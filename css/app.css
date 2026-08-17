@@ -1,0 +1,142 @@
+html, body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  min-height: 100vh;
+}
+
+/* 160px = altura da bottom nav + espaço do botão flutuante (FAB), para que o
+   último item de listas longas nunca fique inalcançável atrás deles. */
+body {
+  padding-bottom: calc(160px + env(safe-area-inset-bottom, 0px));
+}
+@media (min-width: 992px) {
+  body { padding-bottom: 0; }
+}
+
+[x-cloak] { display: none !important; }
+
+a { color: var(--color-primary); }
+
+.cg-app-shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+.cg-main {
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-4);
+  max-width: 1180px;
+  margin-inline: auto;
+  width: 100%;
+}
+@media (min-width: 992px) {
+  .cg-main { padding: var(--space-5) var(--space-6); }
+}
+
+.cg-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.cg-grid-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-3);
+}
+@media (min-width: 768px) {
+  .cg-grid-stats { grid-template-columns: repeat(4, 1fr); }
+}
+
+.cg-grid-dashboard {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+}
+@media (min-width: 992px) {
+  .cg-grid-dashboard { grid-template-columns: 1.4fr 1fr; align-items: start; }
+}
+
+.cg-section-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-bottom: var(--space-3);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cg-muted { color: var(--color-text-muted); }
+
+.cg-scroll-x {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.cg-empty-state {
+  text-align: center;
+  padding: var(--space-6) var(--space-4);
+  color: var(--color-text-muted);
+}
+.cg-empty-state i { font-size: 2rem; color: var(--color-border); }
+
+.cg-offline-banner {
+  background: var(--color-warning);
+  color: #fff;
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 6px;
+}
+
+.cg-demo-banner {
+  background: var(--color-primary-soft);
+  color: var(--color-primary-dark);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: var(--space-4);
+}
+
+/* Modal simples controlado por Alpine (sem depender do bootstrap.bundle.js) */
+.cg-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 20, 18, 0.5);
+  z-index: 1050;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+@media (min-width: 768px) {
+  .cg-modal-backdrop { align-items: center; }
+}
+.cg-modal {
+  background: var(--color-surface);
+  width: 100%;
+  max-width: 560px;
+  max-height: 92vh;
+  overflow-y: auto;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  padding: var(--space-5);
+}
+@media (min-width: 768px) {
+  .cg-modal { border-radius: var(--radius-lg); }
+}
+
+.form-label { font-weight: 600; }
+.form-control, .form-select {
+  min-height: var(--touch-target);
+  border-radius: var(--radius-sm);
+}
+.form-control:focus, .form-select:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 0.2rem rgba(31, 122, 92, 0.18);
+}

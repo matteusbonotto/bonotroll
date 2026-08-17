@@ -1,0 +1,26 @@
+{
+  "name": "CasaGrana — Controle Financeiro e Lista de Compras",
+  "short_name": "CasaGrana",
+  "description": "Controle financeiro pessoal e do grupo, com lista de compras integrada.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#F7F7F5",
+  "theme_color": "#1F7A5C",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "./assets/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "./assets/icons/icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

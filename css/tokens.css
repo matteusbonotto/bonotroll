@@ -1,0 +1,69 @@
+:root {
+  --color-bg: #F7F7F5;
+  --color-surface: #FFFFFF;
+  --color-surface-alt: #F1F3F0;
+  --color-text: #1A1D1B;
+  --color-text-muted: #5B615D;
+  --color-border: #E4E7E2;
+
+  --color-primary: #1F7A5C;
+  --color-primary-dark: #145C44;
+  --color-primary-soft: #E4F2ED;
+  --color-accent: #FF7A45;
+
+  --color-success: #16A34A;
+  --color-danger: #DC2626;
+  --color-warning: #D97706;
+  --color-info: #0EA5E9;
+  --color-secondary: #64748B;
+
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 22px;
+  --radius-pill: 999px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+
+  --touch-target: 48px;
+  --shadow-sm: 0 1px 3px rgba(20, 30, 25, 0.06), 0 1px 2px rgba(20, 30, 25, 0.08);
+  --shadow-md: 0 8px 24px rgba(20, 30, 25, 0.10);
+
+  --font-size-base: 16px;
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #14181A;
+    --color-surface: #1E2427;
+    --color-surface-alt: #242B2E;
+    --color-text: #F2F3F1;
+    --color-text-muted: #A9B2AD;
+    --color-border: #2E3538;
+    --color-primary-soft: #17332A;
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.35);
+    --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
+    color-scheme: dark;
+  }
+}
+
+/* Alinha as cores contextuais do Bootstrap com a identidade do CasaGrana */
+:root {
+  --bs-primary: var(--color-primary);
+  --bs-primary-rgb: 31, 122, 92;
+  --bs-success: var(--color-success);
+  --bs-danger: var(--color-danger);
+  --bs-warning: var(--color-warning);
+  --bs-info: var(--color-info);
+  --bs-secondary: var(--color-secondary);
+  --bs-body-bg: var(--color-bg);
+  --bs-body-color: var(--color-text);
+  --bs-border-color: var(--color-border);
+  --bs-body-font-size: var(--font-size-base);
+}

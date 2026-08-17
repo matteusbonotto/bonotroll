@@ -1,0 +1,202 @@
+-- CasaGrana — schema do banco de dados (Supabase / Postgres)
+--
+-- ESTE ARQUIVO NÃO É EXECUTADO AUTOMATICAMENTE POR NADA NESTE REPOSITÓRIO.
+-- Ele só deve ser rodado manualmente, por você, dentro do SQL Editor do SEU
+-- próprio projeto Supabase, quando decidir sair do modo demonstração.
+-- Veja o README.md para o passo a passo.
+
+create extension if not exists "uuid-ossp";
+
+-- =========================================================
+-- TABELAS
+-- =========================================================
+
+create table if not exists profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  nome text not null,
+  avatar_url text,
+  criado_em timestamptz not null default now()
+);
+
+create table if not exists groups (
+  id uuid primary key default uuid_generate_v4(),
+  nome text not null,
+  codigo text not null unique,
+  criado_por uuid references profiles(id) on delete set null,
+  criado_em timestamptz not null default now()
+);
+
+create table if not exists group_members (
+  group_id uuid not null references groups(id) on delete cascade,
+  profile_id uuid not null references profiles(id) on delete cascade,
+  papel text not null default 'membro' check (papel in ('admin', 'membro')),
+  entrou_em timestamptz not null default now(),
+  primary key (group_id, profile_id)
+);
+
+create table if not exists categories (
+  id uuid primary key default uuid_generate_v4(),
+  owner_id uuid not null references profiles(id) on delete cascade,
+  group_id uuid references groups(id) on delete cascade,
+  nome text not null,
+  cor text not null default '#6c757d',
+  icone text default 'bi-tag',
+  criado_em timestamptz not null default now()
+);
+
+create table if not exists transactions (
+  id uuid primary key default uuid_generate_v4(),
+  owner_id uuid not null references profiles(id) on delete cascade,
+  group_id uuid references groups(id) on delete set null,
+  responsavel_id uuid references profiles(id) on delete set null,
+  tipo text not null check (tipo in ('entrada', 'saida')),
+  titulo text not null,
+  empresa_servico text,
+  categoria_id uuid references categories(id) on delete set null,
+  tipo_despesa text not null default 'variavel' check (tipo_despesa in ('fixa', 'variavel')),
+  valor numeric(12, 2) not null check (valor >= 0),
+  data_cadastro date not null default current_date,
+  data_vencimento date,
+  data_pagamento date,
+  recorrente boolean not null default false,
+  observacoes text,
+  comprovante_url text,
+  criado_em timestamptz not null default now()
+);
+-- Observação: não existe coluna "status" — pago/pendente/a vencer/vencido é
+-- calculado no cliente a partir de data_vencimento e data_pagamento
+-- (ver js/utils/status.js), para não ter duas fontes de verdade divergentes.
+
+create table if not exists shopping_lists (
+  id uuid primary key default uuid_generate_v4(),
+  owner_id uuid not null references profiles(id) on delete cascade,
+  group_id uuid references groups(id) on delete set null,
+  nome text not null default 'Lista de Compras',
+  status text not null default 'planejando' check (status in ('planejando', 'comprando', 'pausada', 'finalizada')),
+  criado_em timestamptz not null default now(),
+  iniciado_em timestamptz,
+  finalizado_em timestamptz,
+  transacao_id uuid references transactions(id) on delete set null
+);
+
+create table if not exists shopping_list_items (
+  id uuid primary key default uuid_generate_v4(),
+  list_id uuid not null references shopping_lists(id) on delete cascade,
+  nome text not null,
+  categoria_id uuid references categories(id) on delete set null,
+  unidade text not null default 'un' check (unidade in ('un', 'kg', 'g')),
+  quantidade numeric(10, 3) default 1,
+  preco_unitario numeric(12, 2),
+  preco_por_kg numeric(12, 2),
+  subtotal numeric(12, 2) default 0,
+  comprado boolean not null default false,
+  codigo_barras text,
+  foto_url text,
+  criado_em timestamptz not null default now()
+);
+
+-- =========================================================
+-- CRIA O PERFIL AUTOMATICAMENTE QUANDO ALGUÉM SE CADASTRA
+-- (js/services/auth.js envia o nome em options.data.nome no signUp)
+-- =========================================================
+
+create or replace function public.handle_new_user()
+returns trigger as $$
+begin
+  insert into public.profiles (id, nome)
+  values (new.id, coalesce(new.raw_user_meta_data->>'nome', split_part(new.email, '@', 1)));
+  return new;
+end;
+$$ language plpgsql security definer;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute procedure public.handle_new_user();
+
+-- =========================================================
+-- FUNÇÃO AUXILIAR PARA AS POLÍTICAS DE RLS
+-- (security definer evita o erro clássico de "recursão infinita" que
+-- acontece quando uma policy de group_members consulta a própria tabela)
+-- =========================================================
+
+create or replace function public.is_group_member(gid uuid)
+returns boolean as $$
+  select exists (
+    select 1 from group_members
+    where group_id = gid and profile_id = auth.uid()
+  );
+$$ language sql security definer stable;
+
+-- =========================================================
+-- ROW LEVEL SECURITY
+-- =========================================================
+
+alter table profiles enable row level security;
+create policy "Ver o próprio perfil e perfis do meu grupo" on profiles for select
+  using (id = auth.uid() or id in (
+    select gm2.profile_id from group_members gm1
+    join group_members gm2 on gm2.group_id = gm1.group_id
+    where gm1.profile_id = auth.uid()
+  ));
+create policy "Atualizar o próprio perfil" on profiles for update
+  using (id = auth.uid());
+
+alter table groups enable row level security;
+create policy "Ver grupos dos quais participo" on groups for select
+  using (public.is_group_member(id));
+create policy "Criar grupo" on groups for insert
+  with check (criado_por = auth.uid());
+create policy "Admin atualiza o grupo" on groups for update
+  using (id in (select group_id from group_members where profile_id = auth.uid() and papel = 'admin'));
+
+alter table group_members enable row level security;
+create policy "Ver membros do meu grupo" on group_members for select
+  using (public.is_group_member(group_id));
+create policy "Entrar em um grupo" on group_members for insert
+  with check (profile_id = auth.uid());
+create policy "Sair do grupo" on group_members for delete
+  using (profile_id = auth.uid());
+
+alter table categories enable row level security;
+create policy "Ver categorias próprias ou do grupo" on categories for select
+  using (owner_id = auth.uid() or public.is_group_member(group_id));
+create policy "Criar categoria" on categories for insert
+  with check (owner_id = auth.uid());
+create policy "Editar/excluir categoria própria" on categories for update
+  using (owner_id = auth.uid());
+create policy "Excluir categoria própria" on categories for delete
+  using (owner_id = auth.uid());
+
+alter table transactions enable row level security;
+create policy "Ver e editar transações próprias ou do grupo" on transactions for all
+  using (owner_id = auth.uid() or public.is_group_member(group_id))
+  with check (owner_id = auth.uid());
+
+alter table shopping_lists enable row level security;
+create policy "Ver e editar listas próprias ou do grupo" on shopping_lists for all
+  using (owner_id = auth.uid() or public.is_group_member(group_id))
+  with check (owner_id = auth.uid());
+
+alter table shopping_list_items enable row level security;
+create policy "Ver e editar itens de listas próprias ou do grupo" on shopping_list_items for all
+  using (list_id in (
+    select id from shopping_lists where owner_id = auth.uid() or public.is_group_member(group_id)
+  ))
+  with check (list_id in (
+    select id from shopping_lists where owner_id = auth.uid() or public.is_group_member(group_id)
+  ));
+
+-- =========================================================
+-- STORAGE (fotos de comprovantes e de itens da lista de compras)
+-- Rode isto depois de criar um bucket chamado "anexos" (privado) em
+-- Storage > New bucket no painel do Supabase.
+-- =========================================================
+
+-- create policy "Upload de anexos do próprio usuário"
+--   on storage.objects for insert
+--   with check (bucket_id = 'anexos' and (storage.foldername(name))[1] = auth.uid()::text);
+--
+-- create policy "Leitura de anexos do próprio usuário"
+--   on storage.objects for select
+--   using (bucket_id = 'anexos' and (storage.foldername(name))[1] = auth.uid()::text);

@@ -1,0 +1,811 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#1F7A5C" />
+  <meta name="description" content="CasaGrana — controle financeiro pessoal e do grupo, com lista de compras integrada." />
+  <title>CasaGrana — Controle Financeiro</title>
+
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" href="./assets/icons/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="./assets/icons/icon.svg" />
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+  <link rel="stylesheet" href="./css/tokens.css" />
+  <link rel="stylesheet" href="./css/components.css" />
+  <link rel="stylesheet" href="./css/app.css" />
+</head>
+<body x-data>
+
+  <div class="cg-offline-banner" x-show="!$store.app.online" x-cloak>
+    <i class="bi bi-wifi-off"></i> Sem conexão — algumas ações serão guardadas e enviadas depois
+  </div>
+
+  <!-- Carregando sessão -->
+  <template x-if="!$store.app.ready">
+    <div class="d-flex align-items-center justify-content-center" style="min-height:100vh;">
+      <div class="text-center">
+        <div class="spinner-border" style="color: var(--color-primary);" role="status"></div>
+        <p class="mt-3 cg-muted">Carregando CasaGrana…</p>
+      </div>
+    </div>
+  </template>
+
+  <!-- ============ TELA DE ENTRADA ============ -->
+  <template x-if="$store.app.ready && !$store.app.profile">
+    <div x-data="authView()" class="d-flex align-items-center justify-content-center p-3" style="min-height:100vh;">
+      <div class="cg-card" style="max-width: 420px; width:100%;">
+        <div class="text-center mb-4">
+          <img src="./assets/icons/icon.svg" width="56" height="56" alt="" class="mb-2" />
+          <h1 class="h4 fw-bold mb-1">CasaGrana</h1>
+          <p class="cg-muted mb-0">Seu dinheiro e suas compras, num só lugar.</p>
+        </div>
+
+        <template x-if="$store.app.isDemoMode">
+          <div class="mb-4">
+            <p class="fw-semibold mb-2"><i class="bi bi-stars"></i> Modo demonstração — entre com um perfil de exemplo:</p>
+            <div class="d-flex flex-column gap-2">
+              <template x-for="p in $store.app.demoProfiles" :key="p.id">
+                <button type="button" class="cg-btn cg-touch btn btn-outline-success text-start" @click="enterDemo(p.id)" :disabled="loading">
+                  <span class="cg-avatar cg-avatar--sm" x-text="cgFormat.initials(p.nome)"></span>
+                  <span class="ms-2">Entrar como <strong x-text="p.nome"></strong></span>
+                </button>
+              </template>
+            </div>
+            <p class="cg-muted small mt-3 mb-0">Os dados são fictícios e ficam só no seu navegador. Quando o Supabase for configurado, essa seção some.</p>
+          </div>
+        </template>
+
+        <template x-if="!$store.app.isDemoMode">
+          <form @submit.prevent="submit">
+            <div class="mb-3" x-show="mode === 'signup'">
+              <label class="form-label">Seu nome</label>
+              <input type="text" class="form-control" x-model="nome" placeholder="Como podemos te chamar?" />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">E-mail</label>
+              <input type="email" class="form-control" x-model="email" required placeholder="voce@email.com" />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Senha</label>
+              <input type="password" class="form-control" x-model="password" required minlength="6" placeholder="••••••••" />
+            </div>
+
+            <template x-if="error"><div class="alert alert-danger py-2 small" x-text="error"></div></template>
+            <template x-if="info"><div class="alert alert-success py-2 small" x-text="info"></div></template>
+
+            <button type="submit" class="cg-btn btn btn-success w-100" :disabled="loading">
+              <span x-show="!loading" x-text="mode === 'signup' ? 'Criar conta' : 'Entrar'"></span>
+              <span x-show="loading"><span class="spinner-border spinner-border-sm"></span> Aguarde…</span>
+            </button>
+
+            <p class="text-center mt-3 mb-0 small">
+              <template x-if="mode === 'login'">
+                <span>Ainda não tem conta? <a href="#" @click.prevent="mode = 'signup'">Criar conta</a></span>
+              </template>
+              <template x-if="mode === 'signup'">
+                <span>Já tem conta? <a href="#" @click.prevent="mode = 'login'">Entrar</a></span>
+              </template>
+            </p>
+          </form>
+        </template>
+      </div>
+    </div>
+  </template>
+
+  <!-- ============ APP AUTENTICADO ============ -->
+  <template x-if="$store.app.ready && $store.app.profile">
+    <div class="cg-app-shell">
+
+      <!-- Sidebar (desktop) -->
+      <aside class="cg-sidebar">
+        <div class="d-flex align-items-center gap-2 mb-4 px-1">
+          <img src="./assets/icons/icon.svg" width="32" height="32" alt="" />
+          <span class="fw-bold">CasaGrana</span>
+        </div>
+        <a href="#" class="cg-sidebar__item" :class="{ 'is-active': $store.app.view === 'home' }" @click.prevent="$store.app.setView('home')">
+          <i class="bi bi-house-door"></i> Início
+        </a>
+        <a href="#" class="cg-sidebar__item" :class="{ 'is-active': $store.app.view === 'transacoes' }" @click.prevent="$store.app.setView('transacoes')">
+          <i class="bi bi-table"></i> Transações
+        </a>
+        <a href="#" class="cg-sidebar__item" :class="{ 'is-active': $store.app.view === 'compras' }" @click.prevent="$store.app.setView('compras')">
+          <i class="bi bi-cart3"></i> Lista de compras
+        </a>
+        <a href="#" class="cg-sidebar__item" :class="{ 'is-active': $store.app.view === 'grupo' }" @click.prevent="$store.app.setView('grupo')">
+          <i class="bi bi-people"></i> Grupo
+        </a>
+        <a href="#" class="cg-sidebar__item" :class="{ 'is-active': $store.app.view === 'perfil' }" @click.prevent="$store.app.setView('perfil')">
+          <i class="bi bi-person-circle"></i> Perfil
+        </a>
+        <div class="mt-auto pt-4">
+          <a href="#" class="cg-sidebar__item text-danger" @click.prevent="$store.app.logout()">
+            <i class="bi bi-box-arrow-right"></i> Sair
+          </a>
+        </div>
+      </aside>
+
+      <div class="cg-main">
+        <!-- Topbar -->
+        <header class="cg-topbar">
+          <div>
+            <h1 class="h5 fw-bold mb-0 d-lg-none">CasaGrana</h1>
+          </div>
+          <div x-data="{ menuOpen: false }" class="position-relative" @click.outside="menuOpen = false">
+            <button type="button" class="btn p-0 border-0 bg-transparent d-flex align-items-center gap-2" @click="menuOpen = !menuOpen">
+              <span class="cg-avatar cg-avatar--sm" x-text="cgFormat.initials($store.app.profile?.nome)"></span>
+              <span class="d-none d-md-inline fw-semibold" x-text="$store.app.profile?.nome"></span>
+              <i class="bi bi-chevron-down small cg-muted"></i>
+            </button>
+            <div x-show="menuOpen" x-cloak x-transition class="cg-card position-absolute end-0 mt-2" style="min-width: 220px; z-index: 1040;">
+              <template x-if="$store.app.isDemoMode && $store.app.demoProfiles.length">
+                <div class="mb-2">
+                  <p class="cg-muted small mb-1 fw-semibold">Trocar perfil (demo)</p>
+                  <template x-for="p in $store.app.demoProfiles" :key="p.id">
+                    <button type="button" class="btn btn-sm btn-outline-secondary w-100 text-start mb-1" @click="$store.app.loginDemo(p.id); menuOpen = false">
+                      <span x-text="p.nome"></span>
+                      <i class="bi bi-check2 float-end" x-show="$store.app.profile?.id === p.id"></i>
+                    </button>
+                  </template>
+                  <hr class="my-2" />
+                </div>
+              </template>
+              <button type="button" class="btn btn-sm btn-outline-secondary w-100 text-start mb-1" @click="$store.app.setView('perfil'); menuOpen = false">
+                <i class="bi bi-gear"></i> Configurações
+              </button>
+              <button type="button" class="btn btn-sm btn-outline-danger w-100 text-start" @click="$store.app.logout()">
+                <i class="bi bi-box-arrow-right"></i> Sair
+              </button>
+            </div>
+          </div>
+        </header>
+
+        <template x-if="$store.app.isDemoMode">
+          <div class="cg-demo-banner">
+            <i class="bi bi-info-circle fs-5"></i>
+            <span>Você está no <strong>modo demonstração</strong> — os dados abaixo são de exemplo e ficam salvos só neste navegador. Veja o README para conectar o Supabase de verdade.</span>
+          </div>
+        </template>
+
+        <!-- ===== HOME ===== -->
+        <section x-show="$store.app.view === 'home'" x-data="dashboardView()" x-init="init()">
+          <div class="cg-section-title"><i class="bi bi-person-circle"></i> Meu resumo</div>
+          <div class="cg-grid-stats mb-4">
+            <div class="cg-card cg-card--stat is-neutral">
+              <span class="cg-card__label">Saldo</span>
+              <span class="cg-card__value" x-text="cgFormat.formatCurrency(personal.saldo)"></span>
+            </div>
+            <div class="cg-card cg-card--stat is-positive">
+              <span class="cg-card__label">Entradas</span>
+              <span class="cg-card__value" x-text="cgFormat.formatCurrency(personal.entradas)"></span>
+            </div>
+            <div class="cg-card cg-card--stat is-negative">
+              <span class="cg-card__label">Saídas</span>
+              <span class="cg-card__value" x-text="cgFormat.formatCurrency(personal.saidas)"></span>
+            </div>
+            <div class="cg-card cg-card--stat">
+              <span class="cg-card__label">Maior gasto</span>
+              <span class="cg-card__value" style="font-size:1.15rem;" x-text="personal.maiorGasto ? cgFormat.formatCurrency(personal.maiorGasto.valor) : '—'"></span>
+              <span class="cg-muted small text-truncate" x-text="personal.maiorGasto?.titulo || 'Nenhum gasto ainda'"></span>
+            </div>
+          </div>
+
+          <template x-if="$store.app.group">
+            <div class="mb-4">
+              <div class="cg-section-title"><i class="bi bi-people"></i> Resumo do grupo — <span x-text="$store.app.group.group.nome"></span></div>
+              <div class="cg-grid-stats">
+                <div class="cg-card cg-card--stat is-neutral">
+                  <span class="cg-card__label">Saldo</span>
+                  <span class="cg-card__value" x-text="cgFormat.formatCurrency(grupo.saldo)"></span>
+                </div>
+                <div class="cg-card cg-card--stat is-positive">
+                  <span class="cg-card__label">Entradas</span>
+                  <span class="cg-card__value" x-text="cgFormat.formatCurrency(grupo.entradas)"></span>
+                </div>
+                <div class="cg-card cg-card--stat is-negative">
+                  <span class="cg-card__label">Saídas</span>
+                  <span class="cg-card__value" x-text="cgFormat.formatCurrency(grupo.saidas)"></span>
+                </div>
+                <div class="cg-card cg-card--stat">
+                  <span class="cg-card__label">Maior gasto</span>
+                  <span class="cg-card__value" style="font-size:1.15rem;" x-text="grupo.maiorGasto ? cgFormat.formatCurrency(grupo.maiorGasto.valor) : '—'"></span>
+                  <span class="cg-muted small text-truncate" x-text="grupo.maiorGasto?.titulo || 'Nenhum gasto ainda'"></span>
+                </div>
+              </div>
+            </div>
+          </template>
+
+          <div class="d-flex flex-wrap gap-2 mb-4">
+            <button type="button" class="cg-btn btn btn-success" @click="$store.txModal.openNew('saida')"><i class="bi bi-dash-circle"></i> Nova despesa</button>
+            <button type="button" class="cg-btn btn btn-outline-success" @click="$store.txModal.openNew('saida', 'fixa')"><i class="bi bi-pin-angle"></i> Despesa fixa</button>
+            <button type="button" class="cg-btn btn btn-outline-primary" @click="$store.txModal.openNew('entrada')"><i class="bi bi-plus-circle"></i> Nova entrada</button>
+            <button type="button" class="cg-btn btn btn-outline-secondary" @click="$store.app.setView('compras')"><i class="bi bi-cart3"></i> Lista de compras</button>
+          </div>
+
+          <div class="cg-grid-dashboard">
+            <div class="cg-card">
+              <div class="cg-section-title"><i class="bi bi-clock-history"></i> Lançamentos recentes</div>
+              <template x-if="!recentes.length"><p class="cg-muted small mb-0">Nada por aqui ainda.</p></template>
+              <div class="d-flex flex-column gap-2">
+                <template x-for="r in recentes" :key="r.id">
+                  <div class="d-flex align-items-center justify-content-between border-bottom pb-2">
+                    <div class="min-w-0">
+                      <div class="fw-semibold text-truncate" x-text="r.titulo"></div>
+                      <div class="cg-muted small" x-text="(categoryFor(r.categoria_id)?.nome || 'Sem categoria') + ' · ' + (responsavelFor(r.responsavel_id)?.nome || '')"></div>
+                    </div>
+                    <div class="text-end ms-2">
+                      <div :class="r.tipo === 'entrada' ? 'text-success fw-semibold' : 'text-danger fw-semibold'" x-text="(r.tipo === 'entrada' ? '+ ' : '- ') + cgFormat.formatCurrency(r.valor)"></div>
+                      <span class="cg-badge" :class="'cg-badge--' + cgStatus.statusMeta(r._status).badge" x-text="cgStatus.statusMeta(r._status).label"></span>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </div>
+
+            <div class="cg-card">
+              <div class="cg-section-title"><i class="bi bi-pie-chart"></i> Gastos por categoria</div>
+              <template x-if="!categoriaResumo.length"><p class="cg-muted small mb-0">Sem dados suficientes ainda.</p></template>
+              <template x-if="categoriaResumo.length">
+                <div x-data="categoryChart()" x-init="$watch('categoriaResumo', v => render(v)); render(categoriaResumo)">
+                  <div style="height:200px;"><canvas x-ref="canvas"></canvas></div>
+                </div>
+              </template>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== TRANSAÇÕES ===== -->
+        <section x-show="$store.app.view === 'transacoes'" x-data="transactionsView()" x-init="init()">
+          <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+            <div class="cg-section-title mb-0"><i class="bi bi-table"></i> Transações</div>
+            <div class="d-flex flex-wrap gap-2">
+              <button type="button" class="cg-btn btn btn-success btn-sm" @click="novaSaida()"><i class="bi bi-dash-circle"></i> Despesa</button>
+              <button type="button" class="cg-btn btn btn-outline-primary btn-sm" @click="novaEntrada()"><i class="bi bi-plus-circle"></i> Entrada</button>
+              <button type="button" class="cg-btn btn btn-outline-secondary btn-sm" @click="abrirImportacao()"><i class="bi bi-upload"></i> Importar CSV</button>
+              <button type="button" class="cg-btn btn btn-outline-secondary btn-sm" @click="exportar()"><i class="bi bi-download"></i> Exportar</button>
+            </div>
+          </div>
+
+          <div class="cg-card mb-3">
+            <div class="row g-2">
+              <div class="col-6 col-md-2">
+                <select class="form-select form-select-sm" x-model="filtro.tipo">
+                  <option value="">Movimentação</option>
+                  <option value="entrada">Entrada</option>
+                  <option value="saida">Saída</option>
+                </select>
+              </div>
+              <div class="col-6 col-md-2">
+                <select class="form-select form-select-sm" x-model="filtro.categoriaId">
+                  <option value="">Categoria</option>
+                  <template x-for="c in $store.app.categories" :key="c.id"><option :value="c.id" x-text="c.nome"></option></template>
+                </select>
+              </div>
+              <div class="col-6 col-md-2">
+                <select class="form-select form-select-sm" x-model="filtro.responsavelId">
+                  <option value="">Responsável</option>
+                  <option :value="$store.app.profile?.id" x-text="$store.app.profile?.nome"></option>
+                  <template x-for="m in ($store.app.group?.members || [])" :key="m.id">
+                    <option :value="m.id" x-text="m.nome" x-show="m.id !== $store.app.profile?.id"></option>
+                  </template>
+                </select>
+              </div>
+              <div class="col-6 col-md-2">
+                <select class="form-select form-select-sm" x-model="filtro.status">
+                  <option value="">Status</option>
+                  <option value="pago">Pago</option>
+                  <option value="a_vencer">A vencer</option>
+                  <option value="vencido">Vencido</option>
+                  <option value="pendente">Pendente</option>
+                </select>
+              </div>
+              <div class="col-6 col-md-2">
+                <select class="form-select form-select-sm" x-model="filtro.tipoDespesa">
+                  <option value="">Fixa/Variável</option>
+                  <option value="fixa">Fixa</option>
+                  <option value="variavel">Variável</option>
+                </select>
+              </div>
+              <div class="col-12 col-md-2">
+                <input type="search" class="form-control form-control-sm" placeholder="Buscar…" x-model.debounce.400ms="filtro.busca" />
+              </div>
+            </div>
+          </div>
+
+          <template x-if="!loading && !sortedRows.length">
+            <div class="cg-empty-state">
+              <i class="bi bi-inbox"></i>
+              <p class="mt-2 mb-0">Nenhum lançamento encontrado com esses filtros.</p>
+            </div>
+          </template>
+
+          <div class="cg-scroll-x" x-show="sortedRows.length">
+            <table class="table cg-table align-middle">
+              <thead>
+                <tr>
+                  <th role="button" @click="sortBy('tipo')">Mov.</th>
+                  <th role="button" @click="sortBy('titulo')">Título / Empresa</th>
+                  <th>Categoria</th>
+                  <th>Responsável</th>
+                  <th>Tipo</th>
+                  <th role="button" @click="sortBy('valor')">Valor</th>
+                  <th role="button" @click="sortBy('data_vencimento')">Vencimento</th>
+                  <th>Status</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <template x-for="row in sortedRows" :key="row.id">
+                  <tr>
+                    <td>
+                      <span class="cg-badge" :class="row.tipo === 'entrada' ? 'cg-badge--success' : 'cg-badge--secondary'" x-text="row.tipo === 'entrada' ? 'Entrada' : 'Saída'"></span>
+                    </td>
+                    <td>
+                      <div class="fw-semibold" x-text="row.titulo"></div>
+                      <div class="cg-muted small" x-text="row.empresa_servico || ''"></div>
+                    </td>
+                    <td>
+                      <select class="form-select form-select-sm" x-effect="$nextTick(() => $el.value = row.categoria_id || '')" @change="setCategoria(row, $event.target.value)">
+                        <option value="">Sem categoria</option>
+                        <template x-for="c in $store.app.categories" :key="c.id"><option :value="c.id" x-text="c.nome"></option></template>
+                      </select>
+                    </td>
+                    <td>
+                      <select class="form-select form-select-sm" x-effect="$nextTick(() => $el.value = row.responsavel_id || '')" @change="setResponsavel(row, $event.target.value)">
+                        <option :value="$store.app.profile?.id" x-text="$store.app.profile?.nome"></option>
+                        <template x-for="m in ($store.app.group?.members || [])" :key="m.id">
+                          <option :value="m.id" x-text="m.nome" x-show="m.id !== $store.app.profile?.id"></option>
+                        </template>
+                      </select>
+                    </td>
+                    <td><span class="cg-muted small" x-text="row.tipo_despesa === 'fixa' ? 'Fixa' : 'Variável'"></span></td>
+                    <td class="fw-semibold" x-text="cgFormat.formatCurrency(row.valor)"></td>
+                    <td x-text="cgFormat.formatDate(row.data_vencimento)"></td>
+                    <td>
+                      <button type="button" class="btn btn-sm p-0 border-0 bg-transparent" @click="togglePago(row)" title="Clique para marcar/desmarcar como pago">
+                        <span class="cg-badge" :class="'cg-badge--' + cgStatus.statusMeta(row._status).badge">
+                          <i :class="'bi ' + cgStatus.statusMeta(row._status).icon"></i>
+                          <span x-text="cgStatus.statusMeta(row._status).label"></span>
+                        </span>
+                      </button>
+                    </td>
+                    <td class="text-end">
+                      <button type="button" class="btn btn-sm btn-outline-secondary" @click="editar(row)"><i class="bi bi-pencil"></i></button>
+                    </td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- ===== LISTA DE COMPRAS ===== -->
+        <section x-show="$store.app.view === 'compras'" x-data="shoppingView()" x-init="init()">
+          <div class="cg-card mb-3" x-show="list">
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+              <div>
+                <div class="cg-section-title mb-0"><i class="bi bi-cart3"></i> <span x-text="list?.nome"></span></div>
+                <span class="cg-muted small" x-text="planejando ? 'Planejando' : emCompra ? 'Comprando agora' : pausada ? 'Pausada' : 'Finalizada'"></span>
+              </div>
+              <div class="d-flex gap-2">
+                <button type="button" class="cg-shopping-toggle" :class="emCompra ? 'cg-shopping-toggle--finish' : 'cg-shopping-toggle--start'" @click="toggleStart()">
+                  <i class="bi" :class="emCompra ? 'bi-flag-fill' : 'bi-play-fill'"></i>
+                  <span x-text="emCompra ? 'Encerrar Compra' : 'Iniciar Compra'"></span>
+                </button>
+                <button type="button" class="cg-btn btn btn-outline-warning" x-show="emCompra" @click="pausar()"><i class="bi bi-pause-fill"></i> Pausar</button>
+                <button type="button" class="cg-btn btn btn-outline-warning" x-show="pausada" @click="retomar()"><i class="bi bi-play-fill"></i> Retomar</button>
+              </div>
+            </div>
+
+            <div class="d-flex flex-wrap align-items-center gap-4 border-top pt-3">
+              <div><span class="cg-muted small d-block">Itens</span><span class="fw-bold" x-text="resumo.itensComprados + ' / ' + resumo.totalItens"></span></div>
+              <div><span class="cg-muted small d-block">Total a pagar</span><span class="fw-bold" x-text="cgFormat.formatCurrency(resumo.valorTotal)"></span></div>
+              <button type="button" class="cg-btn btn btn-outline-secondary btn-sm ms-auto" @click="graficoAberto = true"><i class="bi bi-pie-chart"></i> Ver gráfico</button>
+              <button type="button" class="cg-btn btn btn-outline-secondary btn-sm" @click="abrirImportacao()"><i class="bi bi-upload"></i> Importar CSV</button>
+            </div>
+          </div>
+
+          <!-- Adicionar item -->
+          <div class="cg-card mb-3">
+            <div class="cg-section-title"><i class="bi bi-plus-circle"></i> Adicionar item</div>
+            <form class="row g-2 align-items-end" @submit.prevent="addItem()">
+              <div class="col-12 col-md-4">
+                <label class="form-label small">Item</label>
+                <input type="text" class="form-control" x-model="novoItem.nome" placeholder="Ex: Arroz 5kg" required />
+              </div>
+              <div class="col-6 col-md-3">
+                <label class="form-label small">Categoria</label>
+                <select class="form-select" x-model="novoItem.categoria_id">
+                  <option value="">Sem categoria</option>
+                  <template x-for="c in $store.app.categories" :key="c.id"><option :value="c.id" x-text="c.nome"></option></template>
+                </select>
+              </div>
+              <div class="col-3 col-md-2">
+                <label class="form-label small">Unidade</label>
+                <select class="form-select" x-model="novoItem.unidade">
+                  <option value="un">Unidade</option>
+                  <option value="kg">Kg</option>
+                  <option value="g">Gramas</option>
+                </select>
+              </div>
+              <div class="col-3 col-md-1">
+                <label class="form-label small">Qtd.</label>
+                <input type="number" min="0" step="0.001" class="form-control" x-model="novoItem.quantidade" />
+              </div>
+              <div class="col-12 col-md-2 d-flex gap-2">
+                <button type="submit" class="cg-btn btn btn-success flex-fill"><i class="bi bi-plus-lg"></i></button>
+                <button type="button" class="cg-btn btn btn-outline-secondary" @click="abrirScanner()" title="Ler código de barras"><i class="bi bi-upc-scan"></i></button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Itens -->
+          <template x-if="!loading && !items.length">
+            <div class="cg-empty-state"><i class="bi bi-basket"></i><p class="mt-2 mb-0">Sua lista está vazia. Adicione o primeiro item acima.</p></div>
+          </template>
+
+          <div class="d-flex flex-column gap-2">
+            <template x-for="item in items" :key="item.id">
+              <div class="cg-item-row" :class="{ 'is-comprado': item.comprado }">
+                <span class="cg-chip" :style="{ background: (categoryFor(item.categoria_id)?.cor || '#94A3B8') }">
+                  <span class="cg-chip__dot"></span>
+                </span>
+                <div class="flex-fill min-w-0">
+                  <div class="cg-item-row__nome fw-semibold" x-text="item.nome"></div>
+                  <div class="cg-muted small">
+                    <span x-text="item.quantidade + ' ' + item.unidade"></span>
+                    <template x-if="item.comprado"> · <span class="fw-semibold" x-text="cgFormat.formatCurrency(item.subtotal)"></span></template>
+                  </div>
+                </div>
+
+                <template x-if="emCompra && itemEmEdicaoId !== item.id && !item.comprado">
+                  <button type="button" class="cg-btn btn btn-success btn-sm" @click="abrirPreco(item)">Comprar</button>
+                </template>
+                <template x-if="emCompra && item.comprado">
+                  <button type="button" class="cg-btn btn btn-outline-secondary btn-sm" @click="desmarcarComprado(item)"><i class="bi bi-arrow-counterclockwise"></i></button>
+                </template>
+                <button type="button" class="btn btn-sm btn-link text-danger" @click="removeItem(item.id)"><i class="bi bi-trash"></i></button>
+              </div>
+            </template>
+          </div>
+
+          <!-- Editor de preço inline -->
+          <div class="cg-modal-backdrop" x-show="itemEmEdicaoId" x-cloak @click.self="fecharPreco()">
+            <template x-for="item in items.filter(i => i.id === itemEmEdicaoId)" :key="item.id">
+              <div class="cg-modal">
+                <h2 class="h6 fw-bold mb-3">Comprar: <span x-text="item.nome"></span></h2>
+                <div class="row g-2">
+                  <div class="col-6">
+                    <label class="form-label small" x-text="item.unidade === 'un' ? 'Quantidade' : ('Peso (' + item.unidade + ')')"></label>
+                    <input type="number" min="0" step="0.001" class="form-control" x-model="precoEdicao.quantidade" />
+                  </div>
+                  <div class="col-6">
+                    <label class="form-label small" x-text="item.unidade === 'un' ? 'Preço unitário (R$)' : ('Preço por ' + item.unidade + ' (R$)')"></label>
+                    <input type="number" min="0" step="0.01" class="form-control" x-model="precoEdicao.valor" />
+                  </div>
+                </div>
+                <p class="cg-muted small mt-2 mb-0">
+                  Total: <strong x-text="cgFormat.formatCurrency((Number(precoEdicao.quantidade) || 0) * (Number(precoEdicao.valor) || 0))"></strong>
+                </p>
+                <div class="d-flex gap-2 mt-3">
+                  <button type="button" class="cg-btn btn btn-outline-secondary flex-fill" @click="fecharPreco()">Cancelar</button>
+                  <button type="button" class="cg-btn btn btn-success flex-fill" @click="salvarPreco(item)">Confirmar</button>
+                </div>
+              </div>
+            </template>
+          </div>
+
+          <!-- Scanner de código de barras -->
+          <div class="cg-modal-backdrop" x-show="scannerAberto" x-cloak>
+            <div class="cg-modal text-center">
+              <h2 class="h6 fw-bold mb-3">Aponte a câmera para o código de barras</h2>
+              <div id="cg-scanner-viewport" style="min-height:240px; background:#000; border-radius: var(--radius-md); overflow:hidden;"></div>
+              <p class="text-danger small mt-2" x-show="scannerErro" x-text="scannerErro"></p>
+              <button type="button" class="cg-btn btn btn-outline-secondary mt-3" @click="fecharScanner()">Cancelar</button>
+            </div>
+          </div>
+
+          <!-- Gráfico da compra -->
+          <div class="cg-modal-backdrop" x-show="graficoAberto" x-cloak @click.self="graficoAberto = false">
+            <div class="cg-modal">
+              <h2 class="h6 fw-bold mb-3">Gastos por categoria nesta lista</h2>
+              <template x-if="!resumoPorCategoria.length"><p class="cg-muted small">Ainda não há itens comprados com valor.</p></template>
+              <template x-if="resumoPorCategoria.length">
+                <div x-data="categoryChart()" x-init="$watch('resumoPorCategoria', v => render(v)); render(resumoPorCategoria)">
+                  <div style="height:240px;"><canvas x-ref="canvas"></canvas></div>
+                </div>
+              </template>
+              <button type="button" class="cg-btn btn btn-outline-secondary w-100 mt-3" @click="graficoAberto = false">Fechar</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== GRUPO ===== -->
+        <section x-show="$store.app.view === 'grupo'" x-data="groupView()">
+          <div class="cg-section-title"><i class="bi bi-people"></i> Grupo</div>
+
+          <template x-if="!$store.app.group">
+            <div class="row g-3">
+              <div class="col-12 col-md-6">
+                <div class="cg-card h-100">
+                  <h2 class="h6 fw-bold">Criar um grupo</h2>
+                  <p class="cg-muted small">Útil para dividir e acompanhar as contas da casa com outras pessoas. É totalmente opcional.</p>
+                  <div class="input-group">
+                    <input type="text" class="form-control" placeholder="Ex: Família" x-model="nomeGrupo" />
+                    <button type="button" class="btn btn-success" @click="criar()" :disabled="loading">Criar</button>
+                  </div>
+                </div>
+              </div>
+              <div class="col-12 col-md-6">
+                <div class="cg-card h-100">
+                  <h2 class="h6 fw-bold">Entrar em um grupo</h2>
+                  <p class="cg-muted small">Peça o código do grupo para quem já criou.</p>
+                  <div class="input-group">
+                    <input type="text" class="form-control text-uppercase" placeholder="Código do grupo" x-model="codigoEntrada" />
+                    <button type="button" class="btn btn-outline-success" @click="entrar()" :disabled="loading">Entrar</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </template>
+
+          <template x-if="$store.app.group">
+            <div class="cg-card">
+              <h2 class="h6 fw-bold" x-text="$store.app.group.group.nome"></h2>
+              <p class="cg-muted small">Código do grupo (compartilhe para convidar): <strong x-text="$store.app.group.group.codigo"></strong></p>
+              <div class="d-flex flex-column gap-2 mb-3">
+                <template x-for="m in $store.app.group.members" :key="m.id">
+                  <div class="d-flex align-items-center gap-2 border-bottom pb-2">
+                    <span class="cg-avatar cg-avatar--sm" x-text="cgFormat.initials(m.nome)"></span>
+                    <span x-text="m.nome"></span>
+                    <span class="cg-muted small ms-auto" x-text="m.id === $store.app.group.group.criado_por ? 'Admin' : 'Membro'"></span>
+                  </div>
+                </template>
+              </div>
+              <button type="button" class="cg-btn btn btn-outline-danger" @click="sair()"><i class="bi bi-box-arrow-left"></i> Sair do grupo</button>
+            </div>
+          </template>
+        </section>
+
+        <!-- ===== PERFIL ===== -->
+        <section x-show="$store.app.view === 'perfil'" x-data="profileView()" x-init="init()">
+          <div class="cg-section-title"><i class="bi bi-person-circle"></i> Perfil</div>
+          <div class="cg-card mb-3" style="max-width: 480px;">
+            <label class="form-label">Nome</label>
+            <div class="input-group mb-2">
+              <input type="text" class="form-control" x-model="nome" />
+              <button type="button" class="btn btn-success" @click="salvar()" :disabled="saving">Salvar</button>
+            </div>
+          </div>
+
+          <template x-if="$store.app.isDemoMode">
+            <div class="cg-card mb-3" style="max-width: 480px;">
+              <h2 class="h6 fw-bold"><i class="bi bi-stars"></i> Modo demonstração</h2>
+              <p class="cg-muted small">Configure o Supabase (veja o README) para sair do modo demonstração e usar dados reais.</p>
+              <button type="button" class="cg-btn btn btn-outline-secondary" @click="resetarDemo()"><i class="bi bi-arrow-clockwise"></i> Restaurar dados de exemplo</button>
+            </div>
+          </template>
+
+          <button type="button" class="cg-btn btn btn-outline-danger" @click="$store.app.logout()"><i class="bi bi-box-arrow-right"></i> Sair da conta</button>
+        </section>
+      </div>
+
+      <!-- Bottom nav (mobile) -->
+      <nav class="cg-bottomnav">
+        <button type="button" class="cg-bottomnav__item" :class="{ 'is-active': $store.app.view === 'home' }" @click="$store.app.setView('home')">
+          <i class="bi bi-house-door"></i><span>Início</span>
+        </button>
+        <button type="button" class="cg-bottomnav__item" :class="{ 'is-active': $store.app.view === 'transacoes' }" @click="$store.app.setView('transacoes')">
+          <i class="bi bi-table"></i><span>Transações</span>
+        </button>
+        <button type="button" class="cg-bottomnav__item" :class="{ 'is-active': $store.app.view === 'compras' }" @click="$store.app.setView('compras')">
+          <i class="bi bi-cart3"></i><span>Compras</span>
+        </button>
+        <button type="button" class="cg-bottomnav__item" :class="{ 'is-active': $store.app.view === 'grupo' }" @click="$store.app.setView('grupo')">
+          <i class="bi bi-people"></i><span>Grupo</span>
+        </button>
+        <button type="button" class="cg-bottomnav__item" :class="{ 'is-active': $store.app.view === 'perfil' }" @click="$store.app.setView('perfil')">
+          <i class="bi bi-person-circle"></i><span>Perfil</span>
+        </button>
+      </nav>
+
+      <button type="button" class="cg-fab" x-show="$store.app.view === 'home' || $store.app.view === 'transacoes'" @click="$store.txModal.openNew('saida')" aria-label="Nova despesa">
+        <i class="bi bi-plus-lg"></i>
+      </button>
+    </div>
+  </template>
+
+  <!-- ============ MODAL: NOVA/EDITAR TRANSAÇÃO ============ -->
+  <div class="cg-modal-backdrop" x-show="$store.txModal.open" x-cloak @click.self="$store.txModal.close()">
+    <div class="cg-modal" x-show="$store.txModal.open" x-transition>
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <h2 class="h6 fw-bold mb-0" x-text="$store.txModal.form.id ? 'Editar lançamento' : 'Novo lançamento'"></h2>
+        <button type="button" class="btn-close" @click="$store.txModal.close()"></button>
+      </div>
+
+      <form @submit.prevent="$store.txModal.save()">
+        <div class="btn-group w-100 mb-3" role="group">
+          <input type="radio" class="btn-check" value="saida" x-model="$store.txModal.form.tipo" id="tipoSaida" />
+          <label class="btn btn-outline-danger cg-touch" for="tipoSaida"><i class="bi bi-dash-circle"></i> Saída</label>
+          <input type="radio" class="btn-check" value="entrada" x-model="$store.txModal.form.tipo" id="tipoEntrada" />
+          <label class="btn btn-outline-success cg-touch" for="tipoEntrada"><i class="bi bi-plus-circle"></i> Entrada</label>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Título</label>
+          <input type="text" class="form-control" x-model="$store.txModal.form.titulo" placeholder="Ex: Aluguel, Mercado, Salário…" required />
+        </div>
+
+        <div class="row g-2 mb-3">
+          <div class="col-7">
+            <label class="form-label">Categoria</label>
+            <select class="form-select" x-model="$store.txModal.form.categoria_id">
+              <option value="">Sem categoria</option>
+              <template x-for="c in $store.app.categories" :key="c.id"><option :value="c.id" x-text="c.nome"></option></template>
+            </select>
+          </div>
+          <div class="col-5">
+            <label class="form-label">Valor (R$)</label>
+            <input type="number" min="0" step="0.01" class="form-control" x-model="$store.txModal.form.valor" required />
+          </div>
+        </div>
+
+        <button type="button" class="btn btn-link p-0 mb-3" @click="$store.txModal.showMore = !$store.txModal.showMore">
+          <i class="bi" :class="$store.txModal.showMore ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+          <span x-text="$store.txModal.showMore ? 'Menos opções' : 'Mais opções'"></span>
+        </button>
+
+        <div x-show="$store.txModal.showMore" x-cloak>
+          <div class="mb-3">
+            <label class="form-label">Empresa / Serviço</label>
+            <input type="text" class="form-control" x-model="$store.txModal.form.empresa_servico" placeholder="Opcional" />
+          </div>
+
+          <div class="row g-2 mb-3">
+            <div class="col-6">
+              <label class="form-label">Tipo de despesa</label>
+              <select class="form-select" x-model="$store.txModal.form.tipo_despesa">
+                <option value="variavel">Variável</option>
+                <option value="fixa">Fixa</option>
+              </select>
+            </div>
+            <div class="col-6">
+              <label class="form-label">Responsável</label>
+              <select class="form-select" x-model="$store.txModal.form.responsavel_id">
+                <option :value="$store.app.profile?.id" x-text="$store.app.profile?.nome"></option>
+                <template x-for="m in ($store.app.group?.members || [])" :key="m.id">
+                  <option :value="m.id" x-text="m.nome" x-show="m.id !== $store.app.profile?.id"></option>
+                </template>
+              </select>
+            </div>
+          </div>
+
+          <div class="row g-2 mb-3">
+            <div class="col-6">
+              <label class="form-label">Cadastro</label>
+              <input type="date" class="form-control" x-model="$store.txModal.form.data_cadastro" />
+            </div>
+            <div class="col-6">
+              <label class="form-label">Vencimento</label>
+              <input type="date" class="form-control" x-model="$store.txModal.form.data_vencimento" />
+            </div>
+          </div>
+
+          <div class="form-check mb-2">
+            <input type="checkbox" class="form-check-input" id="marcarPago" x-model="$store.txModal.form.marcarPago" />
+            <label class="form-check-label" for="marcarPago">Já está pago</label>
+          </div>
+          <div class="form-check mb-3">
+            <input type="checkbox" class="form-check-input" id="recorrente" x-model="$store.txModal.form.recorrente" />
+            <label class="form-check-label" for="recorrente">É uma despesa recorrente (mensal)</label>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Observações</label>
+            <textarea class="form-control" rows="2" x-model="$store.txModal.form.observacoes" placeholder="Opcional"></textarea>
+          </div>
+        </div>
+
+        <div class="d-flex gap-2 mt-2">
+          <template x-if="$store.txModal.form.id">
+            <button type="button" class="cg-btn btn btn-outline-danger" @click="$store.txModal.remove()"><i class="bi bi-trash"></i></button>
+          </template>
+          <button type="button" class="cg-btn btn btn-outline-secondary flex-fill" @click="$store.txModal.close()">Cancelar</button>
+          <button type="submit" class="cg-btn btn btn-success flex-fill" :disabled="$store.txModal.saving">
+            <span x-show="!$store.txModal.saving">Salvar</span>
+            <span x-show="$store.txModal.saving"><span class="spinner-border spinner-border-sm"></span></span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============ MODAL: IMPORTAR CSV ============ -->
+  <div class="cg-modal-backdrop" x-show="$store.csvModal.open" x-cloak @click.self="$store.csvModal.close()">
+    <div class="cg-modal" x-show="$store.csvModal.open" x-transition>
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <h2 class="h6 fw-bold mb-0">Importar CSV — <span x-text="$store.csvModal.IMPORT_TARGETS[$store.csvModal.target].label"></span></h2>
+        <button type="button" class="btn-close" @click="$store.csvModal.close()"></button>
+      </div>
+
+      <template x-if="$store.csvModal.step === 'upload'">
+        <div>
+          <p class="cg-muted small">Selecione um arquivo .csv com cabeçalho na primeira linha.</p>
+          <input type="file" accept=".csv" class="form-control" @change="$store.csvModal.onFile($event)" />
+        </div>
+      </template>
+
+      <template x-if="$store.csvModal.step === 'map'">
+        <div>
+          <p class="cg-muted small">Associe cada campo do CasaGrana a uma coluna do seu arquivo.</p>
+          <template x-for="f in $store.csvModal.fields()" :key="f.key">
+            <div class="row g-2 align-items-center mb-2">
+              <div class="col-5"><span class="small fw-semibold" x-text="f.label"></span> <span class="text-danger" x-show="f.required">*</span></div>
+              <div class="col-7">
+                <select class="form-select form-select-sm" x-model="$store.csvModal.mapping[f.key]">
+                  <option value="">— não importar —</option>
+                  <template x-for="h in $store.csvModal.headers" :key="h"><option :value="h" x-text="h"></option></template>
+                </select>
+              </div>
+            </div>
+          </template>
+          <button type="button" class="cg-btn btn btn-success w-100 mt-2" @click="$store.csvModal.avancarPreview()">Continuar</button>
+        </div>
+      </template>
+
+      <template x-if="$store.csvModal.step === 'preview'">
+        <div>
+          <p class="cg-muted small" x-text="$store.csvModal.rawRows.length + ' linha(s) serão importadas.'"></p>
+          <div class="cg-scroll-x mb-3" style="max-height:260px; overflow-y:auto;">
+            <table class="table table-sm">
+              <thead><tr><template x-for="f in $store.csvModal.fields()" :key="f.key"><th x-text="f.label"></th></template></tr></thead>
+              <tbody>
+                <template x-for="(row, i) in $store.csvModal.rawRows.slice(0, 8)" :key="i">
+                  <tr>
+                    <template x-for="f in $store.csvModal.fields()" :key="f.key">
+                      <td x-text="row[$store.csvModal.mapping[f.key]] ?? ''"></td>
+                    </template>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+          <button type="button" class="cg-btn btn btn-success w-100" @click="$store.csvModal.confirmar()">Importar agora</button>
+        </div>
+      </template>
+
+      <template x-if="$store.csvModal.step === 'resultado'">
+        <div>
+          <div class="alert alert-success" x-text="$store.csvModal.result.ok + ' registro(s) importado(s) com sucesso.'"></div>
+          <template x-if="$store.csvModal.result.erros.length">
+            <div class="alert alert-warning">
+              <p class="fw-semibold mb-1">Linhas com erro:</p>
+              <ul class="mb-0 small">
+                <template x-for="e in $store.csvModal.result.erros" :key="e.linha">
+                  <li><span x-text="'Linha ' + e.linha + ': ' + e.motivo"></span></li>
+                </template>
+              </ul>
+            </div>
+          </template>
+          <button type="button" class="cg-btn btn btn-outline-secondary w-100" @click="$store.csvModal.close()">Fechar</button>
+        </div>
+      </template>
+    </div>
+  </div>
+
+  <!-- ============ TOAST ============ -->
+  <div class="position-fixed bottom-0 end-0 p-3" style="z-index:2000; max-width: 320px; pointer-events: none;">
+    <template x-if="$store.app.toast">
+      <div class="cg-card" style="pointer-events: auto;" :class="{
+        'border-success': $store.app.toast.type === 'success',
+        'border-danger': $store.app.toast.type === 'danger'
+      }" x-text="$store.app.toast.message"></div>
+    </template>
+  </div>
+
+  <script type="module" src="./js/app.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
+</body>
+</html>
