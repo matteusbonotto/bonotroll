@@ -287,20 +287,28 @@ create policy "Ver e editar itens de listas próprias ou do grupo" on shopping_l
   ));
 
 -- =========================================================
--- STORAGE (fotos de comprovantes e de itens da lista de compras)
--- Rode isto depois de criar um bucket chamado "anexos" (privado) em
--- Storage > New bucket no painel do Supabase.
+-- STORAGE (fotos de comprovantes de transações)
+-- O bucket privado "anexos" já foi criado (via API, com a service_role key
+-- do seu .env) — não precisa criar nada em Storage, só rodar as policies.
+-- Privado (ao contrário de "avatars"): comprovante é documento financeiro,
+-- só o dono deve conseguir ler — por isso o app pede uma signed URL pra
+-- exibir/baixar em vez de guardar uma URL pública fixa.
 -- =========================================================
 
--- drop policy if exists "Upload de anexos do próprio usuário" on storage.objects;
--- create policy "Upload de anexos do próprio usuário"
---   on storage.objects for insert
---   with check (bucket_id = 'anexos' and (storage.foldername(name))[1] = auth.uid()::text);
---
--- drop policy if exists "Leitura de anexos do próprio usuário" on storage.objects;
--- create policy "Leitura de anexos do próprio usuário"
---   on storage.objects for select
---   using (bucket_id = 'anexos' and (storage.foldername(name))[1] = auth.uid()::text);
+drop policy if exists "Upload de anexos do próprio usuário" on storage.objects;
+create policy "Upload de anexos do próprio usuário"
+  on storage.objects for insert
+  with check (bucket_id = 'anexos' and (storage.foldername(name))[1] = auth.uid()::text);
+
+drop policy if exists "Leitura de anexos do próprio usuário" on storage.objects;
+create policy "Leitura de anexos do próprio usuário"
+  on storage.objects for select
+  using (bucket_id = 'anexos' and (storage.foldername(name))[1] = auth.uid()::text);
+
+drop policy if exists "Exclusão de anexos do próprio usuário" on storage.objects;
+create policy "Exclusão de anexos do próprio usuário"
+  on storage.objects for delete
+  using (bucket_id = 'anexos' and (storage.foldername(name))[1] = auth.uid()::text);
 
 -- =========================================================
 -- STORAGE (foto de perfil)

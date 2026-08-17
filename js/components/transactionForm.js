@@ -1,4 +1,4 @@
-import { createTransaction, updateTransaction, deleteTransaction } from '../services/transactions.js';
+import { createTransaction, updateTransaction, deleteTransaction, uploadComprovante, getComprovanteUrl } from '../services/transactions.js';
 import { createCategory } from '../services/categories.js';
 import { todayIso } from '../utils/format.js';
 
@@ -13,7 +13,8 @@ const emptyForm = () => ({
   valor: '',
   data_cadastro: todayIso(),
   data_vencimento: '',
-  marcarPago: false,
+  data_pagamento: '',
+  comprovante_url: '',
   recorrente: false,
   observacoes: '',
 });
@@ -29,6 +30,8 @@ export function txModalStore() {
     criandoCategoria: false,
     novaCategoriaNome: '',
     novaCategoriaCor: '#64748B',
+    uploadingComprovante: false,
+    comprovantePreviewUrl: null,
 
     openNew(tipo = 'saida', tipoDespesa = 'variavel') {
       this.form = emptyForm();
@@ -38,6 +41,7 @@ export function txModalStore() {
       this.showMore = tipoDespesa === 'fixa';
       this.criandoCategoria = false;
       this.novaCategoriaNome = '';
+      this.comprovantePreviewUrl = null;
       this.open = true;
     },
 
@@ -88,14 +92,45 @@ export function txModalStore() {
         valor: tx.valor,
         data_cadastro: tx.data_cadastro,
         data_vencimento: tx.data_vencimento || '',
-        marcarPago: !!tx.data_pagamento,
+        data_pagamento: tx.data_pagamento || '',
+        comprovante_url: tx.comprovante_url || '',
         recorrente: !!tx.recorrente,
         observacoes: tx.observacoes || '',
       };
       this.showMore = true;
       this.criandoCategoria = false;
       this.novaCategoriaNome = '';
+      this.comprovantePreviewUrl = null;
+      if (tx.comprovante_url) {
+        getComprovanteUrl(tx.comprovante_url).then((url) => { this.comprovantePreviewUrl = url; });
+      }
       this.open = true;
+    },
+
+    onPagoChange(checked) {
+      this.form.data_pagamento = checked ? todayIso() : '';
+    },
+
+    async onComprovanteChange(event) {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      const store = Alpine.store('app');
+      this.uploadingComprovante = true;
+      try {
+        const path = await uploadComprovante(store.profile.id, file);
+        this.form.comprovante_url = path;
+        this.comprovantePreviewUrl = await getComprovanteUrl(path);
+      } catch (e) {
+        store.notify(e.message || 'Erro ao enviar comprovante.', 'danger');
+      } finally {
+        this.uploadingComprovante = false;
+        event.target.value = '';
+      }
+    },
+
+    removerComprovante() {
+      this.form.comprovante_url = '';
+      this.comprovantePreviewUrl = null;
     },
 
     close() {
@@ -120,7 +155,8 @@ export function txModalStore() {
           valor: Number(this.form.valor),
           data_cadastro: this.form.data_cadastro || todayIso(),
           data_vencimento: this.form.data_vencimento || null,
-          data_pagamento: this.form.marcarPago ? todayIso() : null,
+          data_pagamento: this.form.data_pagamento || null,
+          comprovante_url: this.form.comprovante_url || null,
           recorrente: this.form.recorrente,
           observacoes: this.form.observacoes.trim() || null,
           owner_id: store.profile.id,

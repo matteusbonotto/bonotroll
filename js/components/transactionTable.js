@@ -99,6 +99,14 @@ export function transactionsView() {
       await updateTransaction(row.id, { responsavel_id: responsavelId || null });
       await this.load();
     },
+    async setVencimento(row, data) {
+      await updateTransaction(row.id, { data_vencimento: data || null });
+      await this.load();
+    },
+    async setDataPagamento(row, data) {
+      await updateTransaction(row.id, { data_pagamento: data || null });
+      await this.load();
+    },
     async togglePago(row) {
       if (row._status === 'pago') await markAsUnpaid(row.id);
       else await markAsPaid(row.id);

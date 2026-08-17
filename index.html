@@ -347,14 +347,15 @@
             <table class="table cg-table align-middle">
               <thead>
                 <tr>
-                  <th role="button" @click="sortBy('tipo')">Mov.</th>
-                  <th role="button" @click="sortBy('titulo')">Título / Empresa</th>
-                  <th>Categoria</th>
+                  <th role="button" @click="sortBy('tipo')">Movimentação</th>
                   <th>Responsável</th>
+                  <th role="button" @click="sortBy('titulo')">Título / Empresa</th>
                   <th>Tipo</th>
                   <th role="button" @click="sortBy('valor')">Valor</th>
+                  <th>Categoria</th>
                   <th role="button" @click="sortBy('data_vencimento')">Vencimento</th>
-                  <th>Status</th>
+                  <th>Data pagamento</th>
+                  <th>Status pago</th>
                   <th></th>
                 </tr>
               </thead>
@@ -365,16 +366,6 @@
                       <span class="cg-badge" :class="row.tipo === 'entrada' ? 'cg-badge--success' : 'cg-badge--secondary'" x-text="row.tipo === 'entrada' ? 'Entrada' : 'Saída'"></span>
                     </td>
                     <td>
-                      <div class="fw-semibold" x-text="row.titulo"></div>
-                      <div class="cg-muted small" x-text="row.empresa_servico || ''"></div>
-                    </td>
-                    <td>
-                      <select class="form-select form-select-sm" x-effect="$nextTick(() => $el.value = row.categoria_id || '')" @change="setCategoria(row, $event.target.value)">
-                        <option value="">Sem categoria</option>
-                        <template x-for="c in $store.app.categories" :key="c.id"><option :value="c.id" x-text="c.nome"></option></template>
-                      </select>
-                    </td>
-                    <td>
                       <select class="form-select form-select-sm" x-effect="$nextTick(() => $el.value = row.responsavel_id || '')" @change="setResponsavel(row, $event.target.value)">
                         <option :value="$store.app.profile?.id" x-text="$store.app.profile?.nome"></option>
                         <template x-for="m in ($store.app.group?.members || [])" :key="m.id">
@@ -382,16 +373,34 @@
                         </template>
                       </select>
                     </td>
+                    <td>
+                      <div class="fw-semibold" x-text="row.titulo"></div>
+                      <div class="cg-muted small" x-text="row.empresa_servico || ''"></div>
+                    </td>
                     <td><span class="cg-muted small" x-text="row.tipo_despesa === 'fixa' ? 'Fixa' : 'Variável'"></span></td>
                     <td class="fw-semibold" x-text="cgFormat.formatCurrency(row.valor)"></td>
-                    <td x-text="cgFormat.formatDate(row.data_vencimento)"></td>
                     <td>
-                      <button type="button" class="btn btn-sm p-0 border-0 bg-transparent" @click="togglePago(row)" title="Clique para marcar/desmarcar como pago">
+                      <select class="form-select form-select-sm" x-effect="$nextTick(() => $el.value = row.categoria_id || '')" @change="setCategoria(row, $event.target.value)">
+                        <option value="">Sem categoria</option>
+                        <template x-for="c in $store.app.categories" :key="c.id"><option :value="c.id" x-text="c.nome"></option></template>
+                      </select>
+                    </td>
+                    <td>
+                      <input type="date" class="form-control form-control-sm" style="min-width: 150px;" x-effect="$nextTick(() => $el.value = row.data_vencimento || '')" @change="setVencimento(row, $event.target.value)" />
+                    </td>
+                    <td>
+                      <input type="date" class="form-control form-control-sm" style="min-width: 150px;" x-effect="$nextTick(() => $el.value = row.data_pagamento || '')" @change="setDataPagamento(row, $event.target.value)" />
+                    </td>
+                    <td>
+                      <div class="d-flex align-items-center gap-2">
+                        <div class="form-check form-switch mb-0">
+                          <input class="form-check-input" type="checkbox" role="switch" :checked="!!row.data_pagamento" @change="togglePago(row)" title="Marcar/desmarcar como pago" />
+                        </div>
                         <span class="cg-badge" :class="'cg-badge--' + cgStatus.statusMeta(row._status).badge">
                           <i :class="'bi ' + cgStatus.statusMeta(row._status).icon"></i>
                           <span x-text="cgStatus.statusMeta(row._status).label"></span>
                         </span>
-                      </button>
+                      </div>
                     </td>
                     <td class="text-end">
                       <button type="button" class="btn btn-sm btn-outline-secondary" @click="editar(row)"><i class="bi bi-pencil"></i></button>
@@ -762,13 +771,33 @@
             </div>
           </div>
 
-          <div class="form-check mb-2">
-            <input type="checkbox" class="form-check-input" id="marcarPago" x-model="$store.txModal.form.marcarPago" />
-            <label class="form-check-label" for="marcarPago">Já está pago</label>
+          <div class="mb-3">
+            <div class="form-check mb-2">
+              <input type="checkbox" class="form-check-input" id="marcarPago" :checked="!!$store.txModal.form.data_pagamento" @change="$store.txModal.onPagoChange($event.target.checked)" />
+              <label class="form-check-label" for="marcarPago">Já está pago</label>
+            </div>
+            <template x-if="$store.txModal.form.data_pagamento">
+              <input type="date" class="form-control" style="max-width: 200px;" x-model="$store.txModal.form.data_pagamento" />
+            </template>
           </div>
           <div class="form-check mb-3">
             <input type="checkbox" class="form-check-input" id="recorrente" x-model="$store.txModal.form.recorrente" />
             <label class="form-check-label" for="recorrente">É uma despesa recorrente (mensal)</label>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Comprovante</label>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+              <label class="cg-btn btn btn-outline-secondary btn-sm" style="cursor:pointer;">
+                <i class="bi bi-camera"></i>
+                <span x-text="$store.txModal.uploadingComprovante ? 'Enviando…' : ($store.txModal.form.comprovante_url ? 'Trocar foto' : 'Anexar foto')"></span>
+                <input type="file" accept="image/*,.pdf" class="d-none" @change="$store.txModal.onComprovanteChange($event)" :disabled="$store.txModal.uploadingComprovante" />
+              </label>
+              <a :href="$store.txModal.comprovantePreviewUrl" target="_blank" rel="noopener" class="small" x-show="$store.txModal.comprovantePreviewUrl">Ver anexo</a>
+              <button type="button" class="btn btn-sm btn-outline-danger" @click="$store.txModal.removerComprovante()" x-show="$store.txModal.form.comprovante_url">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
           </div>
 
           <div class="mb-3">

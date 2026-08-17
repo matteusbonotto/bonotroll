@@ -8,6 +8,37 @@ export function withStatus(rows) {
   return rows.map((r) => ({ ...r, _status: computeStatus(r) }));
 }
 
+// comprovante_url guarda um DATA URL (modo demo) ou o CAMINHO dentro do
+// bucket privado "anexos" (modo real) — nunca uma URL pública fixa, porque
+// o bucket é privado. Pra exibir, sempre passar o valor salvo por
+// getComprovanteUrl() (que gera uma signed URL válida por 1h) em vez de
+// usar comprovante_url direto num <img>/<a>.
+export async function uploadComprovante(userId, file) {
+  if (isDemoMode()) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(file);
+    });
+  }
+  const supabase = await getSupabase();
+  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+  const path = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+  const { error } = await supabase.storage.from('anexos').upload(path, file);
+  if (error) throw error;
+  return path;
+}
+
+export async function getComprovanteUrl(path) {
+  if (!path) return null;
+  if (isDemoMode() || path.startsWith('data:')) return path;
+  const supabase = await getSupabase();
+  const { data, error } = await supabase.storage.from('anexos').createSignedUrl(path, 3600);
+  if (error) throw error;
+  return data.signedUrl;
+}
+
 // ownerId = usuário logado · groupId = grupo dele (opcional). Traz tudo que é dele
 // OU do grupo, e depois aplica os filtros (tipo, categoria, responsável, status...) em memória.
 export async function listTransactions({ ownerId, groupId, filters = {} } = {}) {
