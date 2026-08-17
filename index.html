@@ -178,23 +178,32 @@
         <!-- ===== HOME ===== -->
         <section x-show="$store.app.view === 'home'" x-data="dashboardView()" x-init="init()">
           <div class="cg-section-title"><i class="bi bi-person-circle"></i> Olá, <span x-text="$store.app.profile?.nome?.split(' ')[0] || ''"></span></div>
-          <div class="cg-grid-stats mb-4">
-            <div class="cg-card cg-card--stat is-neutral">
-              <span class="cg-card__label">Saldo</span>
-              <span class="cg-card__value" x-text="cgFormat.formatCurrency(personal.saldo)"></span>
-            </div>
-            <div class="cg-card cg-card--stat is-positive">
-              <span class="cg-card__label">Entradas</span>
-              <span class="cg-card__value" x-text="cgFormat.formatCurrency(personal.entradas)"></span>
-            </div>
-            <div class="cg-card cg-card--stat is-negative">
-              <span class="cg-card__label">Saídas</span>
-              <span class="cg-card__value" x-text="cgFormat.formatCurrency(personal.saidas)"></span>
-            </div>
-            <div class="cg-card cg-card--stat">
-              <span class="cg-card__label">Maior gasto</span>
-              <span class="cg-card__value" style="font-size:1.15rem;" x-text="personal.maiorGasto ? cgFormat.formatCurrency(personal.maiorGasto.valor) : '—'"></span>
-              <span class="cg-muted small text-truncate" x-text="personal.maiorGasto?.titulo || 'Nenhum gasto ainda'"></span>
+
+          <div class="cg-hero-balance mb-4">
+            <span class="cg-hero-balance__label">Saldo atual</span>
+            <div class="cg-hero-balance__value" x-text="cgFormat.formatCurrency(personal.saldo)"></div>
+            <div class="cg-hero-balance__row">
+              <div class="cg-hero-stat">
+                <i class="bi bi-download"></i>
+                <div>
+                  <span class="cg-hero-stat__label">Entradas</span>
+                  <span class="cg-hero-stat__value" x-text="cgFormat.formatCurrency(personal.entradas)"></span>
+                </div>
+              </div>
+              <div class="cg-hero-stat">
+                <i class="bi bi-upload"></i>
+                <div>
+                  <span class="cg-hero-stat__label">Saídas</span>
+                  <span class="cg-hero-stat__value" x-text="cgFormat.formatCurrency(personal.saidas)"></span>
+                </div>
+              </div>
+              <div class="cg-hero-stat">
+                <i class="bi bi-graph-up-arrow"></i>
+                <div>
+                  <span class="cg-hero-stat__label">Maior gasto</span>
+                  <span class="cg-hero-stat__value" x-text="personal.maiorGasto ? cgFormat.formatCurrency(personal.maiorGasto.valor) : '—'"></span>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -230,21 +239,19 @@
             <button type="button" class="cg-btn btn btn-outline-secondary" @click="$store.app.setView('compras')"><i class="bi bi-cart3"></i> Lista de compras</button>
           </div>
 
-          <div class="cg-grid-dashboard">
+          <div class="cg-grid-dashboard mb-4">
             <div class="cg-card">
-              <div class="cg-section-title"><i class="bi bi-clock-history"></i> Lançamentos recentes</div>
-              <template x-if="!recentes.length"><p class="cg-muted small mb-0">Nada por aqui ainda.</p></template>
+              <div class="cg-section-title"><i class="bi bi-exclamation-circle"></i> Contas a vencer</div>
+              <template x-if="!contasAVencer.length"><p class="cg-muted small mb-0">Nada vencido ou vencendo nos próximos dias. 🎉</p></template>
               <div class="d-flex flex-column gap-2">
-                <template x-for="r in recentes" :key="r.id">
-                  <div class="d-flex align-items-center justify-content-between border-bottom pb-2">
-                    <div class="min-w-0">
-                      <div class="fw-semibold text-truncate" x-text="r.titulo"></div>
-                      <div class="cg-muted small" x-text="(categoryFor(r.categoria_id)?.nome || 'Sem categoria') + ' · ' + (responsavelFor(r.responsavel_id)?.nome || '')"></div>
+                <template x-for="t in contasAVencer" :key="t.id">
+                  <div class="cg-due-row" :class="t._status === 'vencido' ? 'cg-due-row--overdue' : 'cg-due-row--soon'">
+                    <div class="cg-due-row__icon"><i class="bi" :class="t._status === 'vencido' ? 'bi-exclamation-triangle-fill' : 'bi-clock-fill'"></i></div>
+                    <div class="min-w-0 flex-fill">
+                      <div class="fw-semibold text-truncate" x-text="t.titulo"></div>
+                      <div class="small cg-due-row__meta" x-text="diasLabel(t)"></div>
                     </div>
-                    <div class="text-end ms-2">
-                      <div :class="r.tipo === 'entrada' ? 'text-success fw-semibold' : 'text-danger fw-semibold'" x-text="(r.tipo === 'entrada' ? '+ ' : '- ') + cgFormat.formatCurrency(r.valor)"></div>
-                      <span class="cg-badge" :class="'cg-badge--' + cgStatus.statusMeta(r._status).badge" x-text="cgStatus.statusMeta(r._status).label"></span>
-                    </div>
+                    <div class="fw-semibold flex-shrink-0" x-text="cgFormat.formatCurrency(t.valor)"></div>
                   </div>
                 </template>
               </div>
@@ -256,6 +263,25 @@
               <template x-if="categoriaResumo.length">
                 <div x-data="categoryChart()" x-init="$watch('categoriaResumo', v => render(v)); render(categoriaResumo)">
                   <div style="height:200px;"><canvas x-ref="canvas"></canvas></div>
+                </div>
+              </template>
+            </div>
+          </div>
+
+          <div class="cg-card">
+            <div class="cg-section-title mb-2"><i class="bi bi-clock-history"></i> Lançamentos recentes</div>
+            <template x-if="!recentes.length"><p class="cg-muted small mb-0">Nada por aqui ainda.</p></template>
+            <div class="d-flex flex-column gap-2">
+              <template x-for="r in recentes" :key="r.id">
+                <div class="d-flex align-items-center justify-content-between border-bottom pb-2">
+                  <div class="min-w-0">
+                    <div class="fw-semibold text-truncate" x-text="r.titulo"></div>
+                    <div class="cg-muted small" x-text="(categoryFor(r.categoria_id)?.nome || 'Sem categoria') + ' · ' + (responsavelFor(r.responsavel_id)?.nome || '')"></div>
+                  </div>
+                  <div class="text-end ms-2">
+                    <div :class="r.tipo === 'entrada' ? 'text-success fw-semibold' : 'text-danger fw-semibold'" x-text="(r.tipo === 'entrada' ? '+ ' : '- ') + cgFormat.formatCurrency(r.valor)"></div>
+                    <span class="cg-badge" :class="'cg-badge--' + cgStatus.statusMeta(r._status).badge" x-text="cgStatus.statusMeta(r._status).label"></span>
+                  </div>
                 </div>
               </template>
             </div>
@@ -579,41 +605,42 @@
 
           <!-- Adicionar item -->
           <div class="cg-card mb-3">
-            <div class="cg-section-title"><i class="bi bi-plus-circle"></i> Adicionar item</div>
-            <form class="row g-2 align-items-end" @submit.prevent="addItem()">
-              <div class="col-12 col-md-4">
-                <label class="form-label small">Item</label>
-                <input type="text" class="form-control" x-model="novoItem.nome" placeholder="Ex: Arroz 5kg" required />
-              </div>
-              <div class="col-6 col-md-3">
+            <div class="cg-section-title mb-2"><i class="bi bi-plus-circle"></i> Adicionar item</div>
+            <form class="d-flex gap-2 flex-wrap" @submit.prevent="addItem()">
+              <input type="text" class="form-control flex-fill" style="min-width: 160px;" x-model="novoItem.nome" placeholder="Ex: Arroz 5kg" required />
+              <button type="submit" class="cg-btn btn btn-success" title="Adicionar"><i class="bi bi-plus-lg"></i></button>
+              <button type="button" class="cg-btn btn btn-outline-secondary" @click="abrirScanner()" title="Ler código de barras"><i class="bi bi-upc-scan"></i></button>
+              <label class="cg-btn btn btn-outline-secondary mb-0" style="cursor:pointer;" title="Ler nome do item por foto">
+                <span x-show="!lendoFotoItem"><i class="bi bi-camera"></i></span>
+                <span x-show="lendoFotoItem" class="spinner-border spinner-border-sm"></span>
+                <input type="file" accept="image/*" capture="environment" class="d-none" @change="onFotoItem($event)" :disabled="lendoFotoItem" />
+              </label>
+            </form>
+            <a href="#" class="small d-inline-flex align-items-center gap-1 mt-2" @click.prevent="maisOpcoesItem = !maisOpcoesItem">
+              <i class="bi" :class="maisOpcoesItem ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+              <span x-text="maisOpcoesItem ? 'Menos opções' : 'Categoria, unidade e quantidade'"></span>
+            </a>
+            <div class="row g-2 mt-2" x-show="maisOpcoesItem" x-cloak>
+              <div class="col-6 col-md-4">
                 <label class="form-label small">Categoria</label>
-                <select class="form-select" x-model="novoItem.categoria_id">
+                <select class="form-select form-select-sm" x-model="novoItem.categoria_id">
                   <option value="">Sem categoria</option>
                   <template x-for="c in $store.app.categories" :key="c.id"><option :value="c.id" x-text="c.nome"></option></template>
                 </select>
               </div>
-              <div class="col-3 col-md-2">
+              <div class="col-3 col-md-4">
                 <label class="form-label small">Unidade</label>
-                <select class="form-select" x-model="novoItem.unidade">
+                <select class="form-select form-select-sm" x-model="novoItem.unidade">
                   <option value="un">Unidade</option>
                   <option value="kg">Kg</option>
                   <option value="g">Gramas</option>
                 </select>
               </div>
-              <div class="col-3 col-md-1">
+              <div class="col-3 col-md-4">
                 <label class="form-label small">Qtd.</label>
-                <input type="number" min="0" step="0.001" class="form-control" x-model="novoItem.quantidade" />
+                <input type="number" min="0" step="0.001" class="form-control form-control-sm" x-model="novoItem.quantidade" />
               </div>
-              <div class="col-12 col-md-2 d-flex gap-2">
-                <button type="submit" class="cg-btn btn btn-success flex-fill"><i class="bi bi-plus-lg"></i></button>
-                <button type="button" class="cg-btn btn btn-outline-secondary" @click="abrirScanner()" title="Ler código de barras"><i class="bi bi-upc-scan"></i></button>
-                <label class="cg-btn btn btn-outline-secondary mb-0" style="cursor:pointer;" title="Ler nome do item por foto">
-                  <span x-show="!lendoFotoItem"><i class="bi bi-camera"></i></span>
-                  <span x-show="lendoFotoItem" class="spinner-border spinner-border-sm"></span>
-                  <input type="file" accept="image/*" capture="environment" class="d-none" @change="onFotoItem($event)" :disabled="lendoFotoItem" />
-                </label>
-              </div>
-            </form>
+            </div>
           </div>
 
           <!-- Itens -->
@@ -771,46 +798,60 @@
         <!-- ===== PERFIL ===== -->
         <section x-show="$store.app.view === 'perfil'" x-data="profileView()" x-init="init()">
           <div class="cg-section-title"><i class="bi bi-person-circle"></i> Perfil</div>
-          <div class="cg-card mb-3" style="max-width: 480px;">
-            <label class="form-label">Foto e cor</label>
-            <div class="d-flex align-items-center gap-3 mb-3">
-              <span class="cg-avatar" style="width:72px;height:72px;font-size:1.4rem;" :style="{ borderColor: cor, background: cor }">
-                <template x-if="$store.app.profile?.avatar_url"><img :src="$store.app.profile.avatar_url" :alt="$store.app.profile.nome" /></template>
-                <template x-if="!$store.app.profile?.avatar_url"><span x-text="cgFormat.initials($store.app.profile?.nome)"></span></template>
-              </span>
-              <div class="d-flex flex-column gap-2">
-                <label class="cg-btn btn btn-outline-secondary btn-sm" style="cursor:pointer;">
-                  <i class="bi bi-camera"></i> <span x-text="uploadingAvatar ? 'Enviando…' : 'Trocar foto'"></span>
-                  <input type="file" accept="image/*" class="d-none" @change="onAvatarChange($event)" :disabled="uploadingAvatar" />
-                </label>
-                <div class="d-flex align-items-center gap-2">
-                  <label class="small cg-muted mb-0">Cor da borda</label>
-                  <input type="color" class="form-control form-control-color p-0" style="width:36px;height:36px;" x-model="cor" @change="salvarCor()" />
+          <div class="row g-3">
+            <div class="col-12 col-lg-5">
+              <div class="cg-card h-100">
+                <div class="cg-muted small fw-semibold text-uppercase mb-2">Identidade</div>
+                <label class="form-label">Foto e cor</label>
+                <div class="d-flex align-items-center gap-3 mb-3">
+                  <span class="cg-avatar" style="width:72px;height:72px;font-size:1.4rem;" :style="{ borderColor: cor, background: cor }">
+                    <template x-if="$store.app.profile?.avatar_url"><img :src="$store.app.profile.avatar_url" :alt="$store.app.profile.nome" /></template>
+                    <template x-if="!$store.app.profile?.avatar_url"><span x-text="cgFormat.initials($store.app.profile?.nome)"></span></template>
+                  </span>
+                  <div class="d-flex flex-column gap-2">
+                    <label class="cg-btn btn btn-outline-secondary btn-sm" style="cursor:pointer;">
+                      <i class="bi bi-camera"></i> <span x-text="uploadingAvatar ? 'Enviando…' : 'Trocar foto'"></span>
+                      <input type="file" accept="image/*" class="d-none" @change="onAvatarChange($event)" :disabled="uploadingAvatar" />
+                    </label>
+                    <div class="d-flex align-items-center gap-2">
+                      <label class="small cg-muted mb-0">Cor da borda</label>
+                      <input type="color" class="form-control form-control-color p-0" style="width:36px;height:36px;" x-model="cor" @change="salvarCor()" />
+                    </div>
+                  </div>
+                </div>
+                <label class="form-label">Nome</label>
+                <div class="input-group mb-2">
+                  <input type="text" class="form-control" x-model="nome" />
+                  <button type="button" class="btn btn-success" @click="salvar()" :disabled="saving">Salvar</button>
                 </div>
               </div>
             </div>
-            <label class="form-label">Nome</label>
-            <div class="input-group mb-2">
-              <input type="text" class="form-control" x-model="nome" />
-              <button type="button" class="btn btn-success" @click="salvar()" :disabled="saving">Salvar</button>
+
+            <div class="col-12 col-lg-7">
+              <div class="cg-muted small fw-semibold text-uppercase mb-2">Preferências</div>
+              <div class="cg-card cg-card--hoverable mb-3" role="button" @click="$store.categoryModal.openManage()">
+                <div class="d-flex align-items-center gap-3">
+                  <div class="cg-icon-badge"><i class="bi bi-tags"></i></div>
+                  <div class="flex-fill">
+                    <h2 class="h6 fw-bold mb-1">Categorias</h2>
+                    <p class="cg-muted small mb-0">Crie, edite ou exclua as categorias usadas em lançamentos e na lista de compras.</p>
+                  </div>
+                  <i class="bi bi-chevron-right cg-muted"></i>
+                </div>
+              </div>
+
+              <template x-if="$store.app.isDemoMode">
+                <div class="cg-card mb-3">
+                  <h2 class="h6 fw-bold"><i class="bi bi-stars"></i> Modo demonstração</h2>
+                  <p class="cg-muted small">Configure o Supabase (veja o README) para sair do modo demonstração e usar dados reais.</p>
+                  <button type="button" class="cg-btn btn btn-outline-secondary" @click="resetarDemo()"><i class="bi bi-arrow-clockwise"></i> Restaurar dados de exemplo</button>
+                </div>
+              </template>
+
+              <div class="cg-muted small fw-semibold text-uppercase mb-2">Conta</div>
+              <button type="button" class="cg-btn btn btn-outline-danger" @click="$store.app.logout()"><i class="bi bi-box-arrow-right"></i> Sair da conta</button>
             </div>
           </div>
-
-          <div class="cg-card mb-3" style="max-width: 480px;">
-            <h2 class="h6 fw-bold"><i class="bi bi-tags"></i> Categorias</h2>
-            <p class="cg-muted small">Crie, edite ou exclua as categorias usadas em lançamentos e na lista de compras.</p>
-            <button type="button" class="cg-btn btn btn-outline-secondary" @click="$store.categoryModal.openManage()"><i class="bi bi-gear"></i> Gerenciar categorias</button>
-          </div>
-
-          <template x-if="$store.app.isDemoMode">
-            <div class="cg-card mb-3" style="max-width: 480px;">
-              <h2 class="h6 fw-bold"><i class="bi bi-stars"></i> Modo demonstração</h2>
-              <p class="cg-muted small">Configure o Supabase (veja o README) para sair do modo demonstração e usar dados reais.</p>
-              <button type="button" class="cg-btn btn btn-outline-secondary" @click="resetarDemo()"><i class="bi bi-arrow-clockwise"></i> Restaurar dados de exemplo</button>
-            </div>
-          </template>
-
-          <button type="button" class="cg-btn btn btn-outline-danger" @click="$store.app.logout()"><i class="bi bi-box-arrow-right"></i> Sair da conta</button>
         </section>
       </div>
 

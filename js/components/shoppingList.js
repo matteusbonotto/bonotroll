@@ -16,6 +16,7 @@ export function shoppingView() {
     scannerErro: '',
     graficoAberto: false,
     lendoFotoItem: false,
+    maisOpcoesItem: false,
 
     init() {
       this.load();
