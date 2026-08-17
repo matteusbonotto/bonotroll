@@ -598,6 +598,11 @@
               <div class="col-12 col-md-2 d-flex gap-2">
                 <button type="submit" class="cg-btn btn btn-success flex-fill"><i class="bi bi-plus-lg"></i></button>
                 <button type="button" class="cg-btn btn btn-outline-secondary" @click="abrirScanner()" title="Ler código de barras"><i class="bi bi-upc-scan"></i></button>
+                <label class="cg-btn btn btn-outline-secondary mb-0" style="cursor:pointer;" title="Ler nome do item por foto">
+                  <span x-show="!lendoFotoItem"><i class="bi bi-camera"></i></span>
+                  <span x-show="lendoFotoItem" class="spinner-border spinner-border-sm"></span>
+                  <input type="file" accept="image/*" class="d-none" @change="onFotoItem($event)" :disabled="lendoFotoItem" />
+                </label>
               </div>
             </form>
           </div>
@@ -946,11 +951,12 @@
 
           <div class="mb-3">
             <label class="form-label">Comprovante</label>
+            <p class="cg-muted small mb-2">A foto também tenta preencher título e valor sozinha (confira antes de salvar — a leitura não é 100% confiável).</p>
             <div class="d-flex align-items-center gap-2 flex-wrap">
               <label class="cg-btn btn btn-outline-secondary btn-sm" style="cursor:pointer;">
                 <i class="bi bi-camera"></i>
-                <span x-text="$store.txModal.uploadingComprovante ? 'Enviando…' : ($store.txModal.form.comprovante_url ? 'Trocar foto' : 'Anexar foto')"></span>
-                <input type="file" accept="image/*,.pdf" class="d-none" @change="$store.txModal.onComprovanteChange($event)" :disabled="$store.txModal.uploadingComprovante" />
+                <span x-text="$store.txModal.uploadingComprovante ? 'Enviando…' : ($store.txModal.lendoComprovante ? 'Lendo dados…' : ($store.txModal.form.comprovante_url ? 'Trocar foto' : 'Anexar foto'))"></span>
+                <input type="file" accept="image/*,.pdf" class="d-none" @change="$store.txModal.onComprovanteChange($event)" :disabled="$store.txModal.uploadingComprovante || $store.txModal.lendoComprovante" />
               </label>
               <a :href="$store.txModal.comprovantePreviewUrl" target="_blank" rel="noopener" class="small" x-show="$store.txModal.comprovantePreviewUrl">Ver anexo</a>
               <button type="button" class="btn btn-sm btn-outline-danger" @click="$store.txModal.removerComprovante()" x-show="$store.txModal.form.comprovante_url">

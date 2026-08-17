@@ -2,7 +2,7 @@
 // app abrir offline. Chamadas ao Supabase (rede) não passam por aqui — dados
 // offline ficam a cargo do modo demonstração (localStorage) e das telas que
 // avisam quando estão sem conexão.
-const CACHE_NAME = 'casagrana-v3';
+const CACHE_NAME = 'casagrana-v4';
 
 const APP_SHELL = [
   './',
@@ -24,6 +24,7 @@ const APP_SHELL = [
   './js/services/shoppingList.js',
   './js/services/csvImport.js',
   './js/services/barcode.js',
+  './js/services/ocr.js',
   './js/components/store.js',
   './js/components/auth.js',
   './js/components/dashboard.js',

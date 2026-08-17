@@ -1,6 +1,7 @@
 import * as sl from '../services/shoppingList.js';
 import { startBarcodeScanner, stopBarcodeScanner, lookupProductByBarcode } from '../services/barcode.js';
 import { createTransaction } from '../services/transactions.js';
+import { recognizeText, parseReceiptText } from '../services/ocr.js';
 import { todayIso } from '../utils/format.js';
 
 export function shoppingView() {
@@ -14,6 +15,7 @@ export function shoppingView() {
     scannerAberto: false,
     scannerErro: '',
     graficoAberto: false,
+    lendoFotoItem: false,
 
     init() {
       this.load();
@@ -56,6 +58,28 @@ export function shoppingView() {
 
     categoryFor(id) {
       return this.$store.app.categoryById(id);
+    },
+
+    async onFotoItem(event) {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      const store = this.$store.app;
+      this.lendoFotoItem = true;
+      try {
+        const texto = await recognizeText(file);
+        const dados = parseReceiptText(texto);
+        if (dados.titulo) {
+          this.novoItem.nome = dados.titulo;
+          store.notify('Nome lido da foto — confira antes de adicionar.');
+        } else {
+          store.notify('Não consegui ler nenhum texto nessa foto.', 'danger');
+        }
+      } catch {
+        store.notify('Erro ao ler a foto.', 'danger');
+      } finally {
+        this.lendoFotoItem = false;
+        event.target.value = '';
+      }
     },
 
     async addItem() {

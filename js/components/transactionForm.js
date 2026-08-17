@@ -1,5 +1,6 @@
 import { createTransaction, updateTransaction, deleteTransaction, uploadComprovante, getComprovanteUrl } from '../services/transactions.js';
 import { createCategory, uploadCategoryIcon } from '../services/categories.js';
+import { recognizeText, parseReceiptText } from '../services/ocr.js';
 import { todayIso } from '../utils/format.js';
 
 export const CATEGORY_ICON_PRESETS = [
@@ -44,6 +45,7 @@ export function txModalStore() {
     uploadingIconeCategoria: false,
     iconePresets: CATEGORY_ICON_PRESETS,
     uploadingComprovante: false,
+    lendoComprovante: false,
     comprovantePreviewUrl: null,
 
     openNew(tipo = 'saida', tipoDespesa = 'variavel') {
@@ -154,6 +156,20 @@ export function txModalStore() {
         const path = await uploadComprovante(store.profile.id, file);
         this.form.comprovante_url = path;
         this.comprovantePreviewUrl = await getComprovanteUrl(path);
+        this.uploadingComprovante = false;
+        this.lendoComprovante = true;
+        try {
+          const texto = await recognizeText(file);
+          const dados = parseReceiptText(texto);
+          if (dados.titulo && !this.form.titulo.trim()) this.form.titulo = dados.titulo;
+          if (dados.valor && !this.form.valor) this.form.valor = dados.valor;
+          if (dados.titulo || dados.valor) store.notify('Dados lidos da foto — confira antes de salvar.');
+        } catch {
+          // leitura é só um bônus (best-effort) — se falhar, segue com o
+          // anexo já salvo normalmente, sem travar o resto do formulário
+        } finally {
+          this.lendoComprovante = false;
+        }
       } catch (e) {
         store.notify(e.message || 'Erro ao enviar comprovante.', 'danger');
       } finally {
