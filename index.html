@@ -343,7 +343,7 @@
             </div>
           </template>
 
-          <div class="cg-scroll-x" x-show="sortedRows.length">
+          <div class="cg-scroll-x d-none d-md-block" x-show="sortedRows.length">
             <table class="table cg-table align-middle">
               <thead>
                 <tr>
@@ -363,27 +363,66 @@
                 <template x-for="row in sortedRows" :key="row.id">
                   <tr>
                     <td>
-                      <span class="cg-badge" :class="row.tipo === 'entrada' ? 'cg-badge--success' : 'cg-badge--secondary'" x-text="row.tipo === 'entrada' ? 'Entrada' : 'Saída'"></span>
+                      <span class="cg-badge" :class="row.tipo === 'entrada' ? 'cg-badge--success' : 'cg-badge--danger'" x-text="row.tipo === 'entrada' ? 'Entrada' : 'Saída'"></span>
                     </td>
-                    <td>
-                      <select class="form-select form-select-sm" x-effect="$nextTick(() => $el.value = row.responsavel_id || '')" @change="setResponsavel(row, $event.target.value)">
-                        <option :value="$store.app.profile?.id" x-text="$store.app.profile?.nome"></option>
-                        <template x-for="m in ($store.app.group?.members || [])" :key="m.id">
-                          <option :value="m.id" x-text="m.nome" x-show="m.id !== $store.app.profile?.id"></option>
-                        </template>
-                      </select>
+                    <td x-data="{ open: false }" @click.outside="open = false">
+                      <div class="position-relative">
+                        <button type="button" class="cg-pill-trigger" @click="open = !open">
+                          <span class="cg-avatar cg-avatar--sm" :style="{ borderColor: responsavelFor(row.responsavel_id)?.cor || 'var(--color-primary-soft)' }">
+                            <template x-if="responsavelFor(row.responsavel_id)?.avatar_url"><img :src="responsavelFor(row.responsavel_id).avatar_url" :alt="responsavelFor(row.responsavel_id)?.nome" /></template>
+                            <template x-if="!responsavelFor(row.responsavel_id)?.avatar_url"><span x-text="cgFormat.initials(responsavelFor(row.responsavel_id)?.nome)"></span></template>
+                          </span>
+                          <span class="text-truncate" x-text="responsavelFor(row.responsavel_id)?.nome"></span>
+                          <i class="bi bi-chevron-down small cg-muted"></i>
+                        </button>
+                        <div class="cg-card cg-pill-menu" x-show="open" x-cloak x-transition x-effect="if (open) { const r = $el.previousElementSibling.getBoundingClientRect(); $el.style.top = (r.bottom + 4) + 'px'; $el.style.left = Math.min(r.left, window.innerWidth - 216) + 'px'; }">
+                          <button type="button" class="cg-pill-option" @click="setResponsavel(row, $store.app.profile?.id); open = false">
+                            <span class="cg-avatar cg-avatar--sm" :style="{ borderColor: $store.app.profile?.cor || 'var(--color-primary-soft)' }">
+                              <template x-if="$store.app.profile?.avatar_url"><img :src="$store.app.profile.avatar_url" /></template>
+                              <template x-if="!$store.app.profile?.avatar_url"><span x-text="cgFormat.initials($store.app.profile?.nome)"></span></template>
+                            </span>
+                            <span x-text="$store.app.profile?.nome"></span>
+                          </button>
+                          <template x-for="m in ($store.app.group?.members || [])" :key="m.id">
+                            <button type="button" class="cg-pill-option" x-show="m.id !== $store.app.profile?.id" @click="setResponsavel(row, m.id); open = false">
+                              <span class="cg-avatar cg-avatar--sm" :style="{ borderColor: m.cor || 'var(--color-primary-soft)' }">
+                                <template x-if="m.avatar_url"><img :src="m.avatar_url" /></template>
+                                <template x-if="!m.avatar_url"><span x-text="cgFormat.initials(m.nome)"></span></template>
+                              </span>
+                              <span x-text="m.nome"></span>
+                            </button>
+                          </template>
+                        </div>
+                      </div>
                     </td>
                     <td>
                       <div class="fw-semibold" x-text="row.titulo"></div>
                       <div class="cg-muted small" x-text="row.empresa_servico || ''"></div>
                     </td>
-                    <td><span class="cg-muted small" x-text="row.tipo_despesa === 'fixa' ? 'Fixa' : 'Variável'"></span></td>
-                    <td class="fw-semibold" x-text="cgFormat.formatCurrency(row.valor)"></td>
                     <td>
-                      <select class="form-select form-select-sm" x-effect="$nextTick(() => $el.value = row.categoria_id || '')" @change="setCategoria(row, $event.target.value)">
-                        <option value="">Sem categoria</option>
-                        <template x-for="c in $store.app.categories" :key="c.id"><option :value="c.id" x-text="c.nome"></option></template>
-                      </select>
+                      <i class="bi fs-5" :class="row.tipo_despesa === 'fixa' ? 'bi-pin-angle-fill text-warning' : 'bi-pin-angle cg-muted'" :title="row.tipo_despesa === 'fixa' ? 'Despesa fixa' : 'Despesa variável'"></i>
+                    </td>
+                    <td class="fw-semibold" x-text="cgFormat.formatCurrency(row.valor)"></td>
+                    <td x-data="{ open: false }" @click.outside="open = false">
+                      <div class="position-relative">
+                        <button type="button" class="cg-chip" :style="{ background: categoryFor(row.categoria_id)?.cor || '#94A3B8' }" @click="open = !open">
+                          <template x-if="categoryFor(row.categoria_id)?.icone_url"><img :src="categoryFor(row.categoria_id).icone_url" class="cg-chip__icon-img" /></template>
+                          <template x-if="!categoryFor(row.categoria_id)?.icone_url"><i :class="'bi ' + (categoryFor(row.categoria_id)?.icone || 'bi-tag')"></i></template>
+                          <span x-text="categoryFor(row.categoria_id)?.nome || 'Sem categoria'"></span>
+                        </button>
+                        <div class="cg-card cg-pill-menu" x-show="open" x-cloak x-transition x-effect="if (open) { const r = $el.previousElementSibling.getBoundingClientRect(); $el.style.top = (r.bottom + 4) + 'px'; $el.style.left = Math.min(r.left, window.innerWidth - 216) + 'px'; }">
+                          <button type="button" class="cg-pill-option" @click="setCategoria(row, ''); open = false">
+                            <span class="cg-pill-dot" style="background: #94A3B8;"></span>
+                            <span>Sem categoria</span>
+                          </button>
+                          <template x-for="c in $store.app.categories" :key="c.id">
+                            <button type="button" class="cg-pill-option" @click="setCategoria(row, c.id); open = false">
+                              <span class="cg-pill-dot" :style="{ background: c.cor }"></span>
+                              <span x-text="c.nome"></span>
+                            </button>
+                          </template>
+                        </div>
+                      </div>
                     </td>
                     <td>
                       <input type="date" class="form-control form-control-sm" style="min-width: 150px;" x-effect="$nextTick(() => $el.value = row.data_vencimento || '')" @change="setVencimento(row, $event.target.value)" />
@@ -393,8 +432,8 @@
                     </td>
                     <td>
                       <div class="d-flex align-items-center gap-2">
-                        <div class="form-check form-switch mb-0">
-                          <input class="form-check-input" type="checkbox" role="switch" :checked="!!row.data_pagamento" @change="togglePago(row)" title="Marcar/desmarcar como pago" />
+                        <div class="form-check mb-0">
+                          <input class="form-check-input cg-check-success" type="checkbox" :checked="!!row.data_pagamento" @change="togglePago(row)" title="Marcar/desmarcar como pago" />
                         </div>
                         <span class="cg-badge" :class="'cg-badge--' + cgStatus.statusMeta(row._status).badge">
                           <i :class="'bi ' + cgStatus.statusMeta(row._status).icon"></i>
@@ -409,6 +448,97 @@
                 </template>
               </tbody>
             </table>
+          </div>
+
+          <div class="d-flex flex-column gap-2 d-md-none" x-show="sortedRows.length">
+            <template x-for="row in sortedRows" :key="row.id">
+              <div class="cg-card">
+                <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                  <div class="d-flex align-items-center gap-2 min-w-0">
+                    <div class="position-relative flex-shrink-0" x-data="{ open: false }" @click.outside="open = false">
+                      <button type="button" class="btn p-0 border-0 bg-transparent" @click="open = !open">
+                        <span class="cg-avatar cg-avatar--sm" :style="{ borderColor: responsavelFor(row.responsavel_id)?.cor || 'var(--color-primary-soft)' }">
+                          <template x-if="responsavelFor(row.responsavel_id)?.avatar_url"><img :src="responsavelFor(row.responsavel_id).avatar_url" :alt="responsavelFor(row.responsavel_id)?.nome" /></template>
+                          <template x-if="!responsavelFor(row.responsavel_id)?.avatar_url"><span x-text="cgFormat.initials(responsavelFor(row.responsavel_id)?.nome)"></span></template>
+                        </span>
+                      </button>
+                      <div class="cg-card cg-pill-menu" x-show="open" x-cloak x-transition x-effect="if (open) { const r = $el.previousElementSibling.getBoundingClientRect(); $el.style.top = (r.bottom + 4) + 'px'; $el.style.left = Math.min(r.left, window.innerWidth - 216) + 'px'; }">
+                        <button type="button" class="cg-pill-option" @click="setResponsavel(row, $store.app.profile?.id); open = false">
+                          <span class="cg-avatar cg-avatar--sm" :style="{ borderColor: $store.app.profile?.cor || 'var(--color-primary-soft)' }">
+                            <template x-if="$store.app.profile?.avatar_url"><img :src="$store.app.profile.avatar_url" /></template>
+                            <template x-if="!$store.app.profile?.avatar_url"><span x-text="cgFormat.initials($store.app.profile?.nome)"></span></template>
+                          </span>
+                          <span x-text="$store.app.profile?.nome"></span>
+                        </button>
+                        <template x-for="m in ($store.app.group?.members || [])" :key="m.id">
+                          <button type="button" class="cg-pill-option" x-show="m.id !== $store.app.profile?.id" @click="setResponsavel(row, m.id); open = false">
+                            <span class="cg-avatar cg-avatar--sm" :style="{ borderColor: m.cor || 'var(--color-primary-soft)' }">
+                              <template x-if="m.avatar_url"><img :src="m.avatar_url" /></template>
+                              <template x-if="!m.avatar_url"><span x-text="cgFormat.initials(m.nome)"></span></template>
+                            </span>
+                            <span x-text="m.nome"></span>
+                          </button>
+                        </template>
+                      </div>
+                    </div>
+                    <div class="min-w-0">
+                      <div class="fw-semibold text-truncate" x-text="row.titulo"></div>
+                      <div class="cg-muted small text-truncate" x-text="row.empresa_servico || ''"></div>
+                    </div>
+                  </div>
+                  <div class="text-end flex-shrink-0">
+                    <span class="cg-badge" :class="row.tipo === 'entrada' ? 'cg-badge--success' : 'cg-badge--danger'" x-text="row.tipo === 'entrada' ? 'Entrada' : 'Saída'"></span>
+                    <div class="fw-semibold mt-1" x-text="cgFormat.formatCurrency(row.valor)"></div>
+                  </div>
+                </div>
+
+                <div class="d-flex flex-wrap align-items-center gap-2 mb-3" x-data="{ open: false }" @click.outside="open = false">
+                  <div class="position-relative">
+                    <button type="button" class="cg-chip cg-chip--icon-only" :style="{ background: categoryFor(row.categoria_id)?.cor || '#94A3B8' }" :title="categoryFor(row.categoria_id)?.nome || 'Sem categoria'" @click="open = !open">
+                      <template x-if="categoryFor(row.categoria_id)?.icone_url"><img :src="categoryFor(row.categoria_id).icone_url" class="cg-chip__icon-img" /></template>
+                      <template x-if="!categoryFor(row.categoria_id)?.icone_url"><i :class="'bi ' + (categoryFor(row.categoria_id)?.icone || 'bi-tag')"></i></template>
+                    </button>
+                    <div class="cg-card cg-pill-menu" x-show="open" x-cloak x-transition x-effect="if (open) { const r = $el.previousElementSibling.getBoundingClientRect(); $el.style.top = (r.bottom + 4) + 'px'; $el.style.left = Math.min(r.left, window.innerWidth - 216) + 'px'; }">
+                      <button type="button" class="cg-pill-option" @click="setCategoria(row, ''); open = false">
+                        <span class="cg-pill-dot" style="background: #94A3B8;"></span>
+                        <span>Sem categoria</span>
+                      </button>
+                      <template x-for="c in $store.app.categories" :key="c.id">
+                        <button type="button" class="cg-pill-option" @click="setCategoria(row, c.id); open = false">
+                          <span class="cg-pill-dot" :style="{ background: c.cor }"></span>
+                          <span x-text="c.nome"></span>
+                        </button>
+                      </template>
+                    </div>
+                  </div>
+                  <i class="bi fs-5" :class="row.tipo_despesa === 'fixa' ? 'bi-pin-angle-fill text-warning' : 'bi-pin-angle cg-muted'" :title="row.tipo_despesa === 'fixa' ? 'Despesa fixa' : 'Despesa variável'"></i>
+                </div>
+
+                <div class="row g-2 mb-3">
+                  <div class="col-6">
+                    <label class="form-label small cg-muted mb-1">Vencimento</label>
+                    <input type="date" class="form-control form-control-sm" x-effect="$nextTick(() => $el.value = row.data_vencimento || '')" @change="setVencimento(row, $event.target.value)" />
+                  </div>
+                  <div class="col-6">
+                    <label class="form-label small cg-muted mb-1">Pagamento</label>
+                    <input type="date" class="form-control form-control-sm" x-effect="$nextTick(() => $el.value = row.data_pagamento || '')" @change="setDataPagamento(row, $event.target.value)" />
+                  </div>
+                </div>
+
+                <div class="d-flex align-items-center justify-content-between">
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="form-check mb-0">
+                      <input class="form-check-input cg-check-success" type="checkbox" :checked="!!row.data_pagamento" @change="togglePago(row)" title="Marcar/desmarcar como pago" />
+                    </div>
+                    <span class="cg-badge" :class="'cg-badge--' + cgStatus.statusMeta(row._status).badge">
+                      <i :class="'bi ' + cgStatus.statusMeta(row._status).icon"></i>
+                      <span x-text="cgStatus.statusMeta(row._status).label"></span>
+                    </span>
+                  </div>
+                  <button type="button" class="btn btn-sm btn-outline-secondary" @click="editar(row)"><i class="bi bi-pencil"></i></button>
+                </div>
+              </div>
+            </template>
           </div>
         </section>
 
@@ -717,10 +847,39 @@
               <option value="__nova__">+ Nova categoria…</option>
             </select>
             <template x-if="$store.txModal.criandoCategoria">
-              <div class="d-flex gap-2 mt-2">
-                <input type="text" class="form-control form-control-sm" placeholder="Nome da categoria" x-model="$store.txModal.novaCategoriaNome" @keydown.enter.prevent="$store.txModal.criarCategoria()" />
-                <input type="color" class="form-control form-control-color form-control-sm p-0" style="width:36px;" x-model="$store.txModal.novaCategoriaCor" />
-                <button type="button" class="btn btn-success btn-sm" @click="$store.txModal.criarCategoria()">Criar</button>
+              <div class="mt-2 p-2" style="border: 1px solid var(--color-border); border-radius: var(--radius-sm);">
+                <div class="d-flex gap-2 mb-2">
+                  <input type="text" class="form-control form-control-sm" placeholder="Nome da categoria" x-model="$store.txModal.novaCategoriaNome" @keydown.enter.prevent="$store.txModal.criarCategoria()" />
+                  <input type="color" class="form-control form-control-color form-control-sm p-0" style="width:36px;" x-model="$store.txModal.novaCategoriaCor" />
+                </div>
+                <div class="btn-group btn-group-sm mb-2 w-100" role="group">
+                  <button type="button" class="btn" :class="$store.txModal.novaCategoriaModoIcone === 'preset' ? 'btn-secondary' : 'btn-outline-secondary'" @click="$store.txModal.novaCategoriaModoIcone = 'preset'">Ícone</button>
+                  <button type="button" class="btn" :class="$store.txModal.novaCategoriaModoIcone === 'upload' ? 'btn-secondary' : 'btn-outline-secondary'" @click="$store.txModal.novaCategoriaModoIcone = 'upload'">Imagem</button>
+                  <button type="button" class="btn" :class="$store.txModal.novaCategoriaModoIcone === 'url' ? 'btn-secondary' : 'btn-outline-secondary'" @click="$store.txModal.novaCategoriaModoIcone = 'url'">URL</button>
+                </div>
+                <template x-if="$store.txModal.novaCategoriaModoIcone === 'preset'">
+                  <div class="d-flex flex-wrap gap-1 mb-2">
+                    <template x-for="ic in $store.txModal.iconePresets" :key="ic">
+                      <button type="button" class="btn btn-sm p-0" style="width:34px;height:34px;" :class="$store.txModal.novaCategoriaIcone === ic ? 'btn-success' : 'btn-outline-secondary'" @click="$store.txModal.novaCategoriaIcone = ic">
+                        <i :class="'bi ' + ic"></i>
+                      </button>
+                    </template>
+                  </div>
+                </template>
+                <template x-if="$store.txModal.novaCategoriaModoIcone === 'upload'">
+                  <div class="mb-2 d-flex align-items-center gap-2">
+                    <label class="cg-btn btn btn-outline-secondary btn-sm mb-0" style="cursor:pointer;">
+                      <i class="bi bi-upload"></i>
+                      <span x-text="$store.txModal.uploadingIconeCategoria ? 'Enviando…' : ($store.txModal.novaCategoriaIconeUrl ? 'Trocar imagem' : 'Escolher imagem')"></span>
+                      <input type="file" accept="image/*" class="d-none" @change="$store.txModal.onIconeCategoriaFile($event)" :disabled="$store.txModal.uploadingIconeCategoria" />
+                    </label>
+                    <img :src="$store.txModal.novaCategoriaIconeUrl" x-show="$store.txModal.novaCategoriaIconeUrl" style="width:28px;height:28px;border-radius:50%;object-fit:cover;" />
+                  </div>
+                </template>
+                <template x-if="$store.txModal.novaCategoriaModoIcone === 'url'">
+                  <input type="url" class="form-control form-control-sm mb-2" placeholder="https://…" x-model="$store.txModal.novaCategoriaIconeUrlInput" />
+                </template>
+                <button type="button" class="btn btn-success btn-sm w-100" @click="$store.txModal.criarCategoria()">Criar categoria</button>
               </div>
             </template>
           </div>

@@ -42,11 +42,20 @@ create table if not exists categories (
   nome text not null,
   cor text not null default '#6c757d',
   icone text default 'bi-tag',
+  icone_url text,
   criado_em timestamptz not null default now()
 );
 -- (o índice único de categorias fica lá no fim do arquivo, depois de
 -- "transactions"/"shopping_list_items" existirem — ver por quê na seção
 -- "LIMPEZA DE CATEGORIAS DUPLICADAS")
+
+-- "create table if not exists" NÃO adiciona coluna em tabela que já existe
+-- (só cria do zero) — por isso toda coluna nova droppada aqui embaixo desde
+-- que o projeto foi instalado pela primeira vez também precisa de um
+-- "alter table ... add column if not exists" explícito. Rodar de novo é
+-- sempre seguro (idempotente).
+alter table profiles add column if not exists cor text not null default '#1F7A5C';
+alter table categories add column if not exists icone_url text;
 
 create table if not exists transactions (
   id uuid primary key default uuid_generate_v4(),

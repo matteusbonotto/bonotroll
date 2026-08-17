@@ -1,6 +1,13 @@
 import { createTransaction, updateTransaction, deleteTransaction, uploadComprovante, getComprovanteUrl } from '../services/transactions.js';
-import { createCategory } from '../services/categories.js';
+import { createCategory, uploadCategoryIcon } from '../services/categories.js';
 import { todayIso } from '../utils/format.js';
+
+export const CATEGORY_ICON_PRESETS = [
+  'bi-tag', 'bi-house-door', 'bi-car-front', 'bi-basket', 'bi-cart3',
+  'bi-cash-coin', 'bi-heart', 'bi-airplane', 'bi-gift', 'bi-lightning-charge',
+  'bi-phone', 'bi-book', 'bi-cup-straw', 'bi-bicycle', 'bi-collection-play',
+  'bi-mortarboard', 'bi-droplet', 'bi-three-dots',
+];
 
 const emptyForm = () => ({
   id: null,
@@ -30,6 +37,12 @@ export function txModalStore() {
     criandoCategoria: false,
     novaCategoriaNome: '',
     novaCategoriaCor: '#64748B',
+    novaCategoriaIcone: 'bi-tag',
+    novaCategoriaIconeUrl: '',
+    novaCategoriaIconeUrlInput: '',
+    novaCategoriaModoIcone: 'preset',
+    uploadingIconeCategoria: false,
+    iconePresets: CATEGORY_ICON_PRESETS,
     uploadingComprovante: false,
     comprovantePreviewUrl: null,
 
@@ -59,6 +72,8 @@ export function txModalStore() {
         const cat = await createCategory({
           nome: this.novaCategoriaNome.trim(),
           cor: this.novaCategoriaCor,
+          icone: this.novaCategoriaIcone,
+          iconeUrl: this.novaCategoriaModoIcone === 'preset' ? '' : (this.novaCategoriaIconeUrl || this.novaCategoriaIconeUrlInput),
           ownerId: store.profile.id,
           groupId: store.group?.group?.id ?? null,
         });
@@ -74,9 +89,28 @@ export function txModalStore() {
         await Alpine.nextTick();
         this.criandoCategoria = false;
         this.novaCategoriaNome = '';
+        this.novaCategoriaIcone = 'bi-tag';
+        this.novaCategoriaIconeUrl = '';
+        this.novaCategoriaIconeUrlInput = '';
+        this.novaCategoriaModoIcone = 'preset';
         this.form.categoria_id = cat.id;
       } catch (e) {
         store.notify(e.message || 'Erro ao criar categoria.', 'danger');
+      }
+    },
+
+    async onIconeCategoriaFile(event) {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      const store = Alpine.store('app');
+      this.uploadingIconeCategoria = true;
+      try {
+        this.novaCategoriaIconeUrl = await uploadCategoryIcon(store.profile.id, file);
+      } catch (e) {
+        store.notify(e.message || 'Erro ao enviar ícone.', 'danger');
+      } finally {
+        this.uploadingIconeCategoria = false;
+        event.target.value = '';
       }
     },
 

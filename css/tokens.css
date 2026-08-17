@@ -66,4 +66,17 @@
   --bs-body-color: var(--color-text);
   --bs-border-color: var(--color-border);
   --bs-body-font-size: var(--font-size-base);
+  /* --bs-emphasis-color raiz do Bootstrap é sempre #000 (só vira #fff sob
+     [data-bs-theme=dark], que a gente não usa — o tema aqui é 100% via
+     prefers-color-scheme). Tabelas usam --bs-table-color: var(--bs-emphasis-
+     color), não --bs-body-color, então sem isso o texto das células fica
+     preto fixo em qualquer tema. */
+  --bs-emphasis-color: var(--color-text);
+  --bs-emphasis-color-rgb: 26, 29, 27;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bs-emphasis-color-rgb: 242, 243, 241;
+  }
 }

@@ -73,6 +73,7 @@ a { color: var(--color-primary); }
 
 .cg-scroll-x {
   overflow-x: auto;
+  overflow-y: visible;
   -webkit-overflow-scrolling: touch;
 }
 
