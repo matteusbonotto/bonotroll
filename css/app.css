@@ -135,6 +135,12 @@ a { color: var(--color-primary); }
 .form-control, .form-select {
   min-height: var(--touch-target);
   border-radius: var(--radius-sm);
+  /* Sem isso, "Alto contraste" do Windows (ou o force-dark de alguns
+     navegadores) pinta os <select>/<input> nativos com as cores do sistema
+     por cima das nossas — o resto da tela (cg-card, cg-badge etc., que não
+     são controles nativos) não é afetado, só select/input/textarea, daí o
+     "só esse texto fica escuro" mesmo com o tema certo aplicado. */
+  forced-color-adjust: none;
 }
 .form-control:focus, .form-select:focus {
   border-color: var(--color-primary);
