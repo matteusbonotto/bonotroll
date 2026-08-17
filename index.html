@@ -177,7 +177,7 @@
 
         <!-- ===== HOME ===== -->
         <section x-show="$store.app.view === 'home'" x-data="dashboardView()" x-init="init()">
-          <div class="cg-section-title"><i class="bi bi-person-circle"></i> Meu resumo</div>
+          <div class="cg-section-title"><i class="bi bi-person-circle"></i> Olá, <span x-text="$store.app.profile?.nome?.split(' ')[0] || ''"></span></div>
           <div class="cg-grid-stats mb-4">
             <div class="cg-card cg-card--stat is-neutral">
               <span class="cg-card__label">Saldo</span>
@@ -704,21 +704,23 @@
           <template x-if="!$store.app.group">
             <div class="row g-3">
               <div class="col-12 col-md-6">
-                <div class="cg-card h-100">
+                <div class="cg-card cg-card--hoverable h-100">
+                  <div class="cg-icon-badge mb-2"><i class="bi bi-house-add"></i></div>
                   <h2 class="h6 fw-bold">Criar um grupo</h2>
                   <p class="cg-muted small">Útil para dividir e acompanhar as contas da casa com outras pessoas. É totalmente opcional.</p>
                   <div class="input-group">
-                    <input type="text" class="form-control" placeholder="Ex: Família" x-model="nomeGrupo" />
+                    <input type="text" class="form-control" placeholder="Ex: Família" x-model="nomeGrupo" @keydown.enter="criar()" />
                     <button type="button" class="btn btn-success" @click="criar()" :disabled="loading">Criar</button>
                   </div>
                 </div>
               </div>
               <div class="col-12 col-md-6">
-                <div class="cg-card h-100">
+                <div class="cg-card cg-card--hoverable h-100">
+                  <div class="cg-icon-badge cg-icon-badge--accent mb-2"><i class="bi bi-box-arrow-in-right"></i></div>
                   <h2 class="h6 fw-bold">Entrar em um grupo</h2>
                   <p class="cg-muted small">Peça o código do grupo para quem já criou.</p>
                   <div class="input-group">
-                    <input type="text" class="form-control text-uppercase" placeholder="Código do grupo" x-model="codigoEntrada" />
+                    <input type="text" class="form-control text-uppercase" placeholder="Código do grupo" x-model="codigoEntrada" @keydown.enter="entrar()" />
                     <button type="button" class="btn btn-outline-success" @click="entrar()" :disabled="loading">Entrar</button>
                   </div>
                 </div>
@@ -1018,7 +1020,7 @@
           <h3 class="h6 fw-semibold mb-2">Minhas categorias</h3>
           <div class="d-flex flex-column gap-2" style="max-height: 320px; overflow-y: auto;">
             <template x-for="c in $store.app.categories" :key="c.id">
-              <div class="d-flex align-items-center gap-2 p-2" style="border: 1px solid var(--color-border); border-radius: var(--radius-sm);">
+              <div class="cg-list-row d-flex align-items-center gap-2 p-2">
                 <span class="cg-chip cg-chip--icon-only" :style="{ background: c.cor }">
                   <template x-if="c.icone_url"><img :src="c.icone_url" class="cg-chip__icon-img" /></template>
                   <template x-if="!c.icone_url"><i :class="'bi ' + (c.icone || 'bi-tag')"></i></template>

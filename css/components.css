@@ -5,6 +5,41 @@
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
   padding: var(--space-4);
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+/* Elevação sutil em cartões que representam uma ação (criar grupo, entrar
+   em grupo, linha de categoria no gerenciador) — cartões só informativos
+   (ex.: os de saldo/entradas) não usam essa classe, então ficam parados. */
+.cg-card--hoverable:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--color-primary);
+}
+
+.cg-icon-badge {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+}
+.cg-icon-badge--accent {
+  background: color-mix(in srgb, var(--color-accent) 16%, transparent);
+  color: var(--color-accent);
+}
+
+.cg-list-row {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  transition: background 0.1s ease, border-color 0.1s ease;
+}
+.cg-list-row:hover {
+  background: var(--color-surface-alt);
+  border-color: var(--color-primary);
 }
 
 .cg-card--stat {
@@ -314,6 +349,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-3);
+  transition: border-color 0.1s ease;
   padding: var(--space-3);
   border-radius: var(--radius-md);
   border: 1px solid var(--color-border);
