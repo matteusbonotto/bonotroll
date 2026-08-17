@@ -112,6 +112,10 @@ export function transactionsView() {
       else await markAsPaid(row.id);
       await this.load();
     },
+    async toggleTipoDespesa(row) {
+      await updateTransaction(row.id, { tipo_despesa: row.tipo_despesa === 'fixa' ? 'variavel' : 'fixa' });
+      await this.load();
+    },
 
     editar(row) {
       this.$store.txModal.openEdit(row);

@@ -1,14 +1,6 @@
 import { createTransaction, updateTransaction, deleteTransaction, uploadComprovante, getComprovanteUrl } from '../services/transactions.js';
-import { createCategory, uploadCategoryIcon } from '../services/categories.js';
 import { recognizeText, parseReceiptText } from '../services/ocr.js';
 import { todayIso } from '../utils/format.js';
-
-export const CATEGORY_ICON_PRESETS = [
-  'bi-tag', 'bi-house-door', 'bi-car-front', 'bi-basket', 'bi-cart3',
-  'bi-cash-coin', 'bi-heart', 'bi-airplane', 'bi-gift', 'bi-lightning-charge',
-  'bi-phone', 'bi-book', 'bi-cup-straw', 'bi-bicycle', 'bi-collection-play',
-  'bi-mortarboard', 'bi-droplet', 'bi-three-dots',
-];
 
 const emptyForm = () => ({
   id: null,
@@ -35,15 +27,6 @@ export function txModalStore() {
     saving: false,
     showMore: false,
     form: emptyForm(),
-    criandoCategoria: false,
-    novaCategoriaNome: '',
-    novaCategoriaCor: '#64748B',
-    novaCategoriaIcone: 'bi-tag',
-    novaCategoriaIconeUrl: '',
-    novaCategoriaIconeUrlInput: '',
-    novaCategoriaModoIcone: 'preset',
-    uploadingIconeCategoria: false,
-    iconePresets: CATEGORY_ICON_PRESETS,
     uploadingComprovante: false,
     lendoComprovante: false,
     comprovantePreviewUrl: null,
@@ -54,8 +37,6 @@ export function txModalStore() {
       this.form.tipo_despesa = tipoDespesa;
       this.form.responsavel_id = Alpine.store('app').profile?.id || '';
       this.showMore = tipoDespesa === 'fixa';
-      this.criandoCategoria = false;
-      this.novaCategoriaNome = '';
       this.comprovantePreviewUrl = null;
       this.open = true;
     },
@@ -63,56 +44,9 @@ export function txModalStore() {
     onCategoriaChange() {
       if (this.form.categoria_id === '__nova__') {
         this.form.categoria_id = '';
-        this.criandoCategoria = true;
-      }
-    },
-
-    async criarCategoria() {
-      if (!this.novaCategoriaNome.trim()) return;
-      const store = Alpine.store('app');
-      try {
-        const cat = await createCategory({
-          nome: this.novaCategoriaNome.trim(),
-          cor: this.novaCategoriaCor,
-          icone: this.novaCategoriaIcone,
-          iconeUrl: this.novaCategoriaModoIcone === 'preset' ? '' : (this.novaCategoriaIconeUrl || this.novaCategoriaIconeUrlInput),
-          ownerId: store.profile.id,
-          groupId: store.group?.group?.id ?? null,
-        });
-        // Insere direto no array reativo (não chama store.refreshCategories()
-        // aqui: um refetch logo em seguida reatribui store.categories a um
-        // array novo enquanto o <select> ainda está aplicando o valor
-        // selecionado, e a corrida faz o navegador perder a seleção mesmo
-        // com o id certo — só aparece de novo no próximo refresh natural,
-        // ex. próximo login). O nextTick garante que a <option> nova já
-        // existe no DOM antes de tentar selecioná-la (x-for e x-model são
-        // efeitos reativos independentes, sem ordem garantida entre si).
-        store.categories.push(cat);
-        await Alpine.nextTick();
-        this.criandoCategoria = false;
-        this.novaCategoriaNome = '';
-        this.novaCategoriaIcone = 'bi-tag';
-        this.novaCategoriaIconeUrl = '';
-        this.novaCategoriaIconeUrlInput = '';
-        this.novaCategoriaModoIcone = 'preset';
-        this.form.categoria_id = cat.id;
-      } catch (e) {
-        store.notify(e.message || 'Erro ao criar categoria.', 'danger');
-      }
-    },
-
-    async onIconeCategoriaFile(event) {
-      const file = event.target.files?.[0];
-      if (!file) return;
-      const store = Alpine.store('app');
-      this.uploadingIconeCategoria = true;
-      try {
-        this.novaCategoriaIconeUrl = await uploadCategoryIcon(store.profile.id, file);
-      } catch (e) {
-        store.notify(e.message || 'Erro ao enviar ícone.', 'danger');
-      } finally {
-        this.uploadingIconeCategoria = false;
-        event.target.value = '';
+        // Abre o modal compartilhado de categorias já em modo "criar"; ao
+        // salvar lá, a categoria nova volta selecionada aqui.
+        Alpine.store('categoryModal').openCreate((cat) => { this.form.categoria_id = cat.id; });
       }
     },
 
@@ -134,8 +68,6 @@ export function txModalStore() {
         observacoes: tx.observacoes || '',
       };
       this.showMore = true;
-      this.criandoCategoria = false;
-      this.novaCategoriaNome = '';
       this.comprovantePreviewUrl = null;
       if (tx.comprovante_url) {
         getComprovanteUrl(tx.comprovante_url).then((url) => { this.comprovantePreviewUrl = url; });

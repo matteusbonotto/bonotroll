@@ -13,6 +13,16 @@
   gap: var(--space-1);
 }
 
+.cg-card--compact {
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+}
+.cg-card--compact .form-control-sm {
+  min-height: 34px;
+  padding: 2px 6px;
+  font-size: 0.8rem;
+}
+
 .cg-card--stat .cg-card__label {
   font-size: 0.85rem;
   color: var(--color-text-muted);

@@ -26,6 +26,7 @@ const APP_SHELL = [
   './js/services/barcode.js',
   './js/services/ocr.js',
   './js/components/store.js',
+  './js/components/categoryManager.js',
   './js/components/auth.js',
   './js/components/dashboard.js',
   './js/components/transactionForm.js',

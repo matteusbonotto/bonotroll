@@ -1,6 +1,7 @@
 import { appStore } from './components/store.js';
 import { txModalStore } from './components/transactionForm.js';
 import { csvModalStore } from './components/csvImportModal.js';
+import { categoryModalStore } from './components/categoryManager.js';
 import { authView } from './components/auth.js';
 import { dashboardView } from './components/dashboard.js';
 import { transactionsView } from './components/transactionTable.js';
@@ -23,6 +24,7 @@ document.addEventListener('alpine:init', () => {
   Alpine.store('app', appStore());
   Alpine.store('txModal', txModalStore());
   Alpine.store('csvModal', csvModalStore());
+  Alpine.store('categoryModal', categoryModalStore());
 
   Alpine.data('authView', authView);
   Alpine.data('dashboardView', dashboardView);
