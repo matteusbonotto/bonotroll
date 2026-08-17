@@ -8,7 +8,7 @@ export function transactionsView() {
   return {
     rows: [],
     loading: true,
-    filtro: { tipo: '', categoriaId: '', responsavelId: '', status: '', tipoDespesa: '', busca: '' },
+    filtro: { tipo: '', categoriaId: '', responsavelId: '', status: '', tipoDespesa: '', busca: '', dataInicio: '', dataFim: '' },
     ordenarPor: 'data_cadastro',
     ordemDesc: true,
     STATUS_META,
@@ -33,6 +33,8 @@ export function transactionsView() {
           status: this.filtro.status || undefined,
           tipoDespesa: this.filtro.tipoDespesa || undefined,
           busca: this.filtro.busca || undefined,
+          dataInicio: this.filtro.dataInicio || undefined,
+          dataFim: this.filtro.dataFim || undefined,
         },
       });
       this.loading = false;
@@ -58,7 +60,28 @@ export function transactionsView() {
     },
 
     limparFiltros() {
-      this.filtro = { tipo: '', categoriaId: '', responsavelId: '', status: '', tipoDespesa: '', busca: '' };
+      this.filtro = { tipo: '', categoriaId: '', responsavelId: '', status: '', tipoDespesa: '', busca: '', dataInicio: '', dataFim: '' };
+    },
+
+    aplicarPeriodoRapido(dias) {
+      const hoje = new Date();
+      const fim = new Date(hoje);
+      fim.setDate(fim.getDate() + dias);
+      const iso = (d) => d.toISOString().slice(0, 10);
+      if (dias >= 0) {
+        this.filtro.dataInicio = iso(hoje);
+        this.filtro.dataFim = iso(fim);
+      } else {
+        this.filtro.dataInicio = iso(fim);
+        this.filtro.dataFim = iso(hoje);
+      }
+    },
+
+    aplicarMesAtual() {
+      const hoje = new Date();
+      const iso = (d) => d.toISOString().slice(0, 10);
+      this.filtro.dataInicio = iso(new Date(hoje.getFullYear(), hoje.getMonth(), 1));
+      this.filtro.dataFim = iso(new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0));
     },
 
     categoryFor(id) {

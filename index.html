@@ -318,6 +318,22 @@
                 <input type="search" class="form-control form-control-sm" placeholder="Buscar…" x-model.debounce.400ms="filtro.busca" />
               </div>
             </div>
+            <div class="row g-2 align-items-end mt-1">
+              <div class="col-6 col-md-3">
+                <label class="form-label small mb-1 cg-muted">Vencimento de</label>
+                <input type="date" class="form-control form-control-sm" x-model="filtro.dataInicio" />
+              </div>
+              <div class="col-6 col-md-3">
+                <label class="form-label small mb-1 cg-muted">até</label>
+                <input type="date" class="form-control form-control-sm" x-model="filtro.dataFim" />
+              </div>
+              <div class="col-12 col-md-6 d-flex flex-wrap gap-2">
+                <button type="button" class="btn btn-outline-secondary btn-sm" @click="aplicarMesAtual()">Este mês</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" @click="aplicarPeriodoRapido(7)">Próximos 7 dias</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" @click="aplicarPeriodoRapido(-30)">Últimos 30 dias</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm ms-auto" @click="limparFiltros()"><i class="bi bi-x-circle"></i> Limpar filtros</button>
+              </div>
+            </div>
           </div>
 
           <template x-if="!loading && !sortedRows.length">

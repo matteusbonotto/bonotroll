@@ -29,6 +29,12 @@ export async function listTransactions({ ownerId, groupId, filters = {} } = {}) 
   if (filters.responsavelId) rows = rows.filter((r) => r.responsavel_id === filters.responsavelId);
   if (filters.status) rows = rows.filter((r) => r._status === filters.status);
   if (filters.tipoDespesa) rows = rows.filter((r) => r.tipo_despesa === filters.tipoDespesa);
+  // Comparação de string funciona porque as datas já vêm em "aaaa-mm-dd"
+  // (ISO), que ordena igual a data real. Lançamento sem vencimento some da
+  // lista quando o filtro de período está ativo (não dá pra saber se ele
+  // "cai dentro" do período sem uma data).
+  if (filters.dataInicio) rows = rows.filter((r) => r.data_vencimento && r.data_vencimento >= filters.dataInicio);
+  if (filters.dataFim) rows = rows.filter((r) => r.data_vencimento && r.data_vencimento <= filters.dataFim);
   if (filters.busca) {
     const termo = filters.busca.toLowerCase();
     rows = rows.filter(
