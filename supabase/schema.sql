@@ -143,8 +143,13 @@ create policy "Atualizar o próprio perfil" on profiles for update
   using (id = auth.uid());
 
 alter table groups enable row level security;
+-- "or criado_por = auth.uid()" é necessário mesmo sem nenhuma tela depender
+-- disso: createGroup() faz insert+select numa chamada só, e o group_members
+-- do criador só é inserido no passo seguinte — sem essa cláusula, o próprio
+-- Postgres bloqueia o RETURNING do insert (o criador ainda não é membro) e
+-- devolve "new row violates row-level security policy for table groups".
 create policy "Ver grupos dos quais participo" on groups for select
-  using (public.is_group_member(id));
+  using (public.is_group_member(id) or criado_por = auth.uid());
 create policy "Criar grupo" on groups for insert
   with check (criado_por = auth.uid());
 create policy "Admin atualiza o grupo" on groups for update
