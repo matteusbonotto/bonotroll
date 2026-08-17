@@ -2,7 +2,7 @@
 // app abrir offline. Chamadas ao Supabase (rede) não passam por aqui — dados
 // offline ficam a cargo do modo demonstração (localStorage) e das telas que
 // avisam quando estão sem conexão.
-const CACHE_NAME = 'casagrana-v2';
+const CACHE_NAME = 'casagrana-v3';
 
 const APP_SHELL = [
   './',
@@ -70,17 +70,19 @@ self.addEventListener('fetch', (event) => {
   const isSameOrigin = url.origin === self.location.origin;
 
   if (isSameOrigin) {
-    // App shell local: cache-first, atualizando o cache em segundo plano.
+    // App shell local: rede primeiro (sempre pega o deploy mais novo com um
+    // reload normal), cache só como fallback quando estiver offline. Era
+    // cache-first antes — parecia funcionar porque HTML é buscado por fora
+    // daqui (bloco "navigate" acima), mas os .js/.css continuavam vindo do
+    // cache antigo até um SEGUNDO reload (o primeiro só atualizava o cache
+    // em segundo plano), o que fazia deploy parecer "não aplicado".
     event.respondWith(
-      caches.match(request).then((cached) => {
-        const network = fetch(request)
-          .then((response) => {
-            if (response.ok) caches.open(CACHE_NAME).then((cache) => cache.put(request, response.clone()));
-            return response;
-          })
-          .catch(() => cached);
-        return cached || network;
-      })
+      fetch(request)
+        .then((response) => {
+          if (response.ok) caches.open(CACHE_NAME).then((cache) => cache.put(request, response.clone()));
+          return response;
+        })
+        .catch(() => caches.match(request))
     );
   } else {
     // CDNs (Bootstrap, Alpine, ícones, Chart.js etc.): stale-while-revalidate.
