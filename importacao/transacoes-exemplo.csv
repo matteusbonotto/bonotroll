@@ -1,0 +1,19 @@
+tipo,titulo,empresa_servico,categoria_nome,tipo_despesa,valor,data_vencimento
+saida,Amazon Prime,,Assinaturas,fixa,19.90,2026-08-20
+saida,Claro Móvel,,Assinaturas,fixa,51.91,2026-08-15
+saida,Nubank+,,Assinaturas,fixa,29.00,2026-08-07
+saida,Vivo Internet,,Assinaturas,fixa,92.34,2026-08-22
+saida,Open English,,Curso,fixa,172.79,2026-08-02
+saida,Tokio Marine — Seguro casa,,Casa,fixa,34.40,2026-07-28
+saida,CPFL Paulista (energia),,Casa,variavel,196.50,2026-08-16
+saida,Sanasa (água),,Casa,variavel,119.64,2026-08-21
+saida,Condomínio,,Casa,fixa,415.90,
+saida,Seguro Carro,,Carro,fixa,212.58,2026-07-18
+saida,Financiamento Carro,,Carro,fixa,765.87,2026-08-23
+saida,Gasolina,,Carro,variavel,200.00,2026-08-12
+saida,Petlove,,Pet,variavel,44.90,2026-08-09
+saida,iFood / 99,,Delivery,variavel,500.00,
+saida,Financiamento Casa,,Casa,fixa,1000.00,2026-08-14
+saida,Dízimo,,Outro,variavel,200.00,2026-08-10
+entrada,Salário MB Labs,,Salário,fixa,6000.00,2026-08-06
+entrada,Salário Dinamo,,Salário,fixa,5200.00,2026-08-06

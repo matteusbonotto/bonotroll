@@ -44,6 +44,15 @@ export function csvModalStore() {
       this.rawRows = rows;
       this.mapping = {};
       for (const f of this.fields()) {
+        // Match exato primeiro (ex: cabeçalho "tipo_despesa" tem que ganhar
+        // do campo "tipo_despesa" antes de "tipo" tentar um match por
+        // substring — senão "tipo" e "tipo_despesa" colidiam no mesmo
+        // cabeçalho "tipo" e um dos dois ficava sem coluna nenhuma).
+        const exact = headers.find((h) => h.toLowerCase() === f.key.toLowerCase());
+        if (exact) {
+          this.mapping[f.key] = exact;
+          continue;
+        }
         const chave = f.key.split('_')[0].toLowerCase();
         const match = headers.find((h) => h.toLowerCase().includes(chave));
         if (match) this.mapping[f.key] = match;

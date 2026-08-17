@@ -33,7 +33,12 @@ export function appStore() {
         this.ready = true;
       }
 
-      authService.onAuthStateChange(async (session) => {
+      authService.onAuthStateChange(async (event, session) => {
+        // INITIAL_SESSION dispara na hora em que a gente assina o listener,
+        // duplicando a chamada de getSession() logo acima — sem esse filtro,
+        // loadSession() (e ensureDefaultCategories) roda duas vezes em
+        // paralelo no primeiro carregamento e cria categorias duplicadas.
+        if (event === 'INITIAL_SESSION') return;
         if (session) await this.loadSession(session);
         else this.clearSession();
       });

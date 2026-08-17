@@ -15,6 +15,7 @@ create table if not exists profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   nome text not null,
   avatar_url text,
+  cor text not null default '#1F7A5C',
   criado_em timestamptz not null default now()
 );
 
@@ -43,6 +44,9 @@ create table if not exists categories (
   icone text default 'bi-tag',
   criado_em timestamptz not null default now()
 );
+-- (o índice único de categorias fica lá no fim do arquivo, depois de
+-- "transactions"/"shopping_list_items" existirem — ver por quê na seção
+-- "LIMPEZA DE CATEGORIAS DUPLICADAS")
 
 create table if not exists transactions (
   id uuid primary key default uuid_generate_v4(),
@@ -129,61 +133,151 @@ returns boolean as $$
 $$ language sql security definer stable;
 
 -- =========================================================
+-- CRIAR/ENTRAR EM GRUPO
+-- (js/services/groups.js chama estas duas via supabase.rpc(...) em vez de
+-- fazer insert direto. Motivo: "criar grupo" precisa inserir em groups E em
+-- group_members numa única operação — se fossem dois inserts separados pelo
+-- cliente, o Postgres bloquearia o RETURNING do primeiro insert porque quem
+-- está criando ainda não é membro do grupo no instante em que a linha é
+-- lida de volta. E "entrar por código" precisa localizar o grupo pelo
+-- código ANTES de ser membro dele, o que nenhuma policy de SELECT razoável
+-- permite passar em aberto. security definer resolve as duas coisas de uma
+-- vez: a função roda com privilégio para ver/inserir livremente, e só usa
+-- auth.uid() para saber quem está chamando.)
+-- =========================================================
+
+create or replace function public.create_group(p_nome text)
+returns groups
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_group groups;
+  v_codigo text;
+begin
+  -- md5(random()) em vez de uuid_generate_v4(): a extensão uuid-ossp mora no
+  -- schema "extensions" na Supabase, não em "public" — com "set search_path
+  -- = public" acima, uuid_generate_v4() sem qualificar o schema não resolve
+  -- ("function uuid_generate_v4() does not exist"). md5()/random() são
+  -- funções nativas do Postgres, sempre resolvem.
+  v_codigo := upper(substr(md5(random()::text || clock_timestamp()::text), 1, 6));
+  insert into groups (nome, codigo, criado_por)
+  values (p_nome, v_codigo, auth.uid())
+  returning * into v_group;
+
+  insert into group_members (group_id, profile_id, papel)
+  values (v_group.id, auth.uid(), 'admin');
+
+  return v_group;
+end;
+$$;
+
+create or replace function public.join_group_by_code(p_codigo text)
+returns groups
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_group groups;
+begin
+  select * into v_group from groups where codigo = upper(p_codigo);
+  if not found then
+    raise exception 'Código de grupo não encontrado.';
+  end if;
+
+  insert into group_members (group_id, profile_id, papel)
+  values (v_group.id, auth.uid(), 'membro')
+  on conflict do nothing;
+
+  return v_group;
+end;
+$$;
+
+grant execute on function public.create_group(text) to authenticated;
+grant execute on function public.join_group_by_code(text) to authenticated;
+
+-- =========================================================
 -- ROW LEVEL SECURITY
 -- =========================================================
 
+-- Todas as policies abaixo são precedidas de "drop policy if exists" de
+-- propósito: isso torna o arquivo inteiro seguro pra rodar de novo sempre
+-- que ele mudar (nunca dá erro de "policy already exists" — só substitui
+-- pela versão nova). Tabelas ("create table if not exists"), extensão,
+-- função ("create or replace") e trigger ("drop ... if exists" antes)
+-- já eram seguros de re-rodar; só faltava isso nas policies.
+
 alter table profiles enable row level security;
+drop policy if exists "Ver o próprio perfil e perfis do meu grupo" on profiles;
 create policy "Ver o próprio perfil e perfis do meu grupo" on profiles for select
   using (id = auth.uid() or id in (
     select gm2.profile_id from group_members gm1
     join group_members gm2 on gm2.group_id = gm1.group_id
     where gm1.profile_id = auth.uid()
   ));
+drop policy if exists "Atualizar o próprio perfil" on profiles;
 create policy "Atualizar o próprio perfil" on profiles for update
   using (id = auth.uid());
 
 alter table groups enable row level security;
--- "or criado_por = auth.uid()" é necessário mesmo sem nenhuma tela depender
--- disso: createGroup() faz insert+select numa chamada só, e o group_members
--- do criador só é inserido no passo seguinte — sem essa cláusula, o próprio
--- Postgres bloqueia o RETURNING do insert (o criador ainda não é membro) e
--- devolve "new row violates row-level security policy for table groups".
+-- create_group()/join_group_by_code() acima já bypassam RLS (são security
+-- definer), então estas policies só importam pra alguém consultar a tabela
+-- diretamente depois — mas "or criado_por = auth.uid()" continua correto:
+-- o criador de um grupo deve sempre conseguir vê-lo.
+drop policy if exists "Ver grupos dos quais participo" on groups;
 create policy "Ver grupos dos quais participo" on groups for select
   using (public.is_group_member(id) or criado_por = auth.uid());
+drop policy if exists "Admin exclui o grupo" on groups;
+create policy "Admin exclui o grupo" on groups for delete
+  using (id in (select group_id from group_members where profile_id = auth.uid() and papel = 'admin'));
+drop policy if exists "Criar grupo" on groups;
 create policy "Criar grupo" on groups for insert
   with check (criado_por = auth.uid());
+drop policy if exists "Admin atualiza o grupo" on groups;
 create policy "Admin atualiza o grupo" on groups for update
   using (id in (select group_id from group_members where profile_id = auth.uid() and papel = 'admin'));
 
 alter table group_members enable row level security;
+drop policy if exists "Ver membros do meu grupo" on group_members;
 create policy "Ver membros do meu grupo" on group_members for select
   using (public.is_group_member(group_id));
+drop policy if exists "Entrar em um grupo" on group_members;
 create policy "Entrar em um grupo" on group_members for insert
   with check (profile_id = auth.uid());
+drop policy if exists "Sair do grupo" on group_members;
 create policy "Sair do grupo" on group_members for delete
   using (profile_id = auth.uid());
 
 alter table categories enable row level security;
+drop policy if exists "Ver categorias próprias ou do grupo" on categories;
 create policy "Ver categorias próprias ou do grupo" on categories for select
   using (owner_id = auth.uid() or public.is_group_member(group_id));
+drop policy if exists "Criar categoria" on categories;
 create policy "Criar categoria" on categories for insert
   with check (owner_id = auth.uid());
+drop policy if exists "Editar/excluir categoria própria" on categories;
 create policy "Editar/excluir categoria própria" on categories for update
   using (owner_id = auth.uid());
+drop policy if exists "Excluir categoria própria" on categories;
 create policy "Excluir categoria própria" on categories for delete
   using (owner_id = auth.uid());
 
 alter table transactions enable row level security;
+drop policy if exists "Ver e editar transações próprias ou do grupo" on transactions;
 create policy "Ver e editar transações próprias ou do grupo" on transactions for all
   using (owner_id = auth.uid() or public.is_group_member(group_id))
   with check (owner_id = auth.uid());
 
 alter table shopping_lists enable row level security;
+drop policy if exists "Ver e editar listas próprias ou do grupo" on shopping_lists;
 create policy "Ver e editar listas próprias ou do grupo" on shopping_lists for all
   using (owner_id = auth.uid() or public.is_group_member(group_id))
   with check (owner_id = auth.uid());
 
 alter table shopping_list_items enable row level security;
+drop policy if exists "Ver e editar itens de listas próprias ou do grupo" on shopping_list_items;
 create policy "Ver e editar itens de listas próprias ou do grupo" on shopping_list_items for all
   using (list_id in (
     select id from shopping_lists where owner_id = auth.uid() or public.is_group_member(group_id)
@@ -198,10 +292,98 @@ create policy "Ver e editar itens de listas próprias ou do grupo" on shopping_l
 -- Storage > New bucket no painel do Supabase.
 -- =========================================================
 
+-- drop policy if exists "Upload de anexos do próprio usuário" on storage.objects;
 -- create policy "Upload de anexos do próprio usuário"
 --   on storage.objects for insert
 --   with check (bucket_id = 'anexos' and (storage.foldername(name))[1] = auth.uid()::text);
 --
+-- drop policy if exists "Leitura de anexos do próprio usuário" on storage.objects;
 -- create policy "Leitura de anexos do próprio usuário"
 --   on storage.objects for select
 --   using (bucket_id = 'anexos' and (storage.foldername(name))[1] = auth.uid()::text);
+
+-- =========================================================
+-- STORAGE (foto de perfil)
+-- O bucket público "avatars" já foi criado (via API, com a service_role key
+-- do seu .env) — não precisa criar nada em Storage, só rodar as policies.
+-- =========================================================
+
+drop policy if exists "Avatar é público pra leitura" on storage.objects;
+create policy "Avatar é público pra leitura" on storage.objects for select
+  using (bucket_id = 'avatars');
+
+drop policy if exists "Usuário sobe o próprio avatar" on storage.objects;
+create policy "Usuário sobe o próprio avatar" on storage.objects for insert
+  with check (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text);
+
+drop policy if exists "Usuário atualiza o próprio avatar" on storage.objects;
+create policy "Usuário atualiza o próprio avatar" on storage.objects for update
+  using (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text);
+
+drop policy if exists "Usuário remove o próprio avatar" on storage.objects;
+create policy "Usuário remove o próprio avatar" on storage.objects for delete
+  using (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text);
+
+-- =========================================================
+-- LIMPEZA DE CATEGORIAS DUPLICADAS + ÍNDICE ÚNICO
+-- Categorias duplicadas apareciam por uma corrida de dois logins simultâneos
+-- criando as categorias padrão ao mesmo tempo (já corrigido no app). Isto
+-- aqui limpa o que já duplicou (reapontando lançamentos/itens de lista pra
+-- categoria "sobrevivente") e cria o índice que impede duplicar de novo.
+-- Fica no fim do arquivo (não logo após "create table categories") porque
+-- precisa que "transactions" e "shopping_list_items" já existam. Depois da
+-- primeira limpeza isto vira um no-op — seguro de rodar toda vez.
+-- =========================================================
+
+with ranked as (
+  select id, owner_id, nome,
+         coalesce(group_id, '00000000-0000-0000-0000-000000000000'::uuid) as gkey,
+         row_number() over (
+           partition by owner_id, coalesce(group_id, '00000000-0000-0000-0000-000000000000'::uuid), nome
+           order by criado_em
+         ) as rn
+  from categories
+),
+keeper_map as (
+  select d.id as dup_id, k.id as keeper_id
+  from ranked d
+  join ranked k on k.owner_id = d.owner_id and k.gkey = d.gkey and k.nome = d.nome and k.rn = 1
+  where d.rn > 1
+)
+update transactions t set categoria_id = km.keeper_id
+from keeper_map km where t.categoria_id = km.dup_id;
+
+with ranked as (
+  select id, owner_id, nome,
+         coalesce(group_id, '00000000-0000-0000-0000-000000000000'::uuid) as gkey,
+         row_number() over (
+           partition by owner_id, coalesce(group_id, '00000000-0000-0000-0000-000000000000'::uuid), nome
+           order by criado_em
+         ) as rn
+  from categories
+),
+keeper_map as (
+  select d.id as dup_id, k.id as keeper_id
+  from ranked d
+  join ranked k on k.owner_id = d.owner_id and k.gkey = d.gkey and k.nome = d.nome and k.rn = 1
+  where d.rn > 1
+)
+update shopping_list_items i set categoria_id = km.keeper_id
+from keeper_map km where i.categoria_id = km.dup_id;
+
+with ranked as (
+  select id,
+         row_number() over (
+           partition by owner_id, coalesce(group_id, '00000000-0000-0000-0000-000000000000'::uuid), nome
+           order by criado_em
+         ) as rn
+  from categories
+)
+delete from categories c using ranked r
+where c.id = r.id and r.rn > 1;
+
+-- Índice de expressão (não uma unique constraint comum) porque NULL nunca é
+-- igual a NULL: sem o coalesce, duas categorias pessoais (group_id nulo) com
+-- o mesmo nome não seriam pegas como duplicata pelo Postgres.
+create unique index if not exists categories_owner_group_nome_uniq
+  on categories (owner_id, coalesce(group_id, '00000000-0000-0000-0000-000000000000'::uuid), nome);

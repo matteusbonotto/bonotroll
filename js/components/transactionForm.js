@@ -1,4 +1,5 @@
 import { createTransaction, updateTransaction, deleteTransaction } from '../services/transactions.js';
+import { createCategory } from '../services/categories.js';
 import { todayIso } from '../utils/format.js';
 
 const emptyForm = () => ({
@@ -25,6 +26,9 @@ export function txModalStore() {
     saving: false,
     showMore: false,
     form: emptyForm(),
+    criandoCategoria: false,
+    novaCategoriaNome: '',
+    novaCategoriaCor: '#64748B',
 
     openNew(tipo = 'saida', tipoDespesa = 'variavel') {
       this.form = emptyForm();
@@ -32,7 +36,44 @@ export function txModalStore() {
       this.form.tipo_despesa = tipoDespesa;
       this.form.responsavel_id = Alpine.store('app').profile?.id || '';
       this.showMore = tipoDespesa === 'fixa';
+      this.criandoCategoria = false;
+      this.novaCategoriaNome = '';
       this.open = true;
+    },
+
+    onCategoriaChange() {
+      if (this.form.categoria_id === '__nova__') {
+        this.form.categoria_id = '';
+        this.criandoCategoria = true;
+      }
+    },
+
+    async criarCategoria() {
+      if (!this.novaCategoriaNome.trim()) return;
+      const store = Alpine.store('app');
+      try {
+        const cat = await createCategory({
+          nome: this.novaCategoriaNome.trim(),
+          cor: this.novaCategoriaCor,
+          ownerId: store.profile.id,
+          groupId: store.group?.group?.id ?? null,
+        });
+        // Insere direto no array reativo (não chama store.refreshCategories()
+        // aqui: um refetch logo em seguida reatribui store.categories a um
+        // array novo enquanto o <select> ainda está aplicando o valor
+        // selecionado, e a corrida faz o navegador perder a seleção mesmo
+        // com o id certo — só aparece de novo no próximo refresh natural,
+        // ex. próximo login). O nextTick garante que a <option> nova já
+        // existe no DOM antes de tentar selecioná-la (x-for e x-model são
+        // efeitos reativos independentes, sem ordem garantida entre si).
+        store.categories.push(cat);
+        await Alpine.nextTick();
+        this.criandoCategoria = false;
+        this.novaCategoriaNome = '';
+        this.form.categoria_id = cat.id;
+      } catch (e) {
+        store.notify(e.message || 'Erro ao criar categoria.', 'danger');
+      }
     },
 
     openEdit(tx) {
@@ -52,6 +93,8 @@ export function txModalStore() {
         observacoes: tx.observacoes || '',
       };
       this.showMore = true;
+      this.criandoCategoria = false;
+      this.novaCategoriaNome = '';
       this.open = true;
     },
 

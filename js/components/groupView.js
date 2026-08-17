@@ -6,6 +6,8 @@ export function groupView() {
     nomeGrupo: '',
     codigoEntrada: '',
     loading: false,
+    editandoNome: false,
+    novoNome: '',
 
     async criar() {
       if (!this.nomeGrupo.trim()) return;
@@ -48,6 +50,42 @@ export function groupView() {
       await store.refreshGroup();
       await store.refreshCategories();
       store.notify('Você saiu do grupo.');
+    },
+
+    souAdmin() {
+      const group = this.$store.app.group?.group;
+      return !!group && group.criado_por === this.$store.app.profile?.id;
+    },
+
+    iniciarEdicaoNome() {
+      this.novoNome = this.$store.app.group.group.nome;
+      this.editandoNome = true;
+    },
+
+    async salvarNome() {
+      if (!this.novoNome.trim()) return;
+      const store = this.$store.app;
+      try {
+        await groupsService.updateGroupName(store.group.group.id, this.novoNome.trim());
+        await store.refreshGroup();
+        this.editandoNome = false;
+        store.notify('Nome do grupo atualizado.');
+      } catch (e) {
+        store.notify(e.message || 'Erro ao renomear grupo.', 'danger');
+      }
+    },
+
+    async excluirGrupo() {
+      const store = this.$store.app;
+      if (!confirm('Excluir o grupo? Isso remove o grupo pra todo mundo (os lançamentos e categorias de cada pessoa continuam intactos, só deixam de ser compartilhados). Essa ação não pode ser desfeita.')) return;
+      try {
+        await groupsService.deleteGroup(store.group.group.id);
+        await store.refreshGroup();
+        await store.refreshCategories();
+        store.notify('Grupo excluído.');
+      } catch (e) {
+        store.notify(e.message || 'Erro ao excluir grupo.', 'danger');
+      }
     },
   };
 }

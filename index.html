@@ -49,7 +49,10 @@
             <div class="d-flex flex-column gap-2">
               <template x-for="p in $store.app.demoProfiles" :key="p.id">
                 <button type="button" class="cg-btn cg-touch btn btn-outline-success text-start" @click="enterDemo(p.id)" :disabled="loading">
-                  <span class="cg-avatar cg-avatar--sm" x-text="cgFormat.initials(p.nome)"></span>
+                  <span class="cg-avatar cg-avatar--sm" :style="{ borderColor: p.cor || 'var(--color-primary-soft)' }">
+                    <template x-if="p.avatar_url"><img :src="p.avatar_url" :alt="p.nome" /></template>
+                    <template x-if="!p.avatar_url"><span x-text="cgFormat.initials(p.nome)"></span></template>
+                  </span>
                   <span class="ms-2">Entrar como <strong x-text="p.nome"></strong></span>
                 </button>
               </template>
@@ -135,7 +138,10 @@
           </div>
           <div x-data="{ menuOpen: false }" class="position-relative" @click.outside="menuOpen = false">
             <button type="button" class="btn p-0 border-0 bg-transparent d-flex align-items-center gap-2" @click="menuOpen = !menuOpen">
-              <span class="cg-avatar cg-avatar--sm" x-text="cgFormat.initials($store.app.profile?.nome)"></span>
+              <span class="cg-avatar cg-avatar--sm" :style="{ borderColor: $store.app.profile?.cor || 'var(--color-primary-soft)' }">
+                <template x-if="$store.app.profile?.avatar_url"><img :src="$store.app.profile.avatar_url" :alt="$store.app.profile.nome" /></template>
+                <template x-if="!$store.app.profile?.avatar_url"><span x-text="cgFormat.initials($store.app.profile?.nome)"></span></template>
+              </span>
               <span class="d-none d-md-inline fw-semibold" x-text="$store.app.profile?.nome"></span>
               <i class="bi bi-chevron-down small cg-muted"></i>
             </button>
@@ -553,18 +559,40 @@
 
           <template x-if="$store.app.group">
             <div class="cg-card">
-              <h2 class="h6 fw-bold" x-text="$store.app.group.group.nome"></h2>
+              <template x-if="!editandoNome">
+                <div class="d-flex align-items-center gap-2 mb-1">
+                  <h2 class="h6 fw-bold mb-0" x-text="$store.app.group.group.nome"></h2>
+                  <template x-if="souAdmin()">
+                    <button type="button" class="btn btn-sm btn-link p-0" @click="iniciarEdicaoNome()" title="Renomear grupo"><i class="bi bi-pencil"></i></button>
+                  </template>
+                </div>
+              </template>
+              <template x-if="editandoNome">
+                <div class="input-group input-group-sm mb-2" style="max-width: 320px;">
+                  <input type="text" class="form-control" x-model="novoNome" @keydown.enter="salvarNome()" @keydown.escape="editandoNome = false" />
+                  <button type="button" class="btn btn-success" @click="salvarNome()"><i class="bi bi-check2"></i></button>
+                  <button type="button" class="btn btn-outline-secondary" @click="editandoNome = false"><i class="bi bi-x"></i></button>
+                </div>
+              </template>
               <p class="cg-muted small">Código do grupo (compartilhe para convidar): <strong x-text="$store.app.group.group.codigo"></strong></p>
               <div class="d-flex flex-column gap-2 mb-3">
                 <template x-for="m in $store.app.group.members" :key="m.id">
                   <div class="d-flex align-items-center gap-2 border-bottom pb-2">
-                    <span class="cg-avatar cg-avatar--sm" x-text="cgFormat.initials(m.nome)"></span>
+                    <span class="cg-avatar cg-avatar--sm" :style="{ borderColor: m.cor || 'var(--color-primary-soft)' }">
+                      <template x-if="m.avatar_url"><img :src="m.avatar_url" :alt="m.nome" /></template>
+                      <template x-if="!m.avatar_url"><span x-text="cgFormat.initials(m.nome)"></span></template>
+                    </span>
                     <span x-text="m.nome"></span>
                     <span class="cg-muted small ms-auto" x-text="m.id === $store.app.group.group.criado_por ? 'Admin' : 'Membro'"></span>
                   </div>
                 </template>
               </div>
-              <button type="button" class="cg-btn btn btn-outline-danger" @click="sair()"><i class="bi bi-box-arrow-left"></i> Sair do grupo</button>
+              <div class="d-flex gap-2 flex-wrap">
+                <button type="button" class="cg-btn btn btn-outline-danger" @click="sair()"><i class="bi bi-box-arrow-left"></i> Sair do grupo</button>
+                <template x-if="souAdmin()">
+                  <button type="button" class="cg-btn btn btn-outline-danger" @click="excluirGrupo()"><i class="bi bi-trash"></i> Excluir grupo</button>
+                </template>
+              </div>
             </div>
           </template>
         </section>
@@ -573,6 +601,23 @@
         <section x-show="$store.app.view === 'perfil'" x-data="profileView()" x-init="init()">
           <div class="cg-section-title"><i class="bi bi-person-circle"></i> Perfil</div>
           <div class="cg-card mb-3" style="max-width: 480px;">
+            <label class="form-label">Foto e cor</label>
+            <div class="d-flex align-items-center gap-3 mb-3">
+              <span class="cg-avatar" style="width:72px;height:72px;font-size:1.4rem;" :style="{ borderColor: cor }">
+                <template x-if="$store.app.profile?.avatar_url"><img :src="$store.app.profile.avatar_url" :alt="$store.app.profile.nome" /></template>
+                <template x-if="!$store.app.profile?.avatar_url"><span x-text="cgFormat.initials($store.app.profile?.nome)"></span></template>
+              </span>
+              <div class="d-flex flex-column gap-2">
+                <label class="cg-btn btn btn-outline-secondary btn-sm" style="cursor:pointer;">
+                  <i class="bi bi-camera"></i> <span x-text="uploadingAvatar ? 'Enviando…' : 'Trocar foto'"></span>
+                  <input type="file" accept="image/*" class="d-none" @change="onAvatarChange($event)" :disabled="uploadingAvatar" />
+                </label>
+                <div class="d-flex align-items-center gap-2">
+                  <label class="small cg-muted mb-0">Cor da borda</label>
+                  <input type="color" class="form-control form-control-color p-0" style="width:36px;height:36px;" x-model="cor" @change="salvarCor()" />
+                </div>
+              </div>
+            </div>
             <label class="form-label">Nome</label>
             <div class="input-group mb-2">
               <input type="text" class="form-control" x-model="nome" />
@@ -641,10 +686,18 @@
         <div class="row g-2 mb-3">
           <div class="col-7">
             <label class="form-label">Categoria</label>
-            <select class="form-select" x-model="$store.txModal.form.categoria_id">
+            <select class="form-select" x-model="$store.txModal.form.categoria_id" @change="$store.txModal.onCategoriaChange()">
               <option value="">Sem categoria</option>
               <template x-for="c in $store.app.categories" :key="c.id"><option :value="c.id" x-text="c.nome"></option></template>
+              <option value="__nova__">+ Nova categoria…</option>
             </select>
+            <template x-if="$store.txModal.criandoCategoria">
+              <div class="d-flex gap-2 mt-2">
+                <input type="text" class="form-control form-control-sm" placeholder="Nome da categoria" x-model="$store.txModal.novaCategoriaNome" @keydown.enter.prevent="$store.txModal.criarCategoria()" />
+                <input type="color" class="form-control form-control-color form-control-sm p-0" style="width:36px;" x-model="$store.txModal.novaCategoriaCor" />
+                <button type="button" class="btn btn-success btn-sm" @click="$store.txModal.criarCategoria()">Criar</button>
+              </div>
+            </template>
           </div>
           <div class="col-5">
             <label class="form-label">Valor (R$)</label>

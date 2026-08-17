@@ -54,7 +54,7 @@ export function onAuthStateChange(callback) {
   if (isDemoMode()) return () => {};
   let unsubscribeFn = () => {};
   getSupabase().then((supabase) => {
-    const { data } = supabase.auth.onAuthStateChange((_event, session) => callback(session));
+    const { data } = supabase.auth.onAuthStateChange((event, session) => callback(event, session));
     unsubscribeFn = () => data.subscription.unsubscribe();
   });
   return () => unsubscribeFn();
@@ -74,4 +74,25 @@ export async function updateProfile(userId, patch) {
   const { data, error } = await supabase.from('profiles').update(patch).eq('id', userId).select().single();
   if (error) throw error;
   return data;
+}
+
+export async function uploadAvatar(userId, file) {
+  if (isDemoMode()) {
+    const dataUrl = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(file);
+    });
+    return updateProfile(userId, { avatar_url: dataUrl });
+  }
+  const supabase = await getSupabase();
+  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+  const path = `${userId}/avatar.${ext}`;
+  const { error: upErr } = await supabase.storage.from('avatars').upload(path, file, { upsert: true, cacheControl: '3600' });
+  if (upErr) throw upErr;
+  const { data: pub } = supabase.storage.from('avatars').getPublicUrl(path);
+  // cache-bust: o caminho é fixo por usuário, então uma nova foto reusa a
+  // mesma URL — sem isso o navegador continuaria mostrando a imagem antiga.
+  return updateProfile(userId, { avatar_url: `${pub.publicUrl}?t=${Date.now()}` });
 }

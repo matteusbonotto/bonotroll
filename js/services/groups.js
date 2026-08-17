@@ -42,18 +42,20 @@ export async function getMyGroup(profileId) {
   return { group, members: memberRows.map((r) => r.profiles) };
 }
 
+// No modo real, criar e entrar em grupo passam por funções "security
+// definer" no banco (supabase/schema.sql) em vez de inserts diretos daqui —
+// ver o comentário lá pra entender por quê (tem a ver com RLS bloqueando o
+// próprio criador de ver a linha que acabou de inserir).
 export async function createGroup(nome, ownerId) {
-  const codigo = generateGroupCode();
   if (isDemoMode()) {
+    const codigo = generateGroupCode();
     const group = await mockDb.insert('groups', { nome, criado_por: ownerId, codigo });
     await mockDb.insert('group_members', { group_id: group.id, profile_id: ownerId, papel: 'admin', entrou_em: new Date().toISOString() });
     return group;
   }
   const supabase = await getSupabase();
-  const { data: group, error } = await supabase.from('groups').insert({ nome, criado_por: ownerId, codigo }).select().single();
+  const { data: group, error } = await supabase.rpc('create_group', { p_nome: nome });
   if (error) throw error;
-  const { error: memErr } = await supabase.from('group_members').insert({ group_id: group.id, profile_id: ownerId, papel: 'admin' });
-  if (memErr) throw memErr;
   return group;
 }
 
@@ -65,10 +67,8 @@ export async function joinGroupByCode(codigo, profileId) {
     return group;
   }
   const supabase = await getSupabase();
-  const { data: group, error } = await supabase.from('groups').select('*').eq('codigo', codigo.toUpperCase()).single();
-  if (error) throw new Error('Código de grupo não encontrado.');
-  const { error: memErr } = await supabase.from('group_members').insert({ group_id: group.id, profile_id: profileId, papel: 'membro' });
-  if (memErr) throw memErr;
+  const { data: group, error } = await supabase.rpc('join_group_by_code', { p_codigo: codigo.toUpperCase() });
+  if (error) throw new Error(error.message || 'Código de grupo não encontrado.');
   return group;
 }
 
@@ -81,5 +81,23 @@ export async function leaveGroup(groupId, profileId) {
   }
   const supabase = await getSupabase();
   const { error } = await supabase.from('group_members').delete().eq('group_id', groupId).eq('profile_id', profileId);
+  if (error) throw error;
+}
+
+export async function updateGroupName(groupId, nome) {
+  if (isDemoMode()) return mockDb.update('groups', groupId, { nome });
+  const supabase = await getSupabase();
+  const { error } = await supabase.from('groups').update({ nome }).eq('id', groupId);
+  if (error) throw error;
+}
+
+export async function deleteGroup(groupId) {
+  if (isDemoMode()) {
+    const rows = await mockDb.list('group_members', (m) => m.group_id === groupId);
+    for (const row of rows) await mockDb.remove('group_members', row.id);
+    return mockDb.remove('groups', groupId);
+  }
+  const supabase = await getSupabase();
+  const { error } = await supabase.from('groups').delete().eq('id', groupId);
   if (error) throw error;
 }
