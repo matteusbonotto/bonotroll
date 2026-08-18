@@ -4,7 +4,15 @@ import { computeExpiryStatus, expiryStatusMeta } from '../utils/status.js';
 import { startBarcodeScanner, stopBarcodeScanner, lookupProductByBarcode } from '../services/barcode.js';
 import { recognizeText, parseReceiptText } from '../services/ocr.js';
 
-const ITEM_FORM_VAZIO = () => ({ id: null, nome: '', quantidade: 1, data_validade: '' });
+const ITEM_FORM_VAZIO = () => ({ id: null, nome: '', quantidade: 1, data_validade: '', categoria_id: '' });
+const ROOM_FORM_VAZIO = () => ({ id: null, nome: '', icone: 'bi-door-open' });
+const CATEGORIA_FORM_VAZIO = () => ({ id: null, nome: '' });
+
+export const ROOM_ICON_PRESETS = [
+  'bi-door-open', 'bi-door-closed', 'bi-briefcase', 'bi-cup-hot', 'bi-droplet',
+  'bi-tv', 'bi-basket2', 'bi-house-door', 'bi-tree', 'bi-car-front',
+  'bi-book', 'bi-controller', 'bi-flower1', 'bi-bicycle', 'bi-tools',
+];
 
 // Tela "Recursos": inventário doméstico por cômodo -> subcategoria (fixos) ->
 // itens (livres, com quantidade e validade opcional). Navegação em
@@ -29,6 +37,17 @@ export function resourcesView() {
     scannerAberto: false,
     scannerErro: '',
     _debounceQty: {}, // { [item.id]: timeoutId } — ver ajustar()
+
+    // ---------- Gerenciar cômodos ----------
+    roomModalAberto: false,
+    roomForm: ROOM_FORM_VAZIO(),
+    salvandoRoom: false,
+    roomIconPresets: ROOM_ICON_PRESETS,
+
+    // ---------- Gerenciar subcategorias ----------
+    categoriaModalAberto: false,
+    categoriaForm: CATEGORIA_FORM_VAZIO(),
+    salvandoCategoria: false,
 
     async init() {
       const store = this.$store.app;
@@ -76,6 +95,118 @@ export function resourcesView() {
       await this.carregarItens();
     },
 
+    // ---------- Gerenciar cômodos (criar/editar/excluir) ----------
+    abrirNovaRoom() {
+      this.roomForm = ROOM_FORM_VAZIO();
+      this.roomModalAberto = true;
+    },
+    // event.stopPropagation() é essencial aqui: o lápis fica DENTRO do botão
+    // clicável do tile (abre o cômodo) — sem isso, editar um cômodo também
+    // navegava pra dentro dele.
+    abrirEditarRoom(room, event) {
+      event.stopPropagation();
+      this.roomForm = { id: room.id, nome: room.nome, icone: room.icone || 'bi-door-open' };
+      this.roomModalAberto = true;
+    },
+    fecharRoomModal() {
+      this.roomModalAberto = false;
+    },
+    async salvarRoom() {
+      if (!this.roomForm.nome.trim() || this.salvandoRoom) return;
+      const store = this.$store.app;
+      this.salvandoRoom = true;
+      try {
+        if (this.roomForm.id) {
+          const atualizado = await res.updateRoom(this.roomForm.id, { nome: this.roomForm.nome.trim(), icone: this.roomForm.icone });
+          const idx = this.rooms.findIndex((r) => r.id === atualizado.id);
+          if (idx >= 0) this.rooms[idx] = atualizado;
+          store.notify('Cômodo atualizado.');
+        } else {
+          const criado = await res.createRoom({
+            nome: this.roomForm.nome.trim(),
+            icone: this.roomForm.icone,
+            ownerId: store.profile.id,
+            groupId: store.group?.group?.id,
+          });
+          this.rooms.push(criado);
+          store.notify('Cômodo criado.');
+        }
+        this.roomModalAberto = false;
+      } catch (e) {
+        store.notify(e.message || 'Não foi possível salvar o cômodo.', 'danger');
+      } finally {
+        this.salvandoRoom = false;
+      }
+    },
+    async excluirRoom() {
+      if (!this.roomForm.id) return;
+      if (!confirm(`Excluir o cômodo "${this.roomForm.nome}"? As subcategorias e itens dele também serão excluídos — essa ação não pode ser desfeita.`)) return;
+      const store = this.$store.app;
+      try {
+        await res.deleteRoom(this.roomForm.id);
+        const idExcluido = this.roomForm.id;
+        this.rooms = this.rooms.filter((r) => r.id !== idExcluido);
+        this.allItems = this.allItems.filter((i) => i.room_id !== idExcluido);
+        this.roomModalAberto = false;
+        if (this.activeRoomId === idExcluido) this.voltarParaGrade();
+        store.notify('Cômodo excluído.');
+      } catch (e) {
+        store.notify(e.message || 'Não foi possível excluir o cômodo.', 'danger');
+      }
+    },
+
+    // ---------- Gerenciar subcategorias (criar/editar/excluir) ----------
+    abrirNovaSubcategoria() {
+      this.categoriaForm = CATEGORIA_FORM_VAZIO();
+      this.categoriaModalAberto = true;
+    },
+    abrirEditarSubcategoria(categoria, event) {
+      event.stopPropagation();
+      this.categoriaForm = { id: categoria.id, nome: categoria.nome };
+      this.categoriaModalAberto = true;
+    },
+    fecharCategoriaModal() {
+      this.categoriaModalAberto = false;
+    },
+    async salvarSubcategoria() {
+      if (!this.categoriaForm.nome.trim() || this.salvandoCategoria) return;
+      const store = this.$store.app;
+      this.salvandoCategoria = true;
+      try {
+        if (this.categoriaForm.id) {
+          const atualizada = await res.updateRoomCategory(this.categoriaForm.id, { nome: this.categoriaForm.nome.trim() });
+          const idx = this.roomCategories.findIndex((c) => c.id === atualizada.id);
+          if (idx >= 0) this.roomCategories[idx] = atualizada;
+          store.notify('Subcategoria atualizada.');
+        } else {
+          const criada = await res.createRoomCategory({ roomId: this.activeRoomId, nome: this.categoriaForm.nome.trim() });
+          this.roomCategories.push(criada);
+          store.notify('Subcategoria criada.');
+        }
+        this.categoriaModalAberto = false;
+      } catch (e) {
+        store.notify(e.message || 'Não foi possível salvar a subcategoria.', 'danger');
+      } finally {
+        this.salvandoCategoria = false;
+      }
+    },
+    async excluirSubcategoria() {
+      if (!this.categoriaForm.id) return;
+      if (!confirm(`Excluir a subcategoria "${this.categoriaForm.nome}"? Os itens dela ficam sem subcategoria (não são excluídos) — essa ação não pode ser desfeita.`)) return;
+      const store = this.$store.app;
+      try {
+        await res.deleteRoomCategory(this.categoriaForm.id);
+        const idExcluida = this.categoriaForm.id;
+        this.roomCategories = this.roomCategories.filter((c) => c.id !== idExcluida);
+        if (this.activeCategoryId === idExcluida) this.activeCategoryId = null;
+        this.categoriaModalAberto = false;
+        await Promise.all([this.carregarItens(), this.carregarSugestoes()]);
+        store.notify('Subcategoria excluída.');
+      } catch (e) {
+        store.notify(e.message || 'Não foi possível excluir a subcategoria.', 'danger');
+      }
+    },
+
     async carregarItens() {
       try {
         this.items = await res.listItems({ roomId: this.activeRoomId, categoryId: this.activeCategoryId || undefined });
@@ -95,6 +226,19 @@ export function resourcesView() {
     },
     alertCountFor(roomId) {
       return this.allItems.filter((i) => i.room_id === roomId && computeExpiryStatus(i) !== 'ok').length;
+    },
+
+    // Mesma ideia, por subcategoria dentro do cômodo atual — usado nos tiles
+    // de subcategoria (mesma aparência dos tiles de cômodo, pedido explícito).
+    itemCountForCategoria(categoriaId) {
+      return this.allItems.filter((i) => i.room_id === this.activeRoomId && i.category_id === categoriaId).length;
+    },
+    alertCountForCategoria(categoriaId) {
+      return this.allItems.filter((i) => i.room_id === this.activeRoomId && i.category_id === categoriaId && computeExpiryStatus(i) !== 'ok').length;
+    },
+    // "Todas" conta todo item do cômodo, tenha subcategoria ou não.
+    itemCountTodas() {
+      return this.allItems.filter((i) => i.room_id === this.activeRoomId).length;
     },
 
     // Itens em falta (quantidade 0) ou vencendo/vencidos — sugestão de
@@ -118,8 +262,12 @@ export function resourcesView() {
     },
 
     // ---------- Modal de adicionar/editar item ----------
+    // Subcategoria vem pré-preenchida com a que estiver ativa (dentro dela,
+    // "Todas" = sem subcategoria escolhida) — mas continua editável no
+    // select, pra dar pra escolher outra ou nenhuma mesmo adicionando de
+    // dentro de uma subcategoria específica.
     abrirNovoItem() {
-      this.itemForm = ITEM_FORM_VAZIO();
+      this.itemForm = { ...ITEM_FORM_VAZIO(), categoria_id: this.activeCategoryId || '' };
       this.scannerErro = '';
       this.itemModalAberto = true;
     },
@@ -129,6 +277,7 @@ export function resourcesView() {
         nome: item.nome,
         quantidade: item.quantidade,
         data_validade: item.data_validade || '',
+        categoria_id: item.category_id || '',
       };
       this.scannerErro = '';
       this.itemModalAberto = true;
@@ -147,6 +296,7 @@ export function resourcesView() {
           nome: this.itemForm.nome.trim(),
           quantidade: Number(this.itemForm.quantidade) || 0,
           data_validade: this.itemForm.data_validade || null,
+          category_id: this.itemForm.categoria_id || null,
         };
         if (this.itemForm.id) {
           await res.updateItem(this.itemForm.id, patch);
@@ -154,7 +304,6 @@ export function resourcesView() {
           await res.createItem({
             ...patch,
             room_id: this.activeRoomId,
-            category_id: this.activeCategoryId,
             owner_id: store.profile.id,
             group_id: store.group?.group?.id ?? null,
           });

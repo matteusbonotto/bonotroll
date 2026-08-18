@@ -103,6 +103,73 @@ async function criarCategoriaReal(linha) {
   if (error) throw error;
 }
 
+// ---------- CRUD de cômodos e subcategorias (o usuário pode criar os
+// próprios, além dos padrão semeados por ensureDefaultRooms acima) ----------
+
+export async function createRoom({ nome, icone, ownerId, groupId }) {
+  const existentes = await listRooms({ ownerId, groupId });
+  const ordem = existentes.length ? Math.max(...existentes.map((r) => r.ordem)) + 1 : 1;
+  const row = { nome, icone: icone || 'bi-door-open', ordem, owner_id: ownerId, group_id: groupId || null };
+  if (isDemoMode()) return mockDb.insert('resource_rooms', row);
+  return criarRoomReal(row);
+}
+
+export async function updateRoom(id, patch) {
+  if (isDemoMode()) return mockDb.update('resource_rooms', id, patch);
+  const supabase = await getSupabase();
+  const { data, error } = await supabase.from('resource_rooms').update(patch).eq('id', id).select().single();
+  if (error) throw error;
+  return data;
+}
+
+// A FK de resource_categories/resource_items pra room_id é "on delete
+// cascade" (ver supabase/schema.sql) — excluir o cômodo já leva junto as
+// subcategorias e itens dele, sem precisar apagar um por um aqui.
+export async function deleteRoom(id) {
+  if (isDemoMode()) {
+    const categorias = await mockDb.list('resource_categories', (c) => c.room_id === id);
+    for (const c of categorias) await mockDb.remove('resource_categories', c.id);
+    const itens = await mockDb.list('resource_items', (i) => i.room_id === id);
+    for (const i of itens) await mockDb.remove('resource_items', i.id);
+    return mockDb.remove('resource_rooms', id);
+  }
+  const supabase = await getSupabase();
+  const { error } = await supabase.from('resource_rooms').delete().eq('id', id);
+  if (error) throw error;
+}
+
+export async function createRoomCategory({ roomId, nome }) {
+  const existentes = await listRoomCategories(roomId);
+  const ordem = existentes.length ? Math.max(...existentes.map((c) => c.ordem)) + 1 : 1;
+  const row = { room_id: roomId, nome, ordem };
+  if (isDemoMode()) return mockDb.insert('resource_categories', row);
+  const supabase = await getSupabase();
+  const { data, error } = await supabase.from('resource_categories').insert(row).select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function updateRoomCategory(id, patch) {
+  if (isDemoMode()) return mockDb.update('resource_categories', id, patch);
+  const supabase = await getSupabase();
+  const { data, error } = await supabase.from('resource_categories').update(patch).eq('id', id).select().single();
+  if (error) throw error;
+  return data;
+}
+
+// FK de resource_items pra category_id é "on delete set null" — itens dessa
+// subcategoria não somem, só voltam a aparecer em "Todas" sem subcategoria.
+export async function deleteRoomCategory(id) {
+  if (isDemoMode()) {
+    const itens = await mockDb.list('resource_items', (i) => i.category_id === id);
+    for (const i of itens) await mockDb.update('resource_items', i.id, { category_id: null });
+    return mockDb.remove('resource_categories', id);
+  }
+  const supabase = await getSupabase();
+  const { error } = await supabase.from('resource_categories').delete().eq('id', id);
+  if (error) throw error;
+}
+
 // ---------- Itens ----------
 
 export async function listItems({ roomId, categoryId } = {}) {
