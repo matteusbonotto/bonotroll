@@ -4,6 +4,7 @@ import * as groupsService from '../services/groups.js';
 import * as companiesService from '../services/companies.js';
 import { findCompanyByName } from '../services/companies.js';
 import * as notificationsService from '../services/notifications.js';
+import { gerarRecorrentesPendentes } from '../services/recurring.js';
 import { isDemoMode } from '../data/config.js';
 
 // Store global (Alpine.store('app')) — sessão, perfil, grupo, categorias e
@@ -87,6 +88,22 @@ export function appStore() {
       notificationsService
         .generateForProfile({ profileId: profile.id, groupId })
         .then(() => this.refreshNotifications())
+        .catch(() => {});
+
+      // Idem pra recorrência: gera os lançamentos recorrentes pendentes em
+      // segundo plano, sem travar o login. Avisa quantos foram criados e
+      // avisa as telas abertas (ex.: dashboard/transações já carregadas)
+      // pra recarregarem.
+      gerarRecorrentesPendentes({ ownerId: profile.id, groupId })
+        .then((criadas) => {
+          if (!criadas.length) return;
+          this.notify(
+            criadas.length === 1
+              ? '1 lançamento recorrente foi gerado automaticamente.'
+              : `${criadas.length} lançamentos recorrentes foram gerados automaticamente.`
+          );
+          window.dispatchEvent(new CustomEvent('cg:transactions-changed'));
+        })
         .catch(() => {});
     },
 

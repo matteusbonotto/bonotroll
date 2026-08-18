@@ -57,6 +57,20 @@ create table if not exists categories (
 alter table profiles add column if not exists cor text not null default '#1F7A5C';
 alter table categories add column if not exists icone_url text;
 
+-- Orçamento mensal por categoria — pessoal (owner_id), não do grupo: cada
+-- pessoa define o próprio limite. "Mensal" não tem coluna de mês/ano porque
+-- o limite vale todo mês igual; o gasto do mês é sempre recalculado no
+-- cliente a partir de transactions.data_cadastro (ver js/services/budgets.js).
+create table if not exists category_budgets (
+  id uuid primary key default uuid_generate_v4(),
+  owner_id uuid not null references profiles(id) on delete cascade,
+  group_id uuid references groups(id) on delete cascade,
+  categoria_id uuid not null references categories(id) on delete cascade,
+  valor_limite numeric(12, 2) not null check (valor_limite > 0),
+  criado_em timestamptz not null default now(),
+  unique (owner_id, categoria_id)
+);
+
 -- "Empresa/Serviço" de uma transação passou a poder ter logo: cada nome
 -- distinto vira uma linha aqui (criada sob demanda ao salvar uma transação),
 -- reaproveitada da próxima vez que o mesmo nome for digitado.
@@ -462,6 +476,12 @@ create policy "Editar/excluir categoria própria" on categories for update
 drop policy if exists "Excluir categoria própria" on categories;
 create policy "Excluir categoria própria" on categories for delete
   using (owner_id = auth.uid());
+
+alter table category_budgets enable row level security;
+drop policy if exists "Gerenciar os próprios orçamentos" on category_budgets;
+create policy "Gerenciar os próprios orçamentos" on category_budgets for all
+  using (owner_id = auth.uid())
+  with check (owner_id = auth.uid());
 
 alter table companies enable row level security;
 drop policy if exists "Ver empresas próprias ou do grupo" on companies;

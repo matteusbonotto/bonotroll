@@ -1,4 +1,5 @@
 import { listTransactions, computeSummary, groupByCategory, groupByCompany, groupByFlow, groupByPeriod, listPayersFor, shareForMember } from '../services/transactions.js';
+import { listBudgets, computeBudgetProgress } from '../services/budgets.js';
 import { todayIso } from '../utils/format.js';
 
 function diasAte(isoData) {
@@ -24,11 +25,23 @@ export function dashboardView() {
     quebra: 'categoria', // 'categoria' | 'empresa' | 'fluxo' | 'dia' | 'mes' | 'ano'
     contasAVencer: [],
     recentes: [],
+    budgets: [],
 
     init() {
       this.load();
       window.addEventListener('cg:transactions-changed', () => this.load());
+      window.addEventListener('cg:budgets-changed', () => this.carregarOrcamentos());
       this.$watch('$store.app.group', () => this.load());
+    },
+
+    async carregarOrcamentos() {
+      const store = this.$store.app;
+      if (!store.profile) return;
+      try {
+        this.budgets = await listBudgets(store.profile.id);
+      } catch (e) {
+        store.notify(e.message || 'Não consegui carregar os orçamentos.', 'danger');
+      }
     },
 
     async load() {
@@ -48,6 +61,7 @@ export function dashboardView() {
           .slice(0, 5);
 
         this.recentes = groupId ? this.escopo.slice(0, 6) : this.escopo.filter((t) => this.participaEu(t)).slice(0, 6);
+        await this.carregarOrcamentos();
       } catch (e) {
         store.notify(e.message || 'Não consegui carregar o painel.', 'danger');
       }
@@ -171,6 +185,22 @@ export function dashboardView() {
 
     get tipoGraficoQuebra() {
       return this.quebra === 'dia' || this.quebra === 'mes' || this.quebra === 'ano' ? 'bar' : 'doughnut';
+    },
+
+    // ---------- Orçamentos ----------
+    // Sempre a fatia de QUEM ESTÁ LOGADO (não do "quemVer" selecionado no
+    // topo) — orçamento é pessoal, então "ver o orçamento do Beatriz" nunca
+    // faz sentido pro Matheus, independente de qual card ele escolheu ver.
+    get linhasParaOrcamento() {
+      const meuId = this.$store.app.profile?.id;
+      return this.escopo
+        .filter((t) => t.tipo === 'saida')
+        .map((t) => ({ ...t, valor: this.shareFor(t, meuId) }))
+        .filter((t) => t.valor > 0);
+    },
+
+    get budgetProgress() {
+      return computeBudgetProgress(this.linhasParaOrcamento, this.budgets, this.$store.app.categories);
     },
 
     diasLabel(t) {

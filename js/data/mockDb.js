@@ -76,6 +76,10 @@ function seedDatabase() {
     tx({ tipo: 'saida', titulo: 'Dízimo', categoria_id: 'cat-outro', tipo_despesa: 'variavel', valor: 200.00, data_vencimento: isoDaysFromNow(-7), data_pagamento: isoDaysFromNow(-7) }),
     tx({ tipo: 'entrada', titulo: 'Salário MB Labs', categoria_id: 'cat-salario', tipo_despesa: 'fixa', valor: 6000.00, responsavel_id: matheusId, owner_id: matheusId, data_vencimento: isoDaysFromNow(-11), data_pagamento: isoDaysFromNow(-11), recorrente: true }),
     tx({ tipo: 'entrada', titulo: 'Salário Dinamo', categoria_id: 'cat-salario', tipo_despesa: 'fixa', valor: 5200.00, responsavel_id: beatrizId, owner_id: beatrizId, data_vencimento: isoDaysFromNow(-11), data_pagamento: isoDaysFromNow(-11), recorrente: true }),
+    // Propositalmente cadastrada há ~2 meses (não no mês atual) pra
+    // demonstrar a geração automática de recorrência (js/services/recurring.js)
+    // já no primeiro login demo — vira 2 lançamentos novos sozinha.
+    tx({ tipo: 'saida', titulo: 'Spotify Família', categoria_id: 'cat-assinaturas', tipo_despesa: 'fixa', valor: 34.90, data_cadastro: isoDaysFromNow(-70), data_vencimento: isoDaysFromNow(-70), data_pagamento: isoDaysFromNow(-70), recorrente: true }),
   ];
 
   const shoppingLists = [
@@ -146,6 +150,11 @@ function seedDatabase() {
     resource_items: resourceItems,
     notifications: [],
     push_subscriptions: [],
+    category_budgets: [
+      { id: uid('budget'), owner_id: matheusId, group_id: groupId, categoria_id: 'cat-delivery', valor_limite: 300, criado_em: new Date().toISOString() },
+      { id: uid('budget'), owner_id: matheusId, group_id: groupId, categoria_id: 'cat-casa', valor_limite: 1200, criado_em: new Date().toISOString() },
+      { id: uid('budget'), owner_id: matheusId, group_id: groupId, categoria_id: 'cat-pet', valor_limite: 100, criado_em: new Date().toISOString() },
+    ],
   };
 }
 
