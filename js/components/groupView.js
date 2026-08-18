@@ -46,10 +46,14 @@ export function groupView() {
     async sair() {
       const store = this.$store.app;
       if (!confirm('Sair do grupo? Você deixará de ver os dados compartilhados.')) return;
-      await groupsService.leaveGroup(store.group.group.id, store.profile.id);
-      await store.refreshGroup();
-      await store.refreshCategories();
-      store.notify('Você saiu do grupo.');
+      try {
+        await groupsService.leaveGroup(store.group.group.id, store.profile.id);
+        await store.refreshGroup();
+        await store.refreshCategories();
+        store.notify('Você saiu do grupo.');
+      } catch (e) {
+        store.notify(e.message || 'Erro ao sair do grupo.', 'danger');
+      }
     },
 
     souAdmin() {

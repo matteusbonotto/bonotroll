@@ -36,17 +36,21 @@ export function dashboardView() {
       if (!store.profile) return;
       this.loading = true;
 
-      const groupId = store.group?.group?.id;
-      this.escopo = await listTransactions({ ownerId: store.profile.id, groupId });
-      const payersMap = await listPayersFor(this.escopo.map((t) => t.id));
-      this.payersByTx = Object.fromEntries(payersMap);
+      try {
+        const groupId = store.group?.group?.id;
+        this.escopo = await listTransactions({ ownerId: store.profile.id, groupId });
+        const payersMap = await listPayersFor(this.escopo.map((t) => t.id));
+        this.payersByTx = Object.fromEntries(payersMap);
 
-      this.contasAVencer = this.escopo
-        .filter((t) => this.participaEu(t) && t.tipo === 'saida' && (t._status === 'vencido' || t._status === 'a_vencer'))
-        .sort((a, b) => (a.data_vencimento || '').localeCompare(b.data_vencimento || ''))
-        .slice(0, 5);
+        this.contasAVencer = this.escopo
+          .filter((t) => this.participaEu(t) && t.tipo === 'saida' && (t._status === 'vencido' || t._status === 'a_vencer'))
+          .sort((a, b) => (a.data_vencimento || '').localeCompare(b.data_vencimento || ''))
+          .slice(0, 5);
 
-      this.recentes = groupId ? this.escopo.slice(0, 6) : this.escopo.filter((t) => this.participaEu(t)).slice(0, 6);
+        this.recentes = groupId ? this.escopo.slice(0, 6) : this.escopo.filter((t) => this.participaEu(t)).slice(0, 6);
+      } catch (e) {
+        store.notify(e.message || 'Não consegui carregar o painel.', 'danger');
+      }
 
       this.loading = false;
     },

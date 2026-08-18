@@ -37,6 +37,72 @@ document.addEventListener('alpine:init', () => {
   Alpine.data('categoryChart', categoryChart);
 });
 
+// Trava o scroll do fundo enquanto qualquer modal/drawer está aberto — sem
+// isso dava pra rolar a lista de transações (ou qualquer tela) por trás do
+// modal no mobile, o que é bem desorientador. Um MutationObserver global em
+// vez de cada tela avisar individualmente porque os modais vivem espalhados
+// em vários componentes Alpine independentes (txModal, csvModal,
+// categoryModal, e estado local de shoppingView/resourcesView/groupView).
+(function setupModalScrollLock() {
+  function algumOverlayAberto() {
+    return [...document.querySelectorAll('.cg-modal-backdrop, .cg-drawer-backdrop')].some(
+      (el) => getComputedStyle(el).display !== 'none'
+    );
+  }
+  function atualizar() {
+    document.body.style.overflow = algumOverlayAberto() ? 'hidden' : '';
+  }
+  new MutationObserver(atualizar).observe(document.body, { attributes: true, attributeFilter: ['style'], subtree: true });
+  atualizar();
+})();
+
+// Pressionar-e-segurar em qualquer botão marcado com data-repeat (steppers
+// de quantidade em Compras/Recursos) acelera automaticamente — um toque
+// normal (solto antes de ~400ms) já soma/subtrai 1 sozinho via @click do
+// Alpine; isso só entra em ação se a pessoa continuar segurando, disparando
+// cliques extras enquanto o botão estiver pressionado. Delegado no
+// document (não por botão) porque os botões são recriados via x-for toda
+// vez que a lista de itens muda.
+(function setupPressAndHoldSteppers() {
+  let timeoutId = null;
+  let intervalId = null;
+
+  function stop() {
+    clearTimeout(timeoutId);
+    clearInterval(intervalId);
+    timeoutId = null;
+    intervalId = null;
+  }
+
+  function start(btn) {
+    stop();
+    // Espera a mesma janela de um "toque normal" antes de começar a repetir
+    // — se soltar antes disso, foi só o @click nativo mesmo (+1/-1 único).
+    timeoutId = setTimeout(() => {
+      intervalId = setInterval(() => {
+        if (btn.disabled || !document.contains(btn)) { stop(); return; }
+        btn.click();
+      }, 110);
+    }, 400);
+  }
+
+  document.addEventListener('mousedown', (e) => {
+    const btn = e.target.closest('[data-repeat]');
+    if (btn) start(btn);
+  });
+  document.addEventListener(
+    'touchstart',
+    (e) => {
+      const btn = e.target.closest('[data-repeat]');
+      if (btn) start(btn);
+    },
+    { passive: true }
+  );
+  ['mouseup', 'mouseleave', 'touchend', 'touchcancel'].forEach((evento) => {
+    document.addEventListener(evento, stop);
+  });
+})();
+
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker

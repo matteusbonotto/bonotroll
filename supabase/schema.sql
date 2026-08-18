@@ -564,12 +564,22 @@ create policy "Ver e editar itens de listas próprias ou do grupo" on shopping_l
 
 -- =========================================================
 -- STORAGE (fotos de comprovantes de transações)
--- O bucket privado "anexos" já foi criado (via API, com a service_role key
--- do seu .env) — não precisa criar nada em Storage, só rodar as policies.
+-- Cria o bucket direto por SQL (storage.buckets é uma tabela normal) — a
+-- versão anterior deste arquivo assumia que o bucket já existia "criado via
+-- API com a service_role key do seu .env", o que nunca foi verdade neste
+-- projeto: só as policies existiam, sem o bucket por trás, e é por isso que
+-- TODO upload de foto (avatar, ícone de categoria, logo de empresa, foto de
+-- item de Recursos, comprovante) falhava silenciosamente. Rodar este bloco
+-- resolve os cinco de uma vez, já que todos menos "anexos" reaproveitam o
+-- bucket "avatars" (ver comentário mais abaixo).
 -- Privado (ao contrário de "avatars"): comprovante é documento financeiro,
 -- só o dono deve conseguir ler — por isso o app pede uma signed URL pra
 -- exibir/baixar em vez de guardar uma URL pública fixa.
 -- =========================================================
+
+insert into storage.buckets (id, name, public)
+values ('anexos', 'anexos', false)
+on conflict (id) do nothing;
 
 drop policy if exists "Upload de anexos do próprio usuário" on storage.objects;
 create policy "Upload de anexos do próprio usuário"
@@ -587,10 +597,16 @@ create policy "Exclusão de anexos do próprio usuário"
   using (bucket_id = 'anexos' and (storage.foldername(name))[1] = auth.uid()::text);
 
 -- =========================================================
--- STORAGE (foto de perfil)
--- O bucket público "avatars" já foi criado (via API, com a service_role key
--- do seu .env) — não precisa criar nada em Storage, só rodar as policies.
+-- STORAGE (foto de perfil — e, por reaproveitamento do mesmo bucket público,
+-- também ícone de categoria, logo de empresa/serviço e foto de item de
+-- Recursos: todos usam uploadCategoryIcon/uploadCompanyLogo/uploadItemPhoto,
+-- que sobem pra "avatars" na pasta do usuário em vez de criar um bucket por
+-- funcionalidade — ver comentário em js/services/categories.js).
 -- =========================================================
+
+insert into storage.buckets (id, name, public)
+values ('avatars', 'avatars', true)
+on conflict (id) do nothing;
 
 drop policy if exists "Avatar é público pra leitura" on storage.objects;
 create policy "Avatar é público pra leitura" on storage.objects for select

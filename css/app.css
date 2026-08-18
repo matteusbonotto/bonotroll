@@ -245,6 +245,20 @@ a { color: var(--color-primary); }
   .cg-modal { border-radius: var(--radius-lg); }
 }
 
+/* Duas colunas de largura sempre igual, não importa se o conteúdo (valor
+   preenchido x placeholder "dd/mm/yyyy") pede tamanhos diferentes — era o
+   caso do par de datas (Vencimento/Pago em) nos cards de transação mobile,
+   que ficava "torto" porque flex-fill/flex-grow ainda parte do tamanho do
+   CONTEÚDO (flex-basis:auto) antes de crescer. */
+.cg-flex-even {
+  flex: 1 1 0%;
+  min-width: 0;
+}
+.cg-flex-even input {
+  width: 100%;
+  min-width: 0;
+}
+
 .form-label { font-weight: 600; }
 .form-control, .form-select {
   min-height: var(--touch-target);

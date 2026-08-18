@@ -680,11 +680,11 @@
                 </div>
 
                 <div class="d-flex align-items-center gap-3 mb-2">
-                  <div class="d-flex align-items-center gap-1 flex-fill min-w-0">
+                  <div class="d-flex align-items-center gap-1 cg-flex-even">
                     <i class="bi bi-calendar-event cg-muted" :title="'Vencimento'"></i>
                     <input type="date" class="form-control form-control-sm" x-effect="$nextTick(() => $el.value = row.data_vencimento || '')" @change="setVencimento(row, $event.target.value)" />
                   </div>
-                  <div class="d-flex align-items-center gap-1 flex-fill min-w-0">
+                  <div class="d-flex align-items-center gap-1 cg-flex-even">
                     <i class="bi bi-calendar-check cg-muted" :title="'Pago em'"></i>
                     <input type="date" class="form-control form-control-sm" x-effect="$nextTick(() => $el.value = row.data_pagamento || '')" @change="setDataPagamento(row, $event.target.value)" />
                   </div>
@@ -807,8 +807,12 @@
                 </select>
               </div>
               <div class="col-6 col-md-4">
-                <label class="form-label small">Qtd.</label>
-                <input type="number" min="0" step="0.001" class="form-control form-control-sm" x-model="novoItem.quantidade" />
+                <label class="form-label small" x-text="novoItem.unidade === 'un' ? 'Qtde.' : ('Peso (' + novoItem.unidade + ')')"></label>
+                <div class="cg-num-stepper">
+                  <button type="button" class="cg-num-stepper__btn" data-repeat @click="novoItem.quantidade = Math.max(0, (Number(novoItem.quantidade) || 0) - (novoItem.unidade === 'un' ? 1 : 0.1))" aria-label="Diminuir"><i class="bi bi-dash"></i></button>
+                  <input type="number" min="0" step="0.001" class="form-control form-control-sm text-center" x-model="novoItem.quantidade" />
+                  <button type="button" class="cg-num-stepper__btn" data-repeat @click="novoItem.quantidade = (Number(novoItem.quantidade) || 0) + (novoItem.unidade === 'un' ? 1 : 0.1)" aria-label="Aumentar"><i class="bi bi-plus"></i></button>
+                </div>
               </div>
               <div class="col-12">
                 <label class="form-label small d-block">Prioridade</label>
@@ -918,8 +922,12 @@
                   </select>
                 </div>
                 <div class="col-6">
-                  <label class="form-label small">Qtd.</label>
-                  <input type="number" min="0" step="0.001" class="form-control form-control-sm" x-model="edicaoForm.quantidade" />
+                  <label class="form-label small" x-text="edicaoForm.unidade === 'un' ? 'Qtde.' : ('Peso (' + edicaoForm.unidade + ')')"></label>
+                  <div class="cg-num-stepper">
+                    <button type="button" class="cg-num-stepper__btn" data-repeat @click="edicaoForm.quantidade = Math.max(0, (Number(edicaoForm.quantidade) || 0) - (edicaoForm.unidade === 'un' ? 1 : 0.1))" aria-label="Diminuir"><i class="bi bi-dash"></i></button>
+                    <input type="number" min="0" step="0.001" class="form-control form-control-sm text-center" x-model="edicaoForm.quantidade" />
+                    <button type="button" class="cg-num-stepper__btn" data-repeat @click="edicaoForm.quantidade = (Number(edicaoForm.quantidade) || 0) + (edicaoForm.unidade === 'un' ? 1 : 0.1)" aria-label="Aumentar"><i class="bi bi-plus"></i></button>
+                  </div>
                 </div>
                 <div class="col-12">
                   <label class="form-label small d-block">Prioridade</label>
@@ -1050,30 +1058,31 @@
                 <div class="cg-empty-state"><i class="bi bi-box-seam"></i><p class="mt-2 mb-0">Nenhum item aqui ainda.</p></div>
               </template>
 
-              <div class="cg-grid-view">
+              <div class="cg-resource-grid">
                 <template x-for="item in items" :key="item.id">
-                  <div class="cg-card cg-grid-view__card" style="cursor: default;">
-                    <button type="button" class="btn btn-sm btn-link p-0" style="position:absolute; top:6px; right:6px;" @click="abrirEditarItem(item)" title="Editar"><i class="bi bi-pencil"></i></button>
-                    <template x-if="item.foto_url">
-                      <img class="cg-grid-view__logo" :src="item.foto_url" :alt="item.nome" />
-                    </template>
-                    <label class="cg-btn btn btn-outline-secondary btn-sm mb-0" style="cursor:pointer;" x-show="!item.foto_url">
-                      <span x-show="uploadingFotoId !== item.id"><i class="bi bi-camera"></i> Foto</span>
+                  <div class="cg-resource-item" :class="{ 'is-alerta': expiryKey(item) !== 'ok' }">
+                    <button type="button" class="cg-resource-item__edit" @click="abrirEditarItem(item)" aria-label="Editar"><i class="bi bi-pencil"></i></button>
+                    <label class="cg-resource-item__foto" :class="{ 'has-foto': item.foto_url }">
+                      <template x-if="item.foto_url"><img :src="item.foto_url" :alt="item.nome" /></template>
+                      <template x-if="!item.foto_url && uploadingFotoId !== item.id"><i class="bi bi-camera"></i></template>
                       <span x-show="uploadingFotoId === item.id" class="spinner-border spinner-border-sm"></span>
                       <input type="file" accept="image/*" class="d-none" @change="onFotoChange(item, $event)" :disabled="uploadingFotoId === item.id" />
                     </label>
 
-                    <div class="fw-semibold text-truncate w-100" x-text="item.nome"></div>
-
-                    <span class="cg-badge" :class="'cg-badge--' + expiryMeta(item).badge" x-show="expiryKey(item) !== 'ok'">
-                      <i :class="'bi ' + expiryMeta(item).icon"></i> <span x-text="expiryMeta(item).label"></span>
-                    </span>
-                    <div class="cg-muted small" x-show="item.data_validade" x-text="'Val.: ' + cgFormat.formatDate(item.data_validade)"></div>
+                    <div class="cg-resource-item__body">
+                      <div class="fw-semibold text-truncate" x-text="item.nome"></div>
+                      <div class="d-flex align-items-center gap-1 flex-wrap">
+                        <span class="cg-badge" :class="'cg-badge--' + expiryMeta(item).badge" x-show="expiryKey(item) !== 'ok'">
+                          <i :class="'bi ' + expiryMeta(item).icon"></i> <span x-text="expiryMeta(item).label"></span>
+                        </span>
+                        <span class="cg-muted small" x-show="item.data_validade" x-text="cgFormat.formatDate(item.data_validade)"></span>
+                      </div>
+                    </div>
 
                     <div class="cg-qty-stepper">
-                      <button type="button" @click="ajustar(item, -1)" :disabled="item.quantidade <= 0" aria-label="Diminuir quantidade"><i class="bi bi-dash"></i></button>
+                      <button type="button" data-repeat @click="ajustar(item, -1)" :disabled="item.quantidade <= 0" aria-label="Diminuir quantidade"><i class="bi bi-dash"></i></button>
                       <span class="cg-qty-stepper__value" x-text="item.quantidade"></span>
-                      <button type="button" @click="ajustar(item, 1)" aria-label="Aumentar quantidade"><i class="bi bi-plus"></i></button>
+                      <button type="button" data-repeat @click="ajustar(item, 1)" aria-label="Aumentar quantidade"><i class="bi bi-plus"></i></button>
                     </div>
                   </div>
                 </template>
@@ -1090,12 +1099,24 @@
               </h2>
               <div class="mb-3">
                 <label class="form-label small">Nome</label>
-                <input type="text" class="form-control" x-model="itemForm.nome" placeholder="Ex: Arroz, Papel higiênico…" required />
+                <div class="d-flex gap-2">
+                  <input type="text" class="form-control" x-model="itemForm.nome" placeholder="Ex: Arroz, Papel higiênico…" required />
+                  <button type="button" class="cg-btn btn btn-outline-secondary flex-shrink-0" @click="abrirScanner()" title="Ler código de barras"><i class="bi bi-upc-scan"></i></button>
+                  <label class="cg-btn btn btn-outline-secondary mb-0 flex-shrink-0" style="cursor:pointer;" title="Ler nome por foto">
+                    <span x-show="!lendoFotoItem"><i class="bi bi-camera"></i></span>
+                    <span x-show="lendoFotoItem" class="spinner-border spinner-border-sm"></span>
+                    <input type="file" accept="image/*" capture="environment" class="d-none" @change="onFotoNomeItem($event)" :disabled="lendoFotoItem" />
+                  </label>
+                </div>
               </div>
               <div class="row g-2 mb-3">
                 <div class="col-6">
                   <label class="form-label small">Quantidade</label>
-                  <input type="number" min="0" class="form-control" x-model="itemForm.quantidade" />
+                  <div class="cg-num-stepper">
+                    <button type="button" class="cg-num-stepper__btn" data-repeat @click="itemForm.quantidade = Math.max(0, (Number(itemForm.quantidade) || 0) - 1)" aria-label="Diminuir"><i class="bi bi-dash"></i></button>
+                    <input type="number" min="0" class="form-control text-center" x-model="itemForm.quantidade" />
+                    <button type="button" class="cg-num-stepper__btn" data-repeat @click="itemForm.quantidade = (Number(itemForm.quantidade) || 0) + 1" aria-label="Aumentar"><i class="bi bi-plus"></i></button>
+                  </div>
                 </div>
                 <div class="col-6">
                   <label class="form-label small">Validade (opcional)</label>
@@ -1107,8 +1128,18 @@
                   <button type="button" class="btn btn-outline-danger" @click="removeItem(itemForm.id)" title="Excluir"><i class="bi bi-trash"></i></button>
                 </template>
                 <button type="button" class="cg-btn btn btn-outline-secondary flex-fill" @click="fecharModalItem()">Cancelar</button>
-                <button type="button" class="cg-btn btn btn-success flex-fill" @click="salvarItem()">Salvar</button>
+                <button type="button" class="cg-btn btn btn-success flex-fill" :disabled="salvandoItem" @click="salvarItem()">Salvar</button>
               </div>
+            </div>
+          </div>
+
+          <!-- Scanner de código de barras -->
+          <div class="cg-modal-backdrop" x-show="scannerAberto" x-cloak>
+            <div class="cg-modal text-center">
+              <h2 class="h6 fw-bold mb-3">Aponte a câmera para o código de barras</h2>
+              <div id="cg-scanner-viewport-recursos" style="min-height:240px; background:#000; border-radius: var(--radius-md); overflow:hidden;"></div>
+              <p class="text-danger small mt-2" x-show="scannerErro" x-text="scannerErro"></p>
+              <button type="button" class="cg-btn btn btn-outline-secondary mt-3" @click="fecharScanner()">Cancelar</button>
             </div>
           </div>
         </section>
@@ -1638,13 +1669,24 @@
     </div>
   </div>
 
-  <!-- ============ TOAST ============ -->
-  <div class="position-fixed bottom-0 end-0 p-3" style="z-index:2000; max-width: 320px; pointer-events: none;">
-    <template x-if="$store.app.toast">
-      <div class="cg-card" style="pointer-events: auto;" :class="{
-        'border-success': $store.app.toast.type === 'success',
-        'border-danger': $store.app.toast.type === 'danger'
-      }" x-text="$store.app.toast.message"></div>
+  <!-- ============ TOASTS ============ -->
+  <!-- Topo (não embaixo): no mobile, embaixo colide com o FAB de "+ nova
+       despesa", que fica no mesmo canto — resultado real reportado foi
+       "não tem nenhum aviso de erro ou sucesso" porque o toast antigo
+       aparecia bem ali atrás/do lado do botão. -->
+  <!-- pointer-events:none no container: a área vazia ao redor de um toast (ou
+       o espaço que sobra quando não tem nenhum) não pode bloquear cliques no
+       que está embaixo — só o toast em si (pointer-events:auto) precisa
+       receber clique, pro botão de fechar funcionar. -->
+  <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 2000; pointer-events: none;">
+    <template x-for="t in $store.app.toasts" :key="t.id">
+      <div class="toast cg-toast show" style="pointer-events: auto;" :class="'cg-toast--' + t.type" role="status" aria-live="polite" x-transition>
+        <div class="toast-body d-flex align-items-start gap-2">
+          <i class="bi fs-5 flex-shrink-0" :class="t.type === 'danger' ? 'bi-exclamation-circle-fill' : 'bi-check-circle-fill'"></i>
+          <span class="flex-fill" x-text="t.message"></span>
+          <button type="button" class="btn-close flex-shrink-0" @click="$store.app.dismissToast(t.id)" aria-label="Fechar"></button>
+        </div>
+      </div>
     </template>
   </div>
 

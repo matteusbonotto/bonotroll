@@ -13,6 +13,7 @@ export function shoppingView() {
     loading: true,
     novoItem: NOVO_ITEM_VAZIO(),
     categoriaEscolhidaManualmente: false,
+    salvandoItem: false,
     itemEmEdicaoId: null,
     precoEdicao: { valor: '', quantidade: '' },
     scannerAberto: false,
@@ -46,14 +47,23 @@ export function shoppingView() {
       const store = this.$store.app;
       if (!store.profile) return;
       this.loading = true;
-      this.list = await sl.getOrCreateActiveList({ ownerId: store.profile.id, groupId: store.group?.group?.id });
-      this.items = await sl.listItems(this.list.id);
-      this.loading = false;
+      try {
+        this.list = await sl.getOrCreateActiveList({ ownerId: store.profile.id, groupId: store.group?.group?.id });
+        this.items = await sl.listItems(this.list.id);
+      } catch (e) {
+        store.notify(e.message || 'Não consegui carregar a lista de compras.', 'danger');
+      } finally {
+        this.loading = false;
+      }
     },
 
     async refreshItems() {
       if (!this.list) return;
-      this.items = await sl.listItems(this.list.id);
+      try {
+        this.items = await sl.listItems(this.list.id);
+      } catch (e) {
+        this.$store.app.notify(e.message || 'Não consegui atualizar a lista.', 'danger');
+      }
     },
 
     get resumo() {
@@ -114,8 +124,8 @@ export function shoppingView() {
         } else {
           store.notify('Não consegui ler nenhum texto nessa foto.', 'danger');
         }
-      } catch {
-        store.notify('Erro ao ler a foto.', 'danger');
+      } catch (e) {
+        store.notify(e.message || 'Erro ao ler a foto.', 'danger');
       } finally {
         this.lendoFotoItem = false;
         event.target.value = '';
@@ -123,16 +133,32 @@ export function shoppingView() {
     },
 
     async addItem() {
-      if (!this.novoItem.nome.trim()) return;
-      await sl.addItem(this.list.id, { ...this.novoItem, nome: this.novoItem.nome.trim() });
-      this.novoItem = NOVO_ITEM_VAZIO();
-      this.categoriaEscolhidaManualmente = false;
-      await this.refreshItems();
+      if (!this.novoItem.nome.trim() || this.salvandoItem) return;
+      const store = this.$store.app;
+      this.salvandoItem = true;
+      try {
+        await sl.addItem(this.list.id, { ...this.novoItem, nome: this.novoItem.nome.trim() });
+        const nomeAdicionado = this.novoItem.nome.trim();
+        this.novoItem = NOVO_ITEM_VAZIO();
+        this.categoriaEscolhidaManualmente = false;
+        await this.refreshItems();
+        store.notify(`"${nomeAdicionado}" adicionado.`);
+      } catch (e) {
+        store.notify(e.message || 'Não foi possível adicionar o item.', 'danger');
+      } finally {
+        this.salvandoItem = false;
+      }
     },
 
     async removeItem(id) {
-      await sl.removeItem(id);
-      await this.refreshItems();
+      const store = this.$store.app;
+      try {
+        await sl.removeItem(id);
+        await this.refreshItems();
+        store.notify('Item removido.');
+      } catch (e) {
+        store.notify(e.message || 'Não foi possível remover o item.', 'danger');
+      }
     },
 
     // ---------- Edição completa de um item já existente ----------
@@ -152,13 +178,19 @@ export function shoppingView() {
     },
     async salvarEdicao() {
       if (!this.edicaoForm.nome.trim()) return;
-      const { id, ...patch } = this.edicaoForm;
-      patch.nome = patch.nome.trim();
-      patch.categoria_id = patch.categoria_id || null;
-      patch.quantidade = Number(patch.quantidade) || 0;
-      await sl.updateItem(id, patch);
-      this.edicaoAberta = false;
-      await this.refreshItems();
+      const store = this.$store.app;
+      try {
+        const { id, ...patch } = this.edicaoForm;
+        patch.nome = patch.nome.trim();
+        patch.categoria_id = patch.categoria_id || null;
+        patch.quantidade = Number(patch.quantidade) || 0;
+        await sl.updateItem(id, patch);
+        this.edicaoAberta = false;
+        await this.refreshItems();
+        store.notify('Item atualizado.');
+      } catch (e) {
+        store.notify(e.message || 'Não foi possível salvar as alterações.', 'danger');
+      }
     },
 
     // Botão único que alterna: "Iniciar Compra" (planejando/pausada -> comprando)
@@ -166,52 +198,72 @@ export function shoppingView() {
     async toggleStart() {
       if (this.emCompra) {
         await this.finalizar();
-      } else {
+        return;
+      }
+      try {
         this.list = await sl.startShopping(this.list.id);
+      } catch (e) {
+        this.$store.app.notify(e.message || 'Não foi possível iniciar a compra.', 'danger');
       }
     },
 
     async pausar() {
-      this.list = await sl.pauseShopping(this.list.id);
+      try {
+        this.list = await sl.pauseShopping(this.list.id);
+      } catch (e) {
+        this.$store.app.notify(e.message || 'Não foi possível pausar.', 'danger');
+      }
     },
     async retomar() {
-      this.list = await sl.resumeShopping(this.list.id);
+      try {
+        this.list = await sl.resumeShopping(this.list.id);
+      } catch (e) {
+        this.$store.app.notify(e.message || 'Não foi possível retomar.', 'danger');
+      }
     },
 
     async finalizar() {
       const resumo = this.resumo;
       const ok = confirm(`Encerrar a compra?\n${resumo.itensComprados}/${resumo.totalItens} itens · Total R$ ${resumo.valorTotal.toFixed(2)}`);
       if (!ok) return;
-
-      this.list = await sl.finishShopping(this.list.id);
       const store = this.$store.app;
 
-      if (resumo.valorTotal > 0 && confirm('Lançar essa compra como uma despesa no controle financeiro?')) {
-        const categoriaMercado = store.categories.find((c) => c.nome.toLowerCase() === 'mercado');
-        const tx = await createTransaction({
-          tipo: 'saida',
-          titulo: this.list.nome || 'Compras do mercado',
-          categoria_id: categoriaMercado?.id || null,
-          tipo_despesa: 'variavel',
-          valor: resumo.valorTotal,
-          responsavel_id: store.profile.id,
-          owner_id: store.profile.id,
-          group_id: store.group?.group?.id ?? null,
-          data_cadastro: todayIso(),
-          data_pagamento: todayIso(),
-        });
-        await sl.linkListToTransaction(this.list.id, tx.id);
-        window.dispatchEvent(new CustomEvent('cg:transactions-changed'));
-        store.notify('Compra lançada no financeiro.');
-      }
+      try {
+        this.list = await sl.finishShopping(this.list.id);
 
-      await this.novaLista();
+        if (resumo.valorTotal > 0 && confirm('Lançar essa compra como uma despesa no controle financeiro?')) {
+          const categoriaMercado = store.categories.find((c) => c.nome.toLowerCase() === 'mercado');
+          const tx = await createTransaction({
+            tipo: 'saida',
+            titulo: this.list.nome || 'Compras do mercado',
+            categoria_id: categoriaMercado?.id || null,
+            tipo_despesa: 'variavel',
+            valor: resumo.valorTotal,
+            responsavel_id: store.profile.id,
+            owner_id: store.profile.id,
+            group_id: store.group?.group?.id ?? null,
+            data_cadastro: todayIso(),
+            data_pagamento: todayIso(),
+          });
+          await sl.linkListToTransaction(this.list.id, tx.id);
+          window.dispatchEvent(new CustomEvent('cg:transactions-changed'));
+          store.notify('Compra lançada no financeiro.');
+        }
+
+        await this.novaLista();
+      } catch (e) {
+        store.notify(e.message || 'Não foi possível encerrar a compra.', 'danger');
+      }
     },
 
     async novaLista() {
       const store = this.$store.app;
-      this.list = await sl.createList({ ownerId: store.profile.id, groupId: store.group?.group?.id, nome: 'Lista de Compras' });
-      this.items = [];
+      try {
+        this.list = await sl.createList({ ownerId: store.profile.id, groupId: store.group?.group?.id, nome: 'Lista de Compras' });
+        this.items = [];
+      } catch (e) {
+        store.notify(e.message || 'Não foi possível criar uma nova lista.', 'danger');
+      }
     },
 
     abrirPreco(item) {
@@ -226,17 +278,26 @@ export function shoppingView() {
     },
 
     async salvarPreco(item) {
-      const patch = { quantidade: Number(this.precoEdicao.quantidade) || 0, comprado: true };
-      if (item.unidade === 'un') patch.preco_unitario = Number(this.precoEdicao.valor) || 0;
-      else patch.preco_por_kg = Number(this.precoEdicao.valor) || 0;
-      await sl.updateItem(item.id, patch);
-      this.itemEmEdicaoId = null;
-      await this.refreshItems();
+      const store = this.$store.app;
+      try {
+        const patch = { quantidade: Number(this.precoEdicao.quantidade) || 0, comprado: true };
+        if (item.unidade === 'un') patch.preco_unitario = Number(this.precoEdicao.valor) || 0;
+        else patch.preco_por_kg = Number(this.precoEdicao.valor) || 0;
+        await sl.updateItem(item.id, patch);
+        this.itemEmEdicaoId = null;
+        await this.refreshItems();
+      } catch (e) {
+        store.notify(e.message || 'Não foi possível salvar o preço.', 'danger');
+      }
     },
 
     async desmarcarComprado(item) {
-      await sl.updateItem(item.id, { comprado: false });
-      await this.refreshItems();
+      try {
+        await sl.updateItem(item.id, { comprado: false });
+        await this.refreshItems();
+      } catch (e) {
+        this.$store.app.notify(e.message || 'Não foi possível desmarcar o item.', 'danger');
+      }
     },
 
     async abrirScanner() {
@@ -258,10 +319,14 @@ export function shoppingView() {
     async onCodigoLido(codigo) {
       await stopBarcodeScanner();
       this.scannerAberto = false;
-      const produto = await lookupProductByBarcode(codigo);
-      this.novoItem.nome = produto?.nome || `Item ${codigo}`;
-      this.onNomeInput();
-      this.$store.app.notify(produto?.nome ? `Produto identificado: ${produto.nome}` : 'Código lido — confira o nome do item.');
+      try {
+        const produto = await lookupProductByBarcode(codigo);
+        this.novoItem.nome = produto?.nome || `Item ${codigo}`;
+        this.onNomeInput();
+        this.$store.app.notify(produto?.nome ? `Produto identificado: ${produto.nome}` : 'Código lido — confira o nome do item.');
+      } catch (e) {
+        this.$store.app.notify(e.message || 'Não consegui identificar esse código.', 'danger');
+      }
     },
 
     abrirImportacao() {

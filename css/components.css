@@ -499,6 +499,12 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
+  /* align-items: stretch (o default de flex-column) esticava o chip de
+     categoria pra largura toda do card — um "inline-flex" continua sendo
+     esticado no eixo cruzado do pai a menos que isso seja dito
+     explicitamente aqui; sem isso o avatar no canto ficava "flutuando"
+     por cima da barra colorida esticada. */
+  align-items: flex-start;
   gap: 6px;
 }
 .cg-grid-view--compact .cg-grid-view__card {
@@ -571,6 +577,23 @@
   box-shadow: var(--shadow-sm);
 }
 
+/* ---------- Toasts (sucesso/erro de qualquer ação) ---------- */
+.cg-toast {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-left: 4px solid var(--color-success);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  min-width: 260px;
+  max-width: min(360px, calc(100vw - 2 * var(--space-3)));
+  margin-bottom: var(--space-2);
+}
+.cg-toast--success { border-left-color: var(--color-success); }
+.cg-toast--success .bi-check-circle-fill { color: var(--color-success); }
+.cg-toast--danger { border-left-color: var(--color-danger); }
+.cg-toast--danger .bi-exclamation-circle-fill { color: var(--color-danger); }
+
 /* ---------- Recursos: grade de cômodos ---------- */
 .cg-room-grid {
   display: grid;
@@ -630,6 +653,91 @@
   align-items: center;
   justify-content: center;
   padding: 0 4px;
+}
+
+/* ---------- Stepper numérico genérico (com input editável no meio) ---------- */
+/* Usado em formulários (quantidade/peso na lista de compras) — diferente do
+   .cg-qty-stepper de Recursos, que só mostra um número fixo (não editável
+   por digitação, só pelos botões), porque aqui a pessoa também precisa
+   poder digitar o valor direto. */
+.cg-num-stepper {
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+}
+.cg-num-stepper__btn {
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  border-radius: var(--radius-sm);
+  width: var(--touch-target);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text);
+  user-select: none;
+}
+.cg-num-stepper input[type="number"] {
+  min-width: 0;
+}
+
+/* ---------- Recursos: card de item (redesenhado — era só uma pilha de
+   controles soltos: botão "Foto" ocupando a largura toda, lápis boiando no
+   canto sem alinhamento) ---------- */
+.cg-resource-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: var(--space-3);
+}
+.cg-resource-item {
+  position: relative;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.cg-resource-item.is-alerta { border-color: color-mix(in srgb, var(--color-warning) 45%, var(--color-border)); }
+.cg-resource-item__edit {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 2;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--color-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-sm);
+}
+.cg-resource-item__foto {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 16 / 10;
+  background: var(--color-surface-alt);
+  color: var(--color-text-muted);
+  font-size: 1.4rem;
+  cursor: pointer;
+}
+.cg-resource-item__foto.has-foto { cursor: default; }
+.cg-resource-item__foto img { width: 100%; height: 100%; object-fit: cover; }
+.cg-resource-item__body {
+  padding: var(--space-3) var(--space-3) 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 60px;
+}
+.cg-resource-item .cg-qty-stepper {
+  justify-content: center;
+  padding: var(--space-2) var(--space-3) var(--space-3);
 }
 
 /* ---------- Recursos (inventário doméstico): stepper de quantidade ---------- */

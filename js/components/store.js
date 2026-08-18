@@ -23,7 +23,7 @@ export function appStore() {
     view: location.hash.replace('#/', '') || 'home',
     online: navigator.onLine,
     isDemoMode: isDemoMode(),
-    toast: null,
+    toasts: [],
     updateAvailable: false,
     navOpen: false,
     // 'dark' | 'light' | null (null = segue o tema do sistema). O valor
@@ -211,12 +211,22 @@ export function appStore() {
       reg.waiting.postMessage({ type: 'SKIP_WAITING' });
     },
 
+    // Lista (não mais um valor único) — uma ação disparando "sucesso" logo
+    // seguida de outra "erro" (ou vice-versa) sobrescrevia uma a outra antes
+    // de dar tempo da pessoa ler; agora empilha e cada uma some sozinha no
+    // seu próprio tempo. Erro fica mais tempo na tela que sucesso — dá mais
+    // chance de ler algo que precisa de atenção.
     notify(message, type = 'success') {
-      const entry = { message, type, id: Date.now() };
-      this.toast = entry;
+      const entry = { message, type, id: `${Date.now()}-${Math.random().toString(36).slice(2, 6)}` };
+      this.toasts.push(entry);
+      const duracao = type === 'danger' ? 6500 : 3800;
       setTimeout(() => {
-        if (this.toast && this.toast.id === entry.id) this.toast = null;
-      }, 3800);
+        this.toasts = this.toasts.filter((t) => t.id !== entry.id);
+      }, duracao);
+    },
+
+    dismissToast(id) {
+      this.toasts = this.toasts.filter((t) => t.id !== id);
     },
 
     categoryById(id) {

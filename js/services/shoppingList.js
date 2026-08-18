@@ -69,6 +69,15 @@ export async function listItems(listId) {
   return data;
 }
 
+// PGRST204 (PostgREST) = "coluna X não existe nessa tabela ainda" — acontece
+// quando o schema.sql foi atualizado (ex.: a coluna "prioridade" é recente)
+// mas a pessoa ainda não rodou a migração de novo no SQL Editor. Detectar e
+// tentar de novo SEM o campo problemático evita que um campo novo trave uma
+// ação inteira (aqui, "não dá pra adicionar item nenhum na lista").
+function isMissingColumnError(e) {
+  return e?.code === 'PGRST204' || /could not find the .* column|column .* does not exist/i.test(e?.message || '');
+}
+
 export async function addItem(listId, { nome, categoria_id, unidade = 'un', quantidade = 1, prioridade = 3 }) {
   const row = {
     list_id: listId,
@@ -86,7 +95,11 @@ export async function addItem(listId, { nome, categoria_id, unidade = 'un', quan
   };
   if (isDemoMode()) return mockDb.insert('shopping_list_items', row);
   const supabase = await getSupabase();
-  const { data, error } = await supabase.from('shopping_list_items').insert(row).select().single();
+  let { data, error } = await supabase.from('shopping_list_items').insert(row).select().single();
+  if (error && isMissingColumnError(error)) {
+    const { prioridade: _omit, ...semPrioridade } = row;
+    ({ data, error } = await supabase.from('shopping_list_items').insert(semPrioridade).select().single());
+  }
   if (error) throw error;
   return data;
 }
@@ -135,12 +148,12 @@ export async function updateItem(id, patch) {
   const { data: current, error: getErr } = await supabase.from('shopping_list_items').select('*').eq('id', id).single();
   if (getErr) throw getErr;
   const merged = { ...current, ...patch };
-  const { data, error } = await supabase
-    .from('shopping_list_items')
-    .update({ ...patch, subtotal: computeItemSubtotal(merged) })
-    .eq('id', id)
-    .select()
-    .single();
+  const patchCompleto = { ...patch, subtotal: computeItemSubtotal(merged) };
+  let { data, error } = await supabase.from('shopping_list_items').update(patchCompleto).eq('id', id).select().single();
+  if (error && isMissingColumnError(error)) {
+    const { prioridade: _omit, ...semPrioridade } = patchCompleto;
+    ({ data, error } = await supabase.from('shopping_list_items').update(semPrioridade).eq('id', id).select().single());
+  }
   if (error) throw error;
   return data;
 }

@@ -42,23 +42,28 @@ export function transactionsView() {
       const store = this.$store.app;
       if (!store.profile) return;
       this.loading = true;
-      this.rows = await listTransactions({
-        ownerId: store.profile.id,
-        groupId: store.group?.group?.id,
-        filters: {
-          tipo: this.filtro.tipo || undefined,
-          categoriaId: this.filtro.categoriaId || undefined,
-          responsavelId: this.filtro.responsavelId || undefined,
-          status: this.filtro.status || undefined,
-          tipoDespesa: this.filtro.tipoDespesa || undefined,
-          busca: this.filtro.busca || undefined,
-          dataInicio: this.filtro.dataInicio || undefined,
-          dataFim: this.filtro.dataFim || undefined,
-        },
-      });
-      const payersMap = await listPayersFor(this.rows.map((r) => r.id));
-      this.payersByTx = Object.fromEntries(payersMap);
-      this.loading = false;
+      try {
+        this.rows = await listTransactions({
+          ownerId: store.profile.id,
+          groupId: store.group?.group?.id,
+          filters: {
+            tipo: this.filtro.tipo || undefined,
+            categoriaId: this.filtro.categoriaId || undefined,
+            responsavelId: this.filtro.responsavelId || undefined,
+            status: this.filtro.status || undefined,
+            tipoDespesa: this.filtro.tipoDespesa || undefined,
+            busca: this.filtro.busca || undefined,
+            dataInicio: this.filtro.dataInicio || undefined,
+            dataFim: this.filtro.dataFim || undefined,
+          },
+        });
+        const payersMap = await listPayersFor(this.rows.map((r) => r.id));
+        this.payersByTx = Object.fromEntries(payersMap);
+      } catch (e) {
+        store.notify(e.message || 'Não consegui carregar as transações.', 'danger');
+      } finally {
+        this.loading = false;
+      }
     },
 
     // Pagadores de uma transação (vazio = caso simples, só o responsável).
@@ -150,45 +155,64 @@ export function transactionsView() {
       return this.$store.app.profileById(id);
     },
 
-    async setCategoria(row, categoriaId) {
-      await updateTransaction(row.id, { categoria_id: categoriaId || null });
-      await this.load();
-    },
-    async setResponsavel(row, responsavelId) {
-      await updateTransaction(row.id, { responsavel_id: responsavelId || null });
-      await this.load();
-    },
-    async setVencimento(row, data) {
-      await updateTransaction(row.id, { data_vencimento: data || null });
-      await this.load();
-    },
-    async setDataPagamento(row, data) {
-      await updateTransaction(row.id, { data_pagamento: data || null });
-      await this.load();
-    },
-    async togglePago(row) {
-      if (row._status === 'pago') {
-        await markAsUnpaid(row.id);
-      } else {
-        const paga = await markAsPaid(row.id);
-        await this.avisarPagamento(paga);
+    // Todas as edições inline abaixo (dropdown de categoria/responsável na
+    // tabela, datas, pago/não-pago, fixa/variável) passavam batido sem
+    // try/catch — uma falha (rede, RLS, schema desatualizado) simplesmente
+    // não fazia nada visível, exatamente o "não aparece erro nenhum"
+    // reportado. Um helper comum evita repetir o try/catch 6 vezes.
+    async _editarInline(acao, mensagemErro) {
+      try {
+        await acao();
+        await this.load();
+      } catch (e) {
+        this.$store.app.notify(e.message || mensagemErro, 'danger');
       }
-      await this.load();
+    },
+
+    setCategoria(row, categoriaId) {
+      return this._editarInline(() => updateTransaction(row.id, { categoria_id: categoriaId || null }), 'Não foi possível alterar a categoria.');
+    },
+    setResponsavel(row, responsavelId) {
+      return this._editarInline(() => updateTransaction(row.id, { responsavel_id: responsavelId || null }), 'Não foi possível alterar o responsável.');
+    },
+    setVencimento(row, data) {
+      return this._editarInline(() => updateTransaction(row.id, { data_vencimento: data || null }), 'Não foi possível alterar o vencimento.');
+    },
+    setDataPagamento(row, data) {
+      return this._editarInline(() => updateTransaction(row.id, { data_pagamento: data || null }), 'Não foi possível alterar a data de pagamento.');
+    },
+    toggleTipoDespesa(row) {
+      return this._editarInline(
+        () => updateTransaction(row.id, { tipo_despesa: row.tipo_despesa === 'fixa' ? 'variavel' : 'fixa' }),
+        'Não foi possível alterar fixa/variável.'
+      );
+    },
+
+    togglePago(row) {
+      return this._editarInline(async () => {
+        if (row._status === 'pago') {
+          await markAsUnpaid(row.id);
+        } else {
+          const paga = await markAsPaid(row.id);
+          await this.avisarPagamento(paga);
+        }
+      }, 'Não foi possível atualizar o status de pagamento.');
     },
 
     // Avisa os outros membros do grupo que essa despesa foi paga (ver
     // services/notifications.js::notifyPayment). Só faz sentido quando há
-    // grupo com mais de uma pessoa.
+    // grupo com mais de uma pessoa. Best-effort: se a notificação falhar,
+    // não desfaz o pagamento que já foi marcado com sucesso — só avisa.
     async avisarPagamento(transacaoPaga) {
       const store = this.$store.app;
       const memberIds = (store.group?.members || []).map((m) => m.id);
       if (memberIds.length < 2) return;
-      await notifyPayment({ transaction: transacaoPaga, payerProfileId: store.profile.id, memberIds });
-      store.refreshNotifications();
-    },
-    async toggleTipoDespesa(row) {
-      await updateTransaction(row.id, { tipo_despesa: row.tipo_despesa === 'fixa' ? 'variavel' : 'fixa' });
-      await this.load();
+      try {
+        await notifyPayment({ transaction: transacaoPaga, payerProfileId: store.profile.id, memberIds });
+        store.refreshNotifications();
+      } catch (e) {
+        store.notify(e.message || 'Pagamento salvo, mas não consegui avisar o grupo.', 'danger');
+      }
     },
 
     editar(row) {

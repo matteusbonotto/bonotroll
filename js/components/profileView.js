@@ -16,7 +16,11 @@ export function profileView() {
       this.nome = this.$store.app.profile?.nome || '';
       this.cor = this.$store.app.profile?.cor || '#1F7A5C';
       if (this.pushSuportado) {
-        this.pushAtivo = !!(await getExistingSubscription());
+        try {
+          this.pushAtivo = !!(await getExistingSubscription());
+        } catch {
+          // best-effort: se a checagem falhar o switch só começa desligado
+        }
       }
     },
 
