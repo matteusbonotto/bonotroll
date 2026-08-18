@@ -19,22 +19,38 @@ create extension if not exists pg_net with schema extensions;
 -- =========================================================
 -- TRIGGER: avisa a Edge Function notify-payment em tempo real sempre que
 -- uma transação é marcada como paga (data_pagamento passa de nulo pra
--- preenchido). supabase_functions.http_request já vem pronto em todo
--- projeto Supabase — é o mesmo mecanismo por trás da UI "Database Webhooks".
+-- preenchido).
+--
+-- Não usa supabase_functions.http_request (o mecanismo por trás da UI
+-- "Database Webhooks") de propósito — esse schema só existe em projetos
+-- que já criaram um webhook alguma vez pela UI, então depender dele quebra
+-- em projeto novo com o erro "schema supabase_functions does not exist".
+-- Uma função própria chamando net.http_post diretamente (pg_net, já criado
+-- acima) evita essa dependência e funciona em qualquer projeto.
 -- =========================================================
+
+create or replace function public.notify_payment_webhook()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  perform net.http_post(
+    url := 'https://zkoxuafdcsfrdmlfckxz.supabase.co/functions/v1/notify-payment',
+    body := jsonb_build_object('record', to_jsonb(new), 'old_record', to_jsonb(old)),
+    headers := jsonb_build_object('Content-Type', 'application/json', 'Authorization', 'Bearer ' || '<SERVICE_ROLE_KEY>')
+  );
+  return new;
+end;
+$$;
 
 drop trigger if exists notify_payment_trigger on transactions;
 create trigger notify_payment_trigger
   after update on transactions
   for each row
   when (new.data_pagamento is not null and old.data_pagamento is null)
-  execute function supabase_functions.http_request(
-    'https://zkoxuafdcsfrdmlfckxz.supabase.co/functions/v1/notify-payment',
-    'POST',
-    '{"Content-type":"application/json"}',
-    '{}',
-    '5000'
-  );
+  execute function public.notify_payment_webhook();
 
 -- =========================================================
 -- AGENDAMENTOS (pg_cron): notify-scan roda 1x/dia, keepalive a cada 3 dias

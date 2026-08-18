@@ -66,9 +66,14 @@ create table if not exists companies (
   group_id uuid references groups(id) on delete cascade,
   nome text not null,
   logo_url text,
-  criado_em timestamptz not null default now(),
-  unique (owner_id, coalesce(group_id, '00000000-0000-0000-0000-000000000000'::uuid), nome)
+  criado_em timestamptz not null default now()
 );
+-- "unique (col, coalesce(...), col)" como CONSTRAINT de tabela não é SQL
+-- válido no Postgres (constraint só aceita colunas simples, não expressão)
+-- — precisa ser um índice único, mesmo padrão do índice de "categories" lá
+-- embaixo no arquivo (coalesce pro group_id nulo não colidir consigo mesmo).
+create unique index if not exists companies_owner_group_nome_uniq
+  on companies (owner_id, coalesce(group_id, '00000000-0000-0000-0000-000000000000'::uuid), nome);
 
 create table if not exists transactions (
   id uuid primary key default uuid_generate_v4(),
