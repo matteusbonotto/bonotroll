@@ -4,14 +4,26 @@ html, body {
   min-height: 100vh;
 }
 
-/* 96px = espaço do botão flutuante (FAB), pra ele nunca cobrir o último item
-   de listas longas no mobile. A navegação virou menu hambúrguer (não ocupa
-   mais uma faixa fixa no rodapé), então não precisa reservar espaço pra ela. */
-body {
+/* Sem isso, o Android Chrome pode inflar automaticamente o tamanho do texto
+   em páginas com colunas estreitas (o algoritmo de leitura dele, pensado
+   pra site antigo sem viewport responsivo) DEPOIS do primeiro layout —
+   como quase todo espaçamento do projeto é em px fixo (não rem), só o texto
+   cresce sozinho um instante após abrir, e a página inteira parece "dar um
+   zoom" nesse instante até estabilizar. */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* 96px = espaço do botão flutuante (FAB) da Lista de compras, pra ele nunca
+   cobrir o último item da lista no mobile — só a tela de Compras tem FAB
+   agora (ver .cg-fab em components.css), então só ela reserva esse espaço
+   em vez de toda tela ganhar uma faixa vazia embaixo à toa. */
+.cg-view-compras {
   padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
 }
 @media (min-width: 992px) {
-  body { padding-bottom: 0; }
+  .cg-view-compras { padding-bottom: 0; }
 }
 
 [x-cloak] { display: none !important; }
@@ -178,8 +190,27 @@ a { color: var(--color-primary); }
   grid-template-columns: 1fr;
   gap: var(--space-4);
 }
+/* Item de grid tem min-width:auto por padrão (não 0) — na prática isso
+   significa "nunca encolhe abaixo do maior conteúdo indivisível lá dentro",
+   então UM elemento sem quebra de linha (aqui: o <canvas> do Chart.js, que o
+   navegador mede pelo tamanho do desenho já renderizado, não pelo CSS) força
+   a coluna inteira (e os outros cards, que compartilham a mesma coluna) a
+   ficarem mais largos que o container — o conteúdo então vaza pra fora da
+   margem direita em vez de ser cortado ou encolhido. Mesma causa raiz já
+   corrigida antes nos containers flex do hero/stat cards.
+*/
+.cg-grid-dashboard > * {
+  min-width: 0;
+}
 @media (min-width: 992px) {
-  .cg-grid-dashboard { grid-template-columns: 1.4fr 1fr; align-items: start; }
+  /* align-items: stretch (default do grid) — "Contas a vencer" tem mais
+     linhas que "Para onde vai o dinheiro" na maioria dos meses, então com
+     align-items:start (valor antigo) o card do gráfico ficava baixo, sobrando
+     uma faixa vazia do fundo da página do lado dele. Esticando o CARD (não o
+     conteúdo lá dentro) até a altura do vizinho mais alto, o fundo/borda
+     preenchem a fileira inteira mesmo quando o gráfico continua com sua
+     altura fixa de 220px no topo do card. */
+  .cg-grid-dashboard { grid-template-columns: 1.4fr 1fr; }
 }
 
 .cg-section-title {
@@ -264,9 +295,66 @@ a { color: var(--color-primary); }
   overflow-y: auto;
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   padding: var(--space-5);
+  box-shadow: var(--shadow-md);
 }
 @media (min-width: 768px) {
   .cg-modal { border-radius: var(--radius-lg); }
+}
+
+/* Scrollbar fina e discreta em vez da barra grossa padrão do sistema, em
+   QUALQUER área rolável do projeto (modais e as listas roláveis dentro
+   deles, tabelas com scroll horizontal, etc.) — não só ".cg-modal": várias
+   dessas áreas roláveis são divs com overflow inline (max-height + auto),
+   sem classe própria, então o seletor universal é o único jeito de pegar
+   todas de uma vez em vez de caçar cada uma. Firefox usa
+   scrollbar-width/scrollbar-color; Chrome/Safari usam os pseudo-elementos
+   ::-webkit-scrollbar* logo abaixo. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background-color: var(--color-border);
+  border-radius: var(--radius-pill);
+}
+*::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-text-muted);
+}
+
+/* Botão de fechar (Bootstrap .btn-close) some de tão discreto por padrão,
+   principalmente no tema escuro — troca por um "chip" circular com alvo de
+   toque de verdade, sempre visível independente do tema (não depende do
+   filtro invert() padrão do Bootstrap, que é sutil demais aqui). */
+.cg-modal .btn-close,
+.cg-modal-backdrop .btn-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--color-surface-alt) url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%235B615D'%3e%3cpath d='M.293.293a1 1 0 0 1 1.414 0L8 6.586 14.293.293a1 1 0 1 1 1.414 1.414L9.414 8l6.293 6.293a1 1 0 0 1-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 0 1-1.414-1.414L6.586 8 .293 1.707a1 1 0 0 1 0-1.414z'/%3e%3c/svg%3e") center/14px no-repeat;
+  opacity: 1;
+  flex-shrink: 0;
+  transition: background-color 0.15s ease;
+}
+.cg-modal .btn-close:hover,
+.cg-modal-backdrop .btn-close:hover {
+  background-color: var(--color-border);
+}
+:root[data-bs-theme="dark"] .cg-modal .btn-close,
+:root[data-bs-theme="dark"] .cg-modal-backdrop .btn-close {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23F2F3F1'%3e%3cpath d='M.293.293a1 1 0 0 1 1.414 0L8 6.586 14.293.293a1 1 0 1 1 1.414 1.414L9.414 8l6.293 6.293a1 1 0 0 1-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 0 1-1.414-1.414L6.586 8 .293 1.707a1 1 0 0 1 0-1.414z'/%3e%3c/svg%3e");
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-bs-theme="light"]) .cg-modal .btn-close,
+  :root:not([data-bs-theme="light"]) .cg-modal-backdrop .btn-close {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23F2F3F1'%3e%3cpath d='M.293.293a1 1 0 0 1 1.414 0L8 6.586 14.293.293a1 1 0 1 1 1.414 1.414L9.414 8l6.293 6.293a1 1 0 0 1-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 0 1-1.414-1.414L6.586 8 .293 1.707a1 1 0 0 1 0-1.414z'/%3e%3c/svg%3e");
+  }
 }
 
 /* Duas colunas de largura sempre igual, não importa se o conteúdo (valor

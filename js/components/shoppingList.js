@@ -22,6 +22,14 @@ export function shoppingView() {
     lendoFotoItem: false,
     maisOpcoesItem: false,
     ordenarPorPrioridade: false,
+    // Card "Adicionar item" começa fechado (tela mais limpa) e abre pelo
+    // botão flutuante — fica aberto entre adições (pra colocar vários itens
+    // seguidos sem reabrir a cada um), só fecha quando a pessoa manda fechar.
+    itemFormAberto: false,
+    toggleItemForm() {
+      this.itemFormAberto = !this.itemFormAberto;
+      if (this.itemFormAberto) this.$nextTick(() => this.$refs.inputNovoItem?.focus());
+    },
 
     // ---------- Histórico de compras finalizadas ----------
     historicoAberto: false,

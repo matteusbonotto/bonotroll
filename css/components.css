@@ -296,6 +296,29 @@
   flex-shrink: 0;
 }
 
+/* Botão flutuante de "+ Adicionar item" na Lista de compras — reintroduzido
+   só aqui (o antigo era global em Início/Transações mas duplicava um botão
+   já visível nessas telas, então virou clutter sobreposto; aqui o card de
+   adicionar começa fechado, então o FAB é a ÚNICA forma de abri-lo, não uma
+   duplicata). */
+.cg-fab {
+  position: fixed;
+  right: var(--space-4);
+  bottom: calc(var(--space-4) + env(safe-area-inset-bottom, 0px));
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  box-shadow: var(--shadow-md);
+  border: none;
+  z-index: 1030;
+}
+
 /* ---------- Menu hambúrguer / drawer (mobile) ---------- */
 .cg-drawer-backdrop {
   position: fixed;
@@ -467,8 +490,19 @@
   gap: var(--space-3);
 }
 .cg-grid-view--compact {
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  /* 120px só cabia ícone/valor — com o título, categoria, vencimento e
+     status agora sempre visíveis (pedido explícito: "compacto" é só
+     densidade visual, não informação faltando), a coluna precisa de mais
+     espaço pra não virar uma coluna de texto quebrando linha a cada
+     palavra. Continua bem mais denso que o modo grade (220px). */
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
   gap: var(--space-2);
+}
+.cg-grid-view--compact .cg-grid-view__card {
+  font-size: 0.8125rem;
+}
+.cg-grid-view--compact .fw-semibold.text-truncate {
+  font-size: 0.875rem;
 }
 .cg-grid-view__card {
   position: relative;
