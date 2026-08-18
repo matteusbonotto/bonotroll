@@ -7,6 +7,16 @@
   <meta name="description" content="Bõnotto — controle financeiro pessoal e do grupo, com lista de compras integrada." />
   <title>Bõnotto — Controle Financeiro</title>
 
+  <!-- Aplica o tema salvo (ou nenhum = segue o sistema) ANTES do CSS carregar,
+       pra não piscar o tema errado por uma fração de segundo no reload — o
+       resto da lógica (toggle, persistência) fica em store.js::applyTheme. -->
+  <script>
+    (function () {
+      var salvo = localStorage.getItem('bonotto_theme');
+      if (salvo === 'dark' || salvo === 'light') document.documentElement.setAttribute('data-bs-theme', salvo);
+    })();
+  </script>
+
   <link rel="manifest" href="./manifest.webmanifest" />
   <link rel="icon" href="./assets/icons/icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="./assets/icons/icon.svg" />
@@ -155,12 +165,15 @@
             <h1 class="h5 fw-bold mb-0 d-lg-none">Bõnotto</h1>
           </div>
           <div class="d-flex align-items-center gap-2">
+            <button type="button" class="btn p-0 border-0 bg-transparent cg-touch" @click="$store.app.toggleTheme()" :aria-label="$store.app.isDarkNow() ? 'Mudar para modo claro' : 'Mudar para modo escuro'" :title="$store.app.isDarkNow() ? 'Modo claro' : 'Modo escuro'">
+              <i class="bi fs-5" :class="$store.app.isDarkNow() ? 'bi-sun' : 'bi-moon-stars'"></i>
+            </button>
             <div x-data="{ open: false }" class="position-relative" @click.outside="open = false">
               <button type="button" class="btn p-0 border-0 bg-transparent position-relative cg-touch" @click="open = !open; if (open) $store.app.refreshNotifications()" aria-label="Notificações">
                 <i class="bi bi-bell fs-5"></i>
                 <span class="badge rounded-pill bg-danger position-absolute" style="top:2px; right:2px; font-size:0.6rem;" x-show="$store.app.unreadNotificationsCount" x-text="$store.app.unreadNotificationsCount"></span>
               </button>
-              <div x-show="open" x-cloak x-transition class="cg-card position-absolute end-0 mt-2" style="width: 320px; max-width: 88vw; max-height: 400px; overflow-y: auto; z-index: 1040;">
+              <div x-show="open" x-cloak x-transition class="cg-card position-fixed" style="max-height: 400px; overflow-y: auto; z-index: 1040;" x-effect="if (open) { const r = $el.previousElementSibling.getBoundingClientRect(); const w = Math.min(320, window.innerWidth - 16); $el.style.width = w + 'px'; $el.style.top = (r.bottom + 8) + 'px'; $el.style.left = Math.max(8, Math.min(r.right - w, window.innerWidth - w - 8)) + 'px'; }">
                 <div class="d-flex align-items-center justify-content-between mb-2">
                   <span class="fw-bold">Notificações</span>
                   <button type="button" class="btn btn-sm btn-link p-0" x-show="$store.app.unreadNotificationsCount" @click="$store.app.markAllNotificationsRead()">Marcar tudo como lida</button>
@@ -188,7 +201,7 @@
                 <span class="d-none d-md-inline fw-semibold" x-text="$store.app.profile?.nome"></span>
                 <i class="bi bi-chevron-down small cg-muted"></i>
               </button>
-              <div x-show="menuOpen" x-cloak x-transition class="cg-card position-absolute end-0 mt-2" style="min-width: 220px; z-index: 1040;">
+              <div x-show="menuOpen" x-cloak x-transition class="cg-card position-fixed" style="z-index: 1040;" x-effect="if (menuOpen) { const r = $el.previousElementSibling.getBoundingClientRect(); const w = Math.min(240, window.innerWidth - 16); $el.style.width = w + 'px'; $el.style.top = (r.bottom + 8) + 'px'; $el.style.left = Math.max(8, Math.min(r.right - w, window.innerWidth - w - 8)) + 'px'; }">
                 <template x-if="$store.app.isDemoMode && $store.app.demoProfiles.length">
                   <div class="mb-2">
                     <p class="cg-muted small mb-1 fw-semibold">Trocar perfil (demo)</p>
@@ -246,27 +259,27 @@
 
           <div class="cg-hero-balance mb-4" :style="corSelecionada ? { background: `linear-gradient(135deg, ${corSelecionada}, ${corSelecionada})` } : {}">
             <span class="cg-hero-balance__label">Saldo <span x-text="quemVer === 'grupo' ? 'do grupo' : quemVer === 'eu' ? 'atual' : ('de ' + (opcoesQuemVer.find(o => o.id === quemVer)?.nome || ''))"></span></span>
-            <div class="cg-hero-balance__value" x-text="cgFormat.formatCurrency(resumoSelecionado.saldo)"></div>
+            <div class="cg-hero-balance__value" :title="cgFormat.formatCurrency(resumoSelecionado.saldo)" x-text="cgFormat.formatCurrencyCompact(resumoSelecionado.saldo)"></div>
             <div class="cg-hero-balance__row">
               <div class="cg-hero-stat">
                 <i class="bi bi-download"></i>
                 <div>
                   <span class="cg-hero-stat__label">Entradas</span>
-                  <span class="cg-hero-stat__value" x-text="cgFormat.formatCurrency(resumoSelecionado.entradas)"></span>
+                  <span class="cg-hero-stat__value" :title="cgFormat.formatCurrency(resumoSelecionado.entradas)" x-text="cgFormat.formatCurrencyCompact(resumoSelecionado.entradas)"></span>
                 </div>
               </div>
               <div class="cg-hero-stat">
                 <i class="bi bi-upload"></i>
                 <div>
                   <span class="cg-hero-stat__label">Saídas</span>
-                  <span class="cg-hero-stat__value" x-text="cgFormat.formatCurrency(resumoSelecionado.saidas)"></span>
+                  <span class="cg-hero-stat__value" :title="cgFormat.formatCurrency(resumoSelecionado.saidas)" x-text="cgFormat.formatCurrencyCompact(resumoSelecionado.saidas)"></span>
                 </div>
               </div>
               <div class="cg-hero-stat">
                 <i class="bi bi-graph-up-arrow"></i>
                 <div>
                   <span class="cg-hero-stat__label">Maior gasto</span>
-                  <span class="cg-hero-stat__value" x-text="resumoSelecionado.maiorGasto ? cgFormat.formatCurrency(resumoSelecionado.maiorGasto.valor) : '—'"></span>
+                  <span class="cg-hero-stat__value" :title="resumoSelecionado.maiorGasto ? cgFormat.formatCurrency(resumoSelecionado.maiorGasto.valor) : ''" x-text="resumoSelecionado.maiorGasto ? cgFormat.formatCurrencyCompact(resumoSelecionado.maiorGasto.valor) : '—'"></span>
                 </div>
               </div>
             </div>
@@ -291,7 +304,7 @@
                       <div class="fw-semibold text-truncate" x-text="t.titulo"></div>
                       <div class="small cg-due-row__meta" x-text="diasLabel(t)"></div>
                     </div>
-                    <div class="fw-semibold flex-shrink-0 text-break text-end" style="max-width: 40%;" x-text="cgFormat.formatCurrency(t.valor)"></div>
+                    <div class="fw-semibold flex-shrink-0 text-end" :title="cgFormat.formatCurrency(t.valor)" x-text="cgFormat.formatCurrencyCompact(t.valor)"></div>
                   </div>
                 </template>
               </div>
@@ -343,7 +356,7 @@
                     </div>
                   </div>
                   <div class="text-end ms-2">
-                    <div class="text-break text-end" :class="r.tipo === 'entrada' ? 'text-success fw-semibold' : 'text-danger fw-semibold'" x-text="(r.tipo === 'entrada' ? '+ ' : '- ') + cgFormat.formatCurrency(r.valor)"></div>
+                    <div class="text-end" :class="r.tipo === 'entrada' ? 'text-success fw-semibold' : 'text-danger fw-semibold'" :title="cgFormat.formatCurrency(r.valor)" x-text="(r.tipo === 'entrada' ? '+ ' : '- ') + cgFormat.formatCurrencyCompact(r.valor)"></div>
                     <span class="cg-badge" :class="'cg-badge--' + cgStatus.statusMeta(r._status).badge" x-text="cgStatus.statusMeta(r._status).label"></span>
                   </div>
                 </div>
@@ -388,20 +401,20 @@
 
           <div class="cg-card mb-3 cg-filter-panel" :class="{ 'is-open': filtrosAbertos }">
             <div class="row g-2">
-              <div class="col-6 col-md-2">
+              <div class="col-12 col-md-2">
                 <select class="form-select form-select-sm" x-model="filtro.tipo">
                   <option value="">Movimentação</option>
                   <option value="entrada">Entrada</option>
                   <option value="saida">Saída</option>
                 </select>
               </div>
-              <div class="col-6 col-md-2">
+              <div class="col-12 col-md-2">
                 <select class="form-select form-select-sm" x-model="filtro.categoriaId">
                   <option value="">Categoria</option>
                   <template x-for="c in $store.app.categories" :key="c.id"><option :value="c.id" x-text="c.nome"></option></template>
                 </select>
               </div>
-              <div class="col-6 col-md-2">
+              <div class="col-12 col-md-2">
                 <select class="form-select form-select-sm" x-model="filtro.responsavelId">
                   <option value="">Responsável</option>
                   <option :value="$store.app.profile?.id" x-text="$store.app.profile?.nome"></option>
@@ -410,7 +423,7 @@
                   </template>
                 </select>
               </div>
-              <div class="col-6 col-md-2">
+              <div class="col-12 col-md-2">
                 <select class="form-select form-select-sm" x-model="filtro.status">
                   <option value="">Status</option>
                   <option value="pago">Pago</option>
@@ -419,7 +432,7 @@
                   <option value="pendente">Pendente</option>
                 </select>
               </div>
-              <div class="col-6 col-md-2">
+              <div class="col-12 col-md-2">
                 <select class="form-select form-select-sm" x-model="filtro.tipoDespesa">
                   <option value="">Fixa/Variável</option>
                   <option value="fixa">Fixa</option>
@@ -533,7 +546,7 @@
                       <div class="fw-semibold" x-text="row.titulo"></div>
                       <div class="cg-muted small" x-text="row.empresa_servico || ''"></div>
                     </td>
-                    <td class="fw-semibold text-break" x-text="cgFormat.formatCurrency(row.valor)"></td>
+                    <td class="fw-semibold" :title="cgFormat.formatCurrency(row.valor)" x-text="cgFormat.formatCurrencyCompact(row.valor)"></td>
                     <td x-data="{ open: false }" @click.outside="open = false">
                       <div class="position-relative">
                         <button type="button" class="cg-chip" :style="{ background: categoryFor(row.categoria_id)?.cor || '#94A3B8' }" @click="open = !open">
@@ -660,7 +673,7 @@
                       </template>
                     </div>
                   </div>
-                  <div class="fw-semibold flex-shrink-0 text-break text-end" style="max-width: 45%;" x-text="cgFormat.formatCurrency(row.valor)"></div>
+                  <div class="fw-semibold flex-shrink-0 text-end" :title="cgFormat.formatCurrency(row.valor)" x-text="cgFormat.formatCurrencyCompact(row.valor)"></div>
                 </div>
 
                 <div class="d-flex align-items-center gap-3 mb-2">
@@ -696,6 +709,22 @@
           <div class="cg-grid-view" :class="{ 'cg-grid-view--compact': viewMode === 'compacta' }" x-show="viewMode !== 'lista' && sortedRows.length">
             <template x-for="row in sortedRows" :key="row.id">
               <div class="cg-card cg-grid-view__card" @click="editar(row)">
+                <span class="cg-grid-view__avatar" :title="payersFor(row).length >= 2 ? 'Dividido' : (responsavelFor(row.responsavel_id)?.nome || '')">
+                  <template x-if="payersFor(row).length < 2">
+                    <span class="cg-avatar cg-avatar--sm" :style="{ borderColor: responsavelFor(row.responsavel_id)?.cor || 'var(--color-primary-soft)', background: responsavelFor(row.responsavel_id)?.cor || 'var(--color-primary)' }">
+                      <template x-if="responsavelFor(row.responsavel_id)?.avatar_url"><img :src="responsavelFor(row.responsavel_id).avatar_url" /></template>
+                      <template x-if="!responsavelFor(row.responsavel_id)?.avatar_url"><span x-text="cgFormat.initials(responsavelFor(row.responsavel_id)?.nome)"></span></template>
+                    </span>
+                  </template>
+                  <span class="cg-avatar-stack" x-show="payersFor(row).length >= 2">
+                    <template x-for="p in payersFor(row).slice(0, 2)" :key="p.profile_id">
+                      <span class="cg-avatar cg-avatar--sm" :style="{ borderColor: responsavelFor(p.profile_id)?.cor || 'var(--color-primary-soft)', background: responsavelFor(p.profile_id)?.cor || 'var(--color-primary)' }">
+                        <template x-if="responsavelFor(p.profile_id)?.avatar_url"><img :src="responsavelFor(p.profile_id).avatar_url" /></template>
+                        <template x-if="!responsavelFor(p.profile_id)?.avatar_url"><span x-text="cgFormat.initials(responsavelFor(p.profile_id)?.nome)"></span></template>
+                      </span>
+                    </template>
+                  </span>
+                </span>
                 <template x-if="$store.app.companyByName(row.empresa_servico)?.logo_url">
                   <img class="cg-grid-view__logo" :src="$store.app.companyByName(row.empresa_servico).logo_url" :alt="row.empresa_servico" />
                 </template>
@@ -706,7 +735,7 @@
                   </span>
                 </template>
                 <div class="fw-semibold text-truncate w-100" x-show="viewMode !== 'compacta'" x-text="row.titulo"></div>
-                <div class="fw-semibold text-break" :class="row.tipo === 'entrada' ? 'text-success' : ''" x-text="(row.tipo === 'entrada' ? '+ ' : '') + cgFormat.formatCurrency(row.valor)"></div>
+                <div class="fw-semibold" :class="row.tipo === 'entrada' ? 'text-success' : ''" :title="cgFormat.formatCurrency(row.valor)" x-text="(row.tipo === 'entrada' ? '+ ' : '') + cgFormat.formatCurrencyCompact(row.valor)"></div>
                 <span class="cg-badge" :class="'cg-badge--' + cgStatus.statusMeta(row._status).badge" x-show="viewMode !== 'compacta'">
                   <span x-text="cgStatus.statusMeta(row._status).label"></span>
                 </span>
@@ -735,7 +764,7 @@
 
             <div class="d-flex flex-wrap align-items-center gap-4 border-top pt-3">
               <div><span class="cg-muted small d-block">Itens</span><span class="fw-bold" x-text="resumo.itensComprados + ' / ' + resumo.totalItens"></span></div>
-              <div class="min-w-0"><span class="cg-muted small d-block">Total a pagar</span><span class="fw-bold text-break" x-text="cgFormat.formatCurrency(resumo.valorTotal)"></span></div>
+              <div class="min-w-0"><span class="cg-muted small d-block">Total a pagar</span><span class="fw-bold" :title="cgFormat.formatCurrency(resumo.valorTotal)" x-text="cgFormat.formatCurrencyCompact(resumo.valorTotal)"></span></div>
               <button type="button" class="cg-btn btn btn-outline-secondary btn-sm ms-auto" @click="graficoAberto = true"><i class="bi bi-pie-chart"></i> Ver gráfico</button>
               <button type="button" class="cg-btn btn btn-outline-secondary btn-sm" @click="abrirImportacao()"><i class="bi bi-upload"></i> Importar CSV</button>
             </div>
@@ -745,7 +774,7 @@
           <div class="cg-card mb-3">
             <div class="cg-section-title mb-2"><i class="bi bi-plus-circle"></i> Adicionar item</div>
             <form class="d-flex gap-2 flex-wrap" @submit.prevent="addItem()">
-              <input type="text" class="form-control flex-fill" style="min-width: 160px;" x-model="novoItem.nome" placeholder="Ex: Arroz 5kg" required />
+              <input type="text" class="form-control flex-fill" style="min-width: 160px;" x-model="novoItem.nome" @input="onNomeInput()" placeholder="Ex: Arroz 5kg" required />
               <button type="submit" class="cg-btn btn btn-success" title="Adicionar"><i class="bi bi-plus-lg"></i></button>
               <button type="button" class="cg-btn btn btn-outline-secondary" @click="abrirScanner()" title="Ler código de barras"><i class="bi bi-upc-scan"></i></button>
               <label class="cg-btn btn btn-outline-secondary mb-0" style="cursor:pointer;" title="Ler nome do item por foto">
@@ -756,17 +785,17 @@
             </form>
             <a href="#" class="small d-inline-flex align-items-center gap-1 mt-2" @click.prevent="maisOpcoesItem = !maisOpcoesItem">
               <i class="bi" :class="maisOpcoesItem ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
-              <span x-text="maisOpcoesItem ? 'Menos opções' : 'Categoria, unidade e quantidade'"></span>
+              <span x-text="maisOpcoesItem ? 'Menos opções' : 'Categoria, prioridade, unidade e quantidade'"></span>
             </a>
             <div class="row g-2 mt-2" x-show="maisOpcoesItem" x-cloak>
-              <div class="col-6 col-md-4">
-                <label class="form-label small">Categoria</label>
-                <select class="form-select form-select-sm" x-model="novoItem.categoria_id">
+              <div class="col-12 col-md-4">
+                <label class="form-label small">Categoria <span class="cg-muted" x-show="novoItem.categoria_id && !categoriaEscolhidaManualmente">(sugerida)</span></label>
+                <select class="form-select form-select-sm" x-model="novoItem.categoria_id" @change="onCategoriaManual()">
                   <option value="">Sem categoria</option>
                   <template x-for="c in $store.app.categories" :key="c.id"><option :value="c.id" x-text="c.nome"></option></template>
                 </select>
               </div>
-              <div class="col-3 col-md-4">
+              <div class="col-6 col-md-4">
                 <label class="form-label small">Unidade</label>
                 <select class="form-select form-select-sm" x-model="novoItem.unidade">
                   <option value="un">Unidade</option>
@@ -774,12 +803,30 @@
                   <option value="g">Gramas</option>
                 </select>
               </div>
-              <div class="col-3 col-md-4">
+              <div class="col-6 col-md-4">
                 <label class="form-label small">Qtd.</label>
                 <input type="number" min="0" step="0.001" class="form-control form-control-sm" x-model="novoItem.quantidade" />
               </div>
+              <div class="col-12">
+                <label class="form-label small d-block">Prioridade</label>
+                <div class="cg-star-picker">
+                  <template x-for="n in [1,2,3,4,5]" :key="n">
+                    <button type="button" @click="novoItem.prioridade = n" :aria-label="'Prioridade ' + n">
+                      <i class="bi" :class="n <= novoItem.prioridade ? 'bi-star-fill' : 'bi-star'"></i>
+                    </button>
+                  </template>
+                </div>
+              </div>
             </div>
           </div>
+
+          <template x-if="items.length">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <button type="button" class="btn btn-sm" :class="ordenarPorPrioridade ? 'btn-warning' : 'btn-outline-secondary'" @click="ordenarPorPrioridade = !ordenarPorPrioridade">
+                <i class="bi bi-star-fill"></i> Importantes primeiro
+              </button>
+            </div>
+          </template>
 
           <!-- Itens -->
           <template x-if="!loading && !items.length">
@@ -798,16 +845,17 @@
 
           <div class="cg-notebook" x-show="viewMode === 'lista' && items.length">
             <div class="d-flex flex-column">
-              <template x-for="item in items" :key="item.id">
+              <template x-for="item in itemsOrdenados" :key="item.id">
                 <div class="cg-item-row" :class="{ 'is-comprado': item.comprado }">
                   <span class="cg-chip" :style="{ background: (categoryFor(item.categoria_id)?.cor || '#94A3B8') }">
                     <span class="cg-chip__dot"></span>
                   </span>
                   <div class="flex-fill min-w-0">
                     <div class="cg-item-row__nome" x-text="item.nome"></div>
-                    <div class="cg-muted small">
+                    <div class="cg-muted small d-flex align-items-center gap-2">
                       <span x-text="item.quantidade + ' ' + item.unidade"></span>
-                      <template x-if="item.comprado"> · <span class="fw-semibold text-break" x-text="cgFormat.formatCurrency(item.subtotal)"></span></template>
+                      <template x-if="item.comprado"> · <span class="fw-semibold" :title="cgFormat.formatCurrency(item.subtotal)" x-text="cgFormat.formatCurrencyCompact(item.subtotal)"></span></template>
+                      <span class="cg-star-mini" x-show="item.prioridade >= 4" title="Prioridade alta"><i class="bi bi-star-fill"></i></span>
                     </div>
                   </div>
 
@@ -817,7 +865,8 @@
                   <template x-if="emCompra && item.comprado">
                     <button type="button" class="cg-btn btn btn-outline-secondary btn-sm" @click="desmarcarComprado(item)"><i class="bi bi-arrow-counterclockwise"></i></button>
                   </template>
-                  <button type="button" class="btn btn-sm btn-link text-danger" @click="removeItem(item.id)"><i class="bi bi-trash"></i></button>
+                  <button type="button" class="btn btn-sm btn-link" @click="abrirEdicao(item)" title="Editar"><i class="bi bi-pencil"></i></button>
+                  <button type="button" class="btn btn-sm btn-link text-danger" @click="removeItem(item.id)" title="Remover"><i class="bi bi-trash"></i></button>
                 </div>
               </template>
             </div>
@@ -827,17 +876,65 @@
                modo "Comprando") abre o preço; item já comprado alterna
                marcado/desmarcado; fora do modo compra só remove. -->
           <div class="cg-grid-view" :class="{ 'cg-grid-view--compact': viewMode === 'compacta' }" x-show="viewMode !== 'lista' && items.length">
-            <template x-for="item in items" :key="item.id">
-              <div class="cg-card cg-grid-view__card" :class="{ 'is-comprado': item.comprado }" @click="emCompra ? (item.comprado ? desmarcarComprado(item) : abrirPreco(item)) : removeItem(item.id)">
+            <template x-for="item in itemsOrdenados" :key="item.id">
+              <div class="cg-card cg-grid-view__card" :class="{ 'is-comprado': item.comprado }" @click="emCompra ? (item.comprado ? desmarcarComprado(item) : abrirPreco(item)) : abrirEdicao(item)">
+                <span class="cg-star-mini cg-star-mini--corner" x-show="item.prioridade >= 4" title="Prioridade alta"><i class="bi bi-star-fill"></i></span>
                 <span class="cg-chip" :class="{ 'cg-chip--icon-only': viewMode === 'compacta' }" :style="{ background: (categoryFor(item.categoria_id)?.cor || '#94A3B8') }">
                   <i class="bi" :class="item.comprado ? 'bi-check-lg' : 'bi-basket'"></i>
                   <span x-show="viewMode !== 'compacta'" x-text="categoryFor(item.categoria_id)?.nome || 'Sem categoria'"></span>
                 </span>
                 <div class="fw-semibold text-truncate w-100" x-show="viewMode !== 'compacta'" x-text="item.nome"></div>
                 <div class="cg-muted small" x-text="item.quantidade + ' ' + item.unidade"></div>
-                <div class="fw-semibold text-break" x-show="item.comprado" x-text="cgFormat.formatCurrency(item.subtotal)"></div>
+                <div class="fw-semibold" x-show="item.comprado" :title="cgFormat.formatCurrency(item.subtotal)" x-text="cgFormat.formatCurrencyCompact(item.subtotal)"></div>
               </div>
             </template>
+          </div>
+
+          <!-- Editor completo do item (nome/categoria/unidade/quantidade/prioridade) -->
+          <div class="cg-modal-backdrop" x-show="edicaoAberta" x-cloak @click.self="fecharEdicao()">
+            <div class="cg-modal">
+              <h2 class="h6 fw-bold mb-3">Editar item</h2>
+              <div class="mb-3">
+                <label class="form-label small">Nome</label>
+                <input type="text" class="form-control" x-model="edicaoForm.nome" required />
+              </div>
+              <div class="row g-2 mb-3">
+                <div class="col-12">
+                  <label class="form-label small">Categoria</label>
+                  <select class="form-select form-select-sm" x-model="edicaoForm.categoria_id">
+                    <option value="">Sem categoria</option>
+                    <template x-for="c in $store.app.categories" :key="c.id"><option :value="c.id" x-text="c.nome"></option></template>
+                  </select>
+                </div>
+                <div class="col-6">
+                  <label class="form-label small">Unidade</label>
+                  <select class="form-select form-select-sm" x-model="edicaoForm.unidade">
+                    <option value="un">Unidade</option>
+                    <option value="kg">Kg</option>
+                    <option value="g">Gramas</option>
+                  </select>
+                </div>
+                <div class="col-6">
+                  <label class="form-label small">Qtd.</label>
+                  <input type="number" min="0" step="0.001" class="form-control form-control-sm" x-model="edicaoForm.quantidade" />
+                </div>
+                <div class="col-12">
+                  <label class="form-label small d-block">Prioridade</label>
+                  <div class="cg-star-picker">
+                    <template x-for="n in [1,2,3,4,5]" :key="n">
+                      <button type="button" @click="edicaoForm.prioridade = n" :aria-label="'Prioridade ' + n">
+                        <i class="bi" :class="n <= edicaoForm.prioridade ? 'bi-star-fill' : 'bi-star'"></i>
+                      </button>
+                    </template>
+                  </div>
+                </div>
+              </div>
+              <div class="d-flex gap-2">
+                <button type="button" class="btn btn-outline-danger" @click="removeItem(edicaoForm.id); fecharEdicao()" title="Excluir"><i class="bi bi-trash"></i></button>
+                <button type="button" class="cg-btn btn btn-outline-secondary flex-fill" @click="fecharEdicao()">Cancelar</button>
+                <button type="button" class="cg-btn btn btn-success flex-fill" @click="salvarEdicao()">Salvar</button>
+              </div>
+            </div>
           </div>
 
           <!-- Editor de preço inline -->
@@ -912,79 +1009,104 @@
             </div>
           </div>
 
-          <!-- Cômodos (fixos) -->
-          <div class="d-flex flex-wrap gap-2 mb-2">
-            <template x-for="r in rooms" :key="r.id">
-              <button type="button" class="btn btn-sm rounded-pill" :class="activeRoomId === r.id ? 'btn-success' : 'btn-outline-secondary'" @click="selecionarRoom(r.id)">
-                <i class="bi" :class="r.icone"></i> <span x-text="r.nome"></span>
-              </button>
-            </template>
-          </div>
-
-          <!-- Subcategorias do cômodo atual (fixas) -->
-          <template x-if="roomCategories.length">
-            <div class="d-flex flex-wrap gap-2 mb-3">
-              <button type="button" class="btn btn-sm rounded-pill" :class="!activeCategoryId ? 'btn-primary' : 'btn-outline-secondary'" @click="selecionarCategoria(null)">Todas</button>
-              <template x-for="c in roomCategories" :key="c.id">
-                <button type="button" class="btn btn-sm rounded-pill" :class="activeCategoryId === c.id ? 'btn-primary' : 'btn-outline-secondary'" @click="selecionarCategoria(c.id)" x-text="c.nome"></button>
+          <!-- Grade de cômodos (fixos) — tela inicial de Recursos -->
+          <template x-if="!activeRoomId">
+            <div class="cg-room-grid">
+              <template x-for="r in rooms" :key="r.id">
+                <button type="button" class="cg-room-tile" @click="selecionarRoom(r.id)">
+                  <span class="cg-room-tile__alert" x-show="alertCountFor(r.id)" x-text="alertCountFor(r.id)"></span>
+                  <i class="bi" :class="r.icone"></i>
+                  <span class="cg-room-tile__nome" x-text="r.nome"></span>
+                  <span class="cg-room-tile__count" x-text="itemCountFor(r.id) + ' ' + (itemCountFor(r.id) === 1 ? 'item' : 'itens')"></span>
+                </button>
               </template>
             </div>
           </template>
 
-          <!-- Adicionar item -->
-          <div class="cg-card mb-3">
-            <div class="cg-section-title mb-2"><i class="bi bi-plus-circle"></i> Adicionar item <span class="cg-muted" x-show="salaAtual" x-text="'— ' + salaAtual?.nome"></span></div>
-            <form class="row g-2" @submit.prevent="addItem()">
-              <div class="col-12 col-md-5">
-                <input type="text" class="form-control" x-model="novoItem.nome" placeholder="Ex: Arroz, Papel higiênico…" required />
+          <!-- Dentro de um cômodo: só o que já foi pedido — itens (ver, editar,
+               excluir) e um botão de adicionar que abre modal. -->
+          <template x-if="activeRoomId">
+            <div>
+              <div class="d-flex align-items-center justify-content-between mb-3">
+                <button type="button" class="btn btn-sm btn-outline-secondary" @click="voltarParaGrade()"><i class="bi bi-arrow-left"></i> Cômodos</button>
+                <div class="cg-section-title mb-0"><i class="bi" :class="salaAtual?.icone"></i> <span x-text="salaAtual?.nome"></span></div>
+                <button type="button" class="cg-btn btn btn-success btn-sm" @click="abrirNovoItem()"><i class="bi bi-plus-lg"></i> Item</button>
               </div>
-              <div class="col-6 col-md-3">
-                <label class="form-label small mb-1 cg-muted d-md-none">Quantidade</label>
-                <input type="number" min="0" class="form-control" x-model="novoItem.quantidade" placeholder="Qtd." />
-              </div>
-              <div class="col-6 col-md-3">
-                <label class="form-label small mb-1 cg-muted d-md-none">Validade (opcional)</label>
-                <input type="date" class="form-control" x-model="novoItem.data_validade" title="Validade (opcional)" />
-              </div>
-              <div class="col-12 col-md-1">
-                <button type="submit" class="cg-btn btn btn-success w-100"><i class="bi bi-plus-lg"></i></button>
-              </div>
-            </form>
-          </div>
 
-          <!-- Itens -->
-          <template x-if="!loading && !items.length">
-            <div class="cg-empty-state"><i class="bi bi-box-seam"></i><p class="mt-2 mb-0">Nenhum item aqui ainda.</p></div>
+              <!-- Subcategorias do cômodo atual (fixas) -->
+              <template x-if="roomCategories.length">
+                <div class="d-flex flex-wrap gap-2 mb-3">
+                  <button type="button" class="btn btn-sm rounded-pill" :class="!activeCategoryId ? 'btn-primary' : 'btn-outline-secondary'" @click="selecionarCategoria(null)">Todas</button>
+                  <template x-for="c in roomCategories" :key="c.id">
+                    <button type="button" class="btn btn-sm rounded-pill" :class="activeCategoryId === c.id ? 'btn-primary' : 'btn-outline-secondary'" @click="selecionarCategoria(c.id)" x-text="c.nome"></button>
+                  </template>
+                </div>
+              </template>
+
+              <template x-if="!loading && !items.length">
+                <div class="cg-empty-state"><i class="bi bi-box-seam"></i><p class="mt-2 mb-0">Nenhum item aqui ainda.</p></div>
+              </template>
+
+              <div class="cg-grid-view">
+                <template x-for="item in items" :key="item.id">
+                  <div class="cg-card cg-grid-view__card" style="cursor: default;">
+                    <button type="button" class="btn btn-sm btn-link p-0" style="position:absolute; top:6px; right:6px;" @click="abrirEditarItem(item)" title="Editar"><i class="bi bi-pencil"></i></button>
+                    <template x-if="item.foto_url">
+                      <img class="cg-grid-view__logo" :src="item.foto_url" :alt="item.nome" />
+                    </template>
+                    <label class="cg-btn btn btn-outline-secondary btn-sm mb-0" style="cursor:pointer;" x-show="!item.foto_url">
+                      <span x-show="uploadingFotoId !== item.id"><i class="bi bi-camera"></i> Foto</span>
+                      <span x-show="uploadingFotoId === item.id" class="spinner-border spinner-border-sm"></span>
+                      <input type="file" accept="image/*" class="d-none" @change="onFotoChange(item, $event)" :disabled="uploadingFotoId === item.id" />
+                    </label>
+
+                    <div class="fw-semibold text-truncate w-100" x-text="item.nome"></div>
+
+                    <span class="cg-badge" :class="'cg-badge--' + expiryMeta(item).badge" x-show="expiryKey(item) !== 'ok'">
+                      <i :class="'bi ' + expiryMeta(item).icon"></i> <span x-text="expiryMeta(item).label"></span>
+                    </span>
+                    <div class="cg-muted small" x-show="item.data_validade" x-text="'Val.: ' + cgFormat.formatDate(item.data_validade)"></div>
+
+                    <div class="cg-qty-stepper">
+                      <button type="button" @click="ajustar(item, -1)" :disabled="item.quantidade <= 0"><i class="bi bi-dash"></i></button>
+                      <span class="cg-qty-stepper__value" x-text="item.quantidade"></span>
+                      <button type="button" @click="ajustar(item, 1)"><i class="bi bi-plus"></i></button>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </div>
           </template>
 
-          <div class="cg-grid-view">
-            <template x-for="item in items" :key="item.id">
-              <div class="cg-card cg-grid-view__card" style="cursor: default;">
-                <template x-if="item.foto_url">
-                  <img class="cg-grid-view__logo" :src="item.foto_url" :alt="item.nome" />
-                </template>
-                <label class="cg-btn btn btn-outline-secondary btn-sm mb-0" style="cursor:pointer;" x-show="!item.foto_url">
-                  <span x-show="uploadingFotoId !== item.id"><i class="bi bi-camera"></i> Foto</span>
-                  <span x-show="uploadingFotoId === item.id" class="spinner-border spinner-border-sm"></span>
-                  <input type="file" accept="image/*" class="d-none" @change="onFotoChange(item, $event)" :disabled="uploadingFotoId === item.id" />
-                </label>
-
-                <div class="fw-semibold text-truncate w-100" x-text="item.nome"></div>
-
-                <span class="cg-badge" :class="'cg-badge--' + expiryMeta(item).badge" x-show="expiryKey(item) !== 'ok'">
-                  <i :class="'bi ' + expiryMeta(item).icon"></i> <span x-text="expiryMeta(item).label"></span>
-                </span>
-                <div class="cg-muted small" x-show="item.data_validade" x-text="'Val.: ' + cgFormat.formatDate(item.data_validade)"></div>
-
-                <div class="cg-qty-stepper">
-                  <button type="button" @click="ajustar(item, -1)" :disabled="item.quantidade <= 0"><i class="bi bi-dash"></i></button>
-                  <span class="cg-qty-stepper__value" x-text="item.quantidade"></span>
-                  <button type="button" @click="ajustar(item, 1)"><i class="bi bi-plus"></i></button>
-                </div>
-
-                <button type="button" class="btn btn-sm btn-link text-danger p-0" @click="removeItem(item.id)"><i class="bi bi-trash"></i> Remover</button>
+          <!-- Modal de adicionar/editar item -->
+          <div class="cg-modal-backdrop" x-show="itemModalAberto" x-cloak @click.self="fecharModalItem()">
+            <div class="cg-modal">
+              <h2 class="h6 fw-bold mb-3">
+                <span x-text="itemForm.id ? 'Editar item' : 'Adicionar item'"></span>
+                <span class="cg-muted fw-normal" x-text="'— ' + (salaAtual?.nome || '')"></span>
+              </h2>
+              <div class="mb-3">
+                <label class="form-label small">Nome</label>
+                <input type="text" class="form-control" x-model="itemForm.nome" placeholder="Ex: Arroz, Papel higiênico…" required />
               </div>
-            </template>
+              <div class="row g-2 mb-3">
+                <div class="col-6">
+                  <label class="form-label small">Quantidade</label>
+                  <input type="number" min="0" class="form-control" x-model="itemForm.quantidade" />
+                </div>
+                <div class="col-6">
+                  <label class="form-label small">Validade (opcional)</label>
+                  <input type="date" class="form-control" x-model="itemForm.data_validade" />
+                </div>
+              </div>
+              <div class="d-flex gap-2">
+                <template x-if="itemForm.id">
+                  <button type="button" class="btn btn-outline-danger" @click="removeItem(itemForm.id)" title="Excluir"><i class="bi bi-trash"></i></button>
+                </template>
+                <button type="button" class="cg-btn btn btn-outline-secondary flex-fill" @click="fecharModalItem()">Cancelar</button>
+                <button type="button" class="cg-btn btn btn-success flex-fill" @click="salvarItem()">Salvar</button>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -1062,9 +1184,9 @@
         <!-- ===== PERFIL ===== -->
         <section x-show="$store.app.view === 'perfil'" x-data="profileView()" x-init="init()">
           <div class="cg-section-title"><i class="bi bi-person-circle"></i> Perfil</div>
-          <div class="row g-3">
+          <div class="row g-3 align-items-start">
             <div class="col-12 col-lg-5">
-              <div class="cg-card h-100">
+              <div class="cg-card">
                 <div class="cg-muted small fw-semibold text-uppercase mb-2">Identidade</div>
                 <label class="form-label">Foto e cor</label>
                 <div class="d-flex align-items-center gap-3 mb-3">

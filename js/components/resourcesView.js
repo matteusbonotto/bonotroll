@@ -2,21 +2,25 @@ import * as res from '../services/resources.js';
 import { getOrCreateActiveList, addItem as addShoppingItem } from '../services/shoppingList.js';
 import { computeExpiryStatus, expiryStatusMeta } from '../utils/status.js';
 
-const NOVO_ITEM_VAZIO = () => ({ nome: '', quantidade: 1, data_validade: '' });
+const ITEM_FORM_VAZIO = () => ({ id: null, nome: '', quantidade: 1, data_validade: '' });
 
 // Tela "Recursos": inventário doméstico por cômodo -> subcategoria (fixos) ->
-// itens (livres, com quantidade e validade opcional). Ver
-// js/services/resources.js pra CRUD/seed dos cômodos.
+// itens (livres, com quantidade e validade opcional). Navegação em
+// drill-down: grade de cômodos -> dentro de um cômodo, subcategorias +
+// itens -> "+" abre modal de adicionar/editar (ver js/services/resources.js
+// pro CRUD/seed dos cômodos).
 export function resourcesView() {
   return {
     loading: true,
     rooms: [],
     roomCategories: [],
-    allItems: [], // todos os itens do usuário/grupo — só pra "Sugestões"
+    allItems: [], // todos os itens do usuário/grupo — pra "Sugestões" e contagem por cômodo
     items: [], // itens do cômodo/subcategoria selecionados
-    activeRoomId: null,
+    activeRoomId: null, // null = mostra a grade de cômodos
     activeCategoryId: null, // null = "todas" as subcategorias do cômodo
-    novoItem: NOVO_ITEM_VAZIO(),
+
+    itemModalAberto: false,
+    itemForm: ITEM_FORM_VAZIO(),
     uploadingFotoId: null,
 
     async init() {
@@ -25,10 +29,8 @@ export function resourcesView() {
       this.loading = true;
       const groupId = store.group?.group?.id;
       this.rooms = await res.ensureDefaultRooms(store.profile.id, groupId);
-      if (this.rooms.length) await this.selecionarRoom(this.rooms[0].id);
       await this.carregarSugestoes();
       this.loading = false;
-      window.addEventListener('cg:transactions-changed', () => {}); // no-op reservado (paridade com outras telas)
     },
 
     async carregarSugestoes() {
@@ -43,6 +45,12 @@ export function resourcesView() {
       await this.carregarItens();
     },
 
+    voltarParaGrade() {
+      this.activeRoomId = null;
+      this.activeCategoryId = null;
+      this.items = [];
+    },
+
     async selecionarCategoria(categoryId) {
       this.activeCategoryId = categoryId;
       await this.carregarItens();
@@ -54,6 +62,15 @@ export function resourcesView() {
 
     get salaAtual() {
       return this.rooms.find((r) => r.id === this.activeRoomId) || null;
+    },
+
+    // Quantos itens (e quantos precisam de atenção) cada cômodo tem — mostrado
+    // como badge no tile da grade, pra dar contexto sem precisar entrar.
+    itemCountFor(roomId) {
+      return this.allItems.filter((i) => i.room_id === roomId).length;
+    },
+    alertCountFor(roomId) {
+      return this.allItems.filter((i) => i.room_id === roomId && computeExpiryStatus(i) !== 'ok').length;
     },
 
     // Itens em falta (quantidade 0) ou vencendo/vencidos — sugestão de
@@ -76,19 +93,44 @@ export function resourcesView() {
       return this.rooms.find((r) => r.id === roomId) || null;
     },
 
-    async addItem() {
-      if (!this.novoItem.nome.trim() || !this.activeRoomId) return;
+    // ---------- Modal de adicionar/editar item ----------
+    abrirNovoItem() {
+      this.itemForm = ITEM_FORM_VAZIO();
+      this.itemModalAberto = true;
+    },
+    abrirEditarItem(item) {
+      this.itemForm = {
+        id: item.id,
+        nome: item.nome,
+        quantidade: item.quantidade,
+        data_validade: item.data_validade || '',
+      };
+      this.itemModalAberto = true;
+    },
+    fecharModalItem() {
+      this.itemModalAberto = false;
+    },
+
+    async salvarItem() {
+      if (!this.itemForm.nome.trim() || !this.activeRoomId) return;
       const store = this.$store.app;
-      await res.createItem({
-        nome: this.novoItem.nome.trim(),
-        quantidade: Number(this.novoItem.quantidade) || 0,
-        data_validade: this.novoItem.data_validade || null,
-        room_id: this.activeRoomId,
-        category_id: this.activeCategoryId,
-        owner_id: store.profile.id,
-        group_id: store.group?.group?.id ?? null,
-      });
-      this.novoItem = NOVO_ITEM_VAZIO();
+      const patch = {
+        nome: this.itemForm.nome.trim(),
+        quantidade: Number(this.itemForm.quantidade) || 0,
+        data_validade: this.itemForm.data_validade || null,
+      };
+      if (this.itemForm.id) {
+        await res.updateItem(this.itemForm.id, patch);
+      } else {
+        await res.createItem({
+          ...patch,
+          room_id: this.activeRoomId,
+          category_id: this.activeCategoryId,
+          owner_id: store.profile.id,
+          group_id: store.group?.group?.id ?? null,
+        });
+      }
+      this.itemModalAberto = false;
       await this.carregarItens();
       await this.carregarSugestoes();
     },
@@ -103,6 +145,7 @@ export function resourcesView() {
     async removeItem(id) {
       if (!confirm('Remover este item?')) return;
       await res.deleteItem(id);
+      this.itemModalAberto = false;
       await this.carregarItens();
       await this.carregarSugestoes();
     },

@@ -38,8 +38,16 @@
   color-scheme: light;
 }
 
+/* Modo escuro: aplicado em DOIS gatilhos —
+   1) prefers-color-scheme (o sistema operacional está em escuro) E a pessoa
+      nunca escolheu um tema manualmente ([data-bs-theme] ausente);
+   2) [data-bs-theme="dark"] no <html>, setado pelo toggle em
+      js/components/store.js (applyTheme) e persistido em localStorage — tem
+      precedência sobre o sistema porque é mais específico que ":root" puro.
+   [data-bs-theme="light"] reafirma os valores claros pra "forçar claro"
+   funcionar mesmo com o sistema em escuro (mesma lógica de precedência). */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-bs-theme="light"]) {
     --color-bg: #14181A;
     --color-surface: #1E2427;
     --color-surface-alt: #242B2E;
@@ -53,7 +61,36 @@
   }
 }
 
-/* Alinha as cores contextuais do Bootstrap com a identidade do Bõnotto */
+:root[data-bs-theme="dark"] {
+  --color-bg: #14181A;
+  --color-surface: #1E2427;
+  --color-surface-alt: #242B2E;
+  --color-text: #F2F3F1;
+  --color-text-muted: #A9B2AD;
+  --color-border: #2E3538;
+  --color-primary-soft: #17332A;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
+  color-scheme: dark;
+}
+
+:root[data-bs-theme="light"] {
+  --color-bg: #F7F7F5;
+  --color-surface: #FFFFFF;
+  --color-surface-alt: #F1F3F0;
+  --color-text: #1A1D1B;
+  --color-text-muted: #5B615D;
+  --color-border: #E4E7E2;
+  --color-primary-soft: #E4F2ED;
+  --shadow-sm: 0 1px 3px rgba(20, 30, 25, 0.06), 0 1px 2px rgba(20, 30, 25, 0.08);
+  --shadow-md: 0 8px 24px rgba(20, 30, 25, 0.10);
+  color-scheme: light;
+}
+
+/* Alinha as cores contextuais do Bootstrap com a identidade do Bõnotto —
+   usando os MESMOS tokens acima, os componentes nativos do Bootstrap
+   (inputs, tabelas, modais que não usamos, etc.) escurecem/clareiam junto
+   com o resto do app quando data-bs-theme muda, de graça. */
 :root {
   --bs-primary: var(--color-primary);
   --bs-primary-rgb: 31, 122, 92;
@@ -67,16 +104,24 @@
   --bs-border-color: var(--color-border);
   --bs-body-font-size: var(--font-size-base);
   /* --bs-emphasis-color raiz do Bootstrap é sempre #000 (só vira #fff sob
-     [data-bs-theme=dark], que a gente não usa — o tema aqui é 100% via
-     prefers-color-scheme). Tabelas usam --bs-table-color: var(--bs-emphasis-
-     color), não --bs-body-color, então sem isso o texto das células fica
-     preto fixo em qualquer tema. */
+     [data-bs-theme=dark] por padrão) — como a gente já pilota esse atributo
+     na mão, isso aqui só garante que fique em sincronia com --color-text
+     nos dois gatilhos (sistema OU escolha manual) em vez de depender do
+     valor padrão do Bootstrap. Tabelas usam --bs-table-color: var(--bs-
+     emphasis-color), não --bs-body-color, então sem isso o texto das
+     células fica preto fixo em qualquer tema. */
   --bs-emphasis-color: var(--color-text);
   --bs-emphasis-color-rgb: 26, 29, 27;
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-bs-theme="light"]) {
     --bs-emphasis-color-rgb: 242, 243, 241;
   }
+}
+:root[data-bs-theme="dark"] {
+  --bs-emphasis-color-rgb: 242, 243, 241;
+}
+:root[data-bs-theme="light"] {
+  --bs-emphasis-color-rgb: 26, 29, 27;
 }

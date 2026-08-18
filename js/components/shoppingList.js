@@ -4,12 +4,15 @@ import { createTransaction } from '../services/transactions.js';
 import { recognizeText, parseReceiptText } from '../services/ocr.js';
 import { todayIso } from '../utils/format.js';
 
+const NOVO_ITEM_VAZIO = () => ({ nome: '', categoria_id: '', unidade: 'un', quantidade: 1, prioridade: 3 });
+
 export function shoppingView() {
   return {
     list: null,
     items: [],
     loading: true,
-    novoItem: { nome: '', categoria_id: '', unidade: 'un', quantidade: 1 },
+    novoItem: NOVO_ITEM_VAZIO(),
+    categoriaEscolhidaManualmente: false,
     itemEmEdicaoId: null,
     precoEdicao: { valor: '', quantidade: '' },
     scannerAberto: false,
@@ -17,6 +20,13 @@ export function shoppingView() {
     graficoAberto: false,
     lendoFotoItem: false,
     maisOpcoesItem: false,
+    ordenarPorPrioridade: false,
+
+    // Modal de edição completa (nome/categoria/unidade/quantidade/
+    // prioridade) — separado do editor de preço (abrirPreco), que é só
+    // pro fluxo de "Comprando".
+    edicaoAberta: false,
+    edicaoForm: { id: null, nome: '', categoria_id: '', unidade: 'un', quantidade: 1, prioridade: 3 },
 
     // "lista" = folha de caderno (default, ver .cg-notebook em css/components.css).
     // Grade/grade compacta são uma visão alternativa de navegação, sem o
@@ -66,8 +76,27 @@ export function shoppingView() {
     get emCompra() { return this.list?.status === 'comprando'; },
     get pausada() { return this.list?.status === 'pausada'; },
 
+    // "Importantes primeiro" (prioridade 5 -> 1); desligado mostra a ordem
+    // de criação normal (a mesma que já vinha do banco).
+    get itemsOrdenados() {
+      if (!this.ordenarPorPrioridade) return this.items;
+      return [...this.items].sort((a, b) => (b.prioridade || 3) - (a.prioridade || 3));
+    },
+
     categoryFor(id) {
       return this.$store.app.categoryById(id);
+    },
+
+    // Sugere categoria pelo nome digitado (ver guessCategoryByName) — só
+    // se a pessoa ainda não tiver escolhido uma categoria na mão pra este
+    // item; nunca sobrescreve uma escolha manual.
+    onNomeInput() {
+      if (this.categoriaEscolhidaManualmente) return;
+      const sugestao = sl.guessCategoryByName(this.novoItem.nome, this.$store.app.categories);
+      if (sugestao) this.novoItem.categoria_id = sugestao.id;
+    },
+    onCategoriaManual() {
+      this.categoriaEscolhidaManualmente = true;
     },
 
     async onFotoItem(event) {
@@ -80,6 +109,7 @@ export function shoppingView() {
         const dados = parseReceiptText(texto);
         if (dados.titulo) {
           this.novoItem.nome = dados.titulo;
+          this.onNomeInput();
           store.notify('Nome lido da foto — confira antes de adicionar.');
         } else {
           store.notify('Não consegui ler nenhum texto nessa foto.', 'danger');
@@ -95,12 +125,39 @@ export function shoppingView() {
     async addItem() {
       if (!this.novoItem.nome.trim()) return;
       await sl.addItem(this.list.id, { ...this.novoItem, nome: this.novoItem.nome.trim() });
-      this.novoItem = { nome: '', categoria_id: '', unidade: 'un', quantidade: 1 };
+      this.novoItem = NOVO_ITEM_VAZIO();
+      this.categoriaEscolhidaManualmente = false;
       await this.refreshItems();
     },
 
     async removeItem(id) {
       await sl.removeItem(id);
+      await this.refreshItems();
+    },
+
+    // ---------- Edição completa de um item já existente ----------
+    abrirEdicao(item) {
+      this.edicaoForm = {
+        id: item.id,
+        nome: item.nome,
+        categoria_id: item.categoria_id || '',
+        unidade: item.unidade,
+        quantidade: item.quantidade,
+        prioridade: item.prioridade || 3,
+      };
+      this.edicaoAberta = true;
+    },
+    fecharEdicao() {
+      this.edicaoAberta = false;
+    },
+    async salvarEdicao() {
+      if (!this.edicaoForm.nome.trim()) return;
+      const { id, ...patch } = this.edicaoForm;
+      patch.nome = patch.nome.trim();
+      patch.categoria_id = patch.categoria_id || null;
+      patch.quantidade = Number(patch.quantidade) || 0;
+      await sl.updateItem(id, patch);
+      this.edicaoAberta = false;
       await this.refreshItems();
     },
 
@@ -203,6 +260,7 @@ export function shoppingView() {
       this.scannerAberto = false;
       const produto = await lookupProductByBarcode(codigo);
       this.novoItem.nome = produto?.nome || `Item ${codigo}`;
+      this.onNomeInput();
       this.$store.app.notify(produto?.nome ? `Produto identificado: ${produto.nome}` : 'Código lido — confira o nome do item.');
     },
 

@@ -69,13 +69,58 @@ export async function listItems(listId) {
   return data;
 }
 
-export async function addItem(listId, { nome, categoria_id, unidade = 'un', quantidade = 1 }) {
-  const row = { list_id: listId, nome, categoria_id: categoria_id ?? null, unidade, quantidade, preco_unitario: null, preco_por_kg: null, subtotal: 0, comprado: false, codigo_barras: null, foto_url: null };
+export async function addItem(listId, { nome, categoria_id, unidade = 'un', quantidade = 1, prioridade = 3 }) {
+  const row = {
+    list_id: listId,
+    nome,
+    categoria_id: categoria_id ?? null,
+    unidade,
+    quantidade,
+    prioridade,
+    preco_unitario: null,
+    preco_por_kg: null,
+    subtotal: 0,
+    comprado: false,
+    codigo_barras: null,
+    foto_url: null,
+  };
   if (isDemoMode()) return mockDb.insert('shopping_list_items', row);
   const supabase = await getSupabase();
   const { data, error } = await supabase.from('shopping_list_items').insert(row).select().single();
   if (error) throw error;
   return data;
+}
+
+// ---------- Categorização automática ----------
+// Sugere uma categoria pelo NOME digitado, comparando com uma lista de
+// palavras-chave por categoria (só sugere se essa categoria já existir na
+// conta — nunca cria categoria nova sozinho). Sempre editável manualmente
+// depois — isso aqui só preenche o campo, não trava ele. Cada regra aceita
+// mais de um nome de categoria possível porque o modo demo (mockDb.js) e o
+// modo real (DEFAULT_CATEGORIES em services/categories.js) não usam
+// exatamente os mesmos nomes pra "mercado em geral" (Alimentos x Mercado).
+const REGRAS_CATEGORIA = [
+  { nomes: ['Laticínios'], palavras: ['leite', 'queijo', 'requeijao', 'requeijão', 'iogurte', 'manteiga', 'margarina', 'nata', 'creme de leite'] },
+  { nomes: ['Padaria'], palavras: ['pao', 'pão', 'baguete', 'croissant', 'bolo', 'biscoito', 'bolacha', 'torrada', 'rosca'] },
+  { nomes: ['Açougue'], palavras: ['carne', 'frango', 'peixe', 'linguica', 'linguiça', 'bacon', 'salsicha', 'costela', 'picanha', 'file', 'filé'] },
+  { nomes: ['Hortifruti'], palavras: ['banana', 'maca', 'maçã', 'laranja', 'tomate', 'alface', 'cebola', 'batata', 'cenoura', 'limao', 'limão', 'uva', 'mamao', 'mamão', 'abacate', 'pepino', 'pimentao', 'pimentão', 'alho', 'morango'] },
+  { nomes: ['Limpeza'], palavras: ['detergente', 'sabao em po', 'sabão em pó', 'desinfetante', 'agua sanitaria', 'água sanitária', 'amaciante', 'esponja', 'papel toalha', 'multiuso'] },
+  { nomes: ['Higiene'], palavras: ['papel higienico', 'papel higiênico', 'sabonete', 'shampoo', 'condicionador', 'creme dental', 'pasta de dente', 'escova de dente', 'absorvente', 'desodorante', 'fralda'] },
+  { nomes: ['Bebidas'], palavras: ['refrigerante', 'suco', 'agua', 'água', 'cerveja', 'vinho', 'cafe', 'café', 'cha', 'chá', 'energetico', 'energético'] },
+  { nomes: ['Mercado', 'Alimentos'], palavras: ['arroz', 'feijao', 'feijão', 'macarrao', 'macarrão', 'acucar', 'açúcar', ' sal', 'oleo', 'óleo', 'farinha'] },
+];
+
+export function guessCategoryByName(nome, categories) {
+  const alvo = (nome || '').trim().toLowerCase();
+  if (!alvo) return null;
+  for (const regra of REGRAS_CATEGORIA) {
+    if (!regra.palavras.some((p) => alvo.includes(p))) continue;
+    for (const nomeCat of regra.nomes) {
+      const achada = categories.find((c) => c.nome.trim().toLowerCase() === nomeCat.toLowerCase());
+      if (achada) return achada;
+    }
+  }
+  return null;
 }
 
 // Faz merge do patch com o item atual e recalcula o subtotal automaticamente

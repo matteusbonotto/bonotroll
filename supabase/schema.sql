@@ -148,6 +148,93 @@ create table if not exists resource_items (
   criado_em timestamptz not null default now()
 );
 
+-- =========================================================
+-- LIMPEZA DE CÔMODOS/SUBCATEGORIAS DUPLICADOS + ÍNDICES ÚNICOS
+-- Mesmo problema que categories já teve (ver "LIMPEZA DE CATEGORIAS
+-- DUPLICADAS" no fim deste arquivo): ensureDefaultRooms rodando duas vezes
+-- em paralelo (dois acessos à tela de Recursos antes do primeiro terminar)
+-- criava os cômodos padrão duplicados. Reaponta resource_categories e
+-- resource_items dos duplicados pro "sobrevivente" antes de apagar, depois
+-- cria os índices que impedem duplicar de novo. No-op depois da primeira
+-- vez — seguro rodar sempre.
+-- =========================================================
+
+with ranked as (
+  select id, owner_id, nome,
+         coalesce(group_id, '00000000-0000-0000-0000-000000000000'::uuid) as gkey,
+         row_number() over (
+           partition by owner_id, coalesce(group_id, '00000000-0000-0000-0000-000000000000'::uuid), nome
+           order by criado_em
+         ) as rn
+  from resource_rooms
+),
+keeper_map as (
+  select d.id as dup_id, k.id as keeper_id
+  from ranked d
+  join ranked k on k.owner_id = d.owner_id and k.gkey = d.gkey and k.nome = d.nome and k.rn = 1
+  where d.rn > 1
+)
+update resource_categories c set room_id = km.keeper_id
+from keeper_map km where c.room_id = km.dup_id;
+
+with ranked as (
+  select id, owner_id, nome,
+         coalesce(group_id, '00000000-0000-0000-0000-000000000000'::uuid) as gkey,
+         row_number() over (
+           partition by owner_id, coalesce(group_id, '00000000-0000-0000-0000-000000000000'::uuid), nome
+           order by criado_em
+         ) as rn
+  from resource_rooms
+),
+keeper_map as (
+  select d.id as dup_id, k.id as keeper_id
+  from ranked d
+  join ranked k on k.owner_id = d.owner_id and k.gkey = d.gkey and k.nome = d.nome and k.rn = 1
+  where d.rn > 1
+)
+update resource_items i set room_id = km.keeper_id
+from keeper_map km where i.room_id = km.dup_id;
+
+with ranked as (
+  select id,
+         row_number() over (
+           partition by owner_id, coalesce(group_id, '00000000-0000-0000-0000-000000000000'::uuid), nome
+           order by criado_em
+         ) as rn
+  from resource_rooms
+)
+delete from resource_rooms r using ranked rk
+where r.id = rk.id and rk.rn > 1;
+
+create unique index if not exists resource_rooms_owner_group_nome_uniq
+  on resource_rooms (owner_id, coalesce(group_id, '00000000-0000-0000-0000-000000000000'::uuid), nome);
+
+-- Mesma lógica pras subcategorias dentro de cada cômodo (já únicos a essa altura)
+with ranked as (
+  select id, room_id, nome,
+         row_number() over (partition by room_id, nome order by criado_em) as rn
+  from resource_categories
+),
+keeper_map as (
+  select d.id as dup_id, k.id as keeper_id
+  from ranked d
+  join ranked k on k.room_id = d.room_id and k.nome = d.nome and k.rn = 1
+  where d.rn > 1
+)
+update resource_items i set category_id = km.keeper_id
+from keeper_map km where i.category_id = km.dup_id;
+
+with ranked as (
+  select id,
+         row_number() over (partition by room_id, nome order by criado_em) as rn
+  from resource_categories
+)
+delete from resource_categories c using ranked rk
+where c.id = rk.id and rk.rn > 1;
+
+create unique index if not exists resource_categories_room_nome_uniq
+  on resource_categories (room_id, nome);
+
 create table if not exists shopping_lists (
   id uuid primary key default uuid_generate_v4(),
   owner_id uuid not null references profiles(id) on delete cascade,
@@ -167,6 +254,7 @@ create table if not exists shopping_list_items (
   categoria_id uuid references categories(id) on delete set null,
   unidade text not null default 'un' check (unidade in ('un', 'kg', 'g')),
   quantidade numeric(10, 3) default 1,
+  prioridade int not null default 3 check (prioridade between 1 and 5),
   preco_unitario numeric(12, 2),
   preco_por_kg numeric(12, 2),
   subtotal numeric(12, 2) default 0,
@@ -175,6 +263,9 @@ create table if not exists shopping_list_items (
   foto_url text,
   criado_em timestamptz not null default now()
 );
+-- "create table if not exists" não roda em quem já tem a tabela — coluna
+-- nova em conta existente precisa deste alter (idempotente, seguro repetir).
+alter table shopping_list_items add column if not exists prioridade int not null default 3;
 
 -- Notificações dentro do app (sino no topo). dedupe_key evita duplicar a
 -- mesma notificação a cada varredura (cliente, ver js/services/

@@ -12,6 +12,15 @@ export const DEFAULT_CATEGORIES = [
   { nome: 'Mercado', cor: '#16A34A', icone: 'bi-basket' },
   { nome: 'Outro', cor: '#64748B', icone: 'bi-three-dots' },
   { nome: 'Salário', cor: '#EAB308', icone: 'bi-cash-coin' },
+  // Quebra mais fina de "Mercado" — usadas pela categorização automática da
+  // lista de compras (ver guessCategoryByName em services/shoppingList.js).
+  { nome: 'Laticínios', cor: '#38BDF8', icone: 'bi-cup-fill' },
+  { nome: 'Padaria', cor: '#B45309', icone: 'bi-basket2-fill' },
+  { nome: 'Açougue', cor: '#DC2626', icone: 'bi-shop' },
+  { nome: 'Hortifruti', cor: '#65A30D', icone: 'bi-apple' },
+  { nome: 'Limpeza', cor: '#06B6D4', icone: 'bi-droplet' },
+  { nome: 'Higiene', cor: '#EC4899', icone: 'bi-droplet-half' },
+  { nome: 'Bebidas', cor: '#D97706', icone: 'bi-cup-straw' },
 ];
 
 export async function listCategories({ ownerId, groupId }) {
@@ -75,14 +84,28 @@ export async function uploadCategoryIcon(userId, file) {
   return pub.publicUrl;
 }
 
+// "Top up" em vez de "só semeia se estiver vazia": contas criadas antes de
+// novas entradas serem adicionadas em DEFAULT_CATEGORIES (ex.: Laticínios/
+// Padaria/Açougue/Hortifruti, adicionadas pra dar suporte à categorização
+// automática da lista de compras) também recebem as que estão faltando,
+// comparando por nome — nunca duplica o que a pessoa já tem.
 export async function ensureDefaultCategories(ownerId, groupId) {
   const existing = await listCategories({ ownerId, groupId });
-  if (existing.length > 0) return existing;
-  const created = [];
-  for (const c of DEFAULT_CATEGORIES) {
-    created.push(await createCategory({ ...c, ownerId, groupId }));
+  const nomesExistentes = new Set(existing.map((c) => c.nome.trim().toLowerCase()));
+  const faltando = DEFAULT_CATEGORIES.filter((c) => !nomesExistentes.has(c.nome.toLowerCase()));
+  if (!faltando.length) return existing;
+
+  const criadas = [];
+  for (const c of faltando) {
+    try {
+      criadas.push(await createCategory({ ...c, ownerId, groupId }));
+    } catch (e) {
+      // 23505 = unique_violation — outra aba/carregamento concorrente já
+      // criou essa categoria primeiro; seguro ignorar.
+      if (e?.code !== '23505') throw e;
+    }
   }
-  return created;
+  return [...existing, ...criadas];
 }
 
 export async function deleteCategory(id) {

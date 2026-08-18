@@ -35,6 +35,9 @@ function seedDatabase() {
     { id: 'cat-higiene', nome: 'Higiene', cor: '#EC4899', icone: 'bi-droplet-half' },
     { id: 'cat-bebidas', nome: 'Bebidas', cor: '#D97706', icone: 'bi-cup-straw' },
     { id: 'cat-hortifruti', nome: 'Hortifruti', cor: '#65A30D', icone: 'bi-apple' },
+    { id: 'cat-laticinios', nome: 'Laticínios', cor: '#38BDF8', icone: 'bi-cup-fill' },
+    { id: 'cat-padaria', nome: 'Padaria', cor: '#B45309', icone: 'bi-basket2-fill' },
+    { id: 'cat-acougue', nome: 'Açougue', cor: '#DC2626', icone: 'bi-shop' },
   ].map((c) => ({ ...c, owner_id: matheusId, group_id: groupId, criado_em: new Date().toISOString() }));
 
   function tx(data) {
@@ -80,12 +83,12 @@ function seedDatabase() {
   ];
 
   const shoppingListItems = [
-    { id: uid('item'), list_id: 'demo-lista-1', nome: 'Arroz 5kg', categoria_id: 'cat-alimentos', unidade: 'kg', quantidade: 5, preco_unitario: null, preco_por_kg: null, subtotal: 0, comprado: false, codigo_barras: null, foto_url: null },
-    { id: uid('item'), list_id: 'demo-lista-1', nome: 'Feijão 1kg', categoria_id: 'cat-alimentos', unidade: 'kg', quantidade: 1, preco_unitario: null, preco_por_kg: null, subtotal: 0, comprado: false, codigo_barras: null, foto_url: null },
-    { id: uid('item'), list_id: 'demo-lista-1', nome: 'Detergente', categoria_id: 'cat-limpeza', unidade: 'un', quantidade: 2, preco_unitario: null, preco_por_kg: null, subtotal: 0, comprado: false, codigo_barras: null, foto_url: null },
-    { id: uid('item'), list_id: 'demo-lista-1', nome: 'Sabonete', categoria_id: 'cat-higiene', unidade: 'un', quantidade: 3, preco_unitario: null, preco_por_kg: null, subtotal: 0, comprado: false, codigo_barras: null, foto_url: null },
-    { id: uid('item'), list_id: 'demo-lista-1', nome: 'Banana Prata', categoria_id: 'cat-hortifruti', unidade: 'kg', quantidade: 1, preco_unitario: null, preco_por_kg: null, subtotal: 0, comprado: false, codigo_barras: null, foto_url: null },
-    { id: uid('item'), list_id: 'demo-lista-1', nome: 'Refrigerante 2L', categoria_id: 'cat-bebidas', unidade: 'un', quantidade: 2, preco_unitario: null, preco_por_kg: null, subtotal: 0, comprado: false, codigo_barras: null, foto_url: null },
+    { id: uid('item'), list_id: 'demo-lista-1', nome: 'Arroz 5kg', categoria_id: 'cat-alimentos', unidade: 'kg', quantidade: 5, prioridade: 4, preco_unitario: null, preco_por_kg: null, subtotal: 0, comprado: false, codigo_barras: null, foto_url: null },
+    { id: uid('item'), list_id: 'demo-lista-1', nome: 'Feijão 1kg', categoria_id: 'cat-alimentos', unidade: 'kg', quantidade: 1, prioridade: 4, preco_unitario: null, preco_por_kg: null, subtotal: 0, comprado: false, codigo_barras: null, foto_url: null },
+    { id: uid('item'), list_id: 'demo-lista-1', nome: 'Detergente', categoria_id: 'cat-limpeza', unidade: 'un', quantidade: 2, prioridade: 2, preco_unitario: null, preco_por_kg: null, subtotal: 0, comprado: false, codigo_barras: null, foto_url: null },
+    { id: uid('item'), list_id: 'demo-lista-1', nome: 'Sabonete', categoria_id: 'cat-higiene', unidade: 'un', quantidade: 3, prioridade: 3, preco_unitario: null, preco_por_kg: null, subtotal: 0, comprado: false, codigo_barras: null, foto_url: null },
+    { id: uid('item'), list_id: 'demo-lista-1', nome: 'Banana Prata', categoria_id: 'cat-hortifruti', unidade: 'kg', quantidade: 1, prioridade: 3, preco_unitario: null, preco_por_kg: null, subtotal: 0, comprado: false, codigo_barras: null, foto_url: null },
+    { id: uid('item'), list_id: 'demo-lista-1', nome: 'Refrigerante 2L', categoria_id: 'cat-bebidas', unidade: 'un', quantidade: 2, prioridade: 1, preco_unitario: null, preco_por_kg: null, subtotal: 0, comprado: false, codigo_barras: null, foto_url: null },
   ];
 
   // Recursos (inventário doméstico) — mesma lista fixa de cômodos/

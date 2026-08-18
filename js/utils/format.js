@@ -6,6 +6,21 @@ export function formatCurrency(value) {
   return currencyFormatter.format(Number.isFinite(n) ? n : 0);
 }
 
+// Versão curta pra espaço apertado (cards, chips, célula de tabela): a
+// partir de R$ 10 mil vira "R$ 11,2 mil"/"R$ 1,4 mi" em vez do valor cheio
+// quebrando o layout. Abaixo de 10 mil o valor completo já é curto o
+// suficiente, então mostra normal. Use formatCurrency (não esta função)
+// sempre que precisão exata importar (inputs de formulário, exportação CSV).
+export function formatCurrencyCompact(value) {
+  const n = Number(value ?? 0);
+  if (!Number.isFinite(n)) return formatCurrency(0);
+  const abs = Math.abs(n);
+  if (abs < 10000) return formatCurrency(n);
+  const sinal = n < 0 ? '-' : '';
+  if (abs < 1000000) return `${sinal}R$ ${(abs / 1000).toFixed(1).replace('.', ',')} mil`;
+  return `${sinal}R$ ${(abs / 1000000).toFixed(1).replace('.', ',')} mi`;
+}
+
 // Recebe "yyyy-mm-dd" (formato de <input type="date">) e evita o bug de fuso
 // horário que faria a data "voltar" um dia se fosse parseada com `new Date(str)`.
 export function formatDate(isoDate) {

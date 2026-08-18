@@ -145,12 +145,20 @@
 .cg-badge--warning { background: #FEF3C7; color: #78350F; }
 .cg-badge--secondary { background: #E2E8F0; color: #334155; }
 
+/* :not([data-bs-theme="light"]) faz o toggle manual (js/components/store.js
+   ::applyTheme) ter prioridade sobre a preferência do sistema — sem isso,
+   escolher "claro" na mão não teria efeito num sistema operacional em
+   modo escuro. Mesmo padrão em todo bloco @media deste arquivo. */
 @media (prefers-color-scheme: dark) {
-  .cg-badge--success { background: #14532D66; color: #86EFAC; }
-  .cg-badge--danger  { background: #7F1D1D66; color: #FCA5A5; }
-  .cg-badge--warning { background: #78350F66; color: #FCD34D; }
-  .cg-badge--secondary { background: #33415566; color: #CBD5E1; }
+  :root:not([data-bs-theme="light"]) .cg-badge--success { background: #14532D66; color: #86EFAC; }
+  :root:not([data-bs-theme="light"]) .cg-badge--danger  { background: #7F1D1D66; color: #FCA5A5; }
+  :root:not([data-bs-theme="light"]) .cg-badge--warning { background: #78350F66; color: #FCD34D; }
+  :root:not([data-bs-theme="light"]) .cg-badge--secondary { background: #33415566; color: #CBD5E1; }
 }
+:root[data-bs-theme="dark"] .cg-badge--success { background: #14532D66; color: #86EFAC; }
+:root[data-bs-theme="dark"] .cg-badge--danger  { background: #7F1D1D66; color: #FCA5A5; }
+:root[data-bs-theme="dark"] .cg-badge--warning { background: #78350F66; color: #FCD34D; }
+:root[data-bs-theme="dark"] .cg-badge--secondary { background: #33415566; color: #CBD5E1; }
 
 .cg-chip {
   display: inline-flex;
@@ -164,6 +172,17 @@
   border: none;
   cursor: pointer;
   max-width: 100%;
+  white-space: nowrap;
+}
+/* Nome da categoria dentro do chip: nunca quebra linha (era o "Sem
+   categoria" indo pra 2 linhas) — se não couber, corta com reticências em
+   vez de quebrar, já que o chip como flex container só ellipsiza um filho
+   que tenha min-width:0. */
+.cg-chip > span:not(.cg-chip__dot) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 /* ---------- Checkbox "pago" (verde quando marcado, sem virar switch) ---------- */
 .cg-check-success {
@@ -420,8 +439,9 @@
   opacity: 0.7;
 }
 @media (prefers-color-scheme: dark) {
-  .cg-notebook { background-color: #26261C; }
+  :root:not([data-bs-theme="light"]) .cg-notebook { background-color: #26261C; }
 }
+:root[data-bs-theme="dark"] .cg-notebook { background-color: #26261C; }
 .cg-notebook .cg-item-row {
   background: transparent;
   border: none;
@@ -474,6 +494,7 @@
   gap: var(--space-2);
 }
 .cg-grid-view__card {
+  position: relative;
   cursor: pointer;
   min-width: 0;
   display: flex;
@@ -485,6 +506,17 @@
   align-items: center;
   text-align: center;
   gap: 4px;
+}
+.cg-grid-view__avatar {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  line-height: 0;
+}
+.cg-grid-view--compact .cg-grid-view__avatar .cg-avatar--sm {
+  width: 24px;
+  height: 24px;
+  font-size: 0.6rem;
 }
 .cg-grid-view__logo {
   width: 40px;
@@ -502,6 +534,102 @@
 .cg-grid-view__card.is-comprado {
   background: var(--color-primary-soft);
   border-color: var(--color-primary);
+}
+
+/* ---------- Seletor de prioridade (1-5 estrelas) — lista de compras ---------- */
+.cg-star-picker {
+  display: inline-flex;
+  gap: 4px;
+}
+.cg-star-picker button {
+  border: none;
+  background: none;
+  padding: 6px;
+  min-width: var(--touch-target);
+  min-height: var(--touch-target);
+  color: #D97706;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cg-star-mini {
+  color: #D97706;
+  font-size: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+}
+.cg-star-mini--corner {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: var(--color-surface);
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  justify-content: center;
+  box-shadow: var(--shadow-sm);
+}
+
+/* ---------- Recursos: grade de cômodos ---------- */
+.cg-room-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+}
+@media (min-width: 576px) {
+  .cg-room-grid { grid-template-columns: repeat(4, 1fr); }
+}
+@media (min-width: 992px) {
+  .cg-room-grid { grid-template-columns: repeat(6, 1fr); }
+}
+.cg-room-tile {
+  position: relative;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-4) var(--space-2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-height: 108px;
+  transition: box-shadow 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+}
+.cg-room-tile:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--color-primary);
+  transform: translateY(-1px);
+}
+.cg-room-tile i {
+  font-size: 1.7rem;
+  color: var(--color-primary);
+}
+.cg-room-tile__nome {
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-align: center;
+}
+.cg-room-tile__count {
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+}
+.cg-room-tile__alert {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: var(--color-danger);
+  color: #fff;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
 }
 
 /* ---------- Recursos (inventário doméstico): stepper de quantidade ---------- */

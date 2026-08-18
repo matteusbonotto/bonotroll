@@ -18,16 +18,28 @@ export function appStore() {
     categories: [],
     companies: [],
     notifications: [],
-    view: 'home',
+    // Vem da URL (#/transacoes etc.) pra sobreviver a um F5 — antes sempre
+    // recarregava direto na Home, perdendo onde a pessoa estava.
+    view: location.hash.replace('#/', '') || 'home',
     online: navigator.onLine,
     isDemoMode: isDemoMode(),
     toast: null,
     updateAvailable: false,
     navOpen: false,
+    // 'dark' | 'light' | null (null = segue o tema do sistema). O valor
+    // inicial já foi aplicado no <html> por um script inline no <head>
+    // antes do CSS carregar (evita flash do tema errado) — aqui só
+    // sincroniza o estado do Alpine com o que já está no DOM.
+    theme: document.documentElement.getAttribute('data-bs-theme') || null,
 
     async init() {
       window.addEventListener('online', () => { this.online = true; });
       window.addEventListener('offline', () => { this.online = false; });
+      // Cobre voltar/avançar do navegador e edição manual da URL — o clique
+      // normal em um item de menu já muda this.view direto (ver setView).
+      window.addEventListener('hashchange', () => {
+        this.view = location.hash.replace('#/', '') || 'home';
+      });
 
       if (this.isDemoMode) {
         this.demoProfiles = await authService.getDemoProfiles();
@@ -86,6 +98,7 @@ export function appStore() {
       this.companies = [];
       this.notifications = [];
       this.view = 'home';
+      history.replaceState(null, '', location.pathname + location.search);
     },
 
     async refreshNotifications() {
@@ -151,9 +164,32 @@ export function appStore() {
       this.clearSession();
     },
 
+    // theme: 'dark' | 'light' | null (null = volta a seguir o sistema).
+    applyTheme(theme) {
+      if (theme) {
+        document.documentElement.setAttribute('data-bs-theme', theme);
+        localStorage.setItem('bonotto_theme', theme);
+      } else {
+        document.documentElement.removeAttribute('data-bs-theme');
+        localStorage.removeItem('bonotto_theme');
+      }
+      this.theme = theme;
+    },
+
+    // Pra decidir qual ícone mostrar (lua/sol) quando theme é null (seguindo
+    // o sistema) — sem isso o botão não saberia pra qual lado ele vai virar.
+    isDarkNow() {
+      return this.theme ? this.theme === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+    },
+
+    toggleTheme() {
+      this.applyTheme(this.isDarkNow() ? 'light' : 'dark');
+    },
+
     setView(view) {
       this.view = view;
       this.navOpen = false;
+      history.replaceState(null, '', '#/' + view);
     },
 
     // Chamado pelo botão "Atualizar agora" do banner de nova versão (ver

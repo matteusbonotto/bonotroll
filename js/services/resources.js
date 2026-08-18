@@ -49,25 +49,46 @@ export async function listRoomCategories(roomId) {
   return data;
 }
 
+function isUniqueViolation(e) {
+  // 23505 = unique_violation (SQLSTATE do Postgres, exposto pelo
+  // supabase-js em error.code) — quer dizer que outra chamada concorrente
+  // (dois acessos à tela de Recursos antes do primeiro terminar de seedar)
+  // já criou essa linha primeiro. Ignorar é seguro: o objetivo já foi
+  // cumprido por quem chegou antes.
+  return e?.code === '23505';
+}
+
 // Roda no primeiro acesso à tela de Recursos, igual ensureDefaultCategories.
 export async function ensureDefaultRooms(ownerId, groupId) {
   const existentes = await listRooms({ ownerId, groupId });
   if (existentes.length) return existentes;
 
-  const criados = [];
   for (const room of DEFAULT_ROOMS) {
     const linha = { nome: room.nome, icone: room.icone, ordem: room.ordem, owner_id: ownerId, group_id: groupId || null };
-    const roomCriado = isDemoMode() ? await mockDb.insert('resource_rooms', linha) : await criarRoomReal(linha);
-    criados.push(roomCriado);
+    let roomCriado;
+    try {
+      roomCriado = isDemoMode() ? await mockDb.insert('resource_rooms', linha) : await criarRoomReal(linha);
+    } catch (e) {
+      if (isUniqueViolation(e)) continue;
+      throw e;
+    }
 
     const categorias = DEFAULT_ROOM_CATEGORIES[room.nome] || [];
     for (let i = 0; i < categorias.length; i++) {
       const catLinha = { room_id: roomCriado.id, nome: categorias[i], ordem: i + 1 };
-      if (isDemoMode()) await mockDb.insert('resource_categories', catLinha);
-      else await criarCategoriaReal(catLinha);
+      try {
+        if (isDemoMode()) await mockDb.insert('resource_categories', catLinha);
+        else await criarCategoriaReal(catLinha);
+      } catch (e) {
+        if (!isUniqueViolation(e)) throw e;
+      }
     }
   }
-  return criados;
+
+  // Busca do banco de novo em vez de confiar no que foi criado nesta
+  // chamada — se outra chamada concorrente ganhou a corrida em algum
+  // cômodo, a lista acumulada localmente ficaria incompleta.
+  return listRooms({ ownerId, groupId });
 }
 
 async function criarRoomReal(linha) {
