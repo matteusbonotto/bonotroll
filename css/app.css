@@ -4,10 +4,11 @@ html, body {
   min-height: 100vh;
 }
 
-/* 160px = altura da bottom nav + espaço do botão flutuante (FAB), para que o
-   último item de listas longas nunca fique inalcançável atrás deles. */
+/* 96px = espaço do botão flutuante (FAB), pra ele nunca cobrir o último item
+   de listas longas no mobile. A navegação virou menu hambúrguer (não ocupa
+   mais uma faixa fixa no rodapé), então não precisa reservar espaço pra ela. */
 body {
-  padding-bottom: calc(160px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
 }
 @media (min-width: 992px) {
   body { padding-bottom: 0; }
@@ -67,10 +68,15 @@ a { color: var(--color-primary); }
   opacity: 0.85;
 }
 .cg-hero-balance__value {
-  font-size: clamp(2rem, 5vw, 2.6rem);
+  font-size: clamp(1.5rem, 5vw, 2.6rem);
   font-weight: 800;
   line-height: 1.1;
   margin: 2px 0 var(--space-4);
+  /* Rede de segurança pra valores muito grandes (ex.: R$ 123.456.789,00):
+     clamp() sozinho tem um piso (1.5rem) que ainda pode não caber em telas
+     bem estreitas — overflow-wrap deixa quebrar em vez de estourar a largura
+     do card, que era a reclamação original ("quebram layout no mobile"). */
+  overflow-wrap: anywhere;
 }
 .cg-hero-balance__row {
   display: flex;
@@ -81,8 +87,11 @@ a { color: var(--color-primary); }
   display: flex;
   align-items: center;
   gap: 10px;
+  min-width: 0;
+  flex: 1 1 130px;
 }
 .cg-hero-stat i { font-size: 1.3rem; opacity: 0.85; }
+.cg-hero-stat > div { min-width: 0; }
 .cg-hero-stat__label {
   display: block;
   font-size: 0.7rem;
@@ -93,7 +102,8 @@ a { color: var(--color-primary); }
 .cg-hero-stat__value {
   display: block;
   font-weight: 700;
-  font-size: 1.05rem;
+  font-size: clamp(0.9rem, 3.5vw, 1.05rem);
+  overflow-wrap: anywhere;
 }
 
 /* ---------- Contas a vencer (Início) ---------- */
@@ -120,6 +130,16 @@ a { color: var(--color-primary); }
 .cg-due-row--overdue .cg-due-row__meta { color: var(--color-danger); font-weight: 600; }
 .cg-due-row--soon .cg-due-row__icon { background: color-mix(in srgb, var(--color-warning) 18%, transparent); color: var(--color-warning); }
 .cg-due-row--soon .cg-due-row__meta { color: var(--color-warning); }
+
+/* Painel de filtros (Transações/Compras/Recursos): recolhido por padrão no
+   mobile — o botão "Filtros" alterna .is-open. No desktop (≥992px) sempre
+   visível, ignorando o estado do botão (não tem o problema de espaço que
+   motivou isso no mobile). */
+.cg-filter-panel { display: none; }
+.cg-filter-panel.is-open { display: block; }
+@media (min-width: 992px) {
+  .cg-filter-panel { display: block !important; }
+}
 
 .cg-grid-dashboard {
   display: grid;
@@ -162,6 +182,21 @@ a { color: var(--color-primary); }
   font-weight: 600;
   padding: 6px;
 }
+
+.cg-update-banner {
+  background: var(--color-primary-dark);
+  color: #fff;
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 8px var(--space-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.cg-update-banner i { font-size: 1.1rem; }
 
 .cg-demo-banner {
   background: var(--color-primary-soft);

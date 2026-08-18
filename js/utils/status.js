@@ -32,3 +32,29 @@ export function computeStatus(transaction) {
 export function statusMeta(statusKey) {
   return STATUS_META[statusKey] || STATUS_META.pendente;
 }
+
+// ---------- Recursos (inventário doméstico) ----------
+
+export const EXPIRY_STATUS_META = {
+  em_falta: { label: 'Em falta', badge: 'secondary', icon: 'bi-dash-circle' },
+  vencido: { label: 'Vencido', badge: 'danger', icon: 'bi-exclamation-triangle-fill' },
+  vencendo: { label: 'Vencendo', badge: 'warning', icon: 'bi-clock-fill' },
+  ok: { label: 'Ok', badge: 'success', icon: 'bi-check-circle-fill' },
+};
+
+// Mesma lógica de prioridade de computeStatus, adaptada pra item de estoque:
+// quantidade 0 é sempre "em falta" (não importa a validade); validade é
+// opcional — item sem data_validade nunca aparece como vencido/vencendo.
+export function computeExpiryStatus(item) {
+  if (Number(item.quantidade) === 0) return 'em_falta';
+  if (item.data_validade) {
+    const dias = diffInDays(item.data_validade, todayIso());
+    if (dias < 0) return 'vencido';
+    if (dias <= DIAS_PARA_VENCER) return 'vencendo';
+  }
+  return 'ok';
+}
+
+export function expiryStatusMeta(statusKey) {
+  return EXPIRY_STATUS_META[statusKey] || EXPIRY_STATUS_META.ok;
+}

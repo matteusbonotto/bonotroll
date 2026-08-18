@@ -1,6 +1,9 @@
 import * as authService from '../services/auth.js';
 import * as categoriesService from '../services/categories.js';
 import * as groupsService from '../services/groups.js';
+import * as companiesService from '../services/companies.js';
+import { findCompanyByName } from '../services/companies.js';
+import * as notificationsService from '../services/notifications.js';
 import { isDemoMode } from '../data/config.js';
 
 // Store global (Alpine.store('app')) — sessão, perfil, grupo, categorias e
@@ -13,10 +16,14 @@ export function appStore() {
     demoProfiles: [],
     group: null, // { group, members } | null — grupo é sempre opcional
     categories: [],
+    companies: [],
+    notifications: [],
     view: 'home',
     online: navigator.onLine,
     isDemoMode: isDemoMode(),
     toast: null,
+    updateAvailable: false,
+    navOpen: false,
 
     async init() {
       window.addEventListener('online', () => { this.online = true; });
@@ -55,11 +62,20 @@ export function appStore() {
       const groupId = group?.group?.id;
       if (!this.isDemoMode) await categoriesService.ensureDefaultCategories(profile.id, groupId);
       const categories = await categoriesService.listCategories({ ownerId: profile.id, groupId });
+      const companies = await companiesService.listCompanies({ ownerId: profile.id, groupId });
 
       this.session = session;
       this.profile = profile;
       this.group = group;
       this.categories = categories;
+      this.companies = companies;
+
+      // Best-effort: varredura de notificações não deve travar o login se
+      // falhar (ex.: tabela ainda não migrada no Supabase do usuário).
+      notificationsService
+        .generateForProfile({ profileId: profile.id, groupId })
+        .then(() => this.refreshNotifications())
+        .catch(() => {});
     },
 
     clearSession() {
@@ -67,7 +83,29 @@ export function appStore() {
       this.profile = null;
       this.group = null;
       this.categories = [];
+      this.companies = [];
+      this.notifications = [];
       this.view = 'home';
+    },
+
+    async refreshNotifications() {
+      if (!this.profile) return;
+      this.notifications = await notificationsService.listNotifications(this.profile.id);
+    },
+
+    get unreadNotificationsCount() {
+      return this.notifications.filter((n) => !n.lida).length;
+    },
+
+    async markNotificationRead(id) {
+      await notificationsService.markAsRead(id);
+      await this.refreshNotifications();
+    },
+
+    async markAllNotificationsRead() {
+      if (!this.profile) return;
+      await notificationsService.markAllAsRead(this.profile.id);
+      await this.refreshNotifications();
     },
 
     async refreshCategories() {
@@ -75,6 +113,16 @@ export function appStore() {
       const groupId = this.group?.group?.id;
       if (!this.isDemoMode) await categoriesService.ensureDefaultCategories(this.profile.id, groupId);
       this.categories = await categoriesService.listCategories({ ownerId: this.profile.id, groupId });
+    },
+
+    async refreshCompanies() {
+      if (!this.profile) return;
+      const groupId = this.group?.group?.id;
+      this.companies = await companiesService.listCompanies({ ownerId: this.profile.id, groupId });
+    },
+
+    companyByName(nome) {
+      return findCompanyByName(this.companies, nome);
     },
 
     async refreshGroup() {
@@ -105,6 +153,26 @@ export function appStore() {
 
     setView(view) {
       this.view = view;
+      this.navOpen = false;
+    },
+
+    // Chamado pelo botão "Atualizar agora" do banner de nova versão (ver
+    // updateNotifier em js/app.js, que seta updateAvailable = true quando
+    // detecta um service worker novo em estado "waiting").
+    async applyUpdate() {
+      const reg = await navigator.serviceWorker.getRegistration();
+      if (!reg?.waiting) {
+        // Não deveria acontecer (o banner só aparece com um waiting
+        // presente), mas se sumiu por algum motivo um reload simples ainda
+        // resolve na prática.
+        location.reload();
+        return;
+      }
+      // O novo SW assumindo já dispara o próprio "activate" dele (em sw.js),
+      // que limpa qualquer cache com nome diferente do CACHE_NAME atual —
+      // aqui só falta recarregar pra servir os arquivos novos.
+      navigator.serviceWorker.addEventListener('controllerchange', () => location.reload(), { once: true });
+      reg.waiting.postMessage({ type: 'SKIP_WAITING' });
     },
 
     notify(message, type = 'success') {

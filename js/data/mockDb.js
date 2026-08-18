@@ -2,8 +2,8 @@
 // Simula a mesma forma de dados do schema.sql (ver /supabase/schema.sql) para que trocar
 // para o backend real depois não exija mudar nenhuma tela — só os services.
 
-const STORAGE_KEY = 'casagrana_demo_db_v1';
-const SESSION_KEY = 'casagrana_demo_session';
+const STORAGE_KEY = 'bonotto_demo_db_v1';
+const SESSION_KEY = 'bonotto_demo_session';
 
 function uid(prefix) {
   const rand = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
@@ -88,10 +88,44 @@ function seedDatabase() {
     { id: uid('item'), list_id: 'demo-lista-1', nome: 'Refrigerante 2L', categoria_id: 'cat-bebidas', unidade: 'un', quantidade: 2, preco_unitario: null, preco_por_kg: null, subtotal: 0, comprado: false, codigo_barras: null, foto_url: null },
   ];
 
+  // Recursos (inventário doméstico) — mesma lista fixa de cômodos/
+  // subcategorias de DEFAULT_ROOMS/DEFAULT_ROOM_CATEGORIES em
+  // js/services/resources.js (duplicado aqui em vez de importado, mesmo
+  // padrão já usado por "categories" acima com DEFAULT_CATEGORIES — a
+  // camada de dados não importa das camadas de serviço).
+  const rooms = [
+    { id: 'room-quarto', nome: 'Quarto', icone: 'bi-door-closed', ordem: 1 },
+    { id: 'room-escritorio', nome: 'Escritório', icone: 'bi-briefcase', ordem: 2 },
+    { id: 'room-cozinha', nome: 'Cozinha', icone: 'bi-cup-hot', ordem: 3 },
+    { id: 'room-banheiro', nome: 'Banheiro', icone: 'bi-droplet', ordem: 4 },
+    { id: 'room-sala', nome: 'Sala', icone: 'bi-tv', ordem: 5 },
+    { id: 'room-lavanderia', nome: 'Lavanderia', icone: 'bi-basket2', ordem: 6 },
+  ].map((r) => ({ ...r, owner_id: matheusId, group_id: groupId, criado_em: new Date().toISOString() }));
+
+  const roomCategories = [
+    { id: 'rc-quarto-guardaroupa', room_id: 'room-quarto', nome: 'Guarda-roupas', ordem: 1 },
+    { id: 'rc-escritorio-outros', room_id: 'room-escritorio', nome: 'Outros', ordem: 1 },
+    { id: 'rc-cozinha-armario', room_id: 'room-cozinha', nome: 'Armário', ordem: 1 },
+    { id: 'rc-cozinha-geladeira', room_id: 'room-cozinha', nome: 'Geladeira', ordem: 2 },
+    { id: 'rc-banheiro-armario', room_id: 'room-banheiro', nome: 'Armário', ordem: 1 },
+    { id: 'rc-banheiro-prateleira', room_id: 'room-banheiro', nome: 'Prateleira', ordem: 2 },
+    { id: 'rc-sala-outros', room_id: 'room-sala', nome: 'Outros', ordem: 1 },
+    { id: 'rc-lavanderia-outros', room_id: 'room-lavanderia', nome: 'Outros', ordem: 1 },
+  ].map((c) => ({ ...c, criado_em: new Date().toISOString() }));
+
+  const resourceItems = [
+    { id: uid('res'), room_id: 'room-cozinha', category_id: 'rc-cozinha-geladeira', nome: 'Leite', quantidade: 2, data_validade: isoDaysFromNow(4), foto_url: null },
+    { id: uid('res'), room_id: 'room-cozinha', category_id: 'rc-cozinha-geladeira', nome: 'Iogurte', quantidade: 0, data_validade: isoDaysFromNow(-2), foto_url: null },
+    { id: uid('res'), room_id: 'room-cozinha', category_id: 'rc-cozinha-armario', nome: 'Arroz', quantidade: 3, data_validade: null, foto_url: null },
+    { id: uid('res'), room_id: 'room-banheiro', category_id: 'rc-banheiro-armario', nome: 'Papel higiênico', quantidade: 0, data_validade: null, foto_url: null },
+    { id: uid('res'), room_id: 'room-banheiro', category_id: 'rc-banheiro-prateleira', nome: 'Sabonete líquido', quantidade: 1, data_validade: isoDaysFromNow(180), foto_url: null },
+    { id: uid('res'), room_id: 'room-quarto', category_id: 'rc-quarto-guardaroupa', nome: 'Cobertor extra', quantidade: 1, data_validade: null, foto_url: null },
+  ].map((i) => ({ ...i, owner_id: matheusId, group_id: groupId, criado_em: new Date().toISOString() }));
+
   return {
     profiles: [
-      { id: matheusId, nome: 'Matheus', avatar_url: null, criado_em: new Date().toISOString() },
-      { id: beatrizId, nome: 'Beatriz', avatar_url: null, criado_em: new Date().toISOString() },
+      { id: matheusId, nome: 'Matheus', avatar_url: null, cor: '#1F7A5C', criado_em: new Date().toISOString() },
+      { id: beatrizId, nome: 'Beatriz', avatar_url: null, cor: '#FF7A45', criado_em: new Date().toISOString() },
     ],
     groups: [{ id: groupId, nome: 'Família', criado_por: matheusId, codigo: 'FAMILIA-DEMO', criado_em: new Date().toISOString() }],
     group_members: [
@@ -100,8 +134,15 @@ function seedDatabase() {
     ],
     categories,
     transactions,
+    transaction_payers: [],
+    companies: [],
     shopping_lists: shoppingLists,
     shopping_list_items: shoppingListItems,
+    resource_rooms: rooms,
+    resource_categories: roomCategories,
+    resource_items: resourceItems,
+    notifications: [],
+    push_subscriptions: [],
   };
 }
 

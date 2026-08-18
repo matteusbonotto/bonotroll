@@ -1,5 +1,6 @@
 import { updateProfile, uploadAvatar } from '../services/auth.js';
 import { mockDb } from '../data/mockDb.js';
+import { isPushSupported, getExistingSubscription, subscribeToPush, unsubscribeFromPush } from '../services/push.js';
 
 export function profileView() {
   return {
@@ -7,10 +8,36 @@ export function profileView() {
     cor: '#1F7A5C',
     saving: false,
     uploadingAvatar: false,
+    pushSuportado: isPushSupported(),
+    pushAtivo: false,
+    pushCarregando: false,
 
-    init() {
+    async init() {
       this.nome = this.$store.app.profile?.nome || '';
       this.cor = this.$store.app.profile?.cor || '#1F7A5C';
+      if (this.pushSuportado) {
+        this.pushAtivo = !!(await getExistingSubscription());
+      }
+    },
+
+    async alternarPush() {
+      const store = this.$store.app;
+      this.pushCarregando = true;
+      try {
+        if (this.pushAtivo) {
+          await unsubscribeFromPush();
+          this.pushAtivo = false;
+          store.notify('Notificações push desativadas.');
+        } else {
+          await subscribeToPush(store.profile.id);
+          this.pushAtivo = true;
+          store.notify('Notificações push ativadas.');
+        }
+      } catch (e) {
+        store.notify(e.message || 'Não foi possível alterar as notificações push.', 'danger');
+      } finally {
+        this.pushCarregando = false;
+      }
     },
 
     async salvar() {

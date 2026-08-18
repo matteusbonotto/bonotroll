@@ -1,4 +1,4 @@
-# CasaGrana — Controle Financeiro + Lista de Compras
+# Bõnotto — Controle Financeiro + Lista de Compras
 
 PWA mobile-first (com visão mais ampla no desktop) para controle financeiro pessoal e de grupo, com lista de compras integrada. HTML/CSS/JS puro, sem build step — tudo via CDN (Bootstrap, Bootstrap Icons, Alpine.js, Chart.js, PapaParse, html5-qrcode) + Supabase como backend opcional.
 
@@ -37,35 +37,44 @@ Isso é 100% opcional e só deve ser feito quando você estiver pronto (e logado
    ```
 6. Salve. O app detecta automaticamente que não são mais os valores placeholder e passa a usar o Supabase real — a tela de entrada troca os botões de demonstração por um formulário de e-mail/senha (cadastro cria a conta e o perfil na hora).
 
-Categorias padrão são criadas automaticamente no primeiro login de cada conta real (`ensureDefaultCategories`), então você não precisa de um script de seed separado.
+Categorias e cômodos de Recursos padrão são criados automaticamente no primeiro login/primeiro acesso de cada conta real (`ensureDefaultCategories` / `ensureDefaultRooms`), então você não precisa de um script de seed separado.
+
+### Notificações push + keepalive (opcional, requer passos manuais)
+
+A central de notificações (sino no topo) já funciona sozinha, em qualquer modo. Push de verdade (chegar com o app fechado) e o keepalive do projeto (não pausar por inatividade) exigem alguns comandos de terminal e rodar um SQL a mais — passo a passo completo em [`supabase/NOTIFICACOES.md`](./supabase/NOTIFICACOES.md).
 
 ## Estrutura
 
 ```
 index.html                 shell único da aplicação (todas as telas)
 manifest.webmanifest        PWA
-sw.js                        service worker (cache do app shell + CDNs)
+sw.js                        service worker (cache do app shell + CDNs + push)
 css/                         tokens.css (cores/spacing) · components.css · app.css
 js/
-  app.js                     registra os stores/componentes do Alpine
+  app.js                     registra os stores/componentes do Alpine + fluxo de atualização do PWA
   data/
     config.js                credenciais do Supabase (placeholder = modo demo)
+    vapid.js                 chave pública VAPID (push) — a privada nunca fica no repo
     mockDb.js                "banco" localStorage + seed dos dados de exemplo
     supabaseClient.js         cliente Supabase carregado sob demanda
   utils/
     format.js                moeda, datas
-    status.js                regra de pago/pendente/a vencer/vencido
+    status.js                regra de pago/pendente/a vencer/vencido + validade/estoque de Recursos
   services/                  cada função aqui decide sozinha se fala com o
                               mockDb (demo) ou com o Supabase (real) — as
                               telas nunca sabem qual dos dois está ativo
-    auth.js · categories.js · groups.js · transactions.js
+    auth.js · categories.js · companies.js · groups.js · transactions.js
+    resources.js · notifications.js · push.js
     shoppingList.js · csvImport.js · barcode.js
   components/                 um Alpine.data/Alpine.store por tela/modal
     store.js · auth.js · dashboard.js · transactionForm.js
-    transactionTable.js · shoppingList.js · csvImportModal.js
-    groupView.js · profileView.js · charts.js
+    transactionTable.js · shoppingList.js · resourcesView.js · csvImportModal.js
+    groupView.js · profileView.js · categoryManager.js · charts.js
 supabase/
   schema.sql                  schema + RLS — só roda se VOCÊ rodar manualmente
+  notifications_push.sql      trigger + agendamentos (pg_cron) das notificações — opcional
+  functions/                  Edge Functions: keepalive · notify-scan · notify-payment
+  NOTIFICACOES.md              passo a passo do push real + keepalive
 assets/icons/                 ícones do PWA (SVG placeholder — ver abaixo)
 ```
 
@@ -73,12 +82,13 @@ assets/icons/                 ícones do PWA (SVG placeholder — ver abaixo)
 
 `assets/icons/icon.svg` e `icon-maskable.svg` são placeholders funcionais (o manifest já aponta para eles). Antes de publicar de verdade, gere PNGs nos tamanhos 192×192 e 512×512 (e uma versão maskable) a partir de um logo definitivo — ferramentas como [realfavicongenerator.net](https://realfavicongenerator.net) fazem isso automaticamente a partir do SVG.
 
-## O que ainda não está implementado (fora do escopo da v1)
+## O que ainda não está implementado
 
 - OCR de nota fiscal (leitura automática do valor a partir da foto).
 - Geração automática de lançamentos futuros para despesas recorrentes (o campo "recorrente" hoje é só um marcador/filtro).
 - Múltiplas moedas e internacionalização.
-- Notificações push.
+- CRUD de cômodo/subcategoria em Recursos (a lista de cômodos é fixa por design — ver `DEFAULT_ROOMS` em `js/services/resources.js`; dá pra editar direto no banco se quiser mudar).
+- Notificações push e keepalive **funcionam**, mas exigem alguns passos manuais únicos (deploy de Edge Functions, chaves VAPID, agendamento) — ver [`supabase/NOTIFICACOES.md`](./supabase/NOTIFICACOES.md).
 
 ## Checklist antes de considerar "pronto para uso real"
 

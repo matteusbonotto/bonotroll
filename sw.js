@@ -1,8 +1,14 @@
-// Service worker do CasaGrana: cacheia o "app shell" (HTML/CSS/JS/ícones) para o
+// Service worker do Bõnotto: cacheia o "app shell" (HTML/CSS/JS/ícones) para o
 // app abrir offline. Chamadas ao Supabase (rede) não passam por aqui — dados
 // offline ficam a cargo do modo demonstração (localStorage) e das telas que
 // avisam quando estão sem conexão.
-const CACHE_NAME = 'casagrana-v4';
+//
+// Versionamento: todo deploy que muda algum arquivo do APP_SHELL abaixo deve
+// bumpar CACHE_NAME. Isso faz o browser detectar um SW novo, instalá-lo em
+// segundo plano (evento "install" roda de novo) e ficar em estado "waiting"
+// até alguém assumir — é esse "waiting" que js/app.js detecta pra mostrar o
+// banner "Nova versão disponível" (ver updateNotifier em js/app.js).
+const CACHE_NAME = 'bonotto-v1';
 
 const APP_SHELL = [
   './',
@@ -13,14 +19,19 @@ const APP_SHELL = [
   './css/app.css',
   './js/app.js',
   './js/data/config.js',
+  './js/data/vapid.js',
   './js/data/mockDb.js',
   './js/data/supabaseClient.js',
   './js/utils/format.js',
   './js/utils/status.js',
   './js/services/auth.js',
   './js/services/categories.js',
+  './js/services/companies.js',
   './js/services/groups.js',
   './js/services/transactions.js',
+  './js/services/resources.js',
+  './js/services/notifications.js',
+  './js/services/push.js',
   './js/services/shoppingList.js',
   './js/services/csvImport.js',
   './js/services/barcode.js',
@@ -32,6 +43,7 @@ const APP_SHELL = [
   './js/components/transactionForm.js',
   './js/components/transactionTable.js',
   './js/components/shoppingList.js',
+  './js/components/resourcesView.js',
   './js/components/csvImportModal.js',
   './js/components/groupView.js',
   './js/components/profileView.js',
@@ -42,7 +54,56 @@ const APP_SHELL = [
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)).then(() => self.skipWaiting())
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL))
+    // Sem self.skipWaiting() aqui de propósito: um SW novo instalado fica em
+    // "waiting" até o cliente mandar SKIP_WAITING (banner de atualização) —
+    // se pulasse direto, o usuário nunca veria o aviso e a troca de versão
+    // aconteceria por baixo dos panos no meio do uso.
+  );
+});
+
+// Disparado pelo botão "Atualizar agora" do banner (js/app.js) via
+// registration.waiting.postMessage(...). Só depois disso o novo SW assume
+// (dispara "controllerchange" no cliente, que então recarrega a página).
+self.addEventListener('message', (event) => {
+  if (event.data?.type === 'SKIP_WAITING') self.skipWaiting();
+});
+
+// ---------- Web Push ----------
+// O payload é montado pelas Edge Functions notify-scan/notify-payment (ver
+// supabase/functions/) — sempre JSON com { title, body, tag, url }. "tag"
+// evita empilhar notificações repetidas da mesma origem (ex.: duas
+// varreduras do mesmo dia pro mesmo item vencendo substituem uma à outra
+// em vez de abrir duas notificações).
+self.addEventListener('push', (event) => {
+  let payload = { title: 'Bõnotto', body: 'Você tem uma notificação nova.' };
+  try {
+    if (event.data) payload = { ...payload, ...event.data.json() };
+  } catch {
+    // payload não-JSON (não deveria acontecer, mas não trava a notificação)
+  }
+
+  event.waitUntil(
+    self.registration.showNotification(payload.title, {
+      body: payload.body,
+      icon: './assets/icons/icon.svg',
+      badge: './assets/icons/icon.svg',
+      tag: payload.tag || 'bonotto-generico',
+      data: { url: payload.url || './index.html' },
+    })
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = event.notification.data?.url || './index.html';
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if ('focus' in client) return client.focus();
+      }
+      if (self.clients.openWindow) return self.clients.openWindow(url);
+    })
   );
 });
 

@@ -1,4 +1,4 @@
--- CasaGrana — dados básicos (categorias + lançamentos + lista de compras)
+-- Bõnotto — dados básicos (categorias + lançamentos + lista de compras)
 --
 -- PRÉ-REQUISITOS (nessa ordem):
 --   1. Rodar supabase/schema.sql neste projeto.

@@ -53,7 +53,7 @@
   }
 }
 
-/* Alinha as cores contextuais do Bootstrap com a identidade do CasaGrana */
+/* Alinha as cores contextuais do Bootstrap com a identidade do Bõnotto */
 :root {
   --bs-primary: var(--color-primary);
   --bs-primary-rgb: 31, 122, 92;

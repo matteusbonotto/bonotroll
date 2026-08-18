@@ -1,4 +1,4 @@
--- CasaGrana — schema do banco de dados (Supabase / Postgres)
+-- Bõnotto — schema do banco de dados (Supabase / Postgres)
 --
 -- ESTE ARQUIVO NÃO É EXECUTADO AUTOMATICAMENTE POR NADA NESTE REPOSITÓRIO.
 -- Ele só deve ser rodado manualmente, por você, dentro do SQL Editor do SEU
@@ -57,6 +57,19 @@ create table if not exists categories (
 alter table profiles add column if not exists cor text not null default '#1F7A5C';
 alter table categories add column if not exists icone_url text;
 
+-- "Empresa/Serviço" de uma transação passou a poder ter logo: cada nome
+-- distinto vira uma linha aqui (criada sob demanda ao salvar uma transação),
+-- reaproveitada da próxima vez que o mesmo nome for digitado.
+create table if not exists companies (
+  id uuid primary key default uuid_generate_v4(),
+  owner_id uuid not null references profiles(id) on delete cascade,
+  group_id uuid references groups(id) on delete cascade,
+  nome text not null,
+  logo_url text,
+  criado_em timestamptz not null default now(),
+  unique (owner_id, coalesce(group_id, '00000000-0000-0000-0000-000000000000'::uuid), nome)
+);
+
 create table if not exists transactions (
   id uuid primary key default uuid_generate_v4(),
   owner_id uuid not null references profiles(id) on delete cascade,
@@ -79,6 +92,56 @@ create table if not exists transactions (
 -- Observação: não existe coluna "status" — pago/pendente/a vencer/vencido é
 -- calculado no cliente a partir de data_vencimento e data_pagamento
 -- (ver js/utils/status.js), para não ter duas fontes de verdade divergentes.
+
+-- Divisão de despesa entre múltiplos pagadores. Uma transação SEM nenhuma
+-- linha aqui continua sendo 100% do responsavel_id dela (retrocompatível —
+-- despesas antigas não precisam de migração). Linhas aqui só existem quando
+-- há 2+ pagadores, e nesse caso substituem completamente responsavel_id pra
+-- fins de "quem deve quanto" (ver js/services/transactions.js::shareForMember).
+create table if not exists transaction_payers (
+  id uuid primary key default uuid_generate_v4(),
+  transaction_id uuid not null references transactions(id) on delete cascade,
+  profile_id uuid not null references profiles(id) on delete cascade,
+  percentual numeric(5, 2),
+  valor numeric(12, 2) not null check (valor >= 0),
+  criado_em timestamptz not null default now(),
+  unique (transaction_id, profile_id)
+);
+
+-- Recursos (inventário doméstico): cômodo -> subcategoria (fixos, sem CRUD de
+-- usuário — só os itens dentro deles são livres) -> item com quantidade e
+-- validade opcional. Ver js/services/resources.js (DEFAULT_ROOMS/
+-- DEFAULT_ROOM_CATEGORIES) pra lista completa seedada no primeiro acesso.
+create table if not exists resource_rooms (
+  id uuid primary key default uuid_generate_v4(),
+  owner_id uuid not null references profiles(id) on delete cascade,
+  group_id uuid references groups(id) on delete cascade,
+  nome text not null,
+  icone text default 'bi-door-open',
+  ordem int not null default 0,
+  criado_em timestamptz not null default now()
+);
+
+create table if not exists resource_categories (
+  id uuid primary key default uuid_generate_v4(),
+  room_id uuid not null references resource_rooms(id) on delete cascade,
+  nome text not null,
+  ordem int not null default 0,
+  criado_em timestamptz not null default now()
+);
+
+create table if not exists resource_items (
+  id uuid primary key default uuid_generate_v4(),
+  owner_id uuid not null references profiles(id) on delete cascade,
+  group_id uuid references groups(id) on delete cascade,
+  room_id uuid not null references resource_rooms(id) on delete cascade,
+  category_id uuid references resource_categories(id) on delete set null,
+  nome text not null,
+  quantidade int not null default 0 check (quantidade >= 0),
+  data_validade date,
+  foto_url text,
+  criado_em timestamptz not null default now()
+);
 
 create table if not exists shopping_lists (
   id uuid primary key default uuid_generate_v4(),
@@ -105,6 +168,37 @@ create table if not exists shopping_list_items (
   comprado boolean not null default false,
   codigo_barras text,
   foto_url text,
+  criado_em timestamptz not null default now()
+);
+
+-- Notificações dentro do app (sino no topo). dedupe_key evita duplicar a
+-- mesma notificação a cada varredura (cliente, ver js/services/
+-- notifications.js, ou a Edge Function notify-scan) — ex.:
+-- "vencimento_despesa:{transacao_id}:2026-08-18" só entra uma vez por dia
+-- por transação/perfil.
+create table if not exists notifications (
+  id uuid primary key default uuid_generate_v4(),
+  profile_id uuid not null references profiles(id) on delete cascade,
+  tipo text not null check (tipo in ('validade', 'estoque', 'vencimento_despesa', 'pagamento')),
+  titulo text not null,
+  corpo text,
+  referencia_tabela text,
+  referencia_id uuid,
+  dedupe_key text not null,
+  lida boolean not null default false,
+  criado_em timestamptz not null default now(),
+  unique (profile_id, dedupe_key)
+);
+
+-- Inscrições de push (Web Push API) — uma linha por navegador/dispositivo
+-- inscrito. Preenchida pelo client em js/services/push.js, consumida pelas
+-- Edge Functions notify-scan e notify-payment.
+create table if not exists push_subscriptions (
+  id uuid primary key default uuid_generate_v4(),
+  profile_id uuid not null references profiles(id) on delete cascade,
+  endpoint text not null unique,
+  p256dh text not null,
+  auth text not null,
   criado_em timestamptz not null default now()
 );
 
@@ -273,11 +367,88 @@ drop policy if exists "Excluir categoria própria" on categories;
 create policy "Excluir categoria própria" on categories for delete
   using (owner_id = auth.uid());
 
+alter table companies enable row level security;
+drop policy if exists "Ver empresas próprias ou do grupo" on companies;
+create policy "Ver empresas próprias ou do grupo" on companies for select
+  using (owner_id = auth.uid() or public.is_group_member(group_id));
+drop policy if exists "Criar empresa" on companies;
+create policy "Criar empresa" on companies for insert
+  with check (owner_id = auth.uid());
+drop policy if exists "Editar/excluir empresa própria" on companies;
+create policy "Editar/excluir empresa própria" on companies for update
+  using (owner_id = auth.uid());
+drop policy if exists "Excluir empresa própria" on companies;
+create policy "Excluir empresa própria" on companies for delete
+  using (owner_id = auth.uid());
+
 alter table transactions enable row level security;
 drop policy if exists "Ver e editar transações próprias ou do grupo" on transactions;
 create policy "Ver e editar transações próprias ou do grupo" on transactions for all
   using (owner_id = auth.uid() or public.is_group_member(group_id))
   with check (owner_id = auth.uid());
+
+alter table transaction_payers enable row level security;
+drop policy if exists "Ver e editar pagadores de transações visíveis" on transaction_payers;
+create policy "Ver e editar pagadores de transações visíveis" on transaction_payers for all
+  using (transaction_id in (
+    select id from transactions where owner_id = auth.uid() or public.is_group_member(group_id)
+  ))
+  with check (transaction_id in (
+    select id from transactions where owner_id = auth.uid() or public.is_group_member(group_id)
+  ));
+
+alter table resource_rooms enable row level security;
+drop policy if exists "Ver e editar cômodos próprios ou do grupo" on resource_rooms;
+create policy "Ver e editar cômodos próprios ou do grupo" on resource_rooms for all
+  using (owner_id = auth.uid() or public.is_group_member(group_id))
+  with check (owner_id = auth.uid());
+
+alter table resource_categories enable row level security;
+drop policy if exists "Ver e editar subcategorias de cômodos visíveis" on resource_categories;
+create policy "Ver e editar subcategorias de cômodos visíveis" on resource_categories for all
+  using (room_id in (
+    select id from resource_rooms where owner_id = auth.uid() or public.is_group_member(group_id)
+  ))
+  with check (room_id in (
+    select id from resource_rooms where owner_id = auth.uid() or public.is_group_member(group_id)
+  ));
+
+alter table resource_items enable row level security;
+drop policy if exists "Ver e editar itens próprios ou do grupo" on resource_items;
+create policy "Ver e editar itens próprios ou do grupo" on resource_items for all
+  using (owner_id = auth.uid() or public.is_group_member(group_id))
+  with check (owner_id = auth.uid());
+
+alter table notifications enable row level security;
+drop policy if exists "Ver as próprias notificações" on notifications;
+create policy "Ver as próprias notificações" on notifications for select
+  using (profile_id = auth.uid());
+drop policy if exists "Marcar a própria notificação como lida" on notifications;
+create policy "Marcar a própria notificação como lida" on notifications for update
+  using (profile_id = auth.uid());
+drop policy if exists "Criar notificação para si ou colega de grupo" on notifications;
+-- "colega de grupo" existe porque quem MARCA uma despesa como paga (ver
+-- notifyPayment em js/services/notifications.js) insere a notificação já
+-- direto pro profile_id do OUTRO membro, não pro próprio — mesma
+-- necessidade que já existia na policy de SELECT de "profiles" acima.
+create policy "Criar notificação para si ou colega de grupo" on notifications for insert
+  with check (
+    profile_id = auth.uid()
+    or profile_id in (
+      select gm2.profile_id from group_members gm1
+      join group_members gm2 on gm2.group_id = gm1.group_id
+      where gm1.profile_id = auth.uid()
+    )
+  );
+drop policy if exists "Excluir a própria notificação" on notifications;
+create policy "Excluir a própria notificação" on notifications for delete
+  using (profile_id = auth.uid());
+
+alter table push_subscriptions enable row level security;
+drop policy if exists "Gerenciar a própria inscrição de push" on push_subscriptions;
+create policy "Gerenciar a própria inscrição de push" on push_subscriptions for all
+  using (profile_id = auth.uid())
+  with check (profile_id = auth.uid());
 
 alter table shopping_lists enable row level security;
 drop policy if exists "Ver e editar listas próprias ou do grupo" on shopping_lists;

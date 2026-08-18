@@ -1,6 +1,6 @@
 {
-  "name": "CasaGrana — Controle Financeiro e Lista de Compras",
-  "short_name": "CasaGrana",
+  "name": "Bõnotto — Controle Financeiro e Lista de Compras",
+  "short_name": "Bõnotto",
   "description": "Controle financeiro pessoal e do grupo, com lista de compras integrada.",
   "start_url": "./index.html",
   "scope": "./",

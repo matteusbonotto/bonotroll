@@ -1,17 +1,36 @@
-import { listTransactions, updateTransaction, markAsPaid, markAsUnpaid } from '../services/transactions.js';
-import { STATUS_META } from '../utils/status.js';
+import { listTransactions, updateTransaction, markAsPaid, markAsUnpaid, listPayersFor } from '../services/transactions.js';
+import { notifyPayment } from '../services/notifications.js';
+import { STATUS_META, statusMeta } from '../utils/status.js';
 import { exportToCsv } from '../services/csvImport.js';
+import * as format from '../utils/format.js';
+
+const FILTRO_VAZIO = { tipo: '', categoriaId: '', responsavelId: '', status: '', tipoDespesa: '', busca: '', dataInicio: '', dataFim: '' };
 
 // Tela "Transações": tabela com filtros, edição inline (categoria/responsável/pago)
 // e exportação/importação de CSV.
 export function transactionsView() {
   return {
     rows: [],
+    payersByTx: {},
     loading: true,
-    filtro: { tipo: '', categoriaId: '', responsavelId: '', status: '', tipoDespesa: '', busca: '', dataInicio: '', dataFim: '' },
+    filtro: { ...FILTRO_VAZIO },
+    // Painel de filtros recolhível no mobile (a versão anterior ficava sempre
+    // aberta e tomava a tela toda — ver reclamação de UX). No desktop
+    // (≥992px) o CSS ignora esse estado e mostra o painel sempre (ver
+    // .cg-filter-panel em css/app.css).
+    filtrosAbertos: false,
     ordenarPor: 'data_cadastro',
     ordemDesc: true,
     STATUS_META,
+
+    // Lista (tabela desktop / cards empilhados mobile, com edição inline) é
+    // o default. Grade e grade compacta são visões de navegação — tocar num
+    // card abre o formulário completo em vez de editar campo a campo.
+    viewMode: localStorage.getItem('bonotto_view_transacoes') || 'lista',
+    setViewMode(mode) {
+      this.viewMode = mode;
+      localStorage.setItem('bonotto_view_transacoes', mode);
+    },
 
     init() {
       this.load();
@@ -37,7 +56,15 @@ export function transactionsView() {
           dataFim: this.filtro.dataFim || undefined,
         },
       });
+      const payersMap = await listPayersFor(this.rows.map((r) => r.id));
+      this.payersByTx = Object.fromEntries(payersMap);
       this.loading = false;
+    },
+
+    // Pagadores de uma transação (vazio = caso simples, só o responsável).
+    // Usado pra desenhar o "avatar stack" quando há 2+.
+    payersFor(row) {
+      return this.payersByTx[row.id] || [];
     },
 
     get sortedRows() {
@@ -60,7 +87,39 @@ export function transactionsView() {
     },
 
     limparFiltros() {
-      this.filtro = { tipo: '', categoriaId: '', responsavelId: '', status: '', tipoDespesa: '', busca: '', dataInicio: '', dataFim: '' };
+      this.filtro = { ...FILTRO_VAZIO };
+    },
+
+    get filtrosAtivosCount() {
+      return Object.values(this.filtro).filter((v) => v !== '' && v != null).length;
+    },
+
+    // Chips dos filtros ativos (mobile) — cada um com um rótulo legível e uma
+    // função pra limpar só aquele filtro, sem precisar reabrir o painel.
+    get filtrosChips() {
+      const chips = [];
+      const f = this.filtro;
+      if (f.tipo) chips.push({ key: 'tipo', label: f.tipo === 'entrada' ? 'Entrada' : 'Saída' });
+      if (f.categoriaId) chips.push({ key: 'categoriaId', label: this.categoryFor(f.categoriaId)?.nome || 'Categoria' });
+      if (f.responsavelId) chips.push({ key: 'responsavelId', label: this.responsavelFor(f.responsavelId)?.nome || 'Responsável' });
+      if (f.status) chips.push({ key: 'status', label: statusMeta(f.status).label });
+      if (f.tipoDespesa) chips.push({ key: 'tipoDespesa', label: f.tipoDespesa === 'fixa' ? 'Fixa' : 'Variável' });
+      if (f.busca) chips.push({ key: 'busca', label: `"${f.busca}"` });
+      if (f.dataInicio || f.dataFim) {
+        const de = f.dataInicio ? format.formatDate(f.dataInicio) : '…';
+        const ate = f.dataFim ? format.formatDate(f.dataFim) : '…';
+        chips.push({ key: 'periodo', label: `${de} – ${ate}` });
+      }
+      return chips;
+    },
+
+    removerFiltro(key) {
+      if (key === 'periodo') {
+        this.filtro.dataInicio = '';
+        this.filtro.dataFim = '';
+      } else {
+        this.filtro[key] = '';
+      }
     },
 
     aplicarPeriodoRapido(dias) {
@@ -108,9 +167,24 @@ export function transactionsView() {
       await this.load();
     },
     async togglePago(row) {
-      if (row._status === 'pago') await markAsUnpaid(row.id);
-      else await markAsPaid(row.id);
+      if (row._status === 'pago') {
+        await markAsUnpaid(row.id);
+      } else {
+        const paga = await markAsPaid(row.id);
+        await this.avisarPagamento(paga);
+      }
       await this.load();
+    },
+
+    // Avisa os outros membros do grupo que essa despesa foi paga (ver
+    // services/notifications.js::notifyPayment). Só faz sentido quando há
+    // grupo com mais de uma pessoa.
+    async avisarPagamento(transacaoPaga) {
+      const store = this.$store.app;
+      const memberIds = (store.group?.members || []).map((m) => m.id);
+      if (memberIds.length < 2) return;
+      await notifyPayment({ transaction: transacaoPaga, payerProfileId: store.profile.id, memberIds });
+      store.refreshNotifications();
     },
     async toggleTipoDespesa(row) {
       await updateTransaction(row.id, { tipo_despesa: row.tipo_despesa === 'fixa' ? 'variavel' : 'fixa' });
@@ -143,7 +217,7 @@ export function transactionsView() {
         vencimento: r.data_vencimento || '',
         status: STATUS_META[r._status].label,
       }));
-      exportToCsv(dados, 'casagrana-transacoes.csv');
+      exportToCsv(dados, 'bonotto-transacoes.csv');
     },
   };
 }

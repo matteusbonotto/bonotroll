@@ -18,6 +18,15 @@ export function shoppingView() {
     lendoFotoItem: false,
     maisOpcoesItem: false,
 
+    // "lista" = folha de caderno (default, ver .cg-notebook em css/components.css).
+    // Grade/grade compacta são uma visão alternativa de navegação, sem o
+    // tema de papel.
+    viewMode: localStorage.getItem('bonotto_view_compras') || 'lista',
+    setViewMode(mode) {
+      this.viewMode = mode;
+      localStorage.setItem('bonotto_view_compras', mode);
+    },
+
     init() {
       this.load();
       window.addEventListener('cg:shopping-changed', () => this.refreshItems());

@@ -1,4 +1,4 @@
-import { listTransactions, computeSummary, groupByCategory } from '../services/transactions.js';
+import { listTransactions, computeSummary, groupByCategory, groupByCompany, groupByFlow, groupByPeriod, listPayersFor, shareForMember } from '../services/transactions.js';
 import { todayIso } from '../utils/format.js';
 
 function diasAte(isoData) {
@@ -10,14 +10,20 @@ function diasAte(isoData) {
 // Home: saldo em destaque + "Contas a vencer" (o que precisa de atenção
 // agora) antes do log de lançamentos — pago não compete por atenção com o
 // que está vencido/vencendo, então fica de fora dessa lista.
+//
+// "quemVer" controla o resumo em destaque (Eu / cada membro do grupo /
+// Grupo) e também escopa o gráfico de quebra — troca só o card e o
+// gráfico, o restante da tela (contas a vencer, recentes) continua sempre
+// no nível "eu ou grupo" que já existia.
 export function dashboardView() {
   return {
     loading: true,
-    personal: { entradas: 0, saidas: 0, saldo: 0, maiorGasto: null },
-    grupo: { entradas: 0, saidas: 0, saldo: 0, maiorGasto: null },
-    recentes: [],
+    escopo: [], // todas as transações visíveis (próprias + do grupo), com _status
+    payersByTx: {},
+    quemVer: 'eu', // 'eu' | <profile_id> | 'grupo'
+    quebra: 'categoria', // 'categoria' | 'empresa' | 'fluxo' | 'dia' | 'mes' | 'ano'
     contasAVencer: [],
-    categoriaResumo: [],
+    recentes: [],
 
     init() {
       this.load();
@@ -31,26 +37,108 @@ export function dashboardView() {
       this.loading = true;
 
       const groupId = store.group?.group?.id;
-      const escopo = await listTransactions({ ownerId: store.profile.id, groupId });
-      const minhas = escopo.filter((t) => t.responsavel_id === store.profile.id);
+      this.escopo = await listTransactions({ ownerId: store.profile.id, groupId });
+      const payersMap = await listPayersFor(this.escopo.map((t) => t.id));
+      this.payersByTx = Object.fromEntries(payersMap);
 
-      this.personal = computeSummary(minhas);
-      this.contasAVencer = minhas
-        .filter((t) => t.tipo === 'saida' && (t._status === 'vencido' || t._status === 'a_vencer'))
+      this.contasAVencer = this.escopo
+        .filter((t) => this.participaEu(t) && t.tipo === 'saida' && (t._status === 'vencido' || t._status === 'a_vencer'))
         .sort((a, b) => (a.data_vencimento || '').localeCompare(b.data_vencimento || ''))
         .slice(0, 5);
 
-      if (groupId) {
-        this.grupo = computeSummary(escopo);
-        this.categoriaResumo = groupByCategory(escopo, store.categories);
-        this.recentes = escopo.slice(0, 6);
-      } else {
-        this.grupo = { entradas: 0, saidas: 0, saldo: 0, maiorGasto: null };
-        this.categoriaResumo = groupByCategory(minhas, store.categories);
-        this.recentes = minhas.slice(0, 6);
-      }
+      this.recentes = groupId ? this.escopo.slice(0, 6) : this.escopo.filter((t) => this.participaEu(t)).slice(0, 6);
 
       this.loading = false;
+    },
+
+    // Pagadores de uma transação (vazio = caso simples, só o responsável).
+    payersFor(t) {
+      return this.payersByTx[t.id] || [];
+    },
+
+    // Quanto do valor de "t" cabe a profileId — despesa dividida usa a
+    // fatia de cada um; sem divisão, cai pro responsavel_id sozinho.
+    shareFor(t, profileId) {
+      return shareForMember(t, this.payersFor(t), profileId);
+    },
+
+    participaEu(t) {
+      const meuId = this.$store.app.profile?.id;
+      const payers = this.payersFor(t);
+      return payers.length ? payers.some((p) => p.profile_id === meuId) : t.responsavel_id === meuId;
+    },
+
+    // Resumo pessoal de um membro específico: entrada é sempre 100% de quem
+    // é o responsavel_id dela (entrada não é dividida — só despesa); saída
+    // usa a fatia calculada por shareFor, que cai pra responsavel_id sozinho
+    // quando a despesa não tem divisão.
+    resumoPara(profileId) {
+      let entradas = 0;
+      let saidas = 0;
+      let maiorGasto = null;
+      for (const t of this.escopo) {
+        if (t.tipo === 'entrada') {
+          if (t.responsavel_id === profileId) entradas += Number(t.valor) || 0;
+          continue;
+        }
+        const fatia = this.shareFor(t, profileId);
+        if (fatia <= 0) continue;
+        saidas += fatia;
+        if (!maiorGasto || fatia > maiorGasto.valor) maiorGasto = { ...t, valor: fatia };
+      }
+      return { entradas, saidas, saldo: entradas - saidas, maiorGasto };
+    },
+
+    get idQuemVer() {
+      if (this.quemVer === 'eu') return this.$store.app.profile?.id;
+      if (this.quemVer === 'grupo') return null;
+      return this.quemVer;
+    },
+
+    get opcoesQuemVer() {
+      const store = this.$store.app;
+      if (!store.profile) return [];
+      const opcoes = [{ id: 'eu', nome: 'Eu', cor: store.profile.cor, avatar_url: store.profile.avatar_url }];
+      for (const m of store.group?.members || []) {
+        if (m.id === store.profile.id) continue;
+        opcoes.push({ id: m.id, nome: m.nome, cor: m.cor, avatar_url: m.avatar_url });
+      }
+      if (store.group) opcoes.push({ id: 'grupo', nome: 'Grupo', cor: null, avatar_url: null });
+      return opcoes;
+    },
+
+    get resumoSelecionado() {
+      if (this.quemVer === 'grupo') return computeSummary(this.escopo);
+      return this.resumoPara(this.idQuemVer);
+    },
+
+    get corSelecionada() {
+      return this.opcoesQuemVer.find((o) => o.id === this.quemVer)?.cor || null;
+    },
+
+    // Linhas de saída "achatadas" pra fatia do escopo selecionado (Eu/membro),
+    // usadas pelas quebras (categoria/empresa/período) — o grupo usa o
+    // valor cheio de cada despesa, sem achatar por fatia.
+    get linhasQuebra() {
+      if (this.quemVer === 'grupo') return this.escopo;
+      const id = this.idQuemVer;
+      return this.escopo
+        .filter((t) => t.tipo === 'saida')
+        .map((t) => ({ ...t, valor: this.shareFor(t, id) }))
+        .filter((t) => t.valor > 0);
+    },
+
+    get dadosQuebra() {
+      const rows = this.linhasQuebra;
+      const store = this.$store.app;
+      if (this.quebra === 'categoria') return groupByCategory(rows, store.categories);
+      if (this.quebra === 'empresa') return groupByCompany(rows);
+      if (this.quebra === 'fluxo') return groupByFlow(this.quemVer === 'grupo' ? this.escopo : rows);
+      return groupByPeriod(rows, this.quebra); // 'dia' | 'mes' | 'ano'
+    },
+
+    get tipoGraficoQuebra() {
+      return this.quebra === 'dia' || this.quebra === 'mes' || this.quebra === 'ano' ? 'bar' : 'doughnut';
     },
 
     diasLabel(t) {
