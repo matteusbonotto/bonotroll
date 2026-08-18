@@ -105,6 +105,14 @@ a { color: var(--color-primary); }
   font-size: clamp(0.9rem, 3.5vw, 1.05rem);
   overflow-wrap: anywhere;
 }
+.cg-hero-stat__delta {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+  opacity: 0.9;
+  white-space: nowrap;
+}
 
 /* ---------- Contas a vencer (Início) ---------- */
 .cg-due-row {

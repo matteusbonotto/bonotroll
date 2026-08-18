@@ -112,6 +112,34 @@ export function dashboardView() {
       return this.resumoPara(this.idQuemVer);
     },
 
+    // ---------- Comparativo com o mês anterior (saídas) ----------
+    // "Saldo"/"Entradas"/"Saídas" do hero são desde sempre (saldo
+    // acumulado) — esse comparativo é só das saídas DENTRO de cada mês,
+    // pra responder "gastei mais ou menos que mês passado" (métrica
+    // acionável que o saldo acumulado sozinho não responde).
+    saidasNoMes(profileId, mesStr) {
+      let total = 0;
+      for (const t of this.escopo) {
+        if (t.tipo !== 'saida' || (t.data_cadastro || '').slice(0, 7) !== mesStr) continue;
+        total += profileId ? this.shareFor(t, profileId) : Number(t.valor) || 0;
+      }
+      return total;
+    },
+
+    get comparativoMesAnterior() {
+      const hoje = new Date();
+      const mesAtual = hoje.toISOString().slice(0, 7);
+      const anterior = new Date(Date.UTC(hoje.getUTCFullYear(), hoje.getUTCMonth() - 1, 1));
+      const mesAnterior = anterior.toISOString().slice(0, 7);
+      const id = this.quemVer === 'grupo' ? null : this.idQuemVer;
+      const atual = this.saidasNoMes(id, mesAtual);
+      const passado = this.saidasNoMes(id, mesAnterior);
+      // Sem gasto no mês anterior pra comparar (conta nova, ou mês parado)
+      // — não dá pra calcular variação percentual de uma base zero.
+      const percentual = passado > 0 ? Math.round(((atual - passado) / passado) * 100) : null;
+      return { atual, passado, percentual };
+    },
+
     get corSelecionada() {
       return this.opcoesQuemVer.find((o) => o.id === this.quemVer)?.cor || null;
     },
