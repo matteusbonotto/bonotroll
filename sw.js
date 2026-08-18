@@ -8,7 +8,7 @@
 // segundo plano (evento "install" roda de novo) e ficar em estado "waiting"
 // até alguém assumir — é esse "waiting" que js/app.js detecta pra mostrar o
 // banner "Nova versão disponível" (ver updateNotifier em js/app.js).
-const CACHE_NAME = 'bonotto-v1';
+const CACHE_NAME = 'bonotto-v2';
 
 const APP_SHELL = [
   './',

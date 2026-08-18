@@ -82,7 +82,13 @@ export async function addItem(listId, { nome, categoria_id, unidade = 'un', quan
   const row = {
     list_id: listId,
     nome,
-    categoria_id: categoria_id ?? null,
+    // "|| null" (não "?? null"): categoria_id é uma coluna uuid — string
+    // vazia '' (valor "nenhuma categoria" nos <select> do formulário) não é
+    // null/undefined, então "??" deixava passar e o Postgres rejeitava com
+    // "invalid input syntax for type uuid" (bug invisível em modo demo, que
+    // não valida tipo de coluna nenhum). categoria_id nunca é um uuid válido
+    // e falsy ao mesmo tempo, então "||" é seguro aqui.
+    categoria_id: categoria_id || null,
     unidade,
     quantidade,
     prioridade,
@@ -139,6 +145,9 @@ export function guessCategoryByName(nome, categories) {
 // Faz merge do patch com o item atual e recalcula o subtotal automaticamente
 // (preço/quantidade/unidade podem mudar juntos ou em passos separados na UI).
 export async function updateItem(id, patch) {
+  // Mesma normalização de addItem (ver comentário lá): só mexe em
+  // categoria_id se o patch realmente veio com essa chave.
+  if ('categoria_id' in patch) patch = { ...patch, categoria_id: patch.categoria_id || null };
   if (isDemoMode()) {
     const current = await mockDb.get('shopping_list_items', id);
     const merged = { ...current, ...patch };

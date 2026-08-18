@@ -160,10 +160,17 @@ export function transactionsView() {
     // try/catch — uma falha (rede, RLS, schema desatualizado) simplesmente
     // não fazia nada visível, exatamente o "não aparece erro nenhum"
     // reportado. Um helper comum evita repetir o try/catch 6 vezes.
+    //
+    // Dispara "cg:transactions-changed" em vez de chamar this.load() direto
+    // (mesmo padrão de transactionForm.js): o próprio listener do init() já
+    // recarrega esta tabela, e é esse evento que mantém o Dashboard em dia
+    // também — as seções de tela ficam todas montadas ao mesmo tempo
+    // (x-show, não x-if), então uma edição inline feita aqui não aparecia
+    // no Início sem F5 até esse dispatch existir.
     async _editarInline(acao, mensagemErro) {
       try {
         await acao();
-        await this.load();
+        window.dispatchEvent(new CustomEvent('cg:transactions-changed'));
       } catch (e) {
         this.$store.app.notify(e.message || mensagemErro, 'danger');
       }

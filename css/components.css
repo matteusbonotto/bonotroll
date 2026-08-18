@@ -296,26 +296,6 @@
   flex-shrink: 0;
 }
 
-/* Botão flutuante de "+ Nova despesa" no mobile — encostado no canto agora
-   que a navegação virou menu hambúrguer (não tem mais bottom nav embaixo). */
-.cg-fab {
-  position: fixed;
-  right: var(--space-4);
-  bottom: calc(var(--space-4) + env(safe-area-inset-bottom, 0px));
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  background: var(--color-accent);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.6rem;
-  box-shadow: var(--shadow-md);
-  border: none;
-  z-index: 1030;
-}
-
 /* ---------- Menu hambúrguer / drawer (mobile) ---------- */
 .cg-drawer-backdrop {
   position: fixed;
@@ -369,9 +349,6 @@
     border-right: 1px solid var(--color-border);
     min-height: 100vh;
   }
-  /* No desktop as ações já ficam visíveis nos botões da tela — o FAB some para
-     não flutuar sobre gráficos/tabelas. */
-  .cg-fab { display: none; }
 }
 
 /* ---------- Toggle de fluxo da lista de compras ---------- */

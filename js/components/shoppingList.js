@@ -23,6 +23,14 @@ export function shoppingView() {
     maisOpcoesItem: false,
     ordenarPorPrioridade: false,
 
+    // ---------- Histórico de compras finalizadas ----------
+    historicoAberto: false,
+    historicoCarregando: false,
+    historicoListas: [], // [{ list, resumo }]
+    detalheAberto: false,
+    detalheLista: null,
+    detalheItens: [],
+
     // Modal de edição completa (nome/categoria/unidade/quantidade/
     // prioridade) — separado do editor de preço (abrirPreco), que é só
     // pro fluxo de "Comprando".
@@ -264,6 +272,46 @@ export function shoppingView() {
       } catch (e) {
         store.notify(e.message || 'Não foi possível criar uma nova lista.', 'danger');
       }
+    },
+
+    // Compras já finalizadas — o que foi comprado, quando, quanto custou.
+    // Carrega os itens de cada lista pra calcular o resumo (sem coluna
+    // "total" na tabela: o valor certo já é sempre o somatório dos itens,
+    // então recalcular aqui evita uma segunda fonte de verdade divergente).
+    async abrirHistorico() {
+      const store = this.$store.app;
+      this.historicoAberto = true;
+      this.historicoCarregando = true;
+      try {
+        const todas = await sl.listLists({ ownerId: store.profile.id, groupId: store.group?.group?.id });
+        const finalizadas = todas
+          .filter((l) => l.status === 'finalizada')
+          .sort((a, b) => (b.finalizado_em || '').localeCompare(a.finalizado_em || ''));
+        this.historicoListas = await Promise.all(
+          finalizadas.map(async (list) => ({ list, resumo: sl.computeListSummary(await sl.listItems(list.id)) }))
+        );
+      } catch (e) {
+        store.notify(e.message || 'Não consegui carregar o histórico.', 'danger');
+      } finally {
+        this.historicoCarregando = false;
+      }
+    },
+    fecharHistorico() {
+      this.historicoAberto = false;
+    },
+    async verDetalheHistorico(entry) {
+      try {
+        this.detalheLista = entry.list;
+        this.detalheItens = await sl.listItems(entry.list.id);
+        this.detalheAberto = true;
+      } catch (e) {
+        this.$store.app.notify(e.message || 'Não consegui carregar os itens dessa compra.', 'danger');
+      }
+    },
+    fecharDetalheHistorico() {
+      this.detalheAberto = false;
+      this.detalheLista = null;
+      this.detalheItens = [];
     },
 
     abrirPreco(item) {

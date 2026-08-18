@@ -149,6 +149,30 @@ a { color: var(--color-primary); }
   .cg-filter-panel { display: block !important; }
 }
 
+/* Botões de ação rápida (Início: Nova despesa/Despesa fixa/Nova entrada/
+   Lista de compras — Transações: Despesa/Entrada/Importar/Exportar). Largura
+   igual em 2 colunas no mobile em vez de cada botão do tamanho do próprio
+   texto — era isso que deixava a fileira desalinhada/torta no celular. A
+   partir de tablet (≥768px) tem espaço de sobra pra caber tudo numa linha só
+   com largura natural, então volta a ser flex-wrap comum. */
+.cg-quick-actions {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-2);
+}
+.cg-quick-actions .cg-btn {
+  width: 100%;
+}
+@media (min-width: 768px) {
+  .cg-quick-actions {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  .cg-quick-actions .cg-btn {
+    width: auto;
+  }
+}
+
 .cg-grid-dashboard {
   display: grid;
   grid-template-columns: 1fr;
@@ -257,6 +281,20 @@ a { color: var(--color-primary); }
 .cg-flex-even input {
   width: 100%;
   min-width: 0;
+}
+
+/* Rótulo pequeno acima de um campo inline (ex.: Vencimento/Pago em nos
+   cards de transação mobile) — sem isso um <input type="date"> vazio só
+   mostra "dd/mm/yyyy" e parece um campo de formulário quebrado, não uma
+   informação opcional que dá pra tocar pra preencher. */
+.cg-field-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  margin-bottom: 2px;
 }
 
 .form-label { font-weight: 600; }

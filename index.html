@@ -288,10 +288,10 @@
             </div>
           </div>
 
-          <div class="d-flex flex-wrap gap-2 mb-4">
-            <button type="button" class="cg-btn btn btn-success" @click="$store.txModal.openNew('saida')"><i class="bi bi-dash-circle"></i> Nova despesa</button>
-            <button type="button" class="cg-btn btn btn-outline-success" @click="$store.txModal.openNew('saida', 'fixa')"><i class="bi bi-pin-angle"></i> Despesa fixa</button>
-            <button type="button" class="cg-btn btn btn-outline-primary" @click="$store.txModal.openNew('entrada')"><i class="bi bi-plus-circle"></i> Nova entrada</button>
+          <div class="cg-quick-actions mb-4">
+            <button type="button" class="cg-btn btn btn-danger" @click="$store.txModal.openNew('saida')"><i class="bi bi-dash-circle"></i> Nova despesa</button>
+            <button type="button" class="cg-btn btn btn-outline-danger" @click="$store.txModal.openNew('saida', 'fixa')"><i class="bi bi-pin-angle"></i> Despesa fixa</button>
+            <button type="button" class="cg-btn btn btn-outline-success" @click="$store.txModal.openNew('entrada')"><i class="bi bi-plus-circle"></i> Nova entrada</button>
             <button type="button" class="cg-btn btn btn-outline-secondary" @click="$store.app.setView('compras')"><i class="bi bi-cart3"></i> Lista de compras</button>
           </div>
 
@@ -397,17 +397,18 @@
         <section x-show="$store.app.view === 'transacoes'" x-data="transactionsView()" x-init="init()">
           <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
             <div class="cg-section-title mb-0"><i class="bi bi-table"></i> Transações</div>
-            <div class="d-flex flex-wrap gap-2">
-              <div class="cg-view-toggle">
-                <button type="button" :class="{ 'is-active': viewMode === 'lista' }" @click="setViewMode('lista')" title="Lista"><i class="bi bi-list-ul"></i></button>
-                <button type="button" :class="{ 'is-active': viewMode === 'grade' }" @click="setViewMode('grade')" title="Grade"><i class="bi bi-grid-3x3-gap"></i></button>
-                <button type="button" :class="{ 'is-active': viewMode === 'compacta' }" @click="setViewMode('compacta')" title="Grade compacta"><i class="bi bi-grid"></i></button>
-              </div>
-              <button type="button" class="cg-btn btn btn-success btn-sm" @click="novaSaida()"><i class="bi bi-dash-circle"></i> Despesa</button>
-              <button type="button" class="cg-btn btn btn-outline-primary btn-sm" @click="novaEntrada()"><i class="bi bi-plus-circle"></i> Entrada</button>
-              <button type="button" class="cg-btn btn btn-outline-secondary btn-sm" @click="abrirImportacao()"><i class="bi bi-upload"></i> Importar CSV</button>
-              <button type="button" class="cg-btn btn btn-outline-secondary btn-sm" @click="exportar()"><i class="bi bi-download"></i> Exportar</button>
+            <div class="cg-view-toggle">
+              <button type="button" :class="{ 'is-active': viewMode === 'lista' }" @click="setViewMode('lista')" title="Lista"><i class="bi bi-list-ul"></i></button>
+              <button type="button" :class="{ 'is-active': viewMode === 'grade' }" @click="setViewMode('grade')" title="Grade"><i class="bi bi-grid-3x3-gap"></i></button>
+              <button type="button" :class="{ 'is-active': viewMode === 'compacta' }" @click="setViewMode('compacta')" title="Grade compacta"><i class="bi bi-grid"></i></button>
             </div>
+          </div>
+
+          <div class="cg-quick-actions mb-3">
+            <button type="button" class="cg-btn btn btn-danger btn-sm" @click="novaSaida()"><i class="bi bi-dash-circle"></i> Despesa</button>
+            <button type="button" class="cg-btn btn btn-outline-success btn-sm" @click="novaEntrada()"><i class="bi bi-plus-circle"></i> Entrada</button>
+            <button type="button" class="cg-btn btn btn-outline-secondary btn-sm" @click="abrirImportacao()"><i class="bi bi-upload"></i> Importar CSV</button>
+            <button type="button" class="cg-btn btn btn-outline-secondary btn-sm" @click="exportar()"><i class="bi bi-download"></i> Exportar</button>
           </div>
 
           <!-- Botão de abrir/fechar filtros: só existe no mobile (≥992px o painel
@@ -704,13 +705,13 @@
                   <div class="fw-semibold flex-shrink-0 text-end" :title="cgFormat.formatCurrency(row.valor)" x-text="cgFormat.formatCurrencyCompact(row.valor)"></div>
                 </div>
 
-                <div class="d-flex align-items-center gap-3 mb-2">
-                  <div class="d-flex align-items-center gap-1 cg-flex-even">
-                    <i class="bi bi-calendar-event cg-muted" :title="'Vencimento'"></i>
+                <div class="d-flex align-items-start gap-3 mb-2">
+                  <div class="cg-flex-even">
+                    <label class="cg-field-label"><i class="bi bi-calendar-event"></i> Vencimento</label>
                     <input type="date" class="form-control form-control-sm" x-effect="$nextTick(() => $el.value = row.data_vencimento || '')" @change="setVencimento(row, $event.target.value)" />
                   </div>
-                  <div class="d-flex align-items-center gap-1 cg-flex-even">
-                    <i class="bi bi-calendar-check cg-muted" :title="'Pago em'"></i>
+                  <div class="cg-flex-even">
+                    <label class="cg-field-label"><i class="bi bi-calendar-check"></i> Pago em</label>
                     <input type="date" class="form-control form-control-sm" x-effect="$nextTick(() => $el.value = row.data_pagamento || '')" @change="setDataPagamento(row, $event.target.value)" />
                   </div>
                 </div>
@@ -794,6 +795,7 @@
               <div><span class="cg-muted small d-block">Itens</span><span class="fw-bold" x-text="resumo.itensComprados + ' / ' + resumo.totalItens"></span></div>
               <div class="min-w-0"><span class="cg-muted small d-block">Total a pagar</span><span class="fw-bold" :title="cgFormat.formatCurrency(resumo.valorTotal)" x-text="cgFormat.formatCurrencyCompact(resumo.valorTotal)"></span></div>
               <button type="button" class="cg-btn btn btn-outline-secondary btn-sm ms-auto" @click="graficoAberto = true"><i class="bi bi-pie-chart"></i> Ver gráfico</button>
+              <button type="button" class="cg-btn btn btn-outline-secondary btn-sm" @click="abrirHistorico()"><i class="bi bi-clock-history"></i> Histórico</button>
               <button type="button" class="cg-btn btn btn-outline-secondary btn-sm" @click="abrirImportacao()"><i class="bi bi-upload"></i> Importar CSV</button>
             </div>
           </div>
@@ -1020,6 +1022,58 @@
                 </div>
               </template>
               <button type="button" class="cg-btn btn btn-outline-secondary w-100 mt-3" @click="graficoAberto = false">Fechar</button>
+            </div>
+          </div>
+
+          <!-- Histórico de compras finalizadas -->
+          <div class="cg-modal-backdrop" x-show="historicoAberto" x-cloak @click.self="fecharHistorico()">
+            <div class="cg-modal">
+              <div class="d-flex align-items-center justify-content-between mb-3">
+                <h2 class="h6 fw-bold mb-0"><i class="bi bi-clock-history"></i> Histórico de compras</h2>
+                <button type="button" class="btn-close" @click="fecharHistorico()" aria-label="Fechar"></button>
+              </div>
+              <template x-if="historicoCarregando"><p class="cg-muted small">Carregando…</p></template>
+              <template x-if="!historicoCarregando && !historicoListas.length">
+                <p class="cg-muted small mb-0">Nenhuma compra finalizada ainda — encerre uma compra pra ela aparecer aqui.</p>
+              </template>
+              <div class="d-flex flex-column gap-2" style="max-height: 60vh; overflow-y: auto;" x-show="!historicoCarregando && historicoListas.length">
+                <template x-for="entry in historicoListas" :key="entry.list.id">
+                  <button type="button" class="cg-list-row d-flex align-items-center justify-content-between gap-2 p-2 text-start" @click="verDetalheHistorico(entry)">
+                    <div class="min-w-0">
+                      <div class="fw-semibold text-truncate" x-text="entry.list.nome"></div>
+                      <div class="cg-muted small" x-text="cgFormat.formatDate((entry.list.finalizado_em || '').slice(0, 10)) + ' · ' + entry.resumo.itensComprados + '/' + entry.resumo.totalItens + ' itens'"></div>
+                    </div>
+                    <div class="fw-semibold flex-shrink-0" :title="cgFormat.formatCurrency(entry.resumo.valorTotal)" x-text="cgFormat.formatCurrencyCompact(entry.resumo.valorTotal)"></div>
+                  </button>
+                </template>
+              </div>
+            </div>
+          </div>
+
+          <!-- Detalhe de uma compra do histórico (itens, só leitura) -->
+          <div class="cg-modal-backdrop" x-show="detalheAberto" x-cloak @click.self="fecharDetalheHistorico()">
+            <div class="cg-modal">
+              <div class="d-flex align-items-center justify-content-between mb-1">
+                <h2 class="h6 fw-bold mb-0" x-text="detalheLista?.nome"></h2>
+                <button type="button" class="btn-close" @click="fecharDetalheHistorico()" aria-label="Fechar"></button>
+              </div>
+              <p class="cg-muted small mb-3" x-text="cgFormat.formatDate((detalheLista?.finalizado_em || '').slice(0, 10))"></p>
+              <div class="d-flex flex-column gap-2" style="max-height: 55vh; overflow-y: auto;">
+                <template x-for="item in detalheItens" :key="item.id">
+                  <div class="cg-list-row d-flex align-items-center justify-content-between gap-2 p-2">
+                    <div class="d-flex align-items-center gap-2 min-w-0">
+                      <i class="bi" :class="item.comprado ? 'bi-check-circle-fill text-success' : 'bi-circle cg-muted'"></i>
+                      <div class="min-w-0">
+                        <div class="text-truncate" :class="{ 'text-decoration-line-through cg-muted': item.comprado }" x-text="item.nome"></div>
+                        <div class="cg-muted small" x-text="item.quantidade + ' ' + item.unidade"></div>
+                      </div>
+                    </div>
+                    <div class="fw-semibold flex-shrink-0" x-text="item.subtotal ? cgFormat.formatCurrencyCompact(item.subtotal) : '—'"></div>
+                  </div>
+                </template>
+                <p class="cg-muted small mb-0" x-show="!detalheItens.length">Sem itens nessa lista.</p>
+              </div>
+              <button type="button" class="cg-btn btn btn-outline-secondary w-100 mt-3" @click="fecharDetalheHistorico()">Fechar</button>
             </div>
           </div>
         </section>
@@ -1362,10 +1416,6 @@
           </div>
         </aside>
       </div>
-
-      <button type="button" class="cg-fab" x-show="$store.app.view === 'home' || $store.app.view === 'transacoes'" @click="$store.txModal.openNew('saida')" aria-label="Nova despesa">
-        <i class="bi bi-plus-lg"></i>
-      </button>
     </div>
   </template>
 
