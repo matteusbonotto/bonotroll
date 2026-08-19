@@ -1,8 +1,9 @@
 import { listTransactions, updateTransaction, markAsPaid, markAsUnpaid, listPayersFor } from '../services/transactions.js';
 import { notifyPayment } from '../services/notifications.js';
-import { STATUS_META, statusMeta } from '../utils/status.js';
+import { STATUS_META, statusMeta, computeStatus } from '../utils/status.js';
 import { exportToCsv } from '../services/csvImport.js';
 import * as format from '../utils/format.js';
+import { todayIso } from '../utils/format.js';
 
 const FILTRO_VAZIO = { tipo: '', categoriaId: '', responsavelId: '', status: '', tipoDespesa: '', busca: '', dataInicio: '', dataFim: '' };
 
@@ -170,11 +171,15 @@ export function transactionsView() {
     // também — as seções de tela ficam todas montadas ao mesmo tempo
     // (x-show, não x-if), então uma edição inline feita aqui não aparecia
     // no Início sem F5 até esse dispatch existir.
-    async _editarInline(acao, mensagemErro) {
+    // onErro (opcional) desfaz uma mudança otimista feita ANTES de chamar
+    // (ver togglePago) — sem reverter, o campo ficaria mostrando o valor
+    // novo mesmo depois de a chamada ter falhado de verdade.
+    async _editarInline(acao, mensagemErro, onErro) {
       try {
         await acao();
         window.dispatchEvent(new CustomEvent('cg:transactions-changed'));
       } catch (e) {
+        if (onErro) onErro();
         this.$store.app.notify(e.message || mensagemErro, 'danger');
       }
     },
@@ -198,15 +203,35 @@ export function transactionsView() {
       );
     },
 
+    // Otimista: o checkbox (:checked="!!row.data_pagamento") e o badge de
+    // status mudam NA HORA, sem esperar a rede confirmar. Sem isso, no
+    // meio-tempo entre o clique e a resposta, o Alpine re-sincroniza o
+    // :checked pro valor antigo (a rede ainda não voltou) e o checkbox
+    // "pisca" de volta pro estado errado antes de corrigir sozinho — dava a
+    // impressão de que a ação tinha falhado, mesmo tendo funcionado.
+    // onErro desfaz os dois campos se a chamada realmente falhar.
     togglePago(row) {
-      return this._editarInline(async () => {
-        if (row._status === 'pago') {
-          await markAsUnpaid(row.id);
-        } else {
-          const paga = await markAsPaid(row.id);
-          await this.avisarPagamento(paga);
+      const eraPago = row._status === 'pago';
+      const anterior = { data_pagamento: row.data_pagamento, _status: row._status };
+
+      row.data_pagamento = eraPago ? null : todayIso();
+      row._status = computeStatus(row);
+
+      return this._editarInline(
+        async () => {
+          if (eraPago) {
+            await markAsUnpaid(row.id);
+          } else {
+            const paga = await markAsPaid(row.id);
+            await this.avisarPagamento(paga);
+          }
+        },
+        'Não foi possível atualizar o status de pagamento.',
+        () => {
+          row.data_pagamento = anterior.data_pagamento;
+          row._status = anterior._status;
         }
-      }, 'Não foi possível atualizar o status de pagamento.');
+      );
     },
 
     // Avisa os outros membros do grupo que essa despesa foi paga (ver

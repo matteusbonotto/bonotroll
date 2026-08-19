@@ -45,6 +45,13 @@
     <button type="button" class="btn btn-sm btn-light fw-semibold" @click="$store.app.applyUpdate()">Atualizar agora</button>
   </div>
 
+  <div class="cg-update-banner" x-show="$store.app.installPrompt" x-cloak x-transition>
+    <i class="bi bi-download"></i>
+    <span>Instale o Bõnotto na tela de início pra abrir mais rápido e receber notificações.</span>
+    <button type="button" class="btn btn-sm btn-light fw-semibold" @click="$store.app.promptInstall()">Instalar</button>
+    <button type="button" class="btn-close btn-close-white" @click="$store.app.installPrompt = null" aria-label="Dispensar"></button>
+  </div>
+
   <!-- Carregando sessão -->
   <template x-if="!$store.app.ready">
     <div class="d-flex align-items-center justify-content-center" style="min-height:100vh;">
@@ -1523,6 +1530,17 @@
                   <div class="flex-fill">
                     <h2 class="h6 fw-bold mb-1">Orçamentos</h2>
                     <p class="cg-muted small mb-0">Defina um limite mensal por categoria e acompanhe no Início.</p>
+                  </div>
+                  <i class="bi bi-chevron-right cg-muted"></i>
+                </div>
+              </div>
+
+              <div class="cg-card cg-card--hoverable mb-3" x-show="$store.app.installPrompt" x-cloak role="button" @click="$store.app.promptInstall()">
+                <div class="d-flex align-items-center gap-3">
+                  <div class="cg-icon-badge"><i class="bi bi-download"></i></div>
+                  <div class="flex-fill">
+                    <h2 class="h6 fw-bold mb-1">Instalar app</h2>
+                    <p class="cg-muted small mb-0">Adiciona o Bõnotto na tela de início pra abrir como app, mais rápido e recebendo notificações.</p>
                   </div>
                   <i class="bi bi-chevron-right cg-muted"></i>
                 </div>

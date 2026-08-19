@@ -26,6 +26,14 @@ export function appStore() {
     isDemoMode: isDemoMode(),
     toasts: [],
     updateAvailable: false,
+    // installPrompt guarda o evento "beforeinstallprompt" capturado em
+    // app.js (só o navegador consegue reabrir esse prompt, e só uma vez por
+    // evento — precisa ficar guardado até a pessoa clicar em "Instalar").
+    // Chrome/Edge/Android disparam esse evento sozinhos quando os critérios
+    // de instalabilidade batem (manifest válido, HTTPS, service worker já
+    // registrado); iOS Safari nunca dispara (lá a instalação é manual via
+    // "Adicionar à Tela de Início", sem prompt programático possível).
+    installPrompt: null,
     navOpen: false,
     // 'dark' | 'light' | null (null = segue o tema do sistema). O valor
     // inicial já foi aplicado no <html> por um script inline no <head>
@@ -240,6 +248,17 @@ export function appStore() {
       setTimeout(() => {
         this.toasts = this.toasts.filter((t) => t.id !== entry.id);
       }, duracao);
+    },
+
+    // Chamado pelo botão "Instalar app" (banner + Perfil). O prompt nativo só
+    // pode ser mostrado uma vez por evento capturado — depois de usado (ou
+    // recusado), some até o navegador decidir disparar outro.
+    async promptInstall() {
+      const evento = this.installPrompt;
+      if (!evento) return;
+      this.installPrompt = null;
+      evento.prompt();
+      await evento.userChoice;
     },
 
     dismissToast(id) {

@@ -141,6 +141,20 @@ document.addEventListener('alpine:init', () => {
   }, 60000);
 })();
 
+// Captura o prompt nativo de instalação (Chrome/Edge/Android) em vez de
+// deixar o navegador decidir sozinho quando/como oferecer — preventDefault()
+// suprime a UI automática dele (às vezes um infobar discreto, fácil de
+// perder) e guarda o evento pra um botão nosso (banner + Perfil) poder
+// reabrir explicitamente via $store.app.promptInstall(). Sem suporte no iOS
+// Safari (lá não existe esse evento; instalação é manual).
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  Alpine.store('app').installPrompt = e;
+});
+window.addEventListener('appinstalled', () => {
+  Alpine.store('app').installPrompt = null;
+});
+
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker
