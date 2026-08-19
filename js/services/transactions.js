@@ -2,7 +2,7 @@ import { isDemoMode } from '../data/config.js';
 import { mockDb } from '../data/mockDb.js';
 import { getSupabase } from '../data/supabaseClient.js';
 import { computeStatus } from '../utils/status.js';
-import { todayIso } from '../utils/format.js';
+import { todayIso, semAcento } from '../utils/format.js';
 import * as format from '../utils/format.js';
 import { comFallbackDeColuna } from '../utils/dbFallback.js';
 
@@ -30,15 +30,18 @@ const REGRAS_CATEGORIA_DESPESA = [
   { nomes: ['Curso'], palavras: ['curso', 'faculdade', 'escola', 'mensalidade', 'udemy', 'alura', 'ingles', 'inglês', 'idiomas'] },
   { nomes: ['Salário', 'Salario'], palavras: ['salario', 'salário', 'holerite'] },
   { nomes: ['Alimentos', 'Mercado'], palavras: ['mercado', 'supermercado', 'atacadao', 'atacadão'] },
-  { nomes: ['Saúde', 'Saude'], palavras: ['farmacia', 'farmácia', 'drogaria', 'consulta', 'medico', 'médico', 'dentista', 'plano de saude', 'plano de saúde', 'hospital', 'exame', 'laboratorio', 'laboratório', 'fisioterapia', 'psicologo', 'psicólogo', 'terapia', 'oftalmologista', 'nutricionista', 'vacina', 'remedio', 'remédio', 'oculos', 'óculos'] },
-  { nomes: ['Beleza'], palavras: ['sobrancelha', 'sombrancelha', 'cabelo', 'cabeleireiro', 'salao de beleza', 'salão de beleza', 'barbearia', 'barbeiro', 'manicure', 'pedicure', 'unha', 'estetica', 'estética', 'depilacao', 'depilação', 'maquiagem', 'make up', 'makeup', 'spa', 'skincare', 'progressiva', 'escova progressiva', 'tintura', 'coloracao', 'coloração', 'micropigmentacao', 'micropigmentação', 'unhas de gel'] },
+  // Radicais em vez de palavras inteiras onde dá (ex.: "cabele" em vez de
+  // "cabeleireiro") — cobre acentuação e erros de digitação comuns (ex.:
+  // "cabelereiro" sem o primeiro "i") sem precisar listar cada variação.
+  { nomes: ['Saúde', 'Saude'], palavras: ['farmac', 'drogaria', 'consulta', 'medic', 'dentista', 'plano de saude', 'plano de saúde', 'hospital', 'exame', 'laborator', 'fisioterap', 'psicolog', 'terapia', 'oftalmolog', 'nutricion', 'vacina', 'remedio', 'remédio', 'oculos', 'óculos'] },
+  { nomes: ['Beleza'], palavras: ['sobrancelha', 'sombrancelha', 'cabele', 'cabelo', 'salao de beleza', 'salão de beleza', 'barbe', 'manicur', 'pedicur', 'unha', 'esteti', 'depila', 'maquia', 'make', 'spa', 'skincare', 'progressiva', 'tintura', 'colora', 'micropigmenta', 'unhas de gel'] },
 ];
 
 export function guessCategoryByTitle(titulo, categories) {
-  const alvo = (titulo || '').trim().toLowerCase();
+  const alvo = semAcento((titulo || '').trim().toLowerCase());
   if (!alvo) return null;
   for (const regra of REGRAS_CATEGORIA_DESPESA) {
-    if (!regra.palavras.some((p) => alvo.includes(p))) continue;
+    if (!regra.palavras.some((p) => alvo.includes(semAcento(p)))) continue;
     for (const nomeCat of regra.nomes) {
       const achada = categories.find((c) => c.nome.trim().toLowerCase() === nomeCat.toLowerCase());
       if (achada) return achada;

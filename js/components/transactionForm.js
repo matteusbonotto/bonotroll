@@ -385,11 +385,17 @@ export function txModalStore() {
           store.notify(this.form.tipo === 'entrada' ? 'Entrada adicionada.' : 'Despesa adicionada.');
         }
 
+        // Best-effort (mesmo padrão do generateForProfile em store.js): a despesa
+        // já foi salva com sucesso acima, então uma falha aqui (ex.: RLS ainda não
+        // migrada no Supabase do usuário) não pode derrubar o resto do save() e
+        // fazer parecer que o lançamento inteiro falhou quando na verdade só a
+        // notificação pro outro membro não foi.
         if (!this.pagoAoAbrir && payload.data_pagamento) {
           const memberIds = (store.group?.members || []).map((m) => m.id);
           if (memberIds.length >= 2) {
-            await notifyPayment({ transaction: salva, payerProfileId: store.profile.id, memberIds });
-            store.refreshNotifications();
+            notifyPayment({ transaction: salva, payerProfileId: store.profile.id, memberIds })
+              .then(() => store.refreshNotifications())
+              .catch(() => {});
           }
         }
 

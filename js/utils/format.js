@@ -1,6 +1,13 @@
 const currencyFormatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 const dateFormatter = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
+// Usado pela categorização automática (transactions.js/shoppingList.js) pra
+// "farmácia" e "farmacia", "médico" e "medico" etc. casarem com o mesmo
+// radical de palavra-chave sem precisar listar as duas grafias em toda regra.
+export function semAcento(s) {
+  return (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '');
+}
+
 export function formatCurrency(value) {
   const n = Number(value ?? 0);
   return currencyFormatter.format(Number.isFinite(n) ? n : 0);

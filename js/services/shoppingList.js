@@ -2,6 +2,7 @@ import { isDemoMode } from '../data/config.js';
 import { mockDb } from '../data/mockDb.js';
 import { getSupabase } from '../data/supabaseClient.js';
 import { comFallbackDeColuna } from '../utils/dbFallback.js';
+import { semAcento } from '../utils/format.js';
 
 // Calcula o subtotal de um item: por unidade (quantidade × preço unitário)
 // ou por peso (quantidade em kg/g × preço por kg/g).
@@ -150,10 +151,10 @@ const REGRAS_CATEGORIA = [
 ];
 
 export function guessCategoryByName(nome, categories) {
-  const alvo = (nome || '').trim().toLowerCase();
+  const alvo = semAcento((nome || '').trim().toLowerCase());
   if (!alvo) return null;
   for (const regra of REGRAS_CATEGORIA) {
-    if (!regra.palavras.some((p) => alvo.includes(p))) continue;
+    if (!regra.palavras.some((p) => alvo.includes(semAcento(p)))) continue;
     for (const nomeCat of regra.nomes) {
       const achada = categories.find((c) => c.nome.trim().toLowerCase() === nomeCat.toLowerCase());
       if (achada) return achada;

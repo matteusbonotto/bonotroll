@@ -786,6 +786,7 @@
   box-shadow: var(--shadow-sm);
 }
 .cg-resource-item__foto {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -796,7 +797,12 @@
   cursor: pointer;
 }
 .cg-resource-item__foto.has-foto { cursor: default; }
-.cg-resource-item__foto img { width: 100%; height: 100%; object-fit: cover; }
+/* position:absolute tira a <img> do cálculo de tamanho do flex container —
+   sem isso, quando a foto tem proporção diferente de 16:10 (ex.: quadrada),
+   a proporção NATURAL da imagem "vaza" pro tamanho do container e o
+   aspect-ratio acima é ignorado, deixando cards com fotos de tamanhos
+   diferentes lado a lado. */
+.cg-resource-item__foto img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .cg-resource-item__body {
   padding: var(--space-3) var(--space-3) 0;
   display: flex;
