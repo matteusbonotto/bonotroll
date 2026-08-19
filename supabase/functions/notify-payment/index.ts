@@ -78,15 +78,15 @@ Deno.serve(async (req) => {
         } catch (e) {
           const statusCode = (e as { statusCode?: number })?.statusCode;
           const motivo = (e as { body?: string; message?: string })?.body || (e as Error)?.message || 'erro desconhecido';
-          // 404/410 = inscrição morta (navegador desinstalou/expirou) — apaga
-          // de vez. Qualquer outro código (ex.: 401/403 = assinatura VAPID
-          // não bate mais com a chave configurada, geralmente porque a
-          // pessoa se inscreveu ANTES da última troca de chave) fica
-          // registrado no log da function em vez de sumir silenciosamente —
-          // antes disso não tinha como saber, de fora, que o envio tinha
-          // falhado: a resposta sempre voltava "ok" mesmo sem push nenhum
-          // sair de verdade.
-          if (statusCode === 404 || statusCode === 410) {
+          // 404/410 = inscrição morta (navegador desinstalou/expirou). 401/403
+          // = a assinatura VAPID não bate com a chave configurada agora —
+          // sempre acontece quando alguém se inscreveu ANTES da última troca
+          // de chave; como o servidor só tem UMA chave privada ativa por vez,
+          // essa inscrição nunca mais vai funcionar até a pessoa desligar e
+          // religar o toggle de novo (recriando com a chave atual). Nos três
+          // casos apaga de vez — deixar parada só ia gerar o mesmo erro toda
+          // vez que essa pessoa recebesse uma notificação nova.
+          if (statusCode === 404 || statusCode === 410 || statusCode === 401 || statusCode === 403) {
             await supabase.from('push_subscriptions').delete().eq('id', sub.id);
           } else {
             console.error(`push falhou pra profile_id=${n.profile_id} (status=${statusCode}):`, motivo);

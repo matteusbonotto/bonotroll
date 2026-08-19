@@ -143,9 +143,15 @@ Deno.serve(async () => {
           );
           pushEnviados++;
         } catch (e) {
+          // 404/410 = inscrição morta; 401/403 = assinatura VAPID não bate
+          // com a chave atual (inscrita antes da última troca de chave) —
+          // nos dois casos nunca mais vai funcionar sozinha, então apaga
+          // (mesmo critério de notify-payment/index.ts).
           const statusCode = (e as { statusCode?: number })?.statusCode;
-          if (statusCode === 404 || statusCode === 410) {
+          if (statusCode === 404 || statusCode === 410 || statusCode === 401 || statusCode === 403) {
             await supabase.from('push_subscriptions').delete().eq('id', sub.id);
+          } else {
+            console.error(`push falhou pra profile_id=${n.profile_id} (status=${statusCode}):`, (e as Error)?.message);
           }
         }
       }
