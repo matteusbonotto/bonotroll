@@ -9,6 +9,38 @@ export function withStatus(rows) {
   return rows.map((r) => ({ ...r, _status: computeStatus(r) }));
 }
 
+// ---------- Categorização automática (mesma ideia da lista de compras,
+// ver guessCategoryByName em services/shoppingList.js) ----------
+// Sugere pelo TÍTULO digitado (não pela empresa/serviço, que fica escondida
+// atrás de "Mais opções" e pode nem ter sido preenchida ainda quando a
+// pessoa já terminou de escrever o título). Só sugere categorias que já
+// existem na conta, nunca cria uma nova sozinha; sempre editável — só
+// preenche o campo, não trava ele.
+const REGRAS_CATEGORIA_DESPESA = [
+  { nomes: ['Assinaturas'], palavras: ['netflix', 'spotify', 'amazon prime', 'prime video', 'disney', 'hbo', 'youtube premium', 'icloud', 'google one', 'nubank+', 'assinatura', 'streaming', 'deezer'] },
+  { nomes: ['Carro'], palavras: ['gasolina', 'combustivel', 'combustível', 'posto', 'uber', '99', 'estacionamento', 'pedagio', 'pedágio', 'ipva', 'seguro carro', 'oficina', 'mecanico', 'mecânico', 'lavagem', 'financiamento carro'] },
+  { nomes: ['Casa'], palavras: ['aluguel', 'condominio', 'condomínio', 'luz', 'energia', 'agua', 'água', ' gas', 'gás', 'internet', 'financiamento casa', 'iptu', 'seguro casa', 'reforma', 'moveis', 'móveis'] },
+  { nomes: ['Delivery'], palavras: ['ifood', 'rappi', 'uber eats', 'delivery', 'lanche'] },
+  { nomes: ['Pet'], palavras: ['petlove', 'petshop', 'pet shop', 'veterinario', 'veterinário', 'racao', 'ração'] },
+  { nomes: ['Curso'], palavras: ['curso', 'faculdade', 'escola', 'mensalidade', 'udemy', 'alura', 'ingles', 'inglês', 'idiomas'] },
+  { nomes: ['Salário', 'Salario'], palavras: ['salario', 'salário', 'holerite'] },
+  { nomes: ['Alimentos', 'Mercado'], palavras: ['mercado', 'supermercado', 'atacadao', 'atacadão'] },
+  { nomes: ['Saúde', 'Saude'], palavras: ['farmacia', 'farmácia', 'drogaria', 'consulta', 'medico', 'médico', 'dentista', 'plano de saude', 'plano de saúde'] },
+];
+
+export function guessCategoryByTitle(titulo, categories) {
+  const alvo = (titulo || '').trim().toLowerCase();
+  if (!alvo) return null;
+  for (const regra of REGRAS_CATEGORIA_DESPESA) {
+    if (!regra.palavras.some((p) => alvo.includes(p))) continue;
+    for (const nomeCat of regra.nomes) {
+      const achada = categories.find((c) => c.nome.trim().toLowerCase() === nomeCat.toLowerCase());
+      if (achada) return achada;
+    }
+  }
+  return null;
+}
+
 // comprovante_url guarda um DATA URL (modo demo) ou o CAMINHO dentro do
 // bucket privado "anexos" (modo real) — nunca uma URL pública fixa, porque
 // o bucket é privado. Pra exibir, sempre passar o valor salvo por

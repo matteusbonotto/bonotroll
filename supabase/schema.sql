@@ -497,11 +497,21 @@ drop policy if exists "Excluir empresa própria" on companies;
 create policy "Excluir empresa própria" on companies for delete
   using (owner_id = auth.uid());
 
+-- with check só em "owner_id = auth.uid()" (sem o "or is_group_member")
+-- parecia certo mas quebrava todo UPDATE entre membros do grupo: with check
+-- valida a linha DEPOIS da alteração, e um UPDATE que não mexe em owner_id
+-- mantém o owner_id de quem criou — então quando um membro editava/marcava
+-- como paga uma despesa do OUTRO (o uso normal de "grupo"), o Postgres
+-- rejeitava com "new row violates row-level security policy" mesmo a
+-- pessoa podendo ENXERGAR a linha (using já permitia). DELETE não usa with
+-- check, só INSERT/UPDATE — por isso excluir sempre funcionou mas editar
+-- não. Repetido no mesmo padrão em resource_rooms/resource_items/
+-- shopping_lists logo abaixo.
 alter table transactions enable row level security;
 drop policy if exists "Ver e editar transações próprias ou do grupo" on transactions;
 create policy "Ver e editar transações próprias ou do grupo" on transactions for all
   using (owner_id = auth.uid() or public.is_group_member(group_id))
-  with check (owner_id = auth.uid());
+  with check (owner_id = auth.uid() or public.is_group_member(group_id));
 
 alter table transaction_payers enable row level security;
 drop policy if exists "Ver e editar pagadores de transações visíveis" on transaction_payers;
@@ -517,7 +527,7 @@ alter table resource_rooms enable row level security;
 drop policy if exists "Ver e editar cômodos próprios ou do grupo" on resource_rooms;
 create policy "Ver e editar cômodos próprios ou do grupo" on resource_rooms for all
   using (owner_id = auth.uid() or public.is_group_member(group_id))
-  with check (owner_id = auth.uid());
+  with check (owner_id = auth.uid() or public.is_group_member(group_id));
 
 alter table resource_categories enable row level security;
 drop policy if exists "Ver e editar subcategorias de cômodos visíveis" on resource_categories;
@@ -533,7 +543,7 @@ alter table resource_items enable row level security;
 drop policy if exists "Ver e editar itens próprios ou do grupo" on resource_items;
 create policy "Ver e editar itens próprios ou do grupo" on resource_items for all
   using (owner_id = auth.uid() or public.is_group_member(group_id))
-  with check (owner_id = auth.uid());
+  with check (owner_id = auth.uid() or public.is_group_member(group_id));
 
 alter table notifications enable row level security;
 drop policy if exists "Ver as próprias notificações" on notifications;
@@ -570,7 +580,7 @@ alter table shopping_lists enable row level security;
 drop policy if exists "Ver e editar listas próprias ou do grupo" on shopping_lists;
 create policy "Ver e editar listas próprias ou do grupo" on shopping_lists for all
   using (owner_id = auth.uid() or public.is_group_member(group_id))
-  with check (owner_id = auth.uid());
+  with check (owner_id = auth.uid() or public.is_group_member(group_id));
 
 alter table shopping_list_items enable row level security;
 drop policy if exists "Ver e editar itens de listas próprias ou do grupo" on shopping_list_items;

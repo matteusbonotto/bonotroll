@@ -1,4 +1,4 @@
-import { createTransaction, updateTransaction, deleteTransaction, uploadComprovante, getComprovanteUrl, listPayers, setPayers, splitEqually } from '../services/transactions.js';
+import { createTransaction, updateTransaction, deleteTransaction, uploadComprovante, getComprovanteUrl, listPayers, setPayers, splitEqually, guessCategoryByTitle } from '../services/transactions.js';
 import { createCompany, updateCompany, uploadCompanyLogo } from '../services/companies.js';
 import { notifyPayment } from '../services/notifications.js';
 import { recognizeText, parseReceiptText } from '../services/ocr.js';
@@ -49,6 +49,11 @@ export function txModalStore() {
     // notifyPayment só nesse momento, não em toda edição de uma despesa já paga).
     pagoAoAbrir: false,
 
+    // Mesma lógica da lista de compras: sugere categoria pelo título
+    // digitado, mas nunca sobrescreve uma escolha manual — só preenche o
+    // campo, não trava ele.
+    categoriaEscolhidaManualmente: false,
+
     openNew(tipo = 'saida', tipoDespesa = 'variavel') {
       this.form = emptyForm();
       this.form.tipo = tipo;
@@ -59,10 +64,18 @@ export function txModalStore() {
       this.pagadores = [];
       this.empresaLogoUrl = null;
       this.pagoAoAbrir = false;
+      this.categoriaEscolhidaManualmente = false;
       this.open = true;
     },
 
+    onTituloInput() {
+      if (this.categoriaEscolhidaManualmente) return;
+      const sugestao = guessCategoryByTitle(this.form.titulo, Alpine.store('app').categories);
+      if (sugestao) this.form.categoria_id = sugestao.id;
+    },
+
     onCategoriaChange() {
+      this.categoriaEscolhidaManualmente = true;
       if (this.form.categoria_id === '__nova__') {
         this.form.categoria_id = '';
         // Abre o modal compartilhado de categorias já em modo "criar"; ao
@@ -93,6 +106,10 @@ export function txModalStore() {
       this.pagadores = [];
       this.empresaLogoUrl = null;
       this.pagoAoAbrir = !!tx.data_pagamento;
+      // Editando um lançamento existente a categoria já foi escolhida antes
+      // (por sugestão ou à mão) — não deixa o próximo @input no título
+      // trocar ela sozinha.
+      this.categoriaEscolhidaManualmente = true;
       if (tx.comprovante_url) {
         getComprovanteUrl(tx.comprovante_url).then((url) => { this.comprovantePreviewUrl = url; });
       }
