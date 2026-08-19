@@ -4,6 +4,20 @@ html, body {
   min-height: 100vh;
 }
 
+/* O Bootstrap NÃO tem uma utility ".min-w-0" pronta (só existe ".mw-100" pro
+   lado do max-width) — só reparei nisso quando um teste com título bem
+   comprido continuou vazando pra fora do card mesmo depois de eu já ter
+   adicionado a classe em 18 lugares diferentes no index.html, achando que
+   era Bootstrap de verdade. Sem essa classe existir, aquilo tudo era
+   inofensivo/sem efeito nenhum — as classes .cg-due-row/.cg-list-row/
+   .cg-card--compact que ganharam "min-width: 0" direto no CSS delas
+   funcionavam por isso mesmo (CSS de verdade, não essa utility fantasma).
+   Definir ela aqui uma vez resolve todos os 18 lugares de uma vez, inclusive
+   qualquer um que eu tenha esquecido de rastrear manualmente. */
+.min-w-0 {
+  min-width: 0 !important;
+}
+
 /* Sem isso, o Android Chrome pode inflar automaticamente o tamanho do texto
    em páginas com colunas estreitas (o algoritmo de leitura dele, pensado
    pra site antigo sem viewport responsivo) DEPOIS do primeiro layout —
@@ -134,6 +148,14 @@ a { color: var(--color-primary); }
   padding: 10px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--color-border);
+  /* Mesma causa raiz já corrigida em .cg-grid-dashboard, um nível abaixo
+     dessa vez: o pai é flex-column (.d-flex.flex-column no Início), então
+     por padrão esta linha nunca encolhe abaixo do próprio conteúdo mínimo
+     — um título comprido sem quebra (ex.: "Tokio Marine — Seguro casa")
+     empurrava a linha inteira (e o valor, que tem flex-shrink:0) pra fora
+     da borda direita do card em vez de deixar o título truncar como
+     deveria. */
+  min-width: 0;
 }
 .cg-due-row__icon {
   width: 32px;

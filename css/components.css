@@ -36,6 +36,13 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   transition: background 0.1s ease, border-color 0.1s ease;
+  /* Mesma causa raiz de .cg-due-row (ver app.css): toda linha reutilizável
+     com um texto truncável + algo de largura fixa ao lado (valor, input,
+     botões) precisa disso pra realmente truncar em vez de empurrar esse
+     "algo" pra fora do card quando o texto for comprido — a linha em si é
+     sempre filha de um flex-column (o wrapper com overflow-y:auto de cada
+     modal que usa .cg-list-row), então herda o mesmo min-width:auto padrão. */
+  min-width: 0;
 }
 .cg-list-row:hover {
   background: var(--color-surface-alt);
@@ -52,6 +59,12 @@
 .cg-card--compact {
   padding: var(--space-3);
   border-radius: var(--radius-md);
+  /* Mesma causa raiz de .cg-due-row/.cg-list-row: este card é filha de um
+     flex-column (a lista de transações mobile) e tem um título sem quebra
+     lá dentro — sem isso, um título comprido empurrava o card inteiro (e o
+     valor com flex-shrink:0 dentro dele) pra fora da tela em vez de
+     truncar. */
+  min-width: 0;
 }
 .cg-card--compact .form-control-sm {
   min-height: 34px;
@@ -661,8 +674,8 @@
   top: 6px;
   left: 6px;
   z-index: 2;
-  width: 26px;
-  height: 26px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
   border: none;
   background: var(--color-surface-alt);
@@ -670,10 +683,17 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.7rem;
   box-shadow: var(--shadow-sm);
 }
 .cg-room-tile__edit:hover { color: var(--color-primary); }
+/* ".cg-room-tile i" (a regra genérica do ícone principal, logo abaixo) tem a
+   MESMA especificidade que ".cg-room-tile__edit { font-size }" e vem depois
+   no arquivo — então vencia e deixava o lápis do tamanho do ícone principal
+   (1.7rem, gigante). Precisa de uma seletor mais específico pra garantir
+   que o lápis fica pequeno independente da ordem no arquivo. */
+.cg-room-tile .cg-room-tile__edit i {
+  font-size: 0.65rem;
+}
 .cg-room-tile i {
   font-size: 1.7rem;
   color: var(--color-primary);

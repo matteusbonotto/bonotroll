@@ -73,12 +73,18 @@ export function resourcesView() {
       }
     },
 
+    // Entrar num cômodo mostra só os tiles de subcategoria (Todas + as que
+    // existirem + "Nova subcategoria") — NÃO carrega itens ainda. Antes a
+    // grade de subcategorias e a lista de itens apareciam juntas na mesma
+    // tela (tiles + botão "+" + listagem, tudo empilhado), o que ficava
+    // confuso. Agora é dois passos: escolher subcategoria (ou "Todas")
+    // primeiro, ver os itens depois.
     async selecionarRoom(roomId) {
       this.activeRoomId = roomId;
       this.activeCategoryId = null;
+      this.items = [];
       try {
         this.roomCategories = await res.listRoomCategories(roomId);
-        await this.carregarItens();
       } catch (e) {
         this.$store.app.notify(e.message || 'Não consegui abrir esse cômodo.', 'danger');
       }
@@ -90,6 +96,17 @@ export function resourcesView() {
       this.items = [];
     },
 
+    // Volta da lista de itens pros tiles de subcategoria, sem sair do
+    // cômodo (equivalente ao "voltar" de um passo só, não dois).
+    voltarParaSubcategorias() {
+      this.activeCategoryId = null;
+      this.items = [];
+    },
+
+    // categoryId = 'todas' (sentinela, não é um id de verdade) mostra todo
+    // item do cômodo, tenha subcategoria ou não; um id de verdade filtra só
+    // aquela subcategoria. Os dois casos entram na tela de LISTAGEM (ver
+    // carregarItens), saindo da tela de tiles.
     async selecionarCategoria(categoryId) {
       this.activeCategoryId = categoryId;
       await this.carregarItens();
@@ -209,10 +226,16 @@ export function resourcesView() {
 
     async carregarItens() {
       try {
-        this.items = await res.listItems({ roomId: this.activeRoomId, categoryId: this.activeCategoryId || undefined });
+        const categoryId = this.activeCategoryId && this.activeCategoryId !== 'todas' ? this.activeCategoryId : undefined;
+        this.items = await res.listItems({ roomId: this.activeRoomId, categoryId });
       } catch (e) {
         this.$store.app.notify(e.message || 'Não consegui carregar os itens.', 'danger');
       }
+    },
+
+    get nomeCategoriaAtiva() {
+      if (this.activeCategoryId === 'todas') return 'Todas';
+      return this.roomCategories.find((c) => c.id === this.activeCategoryId)?.nome || '';
     },
 
     get salaAtual() {
@@ -267,7 +290,8 @@ export function resourcesView() {
     // select, pra dar pra escolher outra ou nenhuma mesmo adicionando de
     // dentro de uma subcategoria específica.
     abrirNovoItem() {
-      this.itemForm = { ...ITEM_FORM_VAZIO(), categoria_id: this.activeCategoryId || '' };
+      const categoriaPreSelecionada = this.activeCategoryId && this.activeCategoryId !== 'todas' ? this.activeCategoryId : '';
+      this.itemForm = { ...ITEM_FORM_VAZIO(), categoria_id: categoriaPreSelecionada };
       this.scannerErro = '';
       this.itemModalAberto = true;
     },

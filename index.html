@@ -321,8 +321,8 @@
                 </div>
                 <div class="d-flex flex-column gap-3">
                   <template x-for="b in budgetProgress" :key="b.id">
-                    <div>
-                      <div class="d-flex align-items-center justify-content-between gap-2 mb-1">
+                    <div class="min-w-0">
+                      <div class="d-flex align-items-center justify-content-between gap-2 mb-1 min-w-0">
                         <span class="d-flex align-items-center gap-2 min-w-0">
                           <span class="cg-pill-dot flex-shrink-0" :style="{ background: b.categoria?.cor || '#94A3B8' }"></span>
                           <span class="text-truncate" x-text="b.categoria?.nome || 'Categoria'"></span>
@@ -368,7 +368,7 @@
             <template x-if="!recentes.length"><p class="cg-muted small mb-0">Nada por aqui ainda.</p></template>
             <div class="d-flex flex-column gap-2">
               <template x-for="r in recentes" :key="r.id">
-                <div class="d-flex align-items-center justify-content-between border-bottom pb-2">
+                <div class="d-flex align-items-center justify-content-between border-bottom pb-2 min-w-0">
                   <div class="d-flex align-items-center gap-2 min-w-0">
                     <span class="cg-avatar-stack" x-show="payersFor(r).length >= 2">
                       <template x-for="p in payersFor(r).slice(0, 3)" :key="p.profile_id">
@@ -629,7 +629,7 @@
           <div class="d-flex flex-column gap-2 d-md-none">
             <template x-for="row in sortedRows" :key="row.id">
               <div class="cg-card cg-card--compact">
-                <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                <div class="d-flex justify-content-between align-items-center gap-2 mb-2 min-w-0">
                   <div class="d-flex align-items-center gap-2 min-w-0">
                     <button type="button" class="btn p-0 border-0 bg-transparent flex-shrink-0" x-show="payersFor(row).length >= 2" @click="editar(row)" title="Despesa dividida — toque pra ver/editar a divisão">
                       <span class="cg-avatar-stack">
@@ -1124,26 +1124,27 @@
             </div>
           </template>
 
-          <!-- Dentro de um cômodo: só o que já foi pedido — itens (ver, editar,
-               excluir) e um botão de adicionar que abre modal. -->
-          <template x-if="activeRoomId">
+          <!-- Passo 1 dentro de um cômodo: só as subcategorias (mesma
+               aparência dos tiles de cômodo), sem lista de item nenhuma
+               ainda — evita a poluição de mostrar tiles + botão + listagem
+               tudo junto na mesma tela. -->
+          <template x-if="activeRoomId && !activeCategoryId">
             <div>
               <div class="d-flex align-items-center justify-content-between mb-3">
                 <button type="button" class="btn btn-sm btn-outline-secondary" @click="voltarParaGrade()"><i class="bi bi-arrow-left"></i> Cômodos</button>
                 <div class="cg-section-title mb-0"><i class="bi" :class="salaAtual?.icone"></i> <span x-text="salaAtual?.nome"></span></div>
-                <button type="button" class="cg-btn btn btn-success btn-sm" @click="abrirNovoItem()"><i class="bi bi-plus-lg"></i> Item</button>
+                <span style="width: 88px;"></span>
               </div>
 
-              <!-- Subcategorias do cômodo atual — mesma aparência dos tiles de
-                   cômodo (pedido explícito), podem ser criadas/editadas/excluídas. -->
-              <div class="cg-room-grid mb-3">
-                <div class="cg-room-tile" :class="{ 'is-active': !activeCategoryId }" role="button" tabindex="0" @click="selecionarCategoria(null)" @keydown.enter="selecionarCategoria(null)">
+              <div class="cg-room-grid">
+                <div class="cg-room-tile" role="button" tabindex="0" @click="selecionarCategoria('todas')" @keydown.enter="selecionarCategoria('todas')">
+                  <span class="cg-room-tile__alert" x-show="alertCountFor(activeRoomId)" x-text="alertCountFor(activeRoomId)"></span>
                   <i class="bi bi-grid-3x3-gap-fill"></i>
                   <span class="cg-room-tile__nome">Todas</span>
                   <span class="cg-room-tile__count" x-text="itemCountTodas() + ' ' + (itemCountTodas() === 1 ? 'item' : 'itens')"></span>
                 </div>
                 <template x-for="c in roomCategories" :key="c.id">
-                  <div class="cg-room-tile" :class="{ 'is-active': activeCategoryId === c.id }" role="button" tabindex="0" @click="selecionarCategoria(c.id)" @keydown.enter="selecionarCategoria(c.id)">
+                  <div class="cg-room-tile" role="button" tabindex="0" @click="selecionarCategoria(c.id)" @keydown.enter="selecionarCategoria(c.id)">
                     <button type="button" class="cg-room-tile__edit" @click="abrirEditarSubcategoria(c, $event)" aria-label="Editar subcategoria"><i class="bi bi-pencil"></i></button>
                     <span class="cg-room-tile__alert" x-show="alertCountForCategoria(c.id)" x-text="alertCountForCategoria(c.id)"></span>
                     <i class="bi bi-tag"></i>
@@ -1155,6 +1156,18 @@
                   <i class="bi bi-plus-lg"></i>
                   <span class="cg-room-tile__nome">Nova subcategoria</span>
                 </button>
+              </div>
+            </div>
+          </template>
+
+          <!-- Passo 2: dentro de "Todas" ou de uma subcategoria específica —
+               só a listagem de itens (ver, editar, excluir, adicionar). -->
+          <template x-if="activeRoomId && activeCategoryId">
+            <div>
+              <div class="d-flex align-items-center justify-content-between mb-3">
+                <button type="button" class="btn btn-sm btn-outline-secondary" @click="voltarParaSubcategorias()"><i class="bi bi-arrow-left"></i> <span x-text="salaAtual?.nome"></span></button>
+                <div class="cg-section-title mb-0" x-text="nomeCategoriaAtiva"></div>
+                <button type="button" class="cg-btn btn btn-success btn-sm" @click="abrirNovoItem()"><i class="bi bi-plus-lg"></i> Item</button>
               </div>
 
               <template x-if="!loading && !items.length">
@@ -1611,7 +1624,7 @@
             <template x-if="$store.txModal.pagadores.length">
             <div class="d-flex flex-column gap-2">
               <template x-for="p in $store.txModal.pagadores" :key="p.profile_id">
-                <div class="d-flex align-items-center gap-2">
+                <div class="d-flex align-items-center gap-2 min-w-0">
                   <span class="cg-avatar cg-avatar--sm" :style="{ borderColor: $store.txModal.membroFor(p.profile_id)?.cor || 'var(--color-primary-soft)', background: $store.txModal.membroFor(p.profile_id)?.cor || 'var(--color-primary)' }">
                     <template x-if="$store.txModal.membroFor(p.profile_id)?.avatar_url"><img :src="$store.txModal.membroFor(p.profile_id).avatar_url" /></template>
                     <template x-if="!$store.txModal.membroFor(p.profile_id)?.avatar_url"><span x-text="cgFormat.initials($store.txModal.membroFor(p.profile_id)?.nome)"></span></template>
