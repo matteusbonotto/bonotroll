@@ -369,6 +369,23 @@ returns boolean as $$
   );
 $$ language sql security definer stable;
 
+-- Mesma razão do is_group_member acima, pra um caso diferente: decide se
+-- "p_alvo" é colega de grupo de "p_de" (compartilham algum group_members.
+-- group_id). Usada pela policy de INSERT de "notifications" mais abaixo —
+-- sem security definer, a subquery de group_members dentro daquela policy
+-- ficaria sujeita à RLS da PRÓPRIA group_members ao rodar como o role
+-- "authenticated" (diferente de rodar como postgres/superuser no SQL
+-- Editor, que ignora RLS e por isso não reproduzia o bug em teste manual),
+-- podendo bloquear um INSERT legítimo mesmo com os dados de grupo corretos.
+create or replace function public.eh_colega_de_grupo(p_alvo uuid, p_de uuid)
+returns boolean as $$
+  select exists (
+    select 1 from group_members gm1
+    join group_members gm2 on gm2.group_id = gm1.group_id
+    where gm1.profile_id = p_de and gm2.profile_id = p_alvo
+  );
+$$ language sql security definer stable;
+
 -- =========================================================
 -- CRIAR/ENTRAR EM GRUPO
 -- (js/services/groups.js chama estas duas via supabase.rpc(...) em vez de
@@ -584,11 +601,7 @@ drop policy if exists "Criar notificação para si ou colega de grupo" on notifi
 create policy "Criar notificação para si ou colega de grupo" on notifications for insert
   with check (
     profile_id = auth.uid()
-    or profile_id in (
-      select gm2.profile_id from group_members gm1
-      join group_members gm2 on gm2.group_id = gm1.group_id
-      where gm1.profile_id = auth.uid()
-    )
+    or public.eh_colega_de_grupo(profile_id, auth.uid())
   );
 drop policy if exists "Excluir a própria notificação" on notifications;
 create policy "Excluir a própria notificação" on notifications for delete
