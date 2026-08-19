@@ -64,6 +64,7 @@ Deno.serve(async (req) => {
   if (insErro) throw insErro;
 
   let pushEnviados = 0;
+  const pushErros: Array<{ profile_id: string; statusCode?: number; motivo: string }> = [];
   if (vapidPublic && vapidPrivate) {
     for (const n of inseridas ?? []) {
       const { data: subs } = await supabase.from('push_subscriptions').select('*').eq('profile_id', n.profile_id);
@@ -76,16 +77,28 @@ Deno.serve(async (req) => {
           pushEnviados++;
         } catch (e) {
           const statusCode = (e as { statusCode?: number })?.statusCode;
+          const motivo = (e as { body?: string; message?: string })?.body || (e as Error)?.message || 'erro desconhecido';
+          // 404/410 = inscrição morta (navegador desinstalou/expirou) — apaga
+          // de vez. Qualquer outro código (ex.: 401/403 = assinatura VAPID
+          // não bate mais com a chave configurada, geralmente porque a
+          // pessoa se inscreveu ANTES da última troca de chave) fica
+          // registrado no log da function em vez de sumir silenciosamente —
+          // antes disso não tinha como saber, de fora, que o envio tinha
+          // falhado: a resposta sempre voltava "ok" mesmo sem push nenhum
+          // sair de verdade.
           if (statusCode === 404 || statusCode === 410) {
             await supabase.from('push_subscriptions').delete().eq('id', sub.id);
+          } else {
+            console.error(`push falhou pra profile_id=${n.profile_id} (status=${statusCode}):`, motivo);
           }
+          pushErros.push({ profile_id: n.profile_id, statusCode, motivo });
         }
       }
     }
   }
 
-  return new Response(JSON.stringify({ ok: true, notificados: inseridas?.length ?? 0, push_enviados: pushEnviados }), {
-    status: 200,
-    headers: { 'Content-Type': 'application/json' },
-  });
+  return new Response(
+    JSON.stringify({ ok: true, notificados: inseridas?.length ?? 0, push_enviados: pushEnviados, push_erros: pushErros }),
+    { status: 200, headers: { 'Content-Type': 'application/json' } }
+  );
 });
