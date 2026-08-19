@@ -1,6 +1,19 @@
 import { listTransactions, computeSummary, groupByCategory, groupByCompany, groupByFlow, groupByPeriod, listPayersFor, shareForMember } from '../services/transactions.js';
 import { listBudgets, computeBudgetProgress } from '../services/budgets.js';
+import { listAllItems as listAllResourceItems } from '../services/resources.js';
+import { computeExpiryStatus, expiryStatusMeta } from '../utils/status.js';
 import { todayIso } from '../utils/format.js';
+
+const QUEBRAS_STORAGE_KEY = 'bonotto_dashboard_quebras';
+function quebrasIniciais() {
+  try {
+    const salvas = JSON.parse(localStorage.getItem(QUEBRAS_STORAGE_KEY));
+    if (Array.isArray(salvas) && salvas.length === 3) return salvas;
+  } catch {
+    // localStorage corrompido/vazio — cai pro default abaixo
+  }
+  return ['categoria', 'mes', 'fluxo'];
+}
 
 function diasAte(isoData) {
   const a = new Date(`${isoData}T00:00:00Z`).getTime();
@@ -22,16 +35,41 @@ export function dashboardView() {
     escopo: [], // todas as transações visíveis (próprias + do grupo), com _status
     payersByTx: {},
     quemVer: 'eu', // 'eu' | <profile_id> | 'grupo'
-    quebra: 'categoria', // 'categoria' | 'empresa' | 'fluxo' | 'dia' | 'mes' | 'ano'
+    // 3 gráficos independentes, cada um com sua própria quebra — trocável a
+    // qualquer momento, cada escolha fica salva (por navegador) pra próxima
+    // visita. Cada valor: 'categoria' | 'empresa' | 'fluxo' | 'dia' | 'mes' | 'ano'.
+    quebras: quebrasIniciais(),
     contasAVencer: [],
     recentes: [],
     budgets: [],
+    recursosAllItems: [],
+    recursosSugestoesAbertas: false,
 
     init() {
       this.load();
       window.addEventListener('cg:transactions-changed', () => this.load());
       window.addEventListener('cg:budgets-changed', () => this.carregarOrcamentos());
       this.$watch('$store.app.group', () => this.load());
+      this.$watch('quebras', (v) => localStorage.setItem(QUEBRAS_STORAGE_KEY, JSON.stringify(v)));
+    },
+
+    async carregarRecursosSugestoes() {
+      const store = this.$store.app;
+      try {
+        this.recursosAllItems = await listAllResourceItems({ ownerId: store.profile.id, groupId: store.group?.group?.id });
+      } catch (e) {
+        store.notify(e.message || 'Não consegui carregar as sugestões de Recursos.', 'danger');
+      }
+    },
+
+    get recursosSugestoes() {
+      return this.recursosAllItems
+        .map((item) => ({ item, status: computeExpiryStatus(item) }))
+        .filter(({ status }) => status !== 'ok')
+        .sort((a, b) => (a.status === 'em_falta' ? -1 : 1) - (b.status === 'em_falta' ? -1 : 1));
+    },
+    recursosExpiryMeta(item) {
+      return expiryStatusMeta(computeExpiryStatus(item));
     },
 
     async carregarOrcamentos() {
@@ -62,6 +100,7 @@ export function dashboardView() {
 
         this.recentes = groupId ? this.escopo.slice(0, 6) : this.escopo.filter((t) => this.participaEu(t)).slice(0, 6);
         await this.carregarOrcamentos();
+        await this.carregarRecursosSugestoes();
       } catch (e) {
         store.notify(e.message || 'Não consegui carregar o painel.', 'danger');
       }
@@ -174,17 +213,21 @@ export function dashboardView() {
         .filter((t) => t.valor > 0);
     },
 
-    get dadosQuebra() {
+    // Antes era um getter único (this.quebra); agora cada um dos 3 gráficos
+    // passa a própria quebra (quebras[i]) como parâmetro, então precisa ser
+    // método, não getter — um getter só "this.quebra" não dava pra
+    // parametrizar por gráfico.
+    dadosParaQuebra(tipo) {
       const rows = this.linhasQuebra;
       const store = this.$store.app;
-      if (this.quebra === 'categoria') return groupByCategory(rows, store.categories);
-      if (this.quebra === 'empresa') return groupByCompany(rows);
-      if (this.quebra === 'fluxo') return groupByFlow(this.quemVer === 'grupo' ? this.escopo : rows);
-      return groupByPeriod(rows, this.quebra); // 'dia' | 'mes' | 'ano'
+      if (tipo === 'categoria') return groupByCategory(rows, store.categories);
+      if (tipo === 'empresa') return groupByCompany(rows);
+      if (tipo === 'fluxo') return groupByFlow(this.quemVer === 'grupo' ? this.escopo : rows);
+      return groupByPeriod(rows, tipo); // 'dia' | 'mes' | 'ano'
     },
 
-    get tipoGraficoQuebra() {
-      return this.quebra === 'dia' || this.quebra === 'mes' || this.quebra === 'ano' ? 'bar' : 'doughnut';
+    tipoGraficoPara(tipo) {
+      return tipo === 'dia' || tipo === 'mes' || tipo === 'ano' ? 'bar' : 'doughnut';
     },
 
     // ---------- Orçamentos ----------

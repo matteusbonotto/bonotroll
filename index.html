@@ -313,6 +313,27 @@
               </div>
             </div>
 
+            <template x-if="recursosSugestoes.length">
+              <div class="cg-card">
+                <button type="button" class="btn p-0 border-0 bg-transparent w-100 d-flex align-items-center justify-content-between mb-0" @click="recursosSugestoesAbertas = !recursosSugestoesAbertas">
+                  <div class="cg-section-title mb-0"><i class="bi bi-box-seam"></i> Recursos em falta <span class="cg-badge cg-badge--danger" x-text="recursosSugestoes.length"></span></div>
+                  <i class="bi fs-5 cg-muted" :class="recursosSugestoesAbertas ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+                </button>
+                <div class="d-flex flex-column gap-2 mt-2" x-show="recursosSugestoesAbertas">
+                  <template x-for="s in recursosSugestoes" :key="s.item.id">
+                    <div class="cg-due-row" :class="s.status === 'vencendo' ? 'cg-due-row--soon' : 'cg-due-row--overdue'">
+                      <div class="cg-due-row__icon"><i :class="'bi ' + recursosExpiryMeta(s.item).icon"></i></div>
+                      <div class="min-w-0 flex-fill">
+                        <div class="fw-semibold text-truncate" x-text="s.item.nome"></div>
+                        <div class="small cg-due-row__meta" x-text="recursosExpiryMeta(s.item).label"></div>
+                      </div>
+                      <button type="button" class="btn btn-sm btn-outline-secondary flex-shrink-0" @click="$store.app.setView('recursos')">Ver</button>
+                    </div>
+                  </template>
+                </div>
+              </div>
+            </template>
+
             <template x-if="budgetProgress.length">
               <div class="cg-card">
                 <div class="d-flex align-items-center justify-content-between mb-2">
@@ -337,30 +358,38 @@
                 </div>
               </div>
             </template>
+          </div>
 
-            <div class="cg-card">
-              <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
-                <div class="cg-section-title mb-0"><i class="bi bi-bar-chart"></i> Para onde vai o dinheiro</div>
-                <select class="form-select form-select-sm" style="width: auto;" x-model="quebra">
-                  <option value="categoria">Por categoria</option>
-                  <option value="empresa">Por empresa/serviço</option>
-                  <option value="fluxo">Entrada x Saída</option>
-                  <option value="dia">Por dia</option>
-                  <option value="mes">Por mês</option>
-                  <option value="ano">Por ano</option>
-                </select>
-              </div>
-              <template x-if="!dadosQuebra.length"><p class="cg-muted small mb-0">Sem dados suficientes ainda.</p></template>
-              <template x-if="dadosQuebra.length">
-                <div x-data="categoryChart()" x-init="
-                  $watch('dadosQuebra', v => render(v, tipoGraficoQuebra));
-                  $watch('tipoGraficoQuebra', t => render(dadosQuebra, t));
-                  render(dadosQuebra, tipoGraficoQuebra);
-                ">
-                  <div style="height:220px;"><canvas x-ref="canvas"></canvas></div>
+          <!-- 3 gráficos independentes, cada um com a própria quebra
+               (categoria/empresa/fluxo/dia/mês/ano) escolhível a qualquer
+               momento — a escolha de cada um fica salva por navegador. -->
+          <div class="row g-3 mb-4">
+            <template x-for="(q, i) in quebras" :key="i">
+              <div class="col-12 col-lg-4">
+                <div class="cg-card h-100">
+                  <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+                    <div class="cg-section-title mb-0"><i class="bi bi-bar-chart"></i></div>
+                    <select class="form-select form-select-sm" style="width: auto;" x-model="quebras[i]">
+                      <option value="categoria">Por categoria</option>
+                      <option value="empresa">Por empresa/serviço</option>
+                      <option value="fluxo">Entrada x Saída</option>
+                      <option value="dia">Por dia</option>
+                      <option value="mes">Por mês</option>
+                      <option value="ano">Por ano</option>
+                    </select>
+                  </div>
+                  <template x-if="!dadosParaQuebra(q).length"><p class="cg-muted small mb-0">Sem dados suficientes ainda.</p></template>
+                  <template x-if="dadosParaQuebra(q).length">
+                    <div x-data="categoryChart()" x-init="
+                      $watch('dadosParaQuebra(quebras[' + i + '])', v => render(v, tipoGraficoPara(quebras[i])));
+                      render(dadosParaQuebra(quebras[i]), tipoGraficoPara(quebras[i]));
+                    ">
+                      <div style="height:220px;"><canvas x-ref="canvas"></canvas></div>
+                    </div>
+                  </template>
                 </div>
-              </template>
-            </div>
+              </div>
+            </template>
           </div>
 
           <div class="cg-card">
@@ -1087,10 +1116,15 @@
         <section x-show="$store.app.view === 'recursos'" x-data="resourcesView()" x-init="init()">
           <div class="cg-section-title"><i class="bi bi-box-seam"></i> Recursos</div>
 
-          <!-- Sugestões: itens em falta, vencendo ou vencidos, em qualquer cômodo -->
+          <!-- Sugestões: itens em falta, vencendo ou vencidos, em qualquer cômodo.
+               Accordion (fechado por padrão) pra não empurrar a grade de
+               cômodos pra baixo quando a lista cresce. -->
           <div class="cg-card mb-3" x-show="sugestoes.length" x-cloak>
-            <div class="cg-section-title mb-2"><i class="bi bi-exclamation-circle"></i> Sugestões de compra</div>
-            <div class="d-flex flex-column gap-2">
+            <button type="button" class="btn p-0 border-0 bg-transparent w-100 d-flex align-items-center justify-content-between" @click="sugestoesAbertas = !sugestoesAbertas">
+              <div class="cg-section-title mb-0"><i class="bi bi-exclamation-circle"></i> Sugestões de compra <span class="cg-badge cg-badge--danger" x-text="sugestoes.length"></span></div>
+              <i class="bi fs-5 cg-muted" :class="sugestoesAbertas ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+            </button>
+            <div class="d-flex flex-column gap-2 mt-2" x-show="sugestoesAbertas">
               <template x-for="s in sugestoes" :key="s.item.id">
                 <div class="cg-due-row" :class="s.status === 'vencendo' ? 'cg-due-row--soon' : 'cg-due-row--overdue'">
                   <div class="cg-due-row__icon"><i :class="'bi ' + expiryMeta(s.item).icon"></i></div>

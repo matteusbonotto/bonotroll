@@ -28,6 +28,9 @@ export function resourcesView() {
     items: [], // itens do cômodo/subcategoria selecionados
     activeRoomId: null, // null = mostra a grade de cômodos
     activeCategoryId: null, // null = "todas" as subcategorias do cômodo
+    // Fechado por padrão — a lista de sugestões pode crescer bastante e
+    // atrapalhava enxergar a grade de cômodos logo abaixo dela.
+    sugestoesAbertas: false,
 
     itemModalAberto: false,
     itemForm: ITEM_FORM_VAZIO(),

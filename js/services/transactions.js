@@ -20,6 +20,10 @@ const REGRAS_CATEGORIA_DESPESA = [
   { nomes: ['Assinaturas'], palavras: ['netflix', 'spotify', 'amazon prime', 'prime video', 'disney', 'hbo', 'youtube premium', 'icloud', 'google one', 'nubank+', 'assinatura', 'streaming', 'deezer'] },
   { nomes: ['Carro'], palavras: ['gasolina', 'combustivel', 'combustível', 'posto', 'uber', '99', 'estacionamento', 'pedagio', 'pedágio', 'ipva', 'seguro carro', 'oficina', 'mecanico', 'mecânico', 'lavagem', 'financiamento carro'] },
   { nomes: ['Casa'], palavras: ['aluguel', 'condominio', 'condomínio', 'luz', 'energia', 'agua', 'água', ' gas', 'gás', 'internet', 'financiamento casa', 'iptu', 'seguro casa', 'reforma', 'moveis', 'móveis'] },
+  // "Eletrodomésticos" primeiro, cai pra "Casa" se essa categoria específica
+  // ainda não existir na conta (mesmo padrão de fallback de ['Mercado',
+  // 'Alimentos'] logo abaixo — nunca cria categoria nova sozinho).
+  { nomes: ['Eletrodomésticos', 'Eletrodomesticos', 'Casa'], palavras: ['geladeira', 'fogao', 'fogão', 'microondas', 'micro-ondas', 'micro ondas', 'liquidificador', 'maquina de lavar', 'máquina de lavar', 'lava louça', 'lava-louça', 'lavadora', 'ventilador', 'ar condicionado', 'ar-condicionado', 'aspirador', 'batedeira', 'cafeteira', 'forno', 'freezer', 'televisao', 'televisão', 'micro-ondas'] },
   { nomes: ['Delivery'], palavras: ['ifood', 'rappi', 'uber eats', 'delivery', 'lanche'] },
   { nomes: ['Pet'], palavras: ['petlove', 'petshop', 'pet shop', 'veterinario', 'veterinário', 'racao', 'ração'] },
   { nomes: ['Curso'], palavras: ['curso', 'faculdade', 'escola', 'mensalidade', 'udemy', 'alura', 'ingles', 'inglês', 'idiomas'] },
