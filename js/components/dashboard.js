@@ -1,5 +1,4 @@
 import { listTransactions, computeSummary, groupByCategory, groupByCompany, groupByPeriod, listPayersFor, shareForMember } from '../services/transactions.js';
-import { listBudgets, computeBudgetProgress } from '../services/budgets.js';
 import { listAllItems as listAllResourceItems } from '../services/resources.js';
 import { computeExpiryStatus, expiryStatusMeta } from '../utils/status.js';
 import { todayIso } from '../utils/format.js';
@@ -41,14 +40,12 @@ export function dashboardView() {
     quebras: quebrasIniciais(),
     contasAVencer: [],
     recentes: [],
-    budgets: [],
     recursosAllItems: [],
     recursosSugestoesAbertas: false,
 
     init() {
       this.load();
       window.addEventListener('cg:transactions-changed', () => this.load());
-      window.addEventListener('cg:budgets-changed', () => this.carregarOrcamentos());
       window.addEventListener('cg:recursos-changed', () => this.carregarRecursosSugestoes());
       this.$watch('$store.app.group', () => this.load());
       this.$watch('quebras', (v) => localStorage.setItem(QUEBRAS_STORAGE_KEY, JSON.stringify(v)));
@@ -73,16 +70,6 @@ export function dashboardView() {
       return expiryStatusMeta(computeExpiryStatus(item));
     },
 
-    async carregarOrcamentos() {
-      const store = this.$store.app;
-      if (!store.profile) return;
-      try {
-        this.budgets = await listBudgets(store.profile.id);
-      } catch (e) {
-        store.notify(e.message || 'Não consegui carregar os orçamentos.', 'danger');
-      }
-    },
-
     async load() {
       const store = this.$store.app;
       if (!store.profile) return;
@@ -100,7 +87,6 @@ export function dashboardView() {
           .slice(0, 5);
 
         this.recentes = groupId ? this.escopo.slice(0, 6) : this.escopo.filter((t) => this.participaEu(t)).slice(0, 6);
-        await this.carregarOrcamentos();
         await this.carregarRecursosSugestoes();
       } catch (e) {
         store.notify(e.message || 'Não consegui carregar o painel.', 'danger');
@@ -240,22 +226,6 @@ export function dashboardView() {
 
     tipoGraficoPara(tipo) {
       return tipo === 'dia' || tipo === 'mes' || tipo === 'ano' ? 'bar' : 'doughnut';
-    },
-
-    // ---------- Orçamentos ----------
-    // Sempre a fatia de QUEM ESTÁ LOGADO (não do "quemVer" selecionado no
-    // topo) — orçamento é pessoal, então "ver o orçamento do Beatriz" nunca
-    // faz sentido pro Matheus, independente de qual card ele escolheu ver.
-    get linhasParaOrcamento() {
-      const meuId = this.$store.app.profile?.id;
-      return this.escopo
-        .filter((t) => t.tipo === 'saida')
-        .map((t) => ({ ...t, valor: this.shareFor(t, meuId) }))
-        .filter((t) => t.valor > 0);
-    },
-
-    get budgetProgress() {
-      return computeBudgetProgress(this.linhasParaOrcamento, this.budgets, this.$store.app.categories);
     },
 
     diasLabel(t) {

@@ -385,17 +385,20 @@ export function txModalStore() {
           store.notify(this.form.tipo === 'entrada' ? 'Entrada adicionada.' : 'Despesa adicionada.');
         }
 
-        // Best-effort (mesmo padrão do generateForProfile em store.js): a despesa
-        // já foi salva com sucesso acima, então uma falha aqui (ex.: RLS ainda não
-        // migrada no Supabase do usuário) não pode derrubar o resto do save() e
-        // fazer parecer que o lançamento inteiro falhou quando na verdade só a
-        // notificação pro outro membro não foi.
+        // Best-effort (mesmo padrão de avisarPagamento em transactionTable.js): a
+        // despesa já foi salva com sucesso acima, então uma falha aqui (ex.: RLS
+        // ainda não migrada no Supabase do usuário) não pode derrubar o resto do
+        // save() — mas precisa aparecer pra alguém, senão "não consigo avisar o
+        // grupo" vira um problema invisível que ninguém sabe que precisa corrigir.
         if (!this.pagoAoAbrir && payload.data_pagamento) {
           const memberIds = (store.group?.members || []).map((m) => m.id);
           if (memberIds.length >= 2) {
             notifyPayment({ transaction: salva, payerProfileId: store.profile.id, memberIds })
               .then(() => store.refreshNotifications())
-              .catch(() => {});
+              .catch((e) => {
+                console.error('notifyPayment falhou:', e);
+                store.notify(e.message || 'Despesa salva, mas não consegui avisar o grupo.', 'danger');
+              });
           }
         }
 

@@ -335,29 +335,6 @@
               </div>
             </div>
 
-            <div class="cg-card">
-              <div class="d-flex align-items-center justify-content-between mb-2">
-                <div class="cg-section-title mb-0"><i class="bi bi-piggy-bank"></i> Orçamentos do mês</div>
-                <button type="button" class="btn btn-sm btn-link p-0" @click="$store.budgetModal.openManage()">Gerenciar</button>
-              </div>
-              <template x-if="!budgetProgress.length"><p class="cg-muted small mb-0">Nenhum orçamento definido ainda.</p></template>
-              <div class="d-flex flex-column gap-3">
-                <template x-for="b in budgetProgress" :key="b.id">
-                  <div class="min-w-0">
-                    <div class="d-flex align-items-center justify-content-between gap-2 mb-1 min-w-0">
-                      <span class="d-flex align-items-center gap-2 min-w-0">
-                        <span class="cg-pill-dot flex-shrink-0" :style="{ background: b.categoria?.cor || '#94A3B8' }"></span>
-                        <span class="text-truncate" x-text="b.categoria?.nome || 'Categoria'"></span>
-                      </span>
-                      <span class="small cg-muted flex-shrink-0" :title="cgFormat.formatCurrency(b.gasto) + ' de ' + cgFormat.formatCurrency(b.limite)" x-text="cgFormat.formatCurrencyCompact(b.gasto) + ' / ' + cgFormat.formatCurrencyCompact(b.limite)"></span>
-                    </div>
-                    <div class="progress" style="height: 8px;" role="progressbar" :aria-valuenow="b.percentual" aria-valuemin="0" aria-valuemax="100">
-                      <div class="progress-bar" :class="b.percentual >= 100 ? 'bg-danger' : (b.percentual >= 80 ? 'bg-warning' : 'bg-success')" :style="{ width: Math.min(100, b.percentual) + '%' }"></div>
-                    </div>
-                  </div>
-                </template>
-              </div>
-            </div>
           </div>
 
           <!-- 3 gráficos independentes, cada um com a própria quebra

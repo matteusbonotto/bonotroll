@@ -218,6 +218,7 @@ export function transactionsView() {
         await notifyPayment({ transaction: transacaoPaga, payerProfileId: store.profile.id, memberIds });
         store.refreshNotifications();
       } catch (e) {
+        console.error('notifyPayment falhou:', e);
         store.notify(e.message || 'Pagamento salvo, mas não consegui avisar o grupo.', 'danger');
       }
     },
