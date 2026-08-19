@@ -39,7 +39,11 @@ begin
   perform net.http_post(
     url := 'https://zkoxuafdcsfrdmlfckxz.supabase.co/functions/v1/notify-payment',
     body := jsonb_build_object('record', to_jsonb(new), 'old_record', to_jsonb(old)),
-    headers := jsonb_build_object('Content-Type', 'application/json', 'Authorization', 'Bearer ' || '<SERVICE_ROLE_KEY>')
+    -- "apikey" E "Authorization" são checados separadamente pelo gateway do
+    -- Supabase na frente das Edge Functions — só Authorization (como este
+    -- arquivo mandava antes) dá "No API key found in request" (401), mesmo
+    -- com uma service_role key válida no Bearer.
+    headers := jsonb_build_object('Content-Type', 'application/json', 'apikey', '<SERVICE_ROLE_KEY>', 'Authorization', 'Bearer ' || '<SERVICE_ROLE_KEY>')
   );
   return new;
 end;
@@ -66,7 +70,7 @@ select cron.schedule(
   $$
   select net.http_post(
     url := 'https://zkoxuafdcsfrdmlfckxz.supabase.co/functions/v1/notify-scan',
-    headers := jsonb_build_object('Content-Type', 'application/json', 'Authorization', 'Bearer ' || '<SERVICE_ROLE_KEY>')
+    headers := jsonb_build_object('Content-Type', 'application/json', 'apikey', '<SERVICE_ROLE_KEY>', 'Authorization', 'Bearer ' || '<SERVICE_ROLE_KEY>')
   );
   $$
 );
@@ -78,7 +82,7 @@ select cron.schedule(
   $$
   select net.http_post(
     url := 'https://zkoxuafdcsfrdmlfckxz.supabase.co/functions/v1/keepalive',
-    headers := jsonb_build_object('Content-Type', 'application/json', 'Authorization', 'Bearer ' || '<SERVICE_ROLE_KEY>')
+    headers := jsonb_build_object('Content-Type', 'application/json', 'apikey', '<SERVICE_ROLE_KEY>', 'Authorization', 'Bearer ' || '<SERVICE_ROLE_KEY>')
   );
   $$
 );

@@ -48,9 +48,11 @@ Teste rápido de cada uma (deve responder `{"ok":true,...}`):
 
 ```bash
 curl -i --request POST "https://zkoxuafdcsfrdmlfckxz.supabase.co/functions/v1/keepalive" \
+  -H "apikey: SUA_SERVICE_ROLE_KEY" \
   -H "Authorization: Bearer SUA_SERVICE_ROLE_KEY"
 
 curl -i --request POST "https://zkoxuafdcsfrdmlfckxz.supabase.co/functions/v1/notify-scan" \
+  -H "apikey: SUA_SERVICE_ROLE_KEY" \
   -H "Authorization: Bearer SUA_SERVICE_ROLE_KEY"
 ```
 
@@ -58,7 +60,9 @@ curl -i --request POST "https://zkoxuafdcsfrdmlfckxz.supabase.co/functions/v1/no
 
 ## 4. Trigger + agendamentos (pg_cron)
 
-Abra `supabase/notifications_push.sql`, troque as duas ocorrências de `<SERVICE_ROLE_KEY>` pela sua chave `service_role` (**Project Settings → API → service_role secret** — nunca a `anon key`), e rode o arquivo inteiro no SQL Editor do projeto.
+Abra `supabase/notifications_push.sql`, troque todas as ocorrências de `<SERVICE_ROLE_KEY>` pela sua chave `service_role` (**Project Settings → API → service_role secret** — nunca a `anon key`), e rode o arquivo inteiro no SQL Editor do projeto.
+
+> Se você já tinha rodado uma versão anterior deste arquivo (antes do header `apikey` ser adicionado nas chamadas `net.http_post`), rode de novo — sem esse header o gateway do Supabase rejeita a chamada com `"No API key found in request"`, mesmo com uma `service_role` key válida no `Authorization`.
 
 Isso cria:
 - Um trigger em `transactions` que chama `notify-payment` automaticamente sempre que uma despesa é marcada como paga.
