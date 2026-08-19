@@ -13,6 +13,7 @@ import { profileView } from './components/profileView.js';
 import { categoryChart } from './components/charts.js';
 import * as format from './utils/format.js';
 import { STATUS_META, statusMeta } from './utils/status.js';
+import { generateForProfile } from './services/notifications.js';
 
 // Exposto globalmente só para uso direto nas expressões do template (index.html),
 // que não passa por bundler e não pode importar módulos ES ali.
@@ -138,7 +139,15 @@ document.addEventListener('alpine:init', () => {
 
     const store = Alpine.store('app');
     if (!store?.profile) return;
-    store.refreshNotifications();
+    // generateForProfile RE-ESCANEIA despesa a vencer/vencida e item de
+    // Recursos em falta/vencendo (não só relê o que já existe) — sem isso,
+    // uma aba deixada aberta por vários dias nunca percebia sozinha um item
+    // que passou a vencer/faltar nesse meio tempo; só um novo login rodava
+    // esse scan. dedupe_key (upsert ignoreDuplicates) já garante que rodar
+    // de novo a cada 1 min não duplica notificação nenhuma.
+    generateForProfile({ profileId: store.profile.id, groupId: store.group?.group?.id })
+      .then(() => store.refreshNotifications())
+      .catch(() => {});
 
     const config = REFRESH_POR_TELA[store.view];
     if (!config) return;

@@ -57,16 +57,23 @@ create trigger notify_payment_trigger
   execute function public.notify_payment_webhook();
 
 -- =========================================================
--- AGENDAMENTOS (pg_cron): notify-scan roda 1x/dia, keepalive a cada 3 dias
--- (bem abaixo do limite de pausa por inatividade do plano gratuito).
--- Rodar select cron.unschedule('bonotto-notify-scan-diario') /
--- 'bonotto-keepalive' antes se estiver reagendando (evita duplicar o job).
+-- AGENDAMENTOS (pg_cron): notify-scan roda de HORA EM HORA (era 1x/dia —
+-- pedido explícito de deixar vencimento/estoque mais em tempo real, igual
+-- pagamento já é via trigger); keepalive continua a cada 3 dias (bem abaixo
+-- do limite de pausa por inatividade do plano gratuito — não precisa ser
+-- mais frequente que isso, só existe pra manter o projeto "vivo").
+-- 24x/dia ainda é bem modesto pro volume de dados de uma casa (poucas
+-- dezenas de despesas/itens) — não deve chegar perto de nenhum teto do
+-- plano free. Rodar select cron.unschedule(...) antes se estiver
+-- reagendando (evita duplicar o job) — já incluído abaixo, junto com o
+-- unschedule do nome antigo ('-diario') pra quem já tinha agendado.
 -- =========================================================
 
 select cron.unschedule('bonotto-notify-scan-diario') where exists (select 1 from cron.job where jobname = 'bonotto-notify-scan-diario');
+select cron.unschedule('bonotto-notify-scan-horario') where exists (select 1 from cron.job where jobname = 'bonotto-notify-scan-horario');
 select cron.schedule(
-  'bonotto-notify-scan-diario',
-  '0 11 * * *', -- 11:00 UTC ~ 08:00 horário de Brasília
+  'bonotto-notify-scan-horario',
+  '0 * * * *', -- todo início de hora
   $$
   select net.http_post(
     url := 'https://zkoxuafdcsfrdmlfckxz.supabase.co/functions/v1/notify-scan',

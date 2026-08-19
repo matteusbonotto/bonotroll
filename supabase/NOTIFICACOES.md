@@ -66,7 +66,7 @@ Abra `supabase/notifications_push.sql`, troque todas as ocorrências de `<SERVIC
 
 Isso cria:
 - Um trigger em `transactions` que chama `notify-payment` automaticamente sempre que uma despesa é marcada como paga.
-- Um agendamento (`pg_cron`) que roda `notify-scan` todo dia às 08h (horário de Brasília).
+- Um agendamento (`pg_cron`) que roda `notify-scan` de hora em hora.
 - Um agendamento que roda `keepalive` a cada 3 dias.
 
 Se o SQL Editor reclamar que `pg_cron`/`pg_net` não existem, ative as duas extensões em **Database → Extensions** no painel do Supabase antes de rodar de novo (a primeira linha do arquivo já tenta criar as duas, mas alguns projetos exigem habilitar pela UI na primeira vez).
