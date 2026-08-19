@@ -105,6 +105,42 @@ document.addEventListener('alpine:init', () => {
   });
 })();
 
+// Atualiza notificações + a tela aberta a cada 1 min, sem loading nenhum —
+// se algo mudou (ex.: o outro membro cadastrou/editou algo), a pessoa vê
+// sozinho, sem precisar dar F5. Cada tela expõe um "load(true)"/método
+// equivalente que busca os dados de novo SEM mexer na flag "loading" (ver
+// dashboard.js/transactionTable.js) — só troca o valor reativo, sem piscar
+// spinner nem perder scroll/filtro. Central aqui (não por componente)
+// porque só uma tela fica visível por vez (as outras estão x-show:none) e
+// não faz sentido gastar rede atualizando telas que ninguém está vendo.
+(function setupAutoRefresh() {
+  const REFRESH_POR_TELA = {
+    home: { seletor: 'section[x-data^="dashboardView"]', chamar: (c) => c.load(true) },
+    transacoes: { seletor: 'section[x-data^="transactionsView"]', chamar: (c) => c.load(true) },
+    compras: { seletor: 'section[x-data^="shoppingView"]', chamar: (c) => c.refreshItems() },
+    recursos: {
+      seletor: 'section[x-data^="resourcesView"]',
+      chamar: (c) => {
+        c.carregarItens();
+        c.carregarSugestoes();
+      },
+    },
+  };
+
+  setInterval(() => {
+    const store = Alpine.store('app');
+    if (!store?.profile) return;
+    store.refreshNotifications();
+
+    const config = REFRESH_POR_TELA[store.view];
+    if (!config) return;
+    const el = document.querySelector(config.seletor);
+    if (!el) return;
+    const comp = Alpine.$data(el);
+    if (comp) config.chamar(comp);
+  }, 60000);
+})();
+
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker

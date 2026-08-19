@@ -70,10 +70,13 @@ export function dashboardView() {
       return expiryStatusMeta(computeExpiryStatus(item));
     },
 
-    async load() {
+    // silent=true (usado pelo auto-refresh de 1 min, ver setupAutoRefresh em
+    // app.js) busca os mesmos dados sem mexer em "loading" — a tela troca
+    // pros valores novos direto, sem piscar spinner nenhum no meio.
+    async load(silent = false) {
       const store = this.$store.app;
       if (!store.profile) return;
-      this.loading = true;
+      if (!silent) this.loading = true;
 
       try {
         const groupId = store.group?.group?.id;
@@ -89,10 +92,10 @@ export function dashboardView() {
         this.recentes = groupId ? this.escopo.slice(0, 6) : this.escopo.filter((t) => this.participaEu(t)).slice(0, 6);
         await this.carregarRecursosSugestoes();
       } catch (e) {
-        store.notify(e.message || 'Não consegui carregar o painel.', 'danger');
+        if (!silent) store.notify(e.message || 'Não consegui carregar o painel.', 'danger');
       }
 
-      this.loading = false;
+      if (!silent) this.loading = false;
     },
 
     // Pagadores de uma transação (vazio = caso simples, só o responsável).

@@ -38,10 +38,13 @@ export function transactionsView() {
       this.$watch('filtro', () => this.load());
     },
 
-    async load() {
+    // silent=true (auto-refresh de 1 min, ver setupAutoRefresh em app.js)
+    // busca de novo sem mexer em "loading" — troca os dados na hora, sem
+    // piscar spinner nem perder o scroll/filtro que a pessoa já tinha.
+    async load(silent = false) {
       const store = this.$store.app;
       if (!store.profile) return;
-      this.loading = true;
+      if (!silent) this.loading = true;
       try {
         this.rows = await listTransactions({
           ownerId: store.profile.id,
@@ -60,9 +63,9 @@ export function transactionsView() {
         const payersMap = await listPayersFor(this.rows.map((r) => r.id));
         this.payersByTx = Object.fromEntries(payersMap);
       } catch (e) {
-        store.notify(e.message || 'Não consegui carregar as transações.', 'danger');
+        if (!silent) store.notify(e.message || 'Não consegui carregar as transações.', 'danger');
       } finally {
-        this.loading = false;
+        if (!silent) this.loading = false;
       }
     },
 
