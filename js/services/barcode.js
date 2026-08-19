@@ -5,12 +5,36 @@ let scannerInstance = null;
 export async function startBarcodeScanner(elementId, onDetected) {
   const mod = await import('https://esm.sh/html5-qrcode@2');
   const Html5Qrcode = mod.Html5Qrcode || mod.default?.Html5Qrcode;
+  const Formats = mod.Html5QrcodeSupportedFormats || mod.default?.Html5QrcodeSupportedFormats;
   if (!Html5Qrcode) throw new Error('Não foi possível carregar o leitor de código de barras.');
 
-  scannerInstance = new Html5Qrcode(elementId);
+  scannerInstance = new Html5Qrcode(elementId, {
+    // Sem isso o leitor cai no default da biblioteca, que prioriza QR — em
+    // produto de mercado o código é quase sempre EAN/UPC (código de barras
+    // "de verdade", não QR), então precisa listar os formatos 1D
+    // explicitamente pra garantir que eles são reconhecidos.
+    formatsToSupport: Formats ? [
+      Formats.EAN_13, Formats.EAN_8, Formats.UPC_A, Formats.UPC_E,
+      Formats.CODE_128, Formats.CODE_39, Formats.ITF, Formats.QR_CODE,
+    ] : undefined,
+  });
   await scannerInstance.start(
     { facingMode: 'environment' },
-    { fps: 10, qrbox: { width: 260, height: 160 } },
+    {
+      fps: 10,
+      // qrbox em pixels fixos (o valor antigo aqui) não acompanha a
+      // resolução real da câmera — em celulares com câmera de resolução
+      // alta, a caixa mostrada na tela ficava desalinhada com a área que a
+      // biblioteca realmente analisa, então a câmera "via" a imagem mas
+      // nunca decodificava nada apontando pro código. Como função
+      // (recalculada com o tamanho real do viewfinder) sempre bate com o
+      // que é mostrado. Mais larga que alta, do jeito que um código de
+      // barras 1D realmente é.
+      qrbox: (viewfinderWidth, viewfinderHeight) => {
+        const largura = Math.floor(Math.min(viewfinderWidth, viewfinderHeight) * 0.9);
+        return { width: largura, height: Math.floor(largura * 0.5) };
+      },
+    },
     (decodedText) => onDetected(decodedText),
     () => {} // frame sem leitura — ignora, é o comportamento normal enquanto mira no código
   );
