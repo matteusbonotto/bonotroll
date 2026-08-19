@@ -106,14 +106,25 @@ document.addEventListener('alpine:init', () => {
   });
 })();
 
-// Atualiza notificações + a tela aberta a cada 1 min, sem loading nenhum —
-// se algo mudou (ex.: o outro membro cadastrou/editou algo), a pessoa vê
-// sozinho, sem precisar dar F5. Cada tela expõe um "load(true)"/método
-// equivalente que busca os dados de novo SEM mexer na flag "loading" (ver
-// dashboard.js/transactionTable.js) — só troca o valor reativo, sem piscar
-// spinner nem perder scroll/filtro. Central aqui (não por componente)
-// porque só uma tela fica visível por vez (as outras estão x-show:none) e
-// não faz sentido gastar rede atualizando telas que ninguém está vendo.
+// Atualiza a tela aberta a cada 1 min, sem loading nenhum — se algo mudou
+// (ex.: o outro membro cadastrou/editou algo), a pessoa vê sozinho, sem
+// precisar dar F5. Cada tela expõe um "load(true)"/método equivalente que
+// busca os dados de novo SEM mexer na flag "loading" (ver dashboard.js/
+// transactionTable.js) — só troca o valor reativo, sem piscar spinner nem
+// perder scroll/filtro. Central aqui (não por componente) porque só uma
+// tela fica visível por vez (as outras estão x-show:none) e não faz
+// sentido gastar rede atualizando telas que ninguém está vendo.
+//
+// generateForProfile (RE-ESCANEIA despesa a vencer/vencida e item de
+// Recursos em falta/vencendo, não só relê o que já existe) fica num
+// intervalo PRÓPRIO, mais espaçado (5 min) — ela já faz suas próprias
+// buscas de transactions/resource_items por dentro; rodar junto com o
+// refresh de 1 min duplicava essas duas consultas a cada ciclo (Home e
+// Recursos já buscam as duas tabelas por conta própria pra tela em si).
+// 5 min ainda é muito melhor que "só no login" sem gerar o dobro de
+// leitura o tempo todo — dedupe_key (upsert ignoreDuplicates) garante que
+// rodar de novo nunca duplica notificação, então o intervalo maior só
+// atrasa a detecção, nunca perde nada.
 (function setupAutoRefresh() {
   const REFRESH_POR_TELA = {
     home: { seletor: 'section[x-data^="dashboardView"]', chamar: (c) => c.load(true) },
@@ -128,26 +139,19 @@ document.addEventListener('alpine:init', () => {
     },
   };
 
-  setInterval(() => {
-    // Aba em segundo plano/minimizada ou sem internet: pula o ciclo — não
-    // tem quem veja o resultado, só gastaria chamada à toa (o plano free do
-    // Supabase tem teto de banda/requisições mensal, e isso roda pra
-    // qualquer pessoa com o app aberto o dia inteiro, então cada ciclo
-    // evitável conta). Quando a aba voltar a ficar visível, o próximo tick
-    // de 1 min já resolve sozinho, sem precisar de refresh imediato aqui.
-    if (document.hidden || !navigator.onLine) return;
+  // Aba em segundo plano/minimizada ou sem internet: pula o ciclo — não tem
+  // quem veja o resultado, só gastaria chamada à toa (o plano free do
+  // Supabase tem teto de banda/requisições mensal, e isso roda pra qualquer
+  // pessoa com o app aberto o dia inteiro, então cada ciclo evitável conta).
+  // Quando a aba voltar a ficar visível, o próximo tick já resolve sozinho.
+  function podeRodar(store) {
+    return !document.hidden && navigator.onLine && !!store?.profile;
+  }
 
+  setInterval(() => {
     const store = Alpine.store('app');
-    if (!store?.profile) return;
-    // generateForProfile RE-ESCANEIA despesa a vencer/vencida e item de
-    // Recursos em falta/vencendo (não só relê o que já existe) — sem isso,
-    // uma aba deixada aberta por vários dias nunca percebia sozinha um item
-    // que passou a vencer/faltar nesse meio tempo; só um novo login rodava
-    // esse scan. dedupe_key (upsert ignoreDuplicates) já garante que rodar
-    // de novo a cada 1 min não duplica notificação nenhuma.
-    generateForProfile({ profileId: store.profile.id, groupId: store.group?.group?.id })
-      .then(() => store.refreshNotifications())
-      .catch(() => {});
+    if (!podeRodar(store)) return;
+    store.refreshNotifications();
 
     const config = REFRESH_POR_TELA[store.view];
     if (!config) return;
@@ -156,6 +160,14 @@ document.addEventListener('alpine:init', () => {
     const comp = Alpine.$data(el);
     if (comp) config.chamar(comp);
   }, 60000);
+
+  setInterval(() => {
+    const store = Alpine.store('app');
+    if (!podeRodar(store)) return;
+    generateForProfile({ profileId: store.profile.id, groupId: store.group?.group?.id })
+      .then(() => store.refreshNotifications())
+      .catch(() => {});
+  }, 120000);
 })();
 
 // Captura o prompt nativo de instalação (Chrome/Edge/Android) em vez de

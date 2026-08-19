@@ -57,23 +57,27 @@ create trigger notify_payment_trigger
   execute function public.notify_payment_webhook();
 
 -- =========================================================
--- AGENDAMENTOS (pg_cron): notify-scan roda de HORA EM HORA (era 1x/dia —
--- pedido explícito de deixar vencimento/estoque mais em tempo real, igual
--- pagamento já é via trigger); keepalive continua a cada 3 dias (bem abaixo
--- do limite de pausa por inatividade do plano gratuito — não precisa ser
--- mais frequente que isso, só existe pra manter o projeto "vivo").
--- 24x/dia ainda é bem modesto pro volume de dados de uma casa (poucas
--- dezenas de despesas/itens) — não deve chegar perto de nenhum teto do
--- plano free. Rodar select cron.unschedule(...) antes se estiver
--- reagendando (evita duplicar o job) — já incluído abaixo, junto com o
--- unschedule do nome antigo ('-diario') pra quem já tinha agendado.
+-- AGENDAMENTOS (pg_cron): notify-scan roda a cada 5 MIN (era 1x/dia, depois
+-- de hora em hora — pedido explícito de deixar vencimento/estoque em tempo
+-- real de verdade, já que só dá pra saber que "hoje entrou no prazo de 7
+-- dias" ou "a quantidade zerou" rodando essa varredura de novo; diferente
+-- de pagamento, que é um evento discreto — dá pra reagir na hora via
+-- trigger). keepalive continua a cada 3 dias (bem abaixo do limite de
+-- pausa por inatividade do plano gratuito — não precisa ser mais frequente
+-- que isso, só existe pra manter o projeto "vivo"). ~288 execuções/dia de
+-- notify-scan ainda é bem modesto pro volume de dados de uma casa (poucas
+-- dezenas de despesas/itens) e pro teto de invocations do plano free.
+-- Rodar select cron.unschedule(...) antes se estiver reagendando (evita
+-- duplicar o job) — já incluído abaixo, junto com o unschedule dos nomes
+-- antigos ('-diario'/'-horario') pra quem já tinha agendado.
 -- =========================================================
 
 select cron.unschedule('bonotto-notify-scan-diario') where exists (select 1 from cron.job where jobname = 'bonotto-notify-scan-diario');
 select cron.unschedule('bonotto-notify-scan-horario') where exists (select 1 from cron.job where jobname = 'bonotto-notify-scan-horario');
+select cron.unschedule('bonotto-notify-scan-5min') where exists (select 1 from cron.job where jobname = 'bonotto-notify-scan-5min');
 select cron.schedule(
-  'bonotto-notify-scan-horario',
-  '0 * * * *', -- todo início de hora
+  'bonotto-notify-scan-5min',
+  '*/5 * * * *', -- a cada 5 minutos
   $$
   select net.http_post(
     url := 'https://zkoxuafdcsfrdmlfckxz.supabase.co/functions/v1/notify-scan',

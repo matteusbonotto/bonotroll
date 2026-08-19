@@ -56,20 +56,30 @@ async function inserirSeNovo(rows) {
   if (error) throw error;
 }
 
-// Roda a cada carregamento do app (ver init() em components/store.js).
-// Em modo real, a Edge Function notify-scan faz o MESMO trabalho no
-// servidor (+ dispara push) numa varredura diária — rodar aqui também
-// garante que o sino de notificações já funcione mesmo antes de configurar
-// a Edge Function, e é o único jeito de funcionar em modo demo (sem
-// backend nenhum). A dedupe_key idêntica nos dois lados evita duplicar
-// quando as duas rodam no mesmo dia.
+// Roda a cada carregamento do app e, com o app aberto, de novo a cada 5min
+// (ver init()/setupAutoRefresh em components/store.js e app.js). Em modo
+// real, a Edge Function notify-scan faz o MESMO trabalho no servidor (+
+// dispara push) numa varredura por hora — rodar aqui também garante que o
+// sino já funcione antes/sem essa Edge Function configurada, e é o único
+// jeito de funcionar em modo demo (sem backend nenhum). A dedupe_key
+// idêntica nos dois lados evita duplicar quando as duas rodam na mesma hora.
+//
+// IMPORTANTE (RLS): isso roda como o usuário logado, então só pode gravar
+// profile_id = a própria pessoa (nunca em nome de outro membro — ver o
+// histórico de "new row violates row-level security policy" quando uma
+// versão anterior tentou inserir pro colega direto daqui). "Avisar todo o
+// grupo" de verdade (o outro membro recebendo notificação de UMA despesa
+// que essa pessoa nem tocou) só é possível pelo notify-scan no servidor
+// (service_role, ignora RLS de propósito) — aqui só preenche o sino de
+// QUEM ESTÁ LOGADO, olhando despesa/item que aparece no escopo dela
+// (próprio + grupo), não mais só o que ela é responsavel_id.
 export async function generateForProfile({ profileId, groupId }) {
   const hoje = todayIso();
   const rows = [];
 
   const transacoes = await listTransactions({ ownerId: profileId, groupId });
   for (const t of transacoes) {
-    if (t.tipo !== 'saida' || t.responsavel_id !== profileId) continue;
+    if (t.tipo !== 'saida') continue;
     const status = computeStatus(t);
     if (status !== 'vencido' && status !== 'a_vencer') continue;
     rows.push({
