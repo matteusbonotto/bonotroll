@@ -128,6 +128,14 @@ document.addEventListener('alpine:init', () => {
   };
 
   setInterval(() => {
+    // Aba em segundo plano/minimizada ou sem internet: pula o ciclo — não
+    // tem quem veja o resultado, só gastaria chamada à toa (o plano free do
+    // Supabase tem teto de banda/requisições mensal, e isso roda pra
+    // qualquer pessoa com o app aberto o dia inteiro, então cada ciclo
+    // evitável conta). Quando a aba voltar a ficar visível, o próximo tick
+    // de 1 min já resolve sozinho, sem precisar de refresh imediato aqui.
+    if (document.hidden || !navigator.onLine) return;
+
     const store = Alpine.store('app');
     if (!store?.profile) return;
     store.refreshNotifications();

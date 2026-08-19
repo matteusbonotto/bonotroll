@@ -1560,6 +1560,17 @@
                 </div>
               </div>
 
+              <div class="cg-card cg-card--hoverable mb-3" role="button" @click="confirm('Limpar todo o cache e recarregar o app? Útil se algo parecer desatualizado ou travado.') && $store.app.limparCache()">
+                <div class="d-flex align-items-center gap-3">
+                  <div class="cg-icon-badge"><i class="bi bi-trash3"></i></div>
+                  <div class="flex-fill">
+                    <h2 class="h6 fw-bold mb-1">Limpar cache</h2>
+                    <p class="cg-muted small mb-0">Apaga os arquivos guardados no navegador e recarrega — use se algo parecer desatualizado.</p>
+                  </div>
+                  <i class="bi bi-chevron-right cg-muted"></i>
+                </div>
+              </div>
+
               <template x-if="$store.app.isDemoMode">
                 <div class="cg-card mb-3">
                   <h2 class="h6 fw-bold"><i class="bi bi-stars"></i> Modo demonstração</h2>

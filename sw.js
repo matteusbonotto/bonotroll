@@ -8,7 +8,7 @@
 // segundo plano (evento "install" roda de novo) e ficar em estado "waiting"
 // até alguém assumir — é esse "waiting" que js/app.js detecta pra mostrar o
 // banner "Nova versão disponível" (ver updateNotifier em js/app.js).
-const CACHE_NAME = 'bonotto-v2';
+const CACHE_NAME = 'bonotto-v3';
 
 const APP_SHELL = [
   './',
@@ -132,6 +132,15 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
   const isSameOrigin = url.origin === self.location.origin;
 
+  // Chamadas de API do Supabase (REST/Storage/Auth/Edge Functions) NUNCA
+  // passam pelo cache — o comentário do topo do arquivo já dizia isso, mas
+  // faltava de fato excluir: sem esse "return" cedo, elas caíam no mesmo
+  // ramo stale-while-revalidate dos CDNs abaixo, e o service worker passava
+  // a interceptar/re-cachear resposta de dado DINÂMICO (uma consulta com
+  // filtro pode "vazar" resposta de outra). Não chamar respondWith() aqui
+  // deixa o fetch seguir 100% normal, direto pro navegador, sem o SW no meio.
+  if (url.hostname.endsWith('.supabase.co')) return;
+
   if (isSameOrigin) {
     // App shell local: rede primeiro (sempre pega o deploy mais novo com um
     // reload normal), cache só como fallback quando estiver offline. Era
@@ -142,7 +151,13 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          if (response.ok) caches.open(CACHE_NAME).then((cache) => cache.put(request, response.clone()));
+          // clone() PRECISA acontecer aqui, síncrono, antes de qualquer coisa
+          // assíncrona — chamar depois (ex.: dentro do .then() de
+          // caches.open(), como era antes) corre o risco do corpo da
+          // resposta já ter começado a ser consumido por quem pediu o
+          // fetch, e clonar depois disso lança "body stream already used".
+          const copia = response.ok ? response.clone() : null;
+          if (copia) caches.open(CACHE_NAME).then((cache) => cache.put(request, copia));
           return response;
         })
         .catch(() => caches.match(request))

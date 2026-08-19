@@ -236,6 +236,23 @@ export function appStore() {
       reg.waiting.postMessage({ type: 'SKIP_WAITING' });
     },
 
+    // Botão "Limpar cache" (Perfil) — escape hatch manual pra quando algo
+    // parece desatualizado/quebrado e trocar de versão sozinho (banner de
+    // update) não resolveu. Mais agressivo que applyUpdate(): apaga TODO
+    // Cache Storage (não só o do app) e desregistra o service worker
+    // inteiro, forçando ele reinstalar do zero no próximo load — o mesmo
+    // efeito de "limpar cache e recarregar" do DevTools, só que sem precisar
+    // abrir o DevTools.
+    async limparCache() {
+      if ('caches' in window) {
+        const chaves = await caches.keys();
+        await Promise.all(chaves.map((k) => caches.delete(k)));
+      }
+      const reg = await navigator.serviceWorker?.getRegistration();
+      if (reg) await reg.unregister();
+      location.reload();
+    },
+
     // Lista (não mais um valor único) — uma ação disparando "sucesso" logo
     // seguida de outra "erro" (ou vice-versa) sobrescrevia uma a outra antes
     // de dar tempo da pessoa ler; agora empilha e cada uma some sozinha no
