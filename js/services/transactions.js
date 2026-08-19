@@ -4,6 +4,7 @@ import { getSupabase } from '../data/supabaseClient.js';
 import { computeStatus } from '../utils/status.js';
 import { todayIso } from '../utils/format.js';
 import * as format from '../utils/format.js';
+import { comFallbackDeColuna } from '../utils/dbFallback.js';
 
 export function withStatus(rows) {
   return rows.map((r) => ({ ...r, _status: computeStatus(r) }));
@@ -117,17 +118,13 @@ export async function createTransaction(data) {
   const row = { data_cadastro: todayIso(), ...data };
   if (isDemoMode()) return mockDb.insert('transactions', row);
   const supabase = await getSupabase();
-  const { data: created, error } = await supabase.from('transactions').insert(row).select().single();
-  if (error) throw error;
-  return created;
+  return comFallbackDeColuna((obj) => supabase.from('transactions').insert(obj).select().single(), row);
 }
 
 export async function updateTransaction(id, patch) {
   if (isDemoMode()) return mockDb.update('transactions', id, patch);
   const supabase = await getSupabase();
-  const { data, error } = await supabase.from('transactions').update(patch).eq('id', id).select().single();
-  if (error) throw error;
-  return data;
+  return comFallbackDeColuna((obj) => supabase.from('transactions').update(obj).eq('id', id).select().single(), patch);
 }
 
 export async function deleteTransaction(id) {

@@ -71,6 +71,12 @@ export function resourcesView() {
       const store = this.$store.app;
       try {
         this.allItems = await res.listAllItems({ ownerId: store.profile.id, groupId: store.group?.group?.id });
+        // Dashboard tem seu próprio card "Recursos em falta" com os mesmos
+        // dados (ver js/components/dashboard.js) — como as telas ficam
+        // todas montadas ao mesmo tempo (x-show, não x-if), sem esse evento
+        // ele nunca sabia que algo mudou aqui e ficava com a lista velha até
+        // um F5. Mesmo padrão já usado por cg:transactions-changed etc.
+        window.dispatchEvent(new CustomEvent('cg:recursos-changed'));
       } catch (e) {
         store.notify(e.message || 'Não consegui carregar as sugestões.', 'danger');
       }
@@ -152,6 +158,7 @@ export function resourcesView() {
           store.notify('Cômodo criado.');
         }
         this.roomModalAberto = false;
+        window.dispatchEvent(new CustomEvent('cg:recursos-changed'));
       } catch (e) {
         store.notify(e.message || 'Não foi possível salvar o cômodo.', 'danger');
       } finally {
@@ -170,6 +177,7 @@ export function resourcesView() {
         this.roomModalAberto = false;
         if (this.activeRoomId === idExcluido) this.voltarParaGrade();
         store.notify('Cômodo excluído.');
+        window.dispatchEvent(new CustomEvent('cg:recursos-changed'));
       } catch (e) {
         store.notify(e.message || 'Não foi possível excluir o cômodo.', 'danger');
       }
@@ -438,7 +446,8 @@ export function resourcesView() {
         const dados = parseReceiptText(texto);
         if (dados.titulo) {
           this.itemForm.nome = dados.titulo;
-          store.notify('Nome lido da foto — confira antes de salvar.');
+          if (dados.vencimento) this.itemForm.data_validade = dados.vencimento;
+          store.notify(dados.vencimento ? 'Nome e validade lidos da foto — confira antes de salvar.' : 'Nome lido da foto — confira antes de salvar.');
         } else {
           store.notify('Não consegui ler nenhum texto nessa foto.', 'danger');
         }

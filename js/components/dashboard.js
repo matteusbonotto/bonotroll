@@ -49,6 +49,7 @@ export function dashboardView() {
       this.load();
       window.addEventListener('cg:transactions-changed', () => this.load());
       window.addEventListener('cg:budgets-changed', () => this.carregarOrcamentos());
+      window.addEventListener('cg:recursos-changed', () => this.carregarRecursosSugestoes());
       this.$watch('$store.app.group', () => this.load());
       this.$watch('quebras', (v) => localStorage.setItem(QUEBRAS_STORAGE_KEY, JSON.stringify(v)));
     },

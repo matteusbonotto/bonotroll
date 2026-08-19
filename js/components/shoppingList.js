@@ -4,7 +4,11 @@ import { createTransaction } from '../services/transactions.js';
 import { recognizeText, parseReceiptText } from '../services/ocr.js';
 import { todayIso } from '../utils/format.js';
 
-const NOVO_ITEM_VAZIO = () => ({ nome: '', categoria_id: '', unidade: 'un', quantidade: 1, prioridade: 3 });
+// preco: um campo só na UI (o valor digitado), convertido pra
+// preco_unitario OU preco_por_kg conforme a unidade só na hora de salvar
+// (ver addItem/salvarEdicao) — mais simples que a pessoa pensar em "qual
+// dos dois campos preencher" dependendo da unidade escolhida.
+const NOVO_ITEM_VAZIO = () => ({ nome: '', categoria_id: '', unidade: 'un', quantidade: 1, prioridade: 3, preco: '', data_validade: '', codigo_barras: '' });
 
 export function shoppingView() {
   return {
@@ -43,7 +47,33 @@ export function shoppingView() {
     // prioridade) — separado do editor de preço (abrirPreco), que é só
     // pro fluxo de "Comprando".
     edicaoAberta: false,
-    edicaoForm: { id: null, nome: '', categoria_id: '', unidade: 'un', quantidade: 1, prioridade: 3 },
+    edicaoForm: { id: null, nome: '', categoria_id: '', unidade: 'un', quantidade: 1, prioridade: 3, preco: '', data_validade: '', codigo_barras: '' },
+
+    // ---------- Nome do mercado + limite de gasto ----------
+    salvandoNomeMercado: false,
+    async salvarNomeMercado(valor) {
+      if (!this.list || valor === (this.list.nome_mercado || '')) return;
+      this.salvandoNomeMercado = true;
+      try {
+        this.list = await sl.setNomeMercado(this.list.id, valor.trim());
+      } catch (e) {
+        this.$store.app.notify(e.message || 'Não foi possível salvar o mercado.', 'danger');
+      } finally {
+        this.salvandoNomeMercado = false;
+      }
+    },
+    async salvarLimiteGasto(valor) {
+      if (!this.list) return;
+      const numero = Number(valor);
+      try {
+        this.list = await sl.setLimiteGasto(this.list.id, numero > 0 ? numero : null);
+      } catch (e) {
+        this.$store.app.notify(e.message || 'Não foi possível salvar o limite.', 'danger');
+      }
+    },
+    get statusLimiteGasto() {
+      return sl.computeListLimitStatus(this.resumo.valorTotal, this.list?.limite_gasto);
+    },
 
     // "lista" = folha de caderno (default, ver .cg-notebook em css/components.css).
     // Grade/grade compacta são uma visão alternativa de navegação, sem o
@@ -136,7 +166,8 @@ export function shoppingView() {
         if (dados.titulo) {
           this.novoItem.nome = dados.titulo;
           this.onNomeInput();
-          store.notify('Nome lido da foto — confira antes de adicionar.');
+          if (dados.vencimento) this.novoItem.data_validade = dados.vencimento;
+          store.notify(dados.vencimento ? 'Nome e validade lidos da foto — confira antes de adicionar.' : 'Nome lido da foto — confira antes de adicionar.');
         } else {
           store.notify('Não consegui ler nenhum texto nessa foto.', 'danger');
         }
@@ -153,7 +184,14 @@ export function shoppingView() {
       const store = this.$store.app;
       this.salvandoItem = true;
       try {
-        await sl.addItem(this.list.id, { ...this.novoItem, nome: this.novoItem.nome.trim() });
+        const { preco, ...resto } = this.novoItem;
+        const precoNumero = Number(preco) || 0;
+        await sl.addItem(this.list.id, {
+          ...resto,
+          nome: this.novoItem.nome.trim(),
+          preco_unitario: resto.unidade === 'un' && precoNumero > 0 ? precoNumero : null,
+          preco_por_kg: resto.unidade !== 'un' && precoNumero > 0 ? precoNumero : null,
+        });
         const nomeAdicionado = this.novoItem.nome.trim();
         this.novoItem = NOVO_ITEM_VAZIO();
         this.categoriaEscolhidaManualmente = false;
@@ -178,6 +216,8 @@ export function shoppingView() {
     },
 
     // ---------- Edição completa de um item já existente ----------
+    // Mesma ideia de "detalhe" pedida: esse modal já mostra/edita TODOS os
+    // campos que o item pode ter (obrigatórios + opcionais), não só nome.
     abrirEdicao(item) {
       this.edicaoForm = {
         id: item.id,
@@ -186,6 +226,9 @@ export function shoppingView() {
         unidade: item.unidade,
         quantidade: item.quantidade,
         prioridade: item.prioridade || 3,
+        preco: (item.unidade === 'un' ? item.preco_unitario : item.preco_por_kg) ?? '',
+        data_validade: item.data_validade || '',
+        codigo_barras: item.codigo_barras || '',
       };
       this.edicaoAberta = true;
     },
@@ -196,10 +239,18 @@ export function shoppingView() {
       if (!this.edicaoForm.nome.trim()) return;
       const store = this.$store.app;
       try {
-        const { id, ...patch } = this.edicaoForm;
-        patch.nome = patch.nome.trim();
-        patch.categoria_id = patch.categoria_id || null;
-        patch.quantidade = Number(patch.quantidade) || 0;
+        const { id, preco, ...resto } = this.edicaoForm;
+        const precoNumero = Number(preco) || 0;
+        const patch = {
+          ...resto,
+          nome: resto.nome.trim(),
+          categoria_id: resto.categoria_id || null,
+          quantidade: Number(resto.quantidade) || 0,
+          data_validade: resto.data_validade || null,
+          codigo_barras: resto.codigo_barras || null,
+          preco_unitario: resto.unidade === 'un' && precoNumero > 0 ? precoNumero : null,
+          preco_por_kg: resto.unidade !== 'un' && precoNumero > 0 ? precoNumero : null,
+        };
         await sl.updateItem(id, patch);
         this.edicaoAberta = false;
         await this.refreshItems();
@@ -375,6 +426,7 @@ export function shoppingView() {
     async onCodigoLido(codigo) {
       await stopBarcodeScanner();
       this.scannerAberto = false;
+      this.novoItem.codigo_barras = codigo;
       try {
         const produto = await lookupProductByBarcode(codigo);
         this.novoItem.nome = produto?.nome || `Item ${codigo}`;

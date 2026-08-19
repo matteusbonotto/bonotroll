@@ -112,6 +112,14 @@ create table if not exists transactions (
 -- calculado no cliente a partir de data_vencimento e data_pagamento
 -- (ver js/utils/status.js), para não ter duas fontes de verdade divergentes.
 
+-- Código de barras (boleto, 44 dígitos) ou conteúdo de QR code (Pix "copia e
+-- cola" ou o link de uma nota fiscal/NFC-e) lidos ao cadastrar a despesa —
+-- ver js/services/barcode.js::parseBoletoBarcode/parsePixQrPayload. Guardado
+-- mesmo quando só dá pra extrair uma parte dos dados (ou nenhuma), pra
+-- pessoa conseguir conferir a fatura original depois.
+alter table transactions add column if not exists codigo_barras text;
+alter table transactions add column if not exists qrcode_dados text;
+
 -- Divisão de despesa entre múltiplos pagadores. Uma transação SEM nenhuma
 -- linha aqui continua sendo 100% do responsavel_id dela (retrocompatível —
 -- despesas antigas não precisam de migração). Linhas aqui só existem quando
@@ -260,13 +268,21 @@ create table if not exists shopping_lists (
   finalizado_em timestamptz,
   transacao_id uuid references transactions(id) on delete set null
 );
+-- Mercado (pra aparecer no histórico) e limite de gasto — os dois opcionais,
+-- editáveis a qualquer momento pela tela (ver js/components/shoppingList.js).
+-- Sem tabela de preferência separada pra "limite padrão": a lista nova
+-- simplesmente herda o limite da lista anterior mais recente (ver
+-- getOrCreateActiveList em js/services/shoppingList.js), que já dá o efeito
+-- de "lembrar o de sempre" sem precisar de mais uma tabela.
+alter table shopping_lists add column if not exists nome_mercado text;
+alter table shopping_lists add column if not exists limite_gasto numeric(12, 2);
 
 create table if not exists shopping_list_items (
   id uuid primary key default uuid_generate_v4(),
   list_id uuid not null references shopping_lists(id) on delete cascade,
   nome text not null,
   categoria_id uuid references categories(id) on delete set null,
-  unidade text not null default 'un' check (unidade in ('un', 'kg', 'g')),
+  unidade text not null default 'un' check (unidade in ('un', 'kg', 'g', 'l', 'ml')),
   quantidade numeric(10, 3) default 1,
   prioridade int not null default 3 check (prioridade between 1 and 5),
   preco_unitario numeric(12, 2),
@@ -274,12 +290,20 @@ create table if not exists shopping_list_items (
   subtotal numeric(12, 2) default 0,
   comprado boolean not null default false,
   codigo_barras text,
+  data_validade date,
   foto_url text,
   criado_em timestamptz not null default now()
 );
 -- "create table if not exists" não roda em quem já tem a tabela — coluna
 -- nova em conta existente precisa deste alter (idempotente, seguro repetir).
 alter table shopping_list_items add column if not exists prioridade int not null default 3;
+alter table shopping_list_items add column if not exists data_validade date;
+-- Mesma razão: quem já tem a tabela ficou com o check antigo (só
+-- 'un'/'kg'/'g') — recriar o constraint idempotente adiciona 'l'/'ml' sem
+-- precisar apagar a tabela. Nome do constraint é o padrão que o Postgres já
+-- dava sozinho pra um "check" inline sem nome explícito.
+alter table shopping_list_items drop constraint if exists shopping_list_items_unidade_check;
+alter table shopping_list_items add constraint shopping_list_items_unidade_check check (unidade in ('un', 'kg', 'g', 'l', 'ml'));
 
 -- Notificações dentro do app (sino no topo). dedupe_key evita duplicar a
 -- mesma notificação a cada varredura (cliente, ver js/services/

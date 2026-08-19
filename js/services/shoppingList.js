@@ -1,6 +1,7 @@
 import { isDemoMode } from '../data/config.js';
 import { mockDb } from '../data/mockDb.js';
 import { getSupabase } from '../data/supabaseClient.js';
+import { comFallbackDeColuna } from '../utils/dbFallback.js';
 
 // Calcula o subtotal de um item: por unidade (quantidade × preço unitário)
 // ou por peso (quantidade em kg/g × preço por kg/g).
@@ -30,16 +31,30 @@ export async function listLists({ ownerId, groupId }) {
   return data;
 }
 
-// Retorna a lista ativa mais recente (não finalizada) ou cria uma nova em branco.
+// Retorna a lista ativa mais recente (não finalizada) ou cria uma nova em
+// branco — herdando o limite de gasto da lista anterior mais recente (se
+// tinha um), pra funcionar como um "limite padrão" sem precisar de uma
+// tabela de preferência separada. Sempre editável depois, por lista.
 export async function getOrCreateActiveList({ ownerId, groupId }) {
   const lists = await listLists({ ownerId, groupId });
   const active = lists.find((l) => l.status !== 'finalizada');
   if (active) return active;
-  return createList({ ownerId, groupId, nome: 'Lista de Compras' });
+  const limiteAnterior = lists.find((l) => l.limite_gasto)?.limite_gasto ?? null;
+  return createList({ ownerId, groupId, nome: 'Lista de Compras', limiteGasto: limiteAnterior });
 }
 
-export async function createList({ ownerId, groupId, nome }) {
-  const row = { owner_id: ownerId, group_id: groupId ?? null, nome: nome || 'Lista de Compras', status: 'planejando', iniciado_em: null, finalizado_em: null, transacao_id: null };
+export async function createList({ ownerId, groupId, nome, limiteGasto }) {
+  const row = {
+    owner_id: ownerId,
+    group_id: groupId ?? null,
+    nome: nome || 'Lista de Compras',
+    status: 'planejando',
+    iniciado_em: null,
+    finalizado_em: null,
+    transacao_id: null,
+    nome_mercado: null,
+    limite_gasto: limiteGasto ?? null,
+  };
   if (isDemoMode()) return mockDb.insert('shopping_lists', row);
   const supabase = await getSupabase();
   const { data, error } = await supabase.from('shopping_lists').insert(row).select().single();
@@ -60,6 +75,18 @@ export const pauseShopping = (id) => updateList(id, { status: 'pausada' });
 export const resumeShopping = (id) => updateList(id, { status: 'comprando' });
 export const finishShopping = (id) => updateList(id, { status: 'finalizada', finalizado_em: new Date().toISOString() });
 export const linkListToTransaction = (id, transacaoId) => updateList(id, { transacao_id: transacaoId });
+export const setNomeMercado = (id, nomeMercado) => updateList(id, { nome_mercado: nomeMercado || null });
+export const setLimiteGasto = (id, limiteGasto) => updateList(id, { limite_gasto: limiteGasto || null });
+
+// Verde/amarelo/vermelho conforme o total da lista se aproxima ou passa do
+// limite — mesma faixa (80%/100%) já usada nos orçamentos por categoria
+// (ver computeBudgetProgress em js/services/budgets.js).
+export function computeListLimitStatus(total, limite) {
+  if (!limite) return null;
+  const percentual = Math.round((total / limite) * 100);
+  const cor = percentual >= 100 ? 'danger' : percentual >= 80 ? 'warning' : 'success';
+  return { percentual, cor };
+}
 
 export async function listItems(listId) {
   if (isDemoMode()) return mockDb.list('shopping_list_items', (i) => i.list_id === listId);
@@ -69,16 +96,10 @@ export async function listItems(listId) {
   return data;
 }
 
-// PGRST204 (PostgREST) = "coluna X não existe nessa tabela ainda" — acontece
-// quando o schema.sql foi atualizado (ex.: a coluna "prioridade" é recente)
-// mas a pessoa ainda não rodou a migração de novo no SQL Editor. Detectar e
-// tentar de novo SEM o campo problemático evita que um campo novo trave uma
-// ação inteira (aqui, "não dá pra adicionar item nenhum na lista").
-function isMissingColumnError(e) {
-  return e?.code === 'PGRST204' || /could not find the .* column|column .* does not exist/i.test(e?.message || '');
-}
-
-export async function addItem(listId, { nome, categoria_id, unidade = 'un', quantidade = 1, prioridade = 3 }) {
+// Preço já é aceito aqui (opcional) — antes só dava pra preencher durante
+// "Comprando" no mercado; agora dá pra informar de cara se a pessoa já
+// sabe o valor (etiqueta, app do mercado, lembrança de compra anterior).
+export async function addItem(listId, { nome, categoria_id, unidade = 'un', quantidade = 1, prioridade = 3, preco_unitario, preco_por_kg, data_validade, codigo_barras, foto_url }) {
   const row = {
     list_id: listId,
     nome,
@@ -92,22 +113,21 @@ export async function addItem(listId, { nome, categoria_id, unidade = 'un', quan
     unidade,
     quantidade,
     prioridade,
-    preco_unitario: null,
-    preco_por_kg: null,
+    preco_unitario: preco_unitario || null,
+    preco_por_kg: preco_por_kg || null,
     subtotal: 0,
     comprado: false,
-    codigo_barras: null,
-    foto_url: null,
+    codigo_barras: codigo_barras || null,
+    data_validade: data_validade || null,
+    foto_url: foto_url || null,
   };
+  row.subtotal = computeItemSubtotal(row);
   if (isDemoMode()) return mockDb.insert('shopping_list_items', row);
   const supabase = await getSupabase();
-  let { data, error } = await supabase.from('shopping_list_items').insert(row).select().single();
-  if (error && isMissingColumnError(error)) {
-    const { prioridade: _omit, ...semPrioridade } = row;
-    ({ data, error } = await supabase.from('shopping_list_items').insert(semPrioridade).select().single());
-  }
-  if (error) throw error;
-  return data;
+  return comFallbackDeColuna(
+    (obj) => supabase.from('shopping_list_items').insert(obj).select().single(),
+    row
+  );
 }
 
 // ---------- Categorização automática ----------
@@ -158,13 +178,10 @@ export async function updateItem(id, patch) {
   if (getErr) throw getErr;
   const merged = { ...current, ...patch };
   const patchCompleto = { ...patch, subtotal: computeItemSubtotal(merged) };
-  let { data, error } = await supabase.from('shopping_list_items').update(patchCompleto).eq('id', id).select().single();
-  if (error && isMissingColumnError(error)) {
-    const { prioridade: _omit, ...semPrioridade } = patchCompleto;
-    ({ data, error } = await supabase.from('shopping_list_items').update(semPrioridade).eq('id', id).select().single());
-  }
-  if (error) throw error;
-  return data;
+  return comFallbackDeColuna(
+    (obj) => supabase.from('shopping_list_items').update(obj).eq('id', id).select().single(),
+    patchCompleto
+  );
 }
 
 export async function removeItem(id) {

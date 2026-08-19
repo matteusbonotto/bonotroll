@@ -826,6 +826,32 @@
               <button type="button" class="cg-btn btn btn-outline-secondary btn-sm" @click="abrirHistorico()"><i class="bi bi-clock-history"></i> Histórico</button>
               <button type="button" class="cg-btn btn btn-outline-secondary btn-sm" @click="abrirImportacao()"><i class="bi bi-upload"></i> Importar CSV</button>
             </div>
+
+            <!-- Mercado (aparece no histórico depois) e limite de gasto
+                 (opcional, com barra verde/amarelo/vermelho conforme se
+                 aproxima ou passa do limite) — os dois editáveis a
+                 qualquer momento, não só ao iniciar a compra. -->
+            <div class="row g-3 border-top pt-3 mt-1">
+              <div class="col-12 col-sm-6">
+                <label class="form-label small">Mercado (opcional)</label>
+                <input type="text" class="form-control form-control-sm" placeholder="Ex: Extra, Carrefour…" :value="list?.nome_mercado || ''" @change="salvarNomeMercado($event.target.value)" />
+              </div>
+              <div class="col-12 col-sm-6">
+                <label class="form-label small">Limite de gasto (opcional)</label>
+                <div class="input-group input-group-sm mb-1">
+                  <span class="input-group-text">R$</span>
+                  <input type="number" min="0" step="1" class="form-control" placeholder="Sem limite" :value="list?.limite_gasto || ''" @change="salvarLimiteGasto($event.target.value)" />
+                </div>
+                <template x-if="statusLimiteGasto">
+                  <div>
+                    <div class="progress" style="height: 6px;">
+                      <div class="progress-bar" :class="'bg-' + statusLimiteGasto.cor" :style="{ width: Math.min(100, statusLimiteGasto.percentual) + '%' }"></div>
+                    </div>
+                    <span class="cg-muted small" x-text="statusLimiteGasto.percentual + '% do limite'"></span>
+                  </div>
+                </template>
+              </div>
+            </div>
           </div>
 
           <!-- Adicionar item: começa fechado (@click no FAB abaixo) pra deixar a
@@ -837,15 +863,20 @@
               <input type="text" class="form-control flex-fill" style="min-width: 160px;" x-ref="inputNovoItem" x-model="novoItem.nome" @input="onNomeInput()" placeholder="Ex: Arroz 5kg" required />
               <button type="submit" class="cg-btn btn btn-success" title="Adicionar"><i class="bi bi-plus-lg"></i></button>
               <button type="button" class="cg-btn btn btn-outline-secondary" @click="abrirScanner()" title="Ler código de barras"><i class="bi bi-upc-scan"></i></button>
-              <label class="cg-btn btn btn-outline-secondary mb-0" style="cursor:pointer;" title="Ler nome do item por foto">
+              <label class="cg-btn btn btn-outline-secondary mb-0" style="cursor:pointer;" title="Tirar foto do item">
                 <span x-show="!lendoFotoItem"><i class="bi bi-camera"></i></span>
                 <span x-show="lendoFotoItem" class="spinner-border spinner-border-sm"></span>
                 <input type="file" accept="image/*" capture="environment" class="d-none" @change="onFotoItem($event)" :disabled="lendoFotoItem" />
               </label>
+              <label class="cg-btn btn btn-outline-secondary mb-0" style="cursor:pointer;" title="Enviar foto da galeria">
+                <span x-show="!lendoFotoItem"><i class="bi bi-image"></i></span>
+                <span x-show="lendoFotoItem" class="spinner-border spinner-border-sm"></span>
+                <input type="file" accept="image/*" class="d-none" @change="onFotoItem($event)" :disabled="lendoFotoItem" />
+              </label>
             </form>
             <a href="#" class="small d-inline-flex align-items-center gap-1 mt-2" @click.prevent="maisOpcoesItem = !maisOpcoesItem">
               <i class="bi" :class="maisOpcoesItem ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
-              <span x-text="maisOpcoesItem ? 'Menos opções' : 'Categoria, prioridade, unidade e quantidade'"></span>
+              <span x-text="maisOpcoesItem ? 'Menos opções' : 'Preço, categoria, validade, unidade e quantidade'"></span>
             </a>
             <div class="row g-2 mt-2" x-show="maisOpcoesItem" x-cloak>
               <div class="col-12 col-md-4">
@@ -861,6 +892,8 @@
                   <option value="un">Unidade</option>
                   <option value="kg">Kg</option>
                   <option value="g">Gramas</option>
+                  <option value="l">Litros</option>
+                  <option value="ml">Mililitros</option>
                 </select>
               </div>
               <div class="col-6 col-md-4">
@@ -870,6 +903,17 @@
                   <input type="number" min="0" step="0.001" class="form-control form-control-sm text-center" x-model="novoItem.quantidade" />
                   <button type="button" class="cg-num-stepper__btn" data-repeat @click="novoItem.quantidade = (Number(novoItem.quantidade) || 0) + (novoItem.unidade === 'un' ? 1 : 0.1)" aria-label="Aumentar"><i class="bi bi-plus"></i></button>
                 </div>
+              </div>
+              <div class="col-6 col-md-4">
+                <label class="form-label small" x-text="'Preço' + (novoItem.unidade === 'un' ? ' (un.)' : ' (por ' + novoItem.unidade + ')')"></label>
+                <div class="input-group input-group-sm">
+                  <span class="input-group-text">R$</span>
+                  <input type="number" min="0" step="0.01" class="form-control" placeholder="Se souber" x-model="novoItem.preco" />
+                </div>
+              </div>
+              <div class="col-6 col-md-4">
+                <label class="form-label small">Validade (opcional)</label>
+                <input type="date" class="form-control form-control-sm" x-model="novoItem.data_validade" />
               </div>
               <div class="col-12">
                 <label class="form-label small d-block">Prioridade</label>
@@ -980,6 +1024,8 @@
                     <option value="un">Unidade</option>
                     <option value="kg">Kg</option>
                     <option value="g">Gramas</option>
+                    <option value="l">Litros</option>
+                    <option value="ml">Mililitros</option>
                   </select>
                 </div>
                 <div class="col-6">
@@ -989,6 +1035,21 @@
                     <input type="number" min="0" step="0.001" class="form-control form-control-sm text-center" x-model="edicaoForm.quantidade" />
                     <button type="button" class="cg-num-stepper__btn" data-repeat @click="edicaoForm.quantidade = (Number(edicaoForm.quantidade) || 0) + (edicaoForm.unidade === 'un' ? 1 : 0.1)" aria-label="Aumentar"><i class="bi bi-plus"></i></button>
                   </div>
+                </div>
+                <div class="col-6">
+                  <label class="form-label small" x-text="'Preço' + (edicaoForm.unidade === 'un' ? ' (un.)' : ' (por ' + edicaoForm.unidade + ')')"></label>
+                  <div class="input-group input-group-sm">
+                    <span class="input-group-text">R$</span>
+                    <input type="number" min="0" step="0.01" class="form-control" placeholder="Se souber" x-model="edicaoForm.preco" />
+                  </div>
+                </div>
+                <div class="col-6">
+                  <label class="form-label small">Validade</label>
+                  <input type="date" class="form-control form-control-sm" x-model="edicaoForm.data_validade" />
+                </div>
+                <div class="col-12">
+                  <label class="form-label small">Código de barras</label>
+                  <input type="text" class="form-control form-control-sm" x-model="edicaoForm.codigo_barras" placeholder="Opcional" />
                 </div>
                 <div class="col-12">
                   <label class="form-label small d-block">Prioridade</label>
@@ -1074,7 +1135,7 @@
                 <template x-for="entry in historicoListas" :key="entry.list.id">
                   <button type="button" class="cg-list-row d-flex align-items-center justify-content-between gap-2 p-2 text-start" @click="verDetalheHistorico(entry)">
                     <div class="min-w-0">
-                      <div class="fw-semibold text-truncate" x-text="entry.list.nome"></div>
+                      <div class="fw-semibold text-truncate" x-text="entry.list.nome_mercado || entry.list.nome"></div>
                       <div class="cg-muted small" x-text="cgFormat.formatDate((entry.list.finalizado_em || '').slice(0, 10)) + ' · ' + entry.resumo.itensComprados + '/' + entry.resumo.totalItens + ' itens'"></div>
                     </div>
                     <div class="fw-semibold flex-shrink-0" :title="cgFormat.formatCurrency(entry.resumo.valorTotal)" x-text="cgFormat.formatCurrencyCompact(entry.resumo.valorTotal)"></div>
@@ -1252,10 +1313,15 @@
                 <div class="d-flex gap-2">
                   <input type="text" class="form-control" x-model="itemForm.nome" placeholder="Ex: Arroz, Papel higiênico…" required />
                   <button type="button" class="cg-btn btn btn-outline-secondary flex-shrink-0" @click="abrirScanner()" title="Ler código de barras"><i class="bi bi-upc-scan"></i></button>
-                  <label class="cg-btn btn btn-outline-secondary mb-0 flex-shrink-0" style="cursor:pointer;" title="Ler nome por foto">
+                  <label class="cg-btn btn btn-outline-secondary mb-0 flex-shrink-0" style="cursor:pointer;" title="Tirar foto do item">
                     <span x-show="!lendoFotoItem"><i class="bi bi-camera"></i></span>
                     <span x-show="lendoFotoItem" class="spinner-border spinner-border-sm"></span>
                     <input type="file" accept="image/*" capture="environment" class="d-none" @change="onFotoNomeItem($event)" :disabled="lendoFotoItem" />
+                  </label>
+                  <label class="cg-btn btn btn-outline-secondary mb-0 flex-shrink-0" style="cursor:pointer;" title="Enviar foto da galeria">
+                    <span x-show="!lendoFotoItem"><i class="bi bi-image"></i></span>
+                    <span x-show="lendoFotoItem" class="spinner-border spinner-border-sm"></span>
+                    <input type="file" accept="image/*" class="d-none" @change="onFotoNomeItem($event)" :disabled="lendoFotoItem" />
                   </label>
                 </div>
               </div>
@@ -1709,19 +1775,36 @@
           </div>
 
           <div class="mb-3">
-            <label class="form-label">Comprovante</label>
-            <p class="cg-muted small mb-2">A foto também tenta preencher título e valor sozinha (confira antes de salvar — a leitura não é 100% confiável).</p>
+            <label class="form-label">Comprovante / fatura / boleto</label>
+            <p class="cg-muted small mb-2">Foto, arquivo, código de barras do boleto ou QR (Pix/nota fiscal) — todos tentam preencher título, valor, vencimento e categoria sozinhos (confira antes de salvar, a leitura não é 100% confiável).</p>
             <div class="d-flex align-items-center gap-2 flex-wrap">
               <label class="cg-btn btn btn-outline-secondary btn-sm" style="cursor:pointer;">
                 <i class="bi bi-camera"></i>
-                <span x-text="$store.txModal.uploadingComprovante ? 'Enviando…' : ($store.txModal.lendoComprovante ? 'Lendo dados…' : ($store.txModal.form.comprovante_url ? 'Trocar foto' : 'Anexar foto'))"></span>
-                <input type="file" accept="image/*,.pdf" capture="environment" class="d-none" @change="$store.txModal.onComprovanteChange($event)" :disabled="$store.txModal.uploadingComprovante || $store.txModal.lendoComprovante" />
+                <span x-text="$store.txModal.uploadingComprovante ? 'Enviando…' : ($store.txModal.lendoComprovante ? 'Lendo…' : 'Tirar foto')"></span>
+                <input type="file" accept="image/*" capture="environment" class="d-none" @change="$store.txModal.onComprovanteChange($event)" :disabled="$store.txModal.uploadingComprovante || $store.txModal.lendoComprovante" />
               </label>
+              <label class="cg-btn btn btn-outline-secondary btn-sm" style="cursor:pointer;">
+                <i class="bi bi-image"></i>
+                <span x-text="$store.txModal.uploadingComprovante ? 'Enviando…' : ($store.txModal.lendoComprovante ? 'Lendo…' : ($store.txModal.form.comprovante_url ? 'Trocar arquivo' : 'Enviar arquivo'))"></span>
+                <input type="file" accept="image/*" class="d-none" @change="$store.txModal.onComprovanteChange($event)" :disabled="$store.txModal.uploadingComprovante || $store.txModal.lendoComprovante" />
+              </label>
+              <label class="cg-btn btn btn-outline-secondary btn-sm" style="cursor:pointer;">
+                <i class="bi bi-file-earmark-pdf"></i>
+                <span x-text="$store.txModal.lendoComprovante ? 'Lendo…' : 'Importar PDF'"></span>
+                <input type="file" accept="application/pdf" class="d-none" @change="$store.txModal.onComprovantePdfChange($event)" :disabled="$store.txModal.lendoComprovante" />
+              </label>
+              <button type="button" class="cg-btn btn btn-outline-secondary btn-sm" @click="$store.txModal.abrirScannerComprovante()" title="Ler código de barras do boleto ou QR do Pix/nota fiscal">
+                <i class="bi bi-upc-scan"></i> Escanear
+              </button>
               <a :href="$store.txModal.comprovantePreviewUrl" target="_blank" rel="noopener" class="small" x-show="$store.txModal.comprovantePreviewUrl">Ver anexo</a>
               <button type="button" class="btn btn-sm btn-outline-danger" @click="$store.txModal.removerComprovante()" x-show="$store.txModal.form.comprovante_url" aria-label="Remover comprovante">
                 <i class="bi bi-trash"></i>
               </button>
             </div>
+            <p class="cg-muted small mb-0 mt-1" x-show="$store.txModal.form.codigo_barras || $store.txModal.form.qrcode_dados">
+              <i class="bi bi-upc-scan"></i> Código guardado:
+              <span class="text-truncate d-inline-block align-middle" style="max-width: 260px; vertical-align: middle;" x-text="$store.txModal.form.codigo_barras || $store.txModal.form.qrcode_dados"></span>
+            </p>
           </div>
 
           <div class="mb-3">
@@ -1741,6 +1824,16 @@
           </button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- ============ MODAL: LER CÓDIGO DE BARRAS/QR DA DESPESA ============ -->
+  <div class="cg-modal-backdrop" x-show="$store.txModal.scannerComprovanteAberto" x-cloak>
+    <div class="cg-modal text-center">
+      <h2 class="h6 fw-bold mb-3">Aponte a câmera pro código de barras do boleto ou QR do Pix/nota fiscal</h2>
+      <div id="cg-scanner-viewport-despesa" style="min-height:240px; background:#000; border-radius: var(--radius-md); overflow:hidden;"></div>
+      <p class="text-danger small mt-2" x-show="$store.txModal.scannerComprovanteErro" x-text="$store.txModal.scannerComprovanteErro"></p>
+      <button type="button" class="cg-btn btn btn-outline-secondary mt-3" @click="$store.txModal.fecharScannerComprovante()">Cancelar</button>
     </div>
   </div>
 

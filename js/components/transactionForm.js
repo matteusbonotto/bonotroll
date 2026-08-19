@@ -2,6 +2,8 @@ import { createTransaction, updateTransaction, deleteTransaction, uploadComprova
 import { createCompany, updateCompany, uploadCompanyLogo } from '../services/companies.js';
 import { notifyPayment } from '../services/notifications.js';
 import { recognizeText, parseReceiptText } from '../services/ocr.js';
+import { startBarcodeScanner, stopBarcodeScanner, interpretScannedCode } from '../services/barcode.js';
+import { extractTextFromPdf } from '../services/pdf.js';
 import { todayIso } from '../utils/format.js';
 
 const emptyForm = () => ({
@@ -19,6 +21,8 @@ const emptyForm = () => ({
   comprovante_url: '',
   recorrente: false,
   observacoes: '',
+  codigo_barras: '',
+  qrcode_dados: '',
 });
 
 // Modal global de "nova/editar transação" (Alpine.store('txModal')) — aberto
@@ -100,6 +104,8 @@ export function txModalStore() {
         comprovante_url: tx.comprovante_url || '',
         recorrente: !!tx.recorrente,
         observacoes: tx.observacoes || '',
+        codigo_barras: tx.codigo_barras || '',
+        qrcode_dados: tx.qrcode_dados || '',
       };
       this.showMore = true;
       this.comprovantePreviewUrl = null;
@@ -227,6 +233,17 @@ export function txModalStore() {
       await store.refreshCompanies();
     },
 
+    // Só preenche campo que ainda está vazio — nunca sobrescreve algo que a
+    // pessoa já digitou/escolheu, seja na foto/PDF ou no scan de código.
+    aplicarDadosExtraidos(dados) {
+      let preencheu = false;
+      if (dados.titulo && !this.form.titulo.trim()) { this.form.titulo = dados.titulo; preencheu = true; }
+      if (dados.valor && !this.form.valor) { this.form.valor = dados.valor; preencheu = true; }
+      if (dados.vencimento && !this.form.data_vencimento) { this.form.data_vencimento = dados.vencimento; preencheu = true; }
+      if (dados.titulo && !this.categoriaEscolhidaManualmente) this.onTituloInput();
+      return preencheu;
+    },
+
     async onComprovanteChange(event) {
       const file = event.target.files?.[0];
       if (!file) return;
@@ -241,9 +258,8 @@ export function txModalStore() {
         try {
           const texto = await recognizeText(file);
           const dados = parseReceiptText(texto);
-          if (dados.titulo && !this.form.titulo.trim()) this.form.titulo = dados.titulo;
-          if (dados.valor && !this.form.valor) this.form.valor = dados.valor;
-          if (dados.titulo || dados.valor) store.notify('Dados lidos da foto — confira antes de salvar.');
+          const preencheu = this.aplicarDadosExtraidos(dados);
+          if (preencheu) store.notify('Dados lidos da foto — confira antes de salvar.');
         } catch {
           // leitura é só um bônus (best-effort) — se falhar, segue com o
           // anexo já salvo normalmente, sem travar o resto do formulário
@@ -256,6 +272,65 @@ export function txModalStore() {
         this.uploadingComprovante = false;
         event.target.value = '';
       }
+    },
+
+    // PDF (fatura/boleto digital): tenta o texto nativo do PDF primeiro
+    // (rápido e exato) e só cai pra OCR se a página não tiver texto de
+    // verdade (PDF escaneado) — ver extractTextFromPdf em services/pdf.js.
+    // Não faz upload do PDF como comprovante (o bucket é pra imagem); só
+    // usa ele pra preencher o formulário.
+    async onComprovantePdfChange(event) {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      const store = Alpine.store('app');
+      this.lendoComprovante = true;
+      try {
+        const texto = await extractTextFromPdf(file, { recognizeImage: (blob) => recognizeText(blob) });
+        const dados = parseReceiptText(texto);
+        const preencheu = this.aplicarDadosExtraidos(dados);
+        store.notify(preencheu ? 'Dados lidos do PDF — confira antes de salvar.' : 'Não consegui ler dados úteis nesse PDF — preencha manualmente.', preencheu ? 'success' : 'danger');
+      } catch (e) {
+        store.notify(e.message || 'Erro ao ler o PDF.', 'danger');
+      } finally {
+        this.lendoComprovante = false;
+        event.target.value = '';
+      }
+    },
+
+    // ---------- Código de barras (boleto) / QR (Pix, nota fiscal) ----------
+    scannerComprovanteAberto: false,
+    scannerComprovanteErro: '',
+    async abrirScannerComprovante() {
+      this.scannerComprovanteAberto = true;
+      this.scannerComprovanteErro = '';
+      await Alpine.nextTick();
+      try {
+        await startBarcodeScanner('cg-scanner-viewport-despesa', (codigo) => this.onCodigoComprovanteLido(codigo));
+      } catch {
+        this.scannerComprovanteErro = 'Não foi possível acessar a câmera.';
+      }
+    },
+    async fecharScannerComprovante() {
+      await stopBarcodeScanner();
+      this.scannerComprovanteAberto = false;
+    },
+    async onCodigoComprovanteLido(codigo) {
+      await stopBarcodeScanner();
+      this.scannerComprovanteAberto = false;
+      const store = Alpine.store('app');
+      const lido = interpretScannedCode(codigo);
+      if (lido.tipo === 'boleto') this.form.codigo_barras = lido.codigo;
+      else this.form.qrcode_dados = lido.codigo;
+
+      let preencheu = false;
+      if (lido.valor && !this.form.valor) { this.form.valor = lido.valor; preencheu = true; }
+      if (lido.vencimento && !this.form.data_vencimento) { this.form.data_vencimento = lido.vencimento; preencheu = true; }
+      if (lido.nomeRecebedor && !this.form.empresa_servico.trim()) { this.form.empresa_servico = lido.nomeRecebedor; preencheu = true; }
+
+      if (lido.tipo === 'boleto' && preencheu) store.notify('Valor e vencimento lidos do boleto — confira antes de salvar.');
+      else if (lido.tipo === 'pix' && preencheu) store.notify('Dados lidos do Pix — confira antes de salvar.');
+      else if (lido.tipo === 'boleto' || lido.tipo === 'pix') store.notify('Código lido, mas não consegui extrair valor/vencimento — preencha manualmente.', 'danger');
+      else store.notify('Código guardado (não reconhecido como boleto nem Pix) — preencha o resto manualmente.');
     },
 
     removerComprovante() {
@@ -293,6 +368,8 @@ export function txModalStore() {
           comprovante_url: this.form.comprovante_url || null,
           recorrente: this.form.recorrente,
           observacoes: this.form.observacoes.trim() || null,
+          codigo_barras: this.form.codigo_barras || null,
+          qrcode_dados: this.form.qrcode_dados || null,
           owner_id: store.profile.id,
           group_id: store.group?.group?.id ?? null,
         };
