@@ -30,7 +30,8 @@ const REGRAS_CATEGORIA_DESPESA = [
   { nomes: ['Curso'], palavras: ['curso', 'faculdade', 'escola', 'mensalidade', 'udemy', 'alura', 'ingles', 'inglês', 'idiomas'] },
   { nomes: ['Salário', 'Salario'], palavras: ['salario', 'salário', 'holerite'] },
   { nomes: ['Alimentos', 'Mercado'], palavras: ['mercado', 'supermercado', 'atacadao', 'atacadão'] },
-  { nomes: ['Saúde', 'Saude'], palavras: ['farmacia', 'farmácia', 'drogaria', 'consulta', 'medico', 'médico', 'dentista', 'plano de saude', 'plano de saúde'] },
+  { nomes: ['Saúde', 'Saude'], palavras: ['farmacia', 'farmácia', 'drogaria', 'consulta', 'medico', 'médico', 'dentista', 'plano de saude', 'plano de saúde', 'hospital', 'exame', 'laboratorio', 'laboratório', 'fisioterapia', 'psicologo', 'psicólogo', 'terapia', 'oftalmologista', 'nutricionista', 'vacina', 'remedio', 'remédio', 'oculos', 'óculos'] },
+  { nomes: ['Beleza'], palavras: ['sobrancelha', 'sombrancelha', 'cabelo', 'cabeleireiro', 'salao de beleza', 'salão de beleza', 'barbearia', 'barbeiro', 'manicure', 'pedicure', 'unha', 'estetica', 'estética', 'depilacao', 'depilação', 'maquiagem', 'make up', 'makeup', 'spa', 'skincare', 'progressiva', 'escova progressiva', 'tintura', 'coloracao', 'coloração', 'micropigmentacao', 'micropigmentação', 'unhas de gel'] },
 ];
 
 export function guessCategoryByTitle(titulo, categories) {

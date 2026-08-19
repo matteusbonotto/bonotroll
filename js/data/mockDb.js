@@ -38,6 +38,8 @@ function seedDatabase() {
     { id: 'cat-laticinios', nome: 'Laticínios', cor: '#38BDF8', icone: 'bi-cup-fill' },
     { id: 'cat-padaria', nome: 'Padaria', cor: '#B45309', icone: 'bi-basket2-fill' },
     { id: 'cat-acougue', nome: 'Açougue', cor: '#DC2626', icone: 'bi-shop' },
+    { id: 'cat-saude', nome: 'Saúde', cor: '#F43F5E', icone: 'bi-heart-pulse' },
+    { id: 'cat-beleza', nome: 'Beleza', cor: '#D946EF', icone: 'bi-magic' },
   ].map((c) => ({ ...c, owner_id: matheusId, group_id: groupId, criado_em: new Date().toISOString() }));
 
   function tx(data) {

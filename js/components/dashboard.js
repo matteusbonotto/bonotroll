@@ -1,4 +1,4 @@
-import { listTransactions, computeSummary, groupByCategory, groupByCompany, groupByFlow, groupByPeriod, listPayersFor, shareForMember } from '../services/transactions.js';
+import { listTransactions, computeSummary, groupByCategory, groupByCompany, groupByPeriod, listPayersFor, shareForMember } from '../services/transactions.js';
 import { listBudgets, computeBudgetProgress } from '../services/budgets.js';
 import { listAllItems as listAllResourceItems } from '../services/resources.js';
 import { computeExpiryStatus, expiryStatusMeta } from '../utils/status.js';
@@ -223,7 +223,18 @@ export function dashboardView() {
       const store = this.$store.app;
       if (tipo === 'categoria') return groupByCategory(rows, store.categories);
       if (tipo === 'empresa') return groupByCompany(rows);
-      if (tipo === 'fluxo') return groupByFlow(this.quemVer === 'grupo' ? this.escopo : rows);
+      // fluxo (Entrada x Saída) precisa dos dois lados — linhasQuebra é
+      // saída-only (feito pra categoria/empresa/período, que são conceitos
+      // só-de-gasto), então usar ela aqui zerava entradas sempre. resumoSelecionado
+      // já calcula entradas/saídas corretas pra Eu/membro/grupo (mesma fonte
+      // do card de saldo), então reaproveita em vez de recalcular.
+      if (tipo === 'fluxo') {
+        const resumo = this.resumoSelecionado;
+        return [
+          { nome: 'Entradas', total: resumo.entradas, cor: '#16A34A' },
+          { nome: 'Saídas', total: resumo.saidas, cor: '#DC2626' },
+        ];
+      }
       return groupByPeriod(rows, tipo); // 'dia' | 'mes' | 'ano'
     },
 

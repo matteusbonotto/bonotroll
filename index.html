@@ -299,7 +299,7 @@
             <div class="cg-card">
               <div class="cg-section-title"><i class="bi bi-exclamation-circle"></i> Contas a vencer</div>
               <template x-if="!contasAVencer.length"><p class="cg-muted small mb-0">Nada vencido ou vencendo nos próximos dias. 🎉</p></template>
-              <div class="d-flex flex-column gap-2">
+              <div class="d-flex flex-column gap-2" style="max-height: 260px; overflow-y: auto;">
                 <template x-for="t in contasAVencer" :key="t.id">
                   <div class="cg-due-row" :class="t._status === 'vencido' ? 'cg-due-row--overdue' : 'cg-due-row--soon'">
                     <div class="cg-due-row__icon"><i class="bi" :class="t._status === 'vencido' ? 'bi-exclamation-triangle-fill' : 'bi-clock-fill'"></i></div>
@@ -313,51 +313,51 @@
               </div>
             </div>
 
-            <template x-if="recursosSugestoes.length">
-              <div class="cg-card">
-                <button type="button" class="btn p-0 border-0 bg-transparent w-100 d-flex align-items-center justify-content-between mb-0" @click="recursosSugestoesAbertas = !recursosSugestoesAbertas">
-                  <div class="cg-section-title mb-0"><i class="bi bi-box-seam"></i> Recursos em falta <span class="cg-badge cg-badge--danger" x-text="recursosSugestoes.length"></span></div>
-                  <i class="bi fs-5 cg-muted" :class="recursosSugestoesAbertas ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
-                </button>
-                <div class="d-flex flex-column gap-2 mt-2" x-show="recursosSugestoesAbertas">
-                  <template x-for="s in recursosSugestoes" :key="s.item.id">
-                    <div class="cg-due-row" :class="s.status === 'vencendo' ? 'cg-due-row--soon' : 'cg-due-row--overdue'">
-                      <div class="cg-due-row__icon"><i :class="'bi ' + recursosExpiryMeta(s.item).icon"></i></div>
-                      <div class="min-w-0 flex-fill">
-                        <div class="fw-semibold text-truncate" x-text="s.item.nome"></div>
-                        <div class="small cg-due-row__meta" x-text="recursosExpiryMeta(s.item).label"></div>
-                      </div>
-                      <button type="button" class="btn btn-sm btn-outline-secondary flex-shrink-0" @click="$store.app.setView('recursos')">Ver</button>
+            <div class="cg-card">
+              <button type="button" class="btn p-0 border-0 bg-transparent w-100 d-flex align-items-center justify-content-between mb-0" :disabled="!recursosSugestoes.length" @click="recursosSugestoes.length && (recursosSugestoesAbertas = !recursosSugestoesAbertas)">
+                <div class="cg-section-title mb-0"><i class="bi bi-box-seam"></i> Recursos em falta <span class="cg-badge cg-badge--danger" x-show="recursosSugestoes.length" x-text="recursosSugestoes.length"></span></div>
+                <i class="bi fs-5 cg-muted" x-show="recursosSugestoes.length" :class="recursosSugestoesAbertas ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+              </button>
+              <template x-if="!recursosSugestoes.length"><p class="cg-muted small mb-0 mt-2">Nenhum recurso em falta ou vencendo. 🎉</p></template>
+              <div class="mt-2" x-show="recursosSugestoesAbertas && recursosSugestoes.length" style="max-height: 260px; overflow-y: auto;">
+              <div class="d-flex flex-column gap-2">
+                <template x-for="s in recursosSugestoes" :key="s.item.id">
+                  <div class="cg-due-row" :class="s.status === 'vencendo' ? 'cg-due-row--soon' : 'cg-due-row--overdue'">
+                    <div class="cg-due-row__icon"><i :class="'bi ' + recursosExpiryMeta(s.item).icon"></i></div>
+                    <div class="min-w-0 flex-fill">
+                      <div class="fw-semibold text-truncate" x-text="s.item.nome"></div>
+                      <div class="small cg-due-row__meta" x-text="recursosExpiryMeta(s.item).label"></div>
                     </div>
-                  </template>
-                </div>
+                    <button type="button" class="btn btn-sm btn-outline-secondary flex-shrink-0" @click="$store.app.setView('recursos')">Ver</button>
+                  </div>
+                </template>
               </div>
-            </template>
+              </div>
+            </div>
 
-            <template x-if="budgetProgress.length">
-              <div class="cg-card">
-                <div class="d-flex align-items-center justify-content-between mb-2">
-                  <div class="cg-section-title mb-0"><i class="bi bi-piggy-bank"></i> Orçamentos do mês</div>
-                  <button type="button" class="btn btn-sm btn-link p-0" @click="$store.budgetModal.openManage()">Gerenciar</button>
-                </div>
-                <div class="d-flex flex-column gap-3">
-                  <template x-for="b in budgetProgress" :key="b.id">
-                    <div class="min-w-0">
-                      <div class="d-flex align-items-center justify-content-between gap-2 mb-1 min-w-0">
-                        <span class="d-flex align-items-center gap-2 min-w-0">
-                          <span class="cg-pill-dot flex-shrink-0" :style="{ background: b.categoria?.cor || '#94A3B8' }"></span>
-                          <span class="text-truncate" x-text="b.categoria?.nome || 'Categoria'"></span>
-                        </span>
-                        <span class="small cg-muted flex-shrink-0" :title="cgFormat.formatCurrency(b.gasto) + ' de ' + cgFormat.formatCurrency(b.limite)" x-text="cgFormat.formatCurrencyCompact(b.gasto) + ' / ' + cgFormat.formatCurrencyCompact(b.limite)"></span>
-                      </div>
-                      <div class="progress" style="height: 8px;" role="progressbar" :aria-valuenow="b.percentual" aria-valuemin="0" aria-valuemax="100">
-                        <div class="progress-bar" :class="b.percentual >= 100 ? 'bg-danger' : (b.percentual >= 80 ? 'bg-warning' : 'bg-success')" :style="{ width: Math.min(100, b.percentual) + '%' }"></div>
-                      </div>
-                    </div>
-                  </template>
-                </div>
+            <div class="cg-card">
+              <div class="d-flex align-items-center justify-content-between mb-2">
+                <div class="cg-section-title mb-0"><i class="bi bi-piggy-bank"></i> Orçamentos do mês</div>
+                <button type="button" class="btn btn-sm btn-link p-0" @click="$store.budgetModal.openManage()">Gerenciar</button>
               </div>
-            </template>
+              <template x-if="!budgetProgress.length"><p class="cg-muted small mb-0">Nenhum orçamento definido ainda.</p></template>
+              <div class="d-flex flex-column gap-3">
+                <template x-for="b in budgetProgress" :key="b.id">
+                  <div class="min-w-0">
+                    <div class="d-flex align-items-center justify-content-between gap-2 mb-1 min-w-0">
+                      <span class="d-flex align-items-center gap-2 min-w-0">
+                        <span class="cg-pill-dot flex-shrink-0" :style="{ background: b.categoria?.cor || '#94A3B8' }"></span>
+                        <span class="text-truncate" x-text="b.categoria?.nome || 'Categoria'"></span>
+                      </span>
+                      <span class="small cg-muted flex-shrink-0" :title="cgFormat.formatCurrency(b.gasto) + ' de ' + cgFormat.formatCurrency(b.limite)" x-text="cgFormat.formatCurrencyCompact(b.gasto) + ' / ' + cgFormat.formatCurrencyCompact(b.limite)"></span>
+                    </div>
+                    <div class="progress" style="height: 8px;" role="progressbar" :aria-valuenow="b.percentual" aria-valuemin="0" aria-valuemax="100">
+                      <div class="progress-bar" :class="b.percentual >= 100 ? 'bg-danger' : (b.percentual >= 80 ? 'bg-warning' : 'bg-success')" :style="{ width: Math.min(100, b.percentual) + '%' }"></div>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </div>
           </div>
 
           <!-- 3 gráficos independentes, cada um com a própria quebra
@@ -1185,7 +1185,8 @@
               <div class="cg-section-title mb-0"><i class="bi bi-exclamation-circle"></i> Sugestões de compra <span class="cg-badge cg-badge--danger" x-text="sugestoes.length"></span></div>
               <i class="bi fs-5 cg-muted" :class="sugestoesAbertas ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
             </button>
-            <div class="d-flex flex-column gap-2 mt-2" x-show="sugestoesAbertas">
+            <div class="mt-2" x-show="sugestoesAbertas" style="max-height: 320px; overflow-y: auto;">
+            <div class="d-flex flex-column gap-2">
               <template x-for="s in sugestoes" :key="s.item.id">
                 <div class="cg-due-row" :class="s.status === 'vencendo' ? 'cg-due-row--soon' : 'cg-due-row--overdue'">
                   <div class="cg-due-row__icon"><i :class="'bi ' + expiryMeta(s.item).icon"></i></div>
@@ -1196,6 +1197,7 @@
                   <button type="button" class="cg-btn btn btn-outline-success btn-sm flex-shrink-0" @click="adicionarNaListaDeCompras(s.item)"><i class="bi bi-cart-plus"></i> Adicionar</button>
                 </div>
               </template>
+            </div>
             </div>
           </div>
 

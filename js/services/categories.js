@@ -21,6 +21,8 @@ export const DEFAULT_CATEGORIES = [
   { nome: 'Limpeza', cor: '#06B6D4', icone: 'bi-droplet' },
   { nome: 'Higiene', cor: '#EC4899', icone: 'bi-droplet-half' },
   { nome: 'Bebidas', cor: '#D97706', icone: 'bi-cup-straw' },
+  { nome: 'Saúde', cor: '#F43F5E', icone: 'bi-heart-pulse' },
+  { nome: 'Beleza', cor: '#D946EF', icone: 'bi-magic' },
 ];
 
 export async function listCategories({ ownerId, groupId }) {
