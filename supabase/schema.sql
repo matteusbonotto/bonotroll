@@ -369,22 +369,12 @@ returns boolean as $$
   );
 $$ language sql security definer stable;
 
--- Mesma razão do is_group_member acima, pra um caso diferente: decide se
--- "p_alvo" é colega de grupo de "p_de" (compartilham algum group_members.
--- group_id). Usada pela policy de INSERT de "notifications" mais abaixo —
--- sem security definer, a subquery de group_members dentro daquela policy
--- ficaria sujeita à RLS da PRÓPRIA group_members ao rodar como o role
--- "authenticated" (diferente de rodar como postgres/superuser no SQL
--- Editor, que ignora RLS e por isso não reproduzia o bug em teste manual),
--- podendo bloquear um INSERT legítimo mesmo com os dados de grupo corretos.
-create or replace function public.eh_colega_de_grupo(p_alvo uuid, p_de uuid)
-returns boolean as $$
-  select exists (
-    select 1 from group_members gm1
-    join group_members gm2 on gm2.group_id = gm1.group_id
-    where gm1.profile_id = p_de and gm2.profile_id = p_alvo
-  );
-$$ language sql security definer stable;
+-- eh_colega_de_grupo() existiu aqui numa tentativa anterior de resolver a
+-- notificação de pagamento via policy de INSERT cross-usuário — removida:
+-- ver "NOTIFICAR O GRUPO QUANDO UMA DESPESA É PAGA" mais abaixo pelo
+-- caminho que substituiu ela (trigger security definer, sem depender de
+-- RLS de notifications aceitar insert pra outro profile_id).
+drop function if exists public.eh_colega_de_grupo(uuid, uuid);
 
 -- =========================================================
 -- CRIAR/ENTRAR EM GRUPO
@@ -594,18 +584,69 @@ drop policy if exists "Marcar a própria notificação como lida" on notificatio
 create policy "Marcar a própria notificação como lida" on notifications for update
   using (profile_id = auth.uid());
 drop policy if exists "Criar notificação para si ou colega de grupo" on notifications;
--- "colega de grupo" existe porque quem MARCA uma despesa como paga (ver
--- notifyPayment em js/services/notifications.js) insere a notificação já
--- direto pro profile_id do OUTRO membro, não pro próprio — mesma
--- necessidade que já existia na policy de SELECT de "profiles" acima.
-create policy "Criar notificação para si ou colega de grupo" on notifications for insert
-  with check (
-    profile_id = auth.uid()
-    or public.eh_colega_de_grupo(profile_id, auth.uid())
-  );
+drop policy if exists "Criar a própria notificação" on notifications;
+-- Só a própria — de propósito, bem mais estrito do que antes. Notificar o
+-- COLEGA de pagamento não passa mais por aqui: é o trigger
+-- notificar_pagamento_para_grupo() (logo abaixo) que grava isso, rodando
+-- como security definer (ignora RLS por completo). Depender de o CLIENTE
+-- inserir direto pro profile_id de outra pessoa, sob RLS normal, se provou
+-- fragil na prática (ver comentário do trigger) — então o client
+-- (js/services/notifications.js::notifyPayment) só usa esse caminho em modo
+-- demo (mockDb, sem RLS nenhuma); em modo real não escreve mais nada aqui.
+create policy "Criar a própria notificação" on notifications for insert
+  with check (profile_id = auth.uid());
 drop policy if exists "Excluir a própria notificação" on notifications;
 create policy "Excluir a própria notificação" on notifications for delete
   using (profile_id = auth.uid());
+
+-- =========================================================
+-- NOTIFICAR O GRUPO QUANDO UMA DESPESA É PAGA (direto no banco)
+--
+-- Substitui o antigo caminho de "o cliente insere a notificação direto pro
+-- profile_id do colega, sob RLS normal": em teste real (sessão real,
+-- role authenticated, RLS valendo de verdade) isso continuava caindo em
+-- "new row violates row-level security policy" mesmo com a policy e os
+-- dados de grupo corretos — a suspeita é a subquery de group_members
+-- dentro da policy ficar sujeita à RLS da PRÓPRIA group_members outra vez,
+-- de um jeito que não reproduz rodando como postgres/superuser no SQL
+-- Editor (que ignora RLS). Em vez de continuar caçando a causa exata
+-- desse comportamento, a notificação pro colega passa a ser gravada por
+-- um TRIGGER security definer — ignora RLS de propósito, roda sempre,
+-- sem depender de nenhuma policy cross-usuário. Só dispara pra despesa
+-- com grupo (group_id not null); sem grupo não tem quem notificar.
+-- =========================================================
+
+create or replace function public.notificar_pagamento_para_grupo()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  insert into notifications (profile_id, tipo, titulo, corpo, referencia_tabela, referencia_id, dedupe_key, lida)
+  select
+    gm.profile_id,
+    'pagamento',
+    '"' || new.titulo || '" foi paga',
+    'R$ ' || to_char(new.valor, 'FM999999990.00'),
+    'transactions',
+    new.id,
+    'pagamento:' || new.id || ':' || new.data_pagamento::text,
+    false
+  from group_members gm
+  where gm.group_id = new.group_id
+    and gm.profile_id <> auth.uid()
+  on conflict (profile_id, dedupe_key) do nothing;
+  return new;
+end;
+$$;
+
+drop trigger if exists notificar_pagamento_trigger on transactions;
+create trigger notificar_pagamento_trigger
+  after update on transactions
+  for each row
+  when (new.data_pagamento is not null and old.data_pagamento is null and new.group_id is not null)
+  execute function public.notificar_pagamento_para_grupo();
 
 alter table push_subscriptions enable row level security;
 drop policy if exists "Gerenciar a própria inscrição de push" on push_subscriptions;

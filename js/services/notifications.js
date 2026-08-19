@@ -112,10 +112,21 @@ export async function generateForProfile({ profileId, groupId }) {
 // Chamado no momento em que uma despesa é marcada como paga (ver
 // togglePago em components/transactionTable.js e save() em
 // components/transactionForm.js) — notifica os OUTROS membros do grupo, não
-// quem pagou. Em modo real, o mesmo evento também dispara a Edge Function
-// notify-payment via trigger de banco (ver supabase/schema.sql) pra chegar
-// como push mesmo com o app fechado.
+// quem pagou.
+//
+// Em modo REAL isso não escreve mais nada aqui: um insert do cliente direto
+// pro profile_id de OUTRA pessoa, sob RLS normal, se mostrou frágil em teste
+// real (passava rodando como postgres/superuser no SQL Editor, mas
+// continuava caindo em "new row violates row-level security policy" com a
+// sessão de verdade) — a causa exata não valia a pena perseguir mais quando
+// existe um caminho estruturalmente mais simples: o trigger
+// notificar_pagamento_trigger (ver supabase/schema.sql), que roda security
+// definer direto no banco, ignora RLS de propósito, e dispara sozinho no
+// UPDATE de data_pagamento sem precisar de nenhuma chamada daqui. Em modo
+// DEMO (mockDb, sem RLS/trigger nenhum) esse caminho client-side continua
+// sendo o único jeito de existir, então segue rodando normalmente.
 export async function notifyPayment({ transaction, payerProfileId, memberIds }) {
+  if (!isDemoMode()) return;
   const rows = memberIds
     .filter((id) => id !== payerProfileId)
     .map((id) => ({
