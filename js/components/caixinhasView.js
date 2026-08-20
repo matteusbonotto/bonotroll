@@ -288,16 +288,18 @@ export function caixinhasView() {
         this.salvandoMov = false;
       }
     },
+    // Exclusão frequente/baixo dano (docs/BONOTTO-2027-BLUEPRINT.md,
+    // Conflito 3) — sem confirm(), com "Desfazer" no lugar: a linha some da
+    // UI na hora (otimista), e só é removida do banco de verdade alguns
+    // segundos depois, se ninguém desfizer.
     async removerMovimentacao(mov) {
-      if (!confirm('Remover esta movimentação?')) return;
-      const store = this.$store.app;
-      try {
-        await cx.deleteMovimentacao(mov.id);
-        this.movByCaixinha[this.activeId] = this.movFor(this.activeId).filter((m) => m.id !== mov.id);
-        store.notify('Movimentação removida.');
-      } catch (e) {
-        store.notify(e.message || 'Não foi possível remover.', 'danger');
-      }
+      const activeId = this.activeId;
+      this.movByCaixinha[activeId] = this.movFor(activeId).filter((m) => m.id !== mov.id);
+      this.$store.app.notifyUndo(
+        'Movimentação removida.',
+        () => cx.deleteMovimentacao(mov.id),
+        () => { this.movByCaixinha[activeId] = [mov, ...this.movFor(activeId).filter((m) => m.id !== mov.id)]; }
+      );
     },
 
     responsavelFor(id) {

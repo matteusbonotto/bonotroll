@@ -282,6 +282,37 @@ export function appStore() {
       this.toasts = this.toasts.filter((t) => t.id !== id);
     },
 
+    // Toast com "Desfazer" (docs/BONOTTO-2027-BLUEPRINT.md, Conflito 3) —
+    // substitui confirm() nas exclusões frequentes/de baixo dano (uma linha
+    // de histórico, um item avulso): a UI já reflete a exclusão na hora
+    // (quem chama já removeu do array local antes de chamar isto), e só
+    // depois de alguns segundos SEM desfazer é que a exclusão de verdade
+    // (a chamada de API) acontece — `aoConfirmar` é essa chamada real,
+    // `aoDesfazer` desfaz só o estado local (não precisa saber que a API
+    // nunca chegou a ser chamada).
+    notifyUndo(message, aoConfirmar, aoDesfazer) {
+      const id = `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+      let desfeito = false;
+      const timer = setTimeout(async () => {
+        if (desfeito) return;
+        this.toasts = this.toasts.filter((t) => t.id !== id);
+        try {
+          await aoConfirmar();
+        } catch (e) {
+          this.notify(e.message || 'Não consegui concluir a exclusão.', 'danger');
+        }
+      }, 5000);
+      this.toasts.push({
+        id, message, type: 'undo',
+        desfazer: () => {
+          desfeito = true;
+          clearTimeout(timer);
+          this.toasts = this.toasts.filter((t) => t.id !== id);
+          aoDesfazer();
+        },
+      });
+    },
+
     categoryById(id) {
       return this.categories.find((c) => c.id === id) || null;
     },

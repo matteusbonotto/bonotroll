@@ -392,18 +392,19 @@ export function resourcesView() {
       }, 500);
     },
 
+    // Exclusão frequente/baixo dano (docs/BONOTTO-2027-BLUEPRINT.md,
+    // Conflito 3) — sem confirm(), com "Desfazer": item some da grade na
+    // hora, exclusão de verdade (e atualização de sugestões) só acontece
+    // alguns segundos depois se ninguém desfizer.
     async removeItem(id) {
-      if (!confirm('Remover este item?')) return;
-      const store = this.$store.app;
-      try {
-        await res.deleteItem(id);
-        this.itemModalAberto = false;
-        await this.carregarItens();
-        await this.carregarSugestoes();
-        store.notify('Item removido.');
-      } catch (e) {
-        store.notify(e.message || 'Não foi possível remover o item.', 'danger');
-      }
+      const item = this.items.find((i) => i.id === id);
+      this.items = this.items.filter((i) => i.id !== id);
+      this.itemModalAberto = false;
+      this.$store.app.notifyUndo(
+        'Item removido.',
+        async () => { await res.deleteItem(id); await this.carregarSugestoes(); },
+        () => { if (item) this.items = [item, ...this.items]; }
+      );
     },
 
     async onFotoChange(item, event) {

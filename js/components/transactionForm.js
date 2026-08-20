@@ -583,13 +583,21 @@ export function txModalStore() {
       }
     },
 
+    // Exclusão frequente/baixo dano (docs/BONOTTO-2027-BLUEPRINT.md,
+    // Conflito 3) — sem confirm(), com "Desfazer". Diferença dos outros 2
+    // casos (Caixinha/Recursos): o modal e a tabela são componentes Alpine
+    // separados sem array compartilhado, então a linha não some da tabela
+    // na hora — mas a exclusão de verdade (delete + cg:transactions-changed,
+    // que É o que faz ela sumir) só acontece se ninguém desfizer a tempo.
     async remove() {
       if (!this.form.id) return;
-      if (!confirm('Excluir este lançamento? Essa ação não pode ser desfeita.')) return;
-      await deleteTransaction(this.form.id);
-      Alpine.store('app').notify('Lançamento excluído.');
+      const id = this.form.id;
       this.open = false;
-      window.dispatchEvent(new CustomEvent('cg:transactions-changed'));
+      Alpine.store('app').notifyUndo(
+        'Lançamento excluído.',
+        async () => { await deleteTransaction(id); window.dispatchEvent(new CustomEvent('cg:transactions-changed')); },
+        () => {}
+      );
     },
   };
 }
