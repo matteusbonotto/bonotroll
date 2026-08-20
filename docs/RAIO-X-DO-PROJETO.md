@@ -959,6 +959,12 @@ Antes, toda caixinha nascia com `owner_id` = quem estava logado, sem jeito de mu
 - **Conversão pra BRL** (`js/services/fx.js`): uma busca por moeda estrangeira **em uso** (não por caixinha), cacheada 5 min, sempre best-effort — falha de rede/API nunca aparece como erro, só some a linha de conversão. Duas fontes gratuitas sem chave: **Frankfurter** (câmbio do BCE) pras moedas fiduciárias, **CoinGecko** (preço simples) pra USDT/BTC/ETH.
 - Aparece pequena e discreta embaixo do saldo (`conversaoBRLFor`, "≈ R$ …") tanto no tile quanto no card de Saldo do detalhe, e a cotação em si (`cotacaoLabel`, "1 USD ≈ R$ …") some discretamente perto da meta, no detalhe — nunca troca o valor principal, que continua sempre na moeda de verdade da caixinha.
 
+**Dois bugs reais corrigidos no mesmo dia, encontrados pelo usuário em produção** (não em teste — a conversão parecia funcionar em teste local porque o ambiente de teste também tinha esse mesmo problema de rede, então nunca foi pega antes do deploy):
+- `api.frankfurter.app` foi descontinuado e passou a devolver **301** pra `api.frankfurter.dev/v1/...` — o `fetch` falhava (silenciosamente, por design do best-effort) em vez de seguir o redirect entre domínios de forma confiável. Corrigido apontando pro domínio novo direto.
+- **`somaGeral` ("Total guardado em BRL") somava o saldo BRUTO de qualquer caixinha, sem olhar a moeda** — uma caixinha de US$ 903 entrava na soma como se fosse R$ 903, um erro grosseiro de mistura de unidades. `porResponsavel` já filtrava corretamente (só BRL); `somaSaldos` (a função usada por `somaGeral`) não. Corrigido movendo o filtro **pra dentro de `somaSaldos`**, não pra cada chamador — depender de cada call site lembrar de filtrar foi exatamente a causa do bug.
+
+Ambos verificados depois com uma chamada de rede de verdade (não só o modo demo, que sozinho não teria pego o bug do Frankfurter): US$ 903 → "≈ R$ 4.699,30", "1 USD ≈ R$ 5,20", total em BRL corretamente excluindo a caixinha estrangeira.
+
 ### 20.6 Schema
 
 `caixinhas`: `owner_id`, `group_id` (opcional), `banco_nome`, `moeda` (default `'BRL'`), `meta` (opcional), `icone`, `icone_url` (opcional — upload ou URL, mesmo padrão de `categories.icone_url`). `caixinha_movimentacoes`: `caixinha_id`, `tipo` (`'guardado' | 'retirado'`), `valor`, `data`, `observacoes`. RLS espelha exatamente o padrão de `resource_rooms`/`resource_items` (owner ou membro do grupo, `is_group_member`) — inclusive pra permitir trocar o `owner_id` (§20.4).
