@@ -133,7 +133,12 @@ O `docs/BONOTTO-2027-BLUEPRINT.md` (§15) tinha o trabalho visual nas Fases 3–
 
 **Fase 1 (sem mudança)**: rede de testes Playwright.
 
-**Fase 2 (nova posição — era Fase 3/4)**: Design System aplicado — escala tipográfica nova em `tokens.css`; componente `.cg-back` substituindo os 3 botões atuais; `js/utils/modalBehavior.js` consolidando os 5 modais duplicados (ganha Esc-pra-fechar e devolução de foco de graça, pros 5 de uma vez); auditoria e achatamento de card-dentro-de-card; separação visual formal navegação/ação/destrutiva. Tela por tela, não tudo de uma vez (§74 do prompt — nunca 40 arquivos simultâneos) — sugestão de ordem: Recursos e Caixinhas primeiro (é onde o problema de navegação já está confirmado), depois Transações (tela de maior uso), depois o resto.
+**Fase 2 (nova posição — era Fase 3/4) — status**:
+
+- ✅ Escala tipográfica em `tokens.css` (`--font-size-caption` … `--font-size-display`, `--font-weight-*`) — aditiva, componentes migram gradualmente.
+- ✅ Componente `.cg-back` (`css/components.css`) substituindo os 3 botões `btn-outline-secondary` divergentes (Recursos ×2, Caixinhas ×1) — chevron, sem borda/fundo, `aria-label`. Coberto por teste E2E novo (`tests/e2e/back-navigation.spec.js`).
+- ✅ Esc-pra-fechar + devolução de foco pros ~12 modais/drawers do app, de uma vez — **não** via o `modalBehavior.js`/mixin originalmente cogitado (exigiria tocar 4+ arquivos de store pra um ganho pequeno na parte de `open`/`close`, que já é só 2 linhas cada). Em vez disso, centralizado em `js/app.js` (`setupOverlayBehavior`, antes `setupModalScrollLock`) reaproveitando o `@click.self="fechar...()"` que **todo** backdrop já tinha — Esc simula um clique nele. Zero mudança nos stores individuais, ganho pra todos de uma vez. Coberto por `tests/e2e/modal-esc.spec.js`.
+- ⏳ Pendente: auditoria e achatamento de card-dentro-de-card; separação visual formal navegação/ação/destrutiva; migração da tipografia solta pros tokens novos, tela por tela (Recursos/Caixinhas → Transações → resto, ordem original mantida).
 
 **Fase 3 (era Fase 2)**: Money Engine — sem mudança de conteúdo, só de posição no roadmap.
 

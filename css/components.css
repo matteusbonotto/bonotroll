@@ -1,3 +1,27 @@
+/* ---------- Navegação "voltar" (2026-08-20, DESIGN-SYSTEM-2027.md §4) ----------
+   Antes, cada drill-down (Recursos: cômodo→subcategoria→itens; Caixinhas:
+   grade→detalhe) inventava seu próprio botão de voltar isoladamente — 3
+   implementações divergentes, todas <button class="btn btn-outline-secondary">
+   com texto, nunca um chevron. Este é o único componente de "voltar" do
+   projeto agora; toda tela/seção filha de outra usa este, nunca reinventa. */
+.cg-back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--touch-target);
+  padding-inline: var(--space-2);
+  margin-inline-start: calc(var(--space-2) * -1);
+  background: transparent;
+  border: none;
+  color: var(--color-text-muted);
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-body-sm);
+  border-radius: var(--radius-sm);
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+.cg-back i { font-size: 1.1em; }
+.cg-back:hover, .cg-back:focus-visible { color: var(--color-text); background: var(--color-surface-alt); }
+
 /* ---------- Cartões ---------- */
 .cg-card {
   background: var(--color-surface);

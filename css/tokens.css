@@ -35,6 +35,24 @@
 
   --font-size-base: 16px;
 
+  /* Escala tipográfica (2026-08-20, DESIGN-SYSTEM-2027.md §6) — antes disso
+     cada componente escolhia um font-size solto "no olho" (15+ valores
+     distintos e arbitrários encontrados em components.css: 0.6rem, 0.65rem,
+     0.68rem, 0.72rem... sem escala nenhuma por trás). Componentes migram
+     pra estas variáveis gradualmente, tela por tela — nenhum código
+     existente quebra só por essas variáveis existirem. */
+  --font-size-caption: 0.75rem;    /* 12px — labels, metadados, timestamps */
+  --font-size-body-sm: 0.8125rem;  /* 13px — texto secundário, badges */
+  --font-size-body: 0.9375rem;     /* 15px — corpo padrão */
+  --font-size-body-lg: 1.0625rem;  /* 17px — corpo com ênfase */
+  --font-size-title-sm: 1.25rem;   /* 20px — título de seção */
+  --font-size-title: 1.5rem;       /* 24px — título de tela */
+  --font-size-display: clamp(1.75rem, 5vw, 2.25rem); /* valor monetário em destaque */
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 600;
+  --font-weight-bold: 700;
+
   color-scheme: light;
 }
 

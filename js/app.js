@@ -42,23 +42,47 @@ document.addEventListener('alpine:init', () => {
   Alpine.data('categoryChart', categoryChart);
 });
 
-// Trava o scroll do fundo enquanto qualquer modal/drawer está aberto — sem
-// isso dava pra rolar a lista de transações (ou qualquer tela) por trás do
-// modal no mobile, o que é bem desorientador. Um MutationObserver global em
-// vez de cada tela avisar individualmente porque os modais vivem espalhados
-// em vários componentes Alpine independentes (txModal, csvModal,
-// categoryModal, e estado local de shoppingView/resourcesView/groupView).
-(function setupModalScrollLock() {
-  function algumOverlayAberto() {
-    return [...document.querySelectorAll('.cg-modal-backdrop, .cg-drawer-backdrop')].some(
+// Trava o scroll do fundo, fecha com Esc, e devolve o foco — pros ~12
+// modais/drawers do app de uma vez, sem tocar em nenhum deles individualmente.
+// Um MutationObserver global em vez de cada tela avisar individualmente
+// porque os modais vivem espalhados em vários componentes Alpine
+// independentes (txModal, csvModal, categoryModal, e estado local de
+// shoppingView/resourcesView/groupView/caixinhasView) — cada um já tem seu
+// próprio "open"/close(), então em vez de unificar essa camada (mudança
+// grande em ~10 arquivos, risco desnecessário), a gente reaproveita o que
+// TODO modal já tem em comum de graça: um `.cg-modal-backdrop` com
+// `@click.self="fechar...()"` já ligado no HTML (ver DESIGN-SYSTEM-2027.md
+// §9) — Esc simula um clique nesse mesmo backdrop, então cada modal fecha
+// pela sua própria função de sempre, sem precisar saber qual store é dono
+// dele. Os 2 backdrops de câmera/scanner não têm esse @click.self de
+// propósito (fechar sem querer no meio de escanear seria pior) — Esc
+// continua sem efeito neles, por design, não por lacuna.
+(function setupOverlayBehavior() {
+  let focoAntesDoOverlay = null;
+
+  function overlayVisivelAberto() {
+    return [...document.querySelectorAll('.cg-modal-backdrop, .cg-drawer-backdrop')].find(
       (el) => getComputedStyle(el).display !== 'none'
-    );
+    ) || null;
   }
   function atualizar() {
-    document.body.style.overflow = algumOverlayAberto() ? 'hidden' : '';
+    const aberto = overlayVisivelAberto();
+    document.body.style.overflow = aberto ? 'hidden' : '';
+    if (aberto && !focoAntesDoOverlay) {
+      focoAntesDoOverlay = document.activeElement;
+    } else if (!aberto && focoAntesDoOverlay) {
+      if (focoAntesDoOverlay.isConnected) focoAntesDoOverlay.focus();
+      focoAntesDoOverlay = null;
+    }
   }
   new MutationObserver(atualizar).observe(document.body, { attributes: true, attributeFilter: ['style'], subtree: true });
   atualizar();
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    const aberto = overlayVisivelAberto();
+    if (aberto) aberto.click();
+  });
 })();
 
 // Pressionar-e-segurar em qualquer botão marcado com data-repeat (steppers

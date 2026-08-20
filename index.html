@@ -1314,7 +1314,7 @@
           <template x-if="activeRoomId && !activeCategoryId">
             <div>
               <div class="d-flex align-items-center justify-content-between mb-3">
-                <button type="button" class="btn btn-sm btn-outline-secondary" @click="voltarParaGrade()"><i class="bi bi-arrow-left"></i> Cômodos</button>
+                <button type="button" class="cg-back" @click="voltarParaGrade()" aria-label="Voltar para Cômodos"><i class="bi bi-chevron-left" aria-hidden="true"></i> Cômodos</button>
                 <div class="cg-section-title mb-0"><i class="bi" :class="salaAtual?.icone"></i> <span x-text="salaAtual?.nome"></span></div>
                 <button type="button" class="btn btn-sm btn-outline-secondary" @click="abrirEditarRoom(salaAtual, $event)" aria-label="Editar cômodo" style="width: 88px;"><i class="bi bi-pencil"></i> Editar</button>
               </div>
@@ -1348,7 +1348,7 @@
           <template x-if="activeRoomId && activeCategoryId">
             <div>
               <div class="d-flex align-items-center justify-content-between mb-3">
-                <button type="button" class="btn btn-sm btn-outline-secondary" @click="voltarParaSubcategorias()"><i class="bi bi-arrow-left"></i> <span x-text="salaAtual?.nome"></span></button>
+                <button type="button" class="cg-back" @click="voltarParaSubcategorias()" :aria-label="'Voltar para ' + salaAtual?.nome"><i class="bi bi-chevron-left" aria-hidden="true"></i> <span x-text="salaAtual?.nome"></span></button>
                 <div class="cg-section-title mb-0" x-text="nomeCategoriaAtiva"></div>
                 <button type="button" class="cg-btn btn btn-success btn-sm" @click="abrirNovoItem()"><i class="bi bi-plus-lg"></i> Item</button>
               </div>
@@ -1597,7 +1597,7 @@
             <template x-if="activeId && caixinhaAtiva">
               <div>
                 <div class="d-flex align-items-center justify-content-between mb-3">
-                  <button type="button" class="btn btn-sm btn-outline-secondary" @click="voltar()"><i class="bi bi-arrow-left"></i> Caixinhas</button>
+                  <button type="button" class="cg-back" @click="voltar()" aria-label="Voltar para Caixinhas"><i class="bi bi-chevron-left" aria-hidden="true"></i> Caixinhas</button>
                   <div class="cg-section-title mb-0">
                     <img :src="caixinhaAtiva.icone_url" x-show="caixinhaAtiva.icone_url" style="width:24px;height:24px;border-radius:50%;object-fit:cover;" />
                     <i class="bi" :class="caixinhaAtiva.icone" x-show="!caixinhaAtiva.icone_url"></i>
