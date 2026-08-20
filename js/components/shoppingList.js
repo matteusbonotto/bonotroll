@@ -2,7 +2,9 @@ import * as sl from '../services/shoppingList.js';
 import { startBarcodeScanner, stopBarcodeScanner, lookupProductByBarcode } from '../services/barcode.js';
 import { createTransaction } from '../services/transactions.js';
 import { recognizeText, parseReceiptText } from '../services/ocr.js';
-import { todayIso } from '../utils/format.js';
+import { todayIso, semAcento } from '../utils/format.js';
+
+const FILTRO_VAZIO = { categoriaId: '', status: '', prioridade: '', busca: '' };
 
 // preco: um campo só na UI (o valor digitado), convertido pra
 // preco_unitario OU preco_por_kg conforme a unidade só na hora de salvar
@@ -25,6 +27,41 @@ export function shoppingView() {
     graficoAberto: false,
     lendoFotoItem: false,
     ordenarPorPrioridade: false,
+
+    // ---------- Filtros (mesmo padrão de Transações: painel recolhível no
+    // mobile, chips dos filtros ativos, "Cancelar" reseta tudo) ----------
+    filtro: { ...FILTRO_VAZIO },
+    filtrosAbertos: false,
+    limparFiltros() {
+      this.filtro = { ...FILTRO_VAZIO };
+    },
+    get filtrosAtivosCount() {
+      return Object.values(this.filtro).filter((v) => v !== '' && v != null).length;
+    },
+    get filtrosChips() {
+      const chips = [];
+      const f = this.filtro;
+      if (f.categoriaId) chips.push({ key: 'categoriaId', label: this.categoryFor(f.categoriaId)?.nome || 'Categoria' });
+      if (f.status) chips.push({ key: 'status', label: f.status === 'comprado' ? 'Comprado' : 'Pendente' });
+      if (f.prioridade) chips.push({ key: 'prioridade', label: 'Prioridade ' + f.prioridade });
+      if (f.busca) chips.push({ key: 'busca', label: `"${f.busca}"` });
+      return chips;
+    },
+    removerFiltro(key) {
+      this.filtro[key] = '';
+    },
+    get itemsFiltrados() {
+      const f = this.filtro;
+      const busca = f.busca ? semAcento(f.busca.trim().toLowerCase()) : '';
+      return this.items.filter((item) => {
+        if (f.categoriaId && item.categoria_id !== f.categoriaId) return false;
+        if (f.status === 'comprado' && !item.comprado) return false;
+        if (f.status === 'pendente' && item.comprado) return false;
+        if (f.prioridade && Number(item.prioridade || 3) !== Number(f.prioridade)) return false;
+        if (busca && !semAcento((item.nome || '').toLowerCase()).includes(busca)) return false;
+        return true;
+      });
+    },
     // Modal "Adicionar item" começa fechado e abre pelo botão flutuante —
     // fica aberto entre adições (pra colocar vários itens seguidos sem
     // reabrir a cada um), só fecha quando a pessoa manda fechar.
@@ -75,6 +112,24 @@ export function shoppingView() {
     },
     get statusLimiteGasto() {
       return sl.computeListLimitStatus(this.resumo.valorTotal, this.list?.limite_gasto);
+    },
+
+    // Input fica escondido por trás de um botão "editar" — o valor do
+    // limite vira um KPI só de leitura (igual ao statusLimiteKpi ao lado),
+    // e editar abre um modalzinho dedicado em vez de um <input> sempre
+    // visível na tela (pedido explícito: "oculte o input").
+    limiteGastoAberto: false,
+    limiteGastoForm: '',
+    abrirLimiteGasto() {
+      this.limiteGastoForm = this.list?.limite_gasto || '';
+      this.limiteGastoAberto = true;
+    },
+    fecharLimiteGasto() {
+      this.limiteGastoAberto = false;
+    },
+    async salvarLimiteGastoModal() {
+      await this.salvarLimiteGasto(this.limiteGastoForm);
+      this.limiteGastoAberto = false;
     },
 
     // "lista" = folha de caderno (default, ver .cg-notebook em css/components.css).
@@ -137,8 +192,9 @@ export function shoppingView() {
     // "Importantes primeiro" (prioridade 5 -> 1); desligado mostra a ordem
     // de criação normal (a mesma que já vinha do banco).
     get itemsOrdenados() {
-      if (!this.ordenarPorPrioridade) return this.items;
-      return [...this.items].sort((a, b) => (b.prioridade || 3) - (a.prioridade || 3));
+      const base = this.itemsFiltrados;
+      if (!this.ordenarPorPrioridade) return base;
+      return [...base].sort((a, b) => (b.prioridade || 3) - (a.prioridade || 3));
     },
 
     categoryFor(id) {

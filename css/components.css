@@ -107,11 +107,18 @@
   border-color: var(--color-primary);
 }
 
+/* height: 100% (não min-height) de propósito — o .row do Bootstrap já
+   estica as colunas .col-* pra mesma altura (flexbox, align-items:
+   stretch é o default), então isso só precisa preencher a coluna já
+   esticada; sem isso o card ficava do tamanho do próprio conteúdo, e o
+   card "Meta" (com barra de progresso) sempre ficava mais alto que os
+   outros 3 (2026-08-20). */
 .cg-card--stat {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
   min-width: 0;
+  height: 100%;
 }
 
 /* .cg-card.cg-card--compact (composto, não só .cg-card--compact): este

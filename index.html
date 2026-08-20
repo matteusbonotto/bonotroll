@@ -1031,17 +1031,38 @@
               </div>
               <div class="col-12 col-sm-6">
                 <label class="form-label small">Limite de gasto (opcional)</label>
-                <div class="input-group input-group-sm mb-1">
-                  <span class="input-group-text">R$</span>
-                  <input type="number" min="0" step="1" class="form-control" placeholder="Sem limite" :value="list?.limite_gasto || ''" @change="salvarLimiteGasto($event.target.value)" />
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                  <span class="fw-bold fs-5" x-text="list?.limite_gasto ? cgFormat.formatCurrency(list.limite_gasto) : 'Sem limite'"></span>
+                  <button type="button" class="cg-btn-icon btn btn-outline-secondary" @click="abrirLimiteGasto()" title="Editar limite de gasto" aria-label="Editar limite de gasto"><i class="bi bi-pencil"></i></button>
+                  <template x-if="statusLimiteGasto">
+                    <div class="cg-limite-kpi" :class="'cg-limite-kpi--' + statusLimiteGasto.nivel">
+                      <i class="bi" :class="statusLimiteGasto.nivel === 'passou' ? 'bi-exclamation-triangle-fill' : 'bi-circle-fill'"></i>
+                      <span x-text="statusLimiteGasto.percentual + '% do limite'"></span>
+                    </div>
+                  </template>
                 </div>
-                <template x-if="statusLimiteGasto">
-                  <div class="cg-limite-kpi" :class="'cg-limite-kpi--' + statusLimiteGasto.nivel">
-                    <i class="bi" :class="statusLimiteGasto.nivel === 'passou' ? 'bi-exclamation-triangle-fill' : 'bi-circle-fill'"></i>
-                    <span x-text="statusLimiteGasto.percentual + '% do limite'"></span>
-                  </div>
-                </template>
               </div>
+            </div>
+          </div>
+
+          <!-- Editar limite de gasto: input escondido atrás do botão de
+               editar acima, só aparece dentro deste modalzinho. -->
+          <div class="cg-modal-backdrop" x-show="limiteGastoAberto" x-cloak @click.self="fecharLimiteGasto()">
+            <div class="cg-modal cg-modal--sm">
+              <div class="d-flex align-items-center justify-content-between mb-3">
+                <h2 class="h6 fw-bold mb-0">Limite de gasto</h2>
+                <button type="button" class="btn-close" @click="fecharLimiteGasto()" aria-label="Fechar"></button>
+              </div>
+              <form @submit.prevent="salvarLimiteGastoModal()">
+                <div class="input-group input-group-sm mb-3">
+                  <span class="input-group-text">R$</span>
+                  <input type="number" min="0" step="1" class="form-control" placeholder="Sem limite" x-model="limiteGastoForm" />
+                </div>
+                <div class="d-flex gap-2">
+                  <button type="button" class="cg-btn btn btn-outline-secondary flex-fill" @click="fecharLimiteGasto()">Cancelar</button>
+                  <button type="submit" class="cg-btn btn btn-success flex-fill">Salvar</button>
+                </div>
+              </form>
             </div>
           </div>
 
@@ -1135,6 +1156,65 @@
             </div>
           </div>
 
+          <!-- Filtros: mesmo componente/padrão visual de Transações (painel
+               recolhível no mobile, chips dos filtros ativos, "Cancelar"
+               reseta tudo) — pedido explícito de padronizar. -->
+          <template x-if="items.length">
+          <div>
+            <button type="button" class="cg-btn btn btn-outline-secondary btn-sm d-lg-none mb-2 w-100 justify-content-between" @click="filtrosAbertos = !filtrosAbertos">
+              <span><i class="bi bi-funnel"></i> Filtros <span class="badge rounded-pill text-bg-secondary" x-show="filtrosAtivosCount" x-text="filtrosAtivosCount"></span></span>
+              <i class="bi" :class="filtrosAbertos ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+            </button>
+
+            <template x-if="filtrosChips.length">
+              <div class="d-flex flex-wrap gap-2 mb-2 d-lg-none">
+                <template x-for="chip in filtrosChips" :key="chip.key">
+                  <button type="button" class="cg-chip" style="background: var(--color-surface-alt); color: var(--color-text); border: 1px solid var(--color-border);" @click="removerFiltro(chip.key)">
+                    <span x-text="chip.label"></span> <i class="bi bi-x"></i>
+                  </button>
+                </template>
+              </div>
+            </template>
+
+            <div class="cg-card mb-3 cg-filter-panel" :class="{ 'is-open': filtrosAbertos }">
+              <div class="row g-2">
+                <div class="col-6 col-md-3">
+                  <select class="form-select form-select-sm" x-model="filtro.categoriaId">
+                    <option value="">Categoria</option>
+                    <template x-for="c in $store.app.categories" :key="c.id"><option :value="c.id" x-text="c.nome"></option></template>
+                  </select>
+                </div>
+                <div class="col-6 col-md-3">
+                  <select class="form-select form-select-sm" x-model="filtro.status">
+                    <option value="">Status</option>
+                    <option value="pendente">Pendente</option>
+                    <option value="comprado">Comprado</option>
+                  </select>
+                </div>
+                <div class="col-6 col-md-3">
+                  <select class="form-select form-select-sm" x-model="filtro.prioridade">
+                    <option value="">Prioridade</option>
+                    <option value="5">★★★★★</option>
+                    <option value="4">★★★★</option>
+                    <option value="3">★★★</option>
+                    <option value="2">★★</option>
+                    <option value="1">★</option>
+                  </select>
+                </div>
+                <div class="col-6 col-md-3">
+                  <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-transparent border-end-0"><i class="bi bi-search cg-muted"></i></span>
+                    <input type="search" class="form-control border-start-0" placeholder="Buscar…" x-model.debounce.400ms="filtro.busca" />
+                  </div>
+                </div>
+              </div>
+              <div class="d-flex justify-content-end mt-2">
+                <button type="button" class="btn btn-outline-secondary btn-sm" @click="limparFiltros()"><i class="bi bi-x-circle"></i> Cancelar</button>
+              </div>
+            </div>
+          </div>
+          </template>
+
           <template x-if="items.length">
             <div class="d-flex justify-content-between align-items-center mb-2">
               <button type="button" class="btn btn-sm" :class="ordenarPorPrioridade ? 'btn-warning' : 'btn-outline-secondary'" @click="ordenarPorPrioridade = !ordenarPorPrioridade">
@@ -1148,6 +1228,10 @@
             <div class="cg-empty-state"><i class="bi bi-basket"></i><p class="mt-2 mb-0">Sua lista está vazia. Adicione o primeiro item acima.</p></div>
           </template>
 
+          <template x-if="!loading && items.length && !itemsFiltrados.length">
+            <div class="cg-empty-state"><i class="bi bi-funnel"></i><p class="mt-2 mb-0">Nenhum item encontrado com esses filtros.</p></div>
+          </template>
+
           <template x-if="items.length">
             <div class="d-flex justify-content-end mb-2">
               <div class="cg-view-toggle">
@@ -1158,7 +1242,7 @@
             </div>
           </template>
 
-          <div class="cg-notebook" x-show="viewMode === 'lista' && items.length">
+          <div class="cg-notebook" x-show="viewMode === 'lista' && itemsOrdenados.length">
             <div class="d-flex flex-column">
               <template x-for="item in itemsOrdenados" :key="item.id">
                 <div class="cg-item-row" :class="{ 'is-comprado': item.comprado }">
@@ -1190,7 +1274,7 @@
           <!-- Grade / grade compacta: toque em item ainda-não-comprado (em
                modo "Comprando") abre o preço; item já comprado alterna
                marcado/desmarcado; fora do modo compra só remove. -->
-          <div class="cg-grid-view" :class="{ 'cg-grid-view--compact': viewMode === 'compacta' }" x-show="viewMode !== 'lista' && items.length">
+          <div class="cg-grid-view" :class="{ 'cg-grid-view--compact': viewMode === 'compacta' }" x-show="viewMode !== 'lista' && itemsOrdenados.length">
             <template x-for="item in itemsOrdenados" :key="item.id">
               <div class="cg-card cg-grid-view__card" :class="{ 'is-comprado': item.comprado }" @click="emCompra ? (item.comprado ? desmarcarComprado(item) : abrirPreco(item)) : abrirEdicao(item)">
                 <span class="cg-star-mini cg-star-mini--corner" x-show="item.prioridade >= 4" title="Prioridade alta"><i class="bi bi-star-fill"></i></span>
@@ -2315,9 +2399,9 @@
               <label class="form-check-label small" for="recorrente">Recorrente</label>
             </div>
             <div class="d-flex align-items-center gap-1 ms-auto">
-              <input type="number" min="1" class="form-control form-control-sm" placeholder="Parc." style="width: 64px;" x-model="$store.txModal.form.parcela_atual" title="Parcela atual (opcional)" />
+              <input type="number" min="1" class="form-control form-control-sm" placeholder="Parc." style="width: 80px;" x-model="$store.txModal.form.parcela_atual" title="Parcela atual (opcional)" />
               <span class="cg-muted small">/</span>
-              <input type="number" min="1" class="form-control form-control-sm" placeholder="Total" style="width: 64px;" x-model="$store.txModal.form.parcela_total" title="Total de parcelas (opcional)" />
+              <input type="number" min="1" class="form-control form-control-sm" placeholder="Total" style="width: 80px;" x-model="$store.txModal.form.parcela_total" title="Total de parcelas (opcional)" />
             </div>
           </div>
 
@@ -2372,27 +2456,31 @@
 
           <div class="cg-muted small fw-semibold text-uppercase mb-2 pt-2 border-top">Comprovante <span class="cg-muted fw-normal text-lowercase" title="Foto, arquivo, código de barras do boleto ou QR (Pix/nota fiscal) — tenta preencher título, valor, vencimento e categoria sozinho; confira antes de salvar.">(preenche sozinho, confira antes de salvar)</span></div>
           <div class="mb-2">
-            <div class="d-flex align-items-center gap-2 flex-wrap">
-              <label class="cg-btn btn btn-outline-secondary btn-sm" style="cursor:pointer;">
-                <i class="bi bi-camera"></i>
-                <span x-text="$store.txModal.uploadingComprovante ? 'Enviando…' : ($store.txModal.lendoComprovante ? 'Lendo…' : 'Tirar foto')"></span>
+            <!-- Ícone-só + title (não texto no botão): 4 ações cabendo numa
+                 linha só em qualquer largura, do jeito que rótulo "Importar
+                 PDF"/"Enviar arquivo" por extenso nunca conseguia (sempre
+                 quebrava pra 2 linhas, mesmo no modal de 600px). -->
+            <div class="d-flex align-items-center gap-2 flex-nowrap">
+              <label class="cg-btn-icon btn btn-outline-secondary mb-0 flex-shrink-0" style="cursor:pointer;" title="Tirar foto do comprovante" aria-label="Tirar foto do comprovante">
+                <span x-show="!$store.txModal.uploadingComprovante && !$store.txModal.lendoComprovante"><i class="bi bi-camera"></i></span>
+                <span x-show="$store.txModal.uploadingComprovante || $store.txModal.lendoComprovante" class="spinner-border spinner-border-sm"></span>
                 <input type="file" accept="image/*" capture="environment" class="d-none" @change="$store.txModal.onComprovanteChange($event)" :disabled="$store.txModal.uploadingComprovante || $store.txModal.lendoComprovante" />
               </label>
-              <label class="cg-btn btn btn-outline-secondary btn-sm" style="cursor:pointer;">
-                <i class="bi bi-image"></i>
-                <span x-text="$store.txModal.uploadingComprovante ? 'Enviando…' : ($store.txModal.lendoComprovante ? 'Lendo…' : ($store.txModal.form.comprovante_url ? 'Trocar arquivo' : 'Enviar arquivo'))"></span>
+              <label class="cg-btn-icon btn btn-outline-secondary mb-0 flex-shrink-0" style="cursor:pointer;" :title="$store.txModal.form.comprovante_url ? 'Trocar arquivo do comprovante' : 'Enviar arquivo do comprovante'" :aria-label="$store.txModal.form.comprovante_url ? 'Trocar arquivo do comprovante' : 'Enviar arquivo do comprovante'">
+                <span x-show="!$store.txModal.uploadingComprovante && !$store.txModal.lendoComprovante"><i class="bi bi-image"></i></span>
+                <span x-show="$store.txModal.uploadingComprovante || $store.txModal.lendoComprovante" class="spinner-border spinner-border-sm"></span>
                 <input type="file" accept="image/*" class="d-none" @change="$store.txModal.onComprovanteChange($event)" :disabled="$store.txModal.uploadingComprovante || $store.txModal.lendoComprovante" />
               </label>
-              <label class="cg-btn btn btn-outline-secondary btn-sm" style="cursor:pointer;">
-                <i class="bi bi-file-earmark-pdf"></i>
-                <span x-text="$store.txModal.lendoComprovante ? 'Lendo…' : 'Importar PDF'"></span>
+              <label class="cg-btn-icon btn btn-outline-secondary mb-0 flex-shrink-0" style="cursor:pointer;" title="Importar comprovante em PDF" aria-label="Importar comprovante em PDF">
+                <span x-show="!$store.txModal.lendoComprovante"><i class="bi bi-file-earmark-pdf"></i></span>
+                <span x-show="$store.txModal.lendoComprovante" class="spinner-border spinner-border-sm"></span>
                 <input type="file" accept="application/pdf" class="d-none" @change="$store.txModal.onComprovantePdfChange($event)" :disabled="$store.txModal.lendoComprovante" />
               </label>
-              <button type="button" class="cg-btn btn btn-outline-secondary btn-sm" @click="$store.txModal.abrirScannerComprovante()" title="Ler código de barras do boleto ou QR do Pix/nota fiscal">
-                <i class="bi bi-upc-scan"></i> Escanear
+              <button type="button" class="cg-btn-icon btn btn-outline-secondary flex-shrink-0" @click="$store.txModal.abrirScannerComprovante()" title="Ler código de barras do boleto ou QR do Pix/nota fiscal" aria-label="Escanear código de barras ou QR">
+                <i class="bi bi-upc-scan"></i>
               </button>
-              <a :href="$store.txModal.comprovantePreviewUrl" target="_blank" rel="noopener" class="small" x-show="$store.txModal.comprovantePreviewUrl">Ver anexo</a>
-              <button type="button" class="btn btn-sm btn-outline-danger" @click="$store.txModal.removerComprovante()" x-show="$store.txModal.form.comprovante_url" aria-label="Remover comprovante">
+              <a :href="$store.txModal.comprovantePreviewUrl" target="_blank" rel="noopener" class="small text-truncate" x-show="$store.txModal.comprovantePreviewUrl">Ver anexo</a>
+              <button type="button" class="btn btn-sm btn-outline-danger flex-shrink-0" @click="$store.txModal.removerComprovante()" x-show="$store.txModal.form.comprovante_url" aria-label="Remover comprovante">
                 <i class="bi bi-trash"></i>
               </button>
             </div>
