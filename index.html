@@ -23,12 +23,19 @@
 
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
-  <!-- Única fonte externa do projeto (o resto usa fonte do sistema, ver
-       css/tokens.css) — exceção deliberada só pra dar o efeito de anotação à
-       caneta pedido pra tela de Lista de compras (ver .cg-notebook). -->
+  <!-- Plus Jakarta Sans (2026-08-20, DESIGN-SYSTEM-2027.md) — a identidade
+       visual do produto inteiro. Antes disso o app rodava na fonte padrão do
+       sistema operacional (Segoe UI/San Francisco/Roboto conforme o
+       dispositivo) — a causa raiz mais direta de "não parece um produto
+       desenhado", já que é o primeiro elemento que o olho registra em
+       qualquer tela, antes até de cor ou layout. Geométrica e confiante
+       (referência: como fintechs modernas tratam tipografia — Nubank, Wise,
+       Revolut —, sem copiar nenhuma marca), com números tabulares nítidos
+       pro dado mais importante do app (valor monetário). Caveat continua a
+       única outra exceção (efeito de caneta na Lista de Compras). -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&family=Caveat:wght@500;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="./css/tokens.css" />
   <link rel="stylesheet" href="./css/components.css" />
   <link rel="stylesheet" href="./css/app.css" />
@@ -1906,7 +1913,7 @@
                   <div class="cg-muted small fw-semibold text-uppercase mb-2">Entre vocês</div>
                   <div class="cg-card p-0">
                     <template x-for="(s, i) in saldosEntreMembros" :key="i">
-                      <div class="cg-list-row px-3">
+                      <div class="cg-list-flat px-3">
                         <div class="cg-icon-badge"><i class="bi bi-arrow-left-right"></i></div>
                         <div class="flex-fill">
                           <span x-text="nomeMembro(s.devedorId)"></span> deve
@@ -1963,11 +1970,11 @@
 
             <div class="col-12 col-lg-7">
               <div class="cg-muted small fw-semibold text-uppercase mb-2">Preferências</div>
-              <!-- Um único .cg-card com linhas .cg-list-row dentro (2026-08-20,
+              <!-- Um único .cg-card com linhas .cg-list-flat dentro (2026-08-20,
                    DESIGN-SYSTEM-2027.md §7) — antes eram 6 .cg-card empilhados,
                    cada um com a própria borda+sombra ("card dentro de card"). -->
               <div class="cg-card p-0">
-                <div class="cg-list-row cg-list-row--hoverable px-3" role="button" @click="$store.categoryModal.openManage()">
+                <div class="cg-list-flat cg-list-flat--hoverable px-3" role="button" @click="$store.categoryModal.openManage()">
                   <div class="cg-icon-badge"><i class="bi bi-tags"></i></div>
                   <div class="flex-fill">
                     <h2 class="h6 fw-bold mb-1">Categorias</h2>
@@ -1976,7 +1983,7 @@
                   <i class="bi bi-chevron-right cg-muted"></i>
                 </div>
 
-                <div class="cg-list-row cg-list-row--hoverable px-3" role="button" @click="$store.budgetModal.openManage()">
+                <div class="cg-list-flat cg-list-flat--hoverable px-3" role="button" @click="$store.budgetModal.openManage()">
                   <div class="cg-icon-badge"><i class="bi bi-piggy-bank"></i></div>
                   <div class="flex-fill">
                     <h2 class="h6 fw-bold mb-1">Orçamentos</h2>
@@ -1985,7 +1992,7 @@
                   <i class="bi bi-chevron-right cg-muted"></i>
                 </div>
 
-                <div class="cg-list-row cg-list-row--hoverable px-3" x-show="$store.app.installPrompt" x-cloak role="button" @click="$store.app.promptInstall()">
+                <div class="cg-list-flat cg-list-flat--hoverable px-3" x-show="$store.app.installPrompt" x-cloak role="button" @click="$store.app.promptInstall()">
                   <div class="cg-icon-badge"><i class="bi bi-download"></i></div>
                   <div class="flex-fill">
                     <h2 class="h6 fw-bold mb-1">Instalar app</h2>
@@ -1994,7 +2001,7 @@
                   <i class="bi bi-chevron-right cg-muted"></i>
                 </div>
 
-                <div class="cg-list-row px-3">
+                <div class="cg-list-flat px-3">
                   <div class="cg-icon-badge"><i class="bi bi-bell"></i></div>
                   <div class="flex-fill">
                     <h2 class="h6 fw-bold mb-1">Notificações push</h2>
@@ -2006,7 +2013,7 @@
                   </div>
                 </div>
 
-                <div class="cg-list-row cg-list-row--hoverable px-3" role="button" @click="exportarDados()">
+                <div class="cg-list-flat cg-list-flat--hoverable px-3" role="button" @click="exportarDados()">
                   <div class="cg-icon-badge"><i class="bi bi-download"></i></div>
                   <div class="flex-fill">
                     <h2 class="h6 fw-bold mb-1">Exportar meus dados</h2>
@@ -2016,7 +2023,7 @@
                   <i class="bi bi-chevron-right cg-muted" x-show="!exportando"></i>
                 </div>
 
-                <div class="cg-list-row cg-list-row--hoverable px-3" role="button" @click="confirm('Limpar todo o cache e recarregar o app? Útil se algo parecer desatualizado ou travado.') && $store.app.limparCache()">
+                <div class="cg-list-flat cg-list-flat--hoverable px-3" role="button" @click="confirm('Limpar todo o cache e recarregar o app? Útil se algo parecer desatualizado ou travado.') && $store.app.limparCache()">
                   <div class="cg-icon-badge"><i class="bi bi-trash3"></i></div>
                   <div class="flex-fill">
                     <h2 class="h6 fw-bold mb-1">Limpar cache</h2>
@@ -2026,7 +2033,7 @@
                 </div>
 
                 <template x-if="$store.app.isDemoMode">
-                  <div class="cg-list-row px-3" style="align-items: flex-start;">
+                  <div class="cg-list-flat px-3" style="align-items: flex-start;">
                     <div class="cg-icon-badge"><i class="bi bi-stars"></i></div>
                     <div class="flex-fill">
                       <h2 class="h6 fw-bold mb-1">Modo demonstração</h2>

@@ -17,9 +17,13 @@
   --color-info: #0EA5E9;
   --color-secondary: #64748B;
 
-  --radius-sm: 10px;
-  --radius-md: 16px;
-  --radius-lg: 22px;
+  /* Raio maior (2026-08-20) — cantos mais arredondados leem como "app",
+     cantos quase retos leem como "painel administrativo". Cards saltaram de
+     22px pra 28px, pill continua pill (botão de ação principal também vira
+     pill agora — ver .cg-btn--primary em components.css). */
+  --radius-sm: 12px;
+  --radius-md: 18px;
+  --radius-lg: 28px;
   --radius-pill: 999px;
 
   --space-1: 4px;
@@ -30,9 +34,14 @@
   --space-6: 32px;
 
   --touch-target: 48px;
-  --shadow-sm: 0 1px 3px rgba(20, 30, 25, 0.06), 0 1px 2px rgba(20, 30, 25, 0.08);
-  --shadow-md: 0 8px 24px rgba(20, 30, 25, 0.10);
+  /* Sombra mais presente, sem borda — elevação de verdade em vez de
+     contorno. Ver .cg-card em components.css: borda removida, a sombra
+     sozinha marca onde o card termina. */
+  --shadow-sm: 0 2px 8px rgba(20, 30, 25, 0.07);
+  --shadow-md: 0 12px 32px rgba(20, 30, 25, 0.12);
+  --shadow-lg: 0 20px 48px rgba(20, 30, 25, 0.16);
 
+  --font-family-base: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-size-base: 16px;
 
   /* Escala tipográfica (2026-08-20, DESIGN-SYSTEM-2027.md §6) — antes disso
@@ -73,8 +82,9 @@
     --color-text-muted: #A9B2AD;
     --color-border: #2E3538;
     --color-primary-soft: #17332A;
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.35);
-    --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 12px 32px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 20px 48px rgba(0, 0, 0, 0.5);
     color-scheme: dark;
   }
 }
@@ -87,8 +97,9 @@
   --color-text-muted: #A9B2AD;
   --color-border: #2E3538;
   --color-primary-soft: #17332A;
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.35);
-  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 12px 32px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 20px 48px rgba(0, 0, 0, 0.5);
   color-scheme: dark;
 }
 
@@ -100,8 +111,9 @@
   --color-text-muted: #5B615D;
   --color-border: #E4E7E2;
   --color-primary-soft: #E4F2ED;
-  --shadow-sm: 0 1px 3px rgba(20, 30, 25, 0.06), 0 1px 2px rgba(20, 30, 25, 0.08);
-  --shadow-md: 0 8px 24px rgba(20, 30, 25, 0.10);
+  --shadow-sm: 0 2px 8px rgba(20, 30, 25, 0.07);
+  --shadow-md: 0 12px 32px rgba(20, 30, 25, 0.12);
+  --shadow-lg: 0 20px 48px rgba(20, 30, 25, 0.16);
   color-scheme: light;
 }
 
@@ -121,6 +133,14 @@
   --bs-body-color: var(--color-text);
   --bs-border-color: var(--color-border);
   --bs-body-font-size: var(--font-size-base);
+  --bs-body-font-family: var(--font-family-base);
+  --bs-btn-font-family: var(--font-family-base);
+  /* Inputs mais "app", menos "formulário de admin": raio maior, mesma
+     família de fonte, foco na cor da marca em vez do azul padrão do
+     Bootstrap. */
+  --bs-border-radius: var(--radius-md);
+  --bs-border-radius-sm: var(--radius-sm);
+  --bs-border-radius-lg: var(--radius-lg);
   /* --bs-emphasis-color raiz do Bootstrap é sempre #000 (só vira #fff sob
      [data-bs-theme=dark] por padrão) — como a gente já pilota esse atributo
      na mão, isso aqui só garante que fique em sincronia com --color-text

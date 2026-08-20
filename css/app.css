@@ -1,7 +1,17 @@
 html, body {
   background: var(--color-bg);
   color: var(--color-text);
+  font-family: var(--font-family-base);
   min-height: 100vh;
+}
+
+/* Qualquer número (valor monetário, quantidade, percentual) alinha em
+   coluna, nunca "dança" de largura dígito a dígito — letter-spacing levemente
+   negativo no texto grande porque Plus Jakarta Sans, como toda geométrica,
+   fica um pouco solta em tamanho display sem isso. */
+.cg-hero-balance__value, .cg-card--stat .h5, h1, h2, h3 {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
 }
 
 /* Acessibilidade (2026-08-20, DESIGN-SYSTEM-2027.md §12/Fase 5) — respeita
@@ -96,21 +106,21 @@ a { color: var(--color-primary); }
   background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
   color: #fff;
   border-radius: var(--radius-lg);
-  padding: var(--space-5);
-  box-shadow: var(--shadow-md);
+  padding: var(--space-6) var(--space-5);
+  box-shadow: var(--shadow-lg);
 }
 .cg-hero-balance__label {
-  font-size: 0.8rem;
-  font-weight: 600;
+  font-size: var(--font-size-body-sm);
+  font-weight: var(--font-weight-bold);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   opacity: 0.85;
 }
 .cg-hero-balance__value {
-  font-size: clamp(1.5rem, 5vw, 2.6rem);
+  font-size: var(--font-size-display);
   font-weight: 800;
-  line-height: 1.1;
-  margin: 2px 0 var(--space-4);
+  line-height: 1.05;
+  margin: var(--space-1) 0 var(--space-4);
   /* Rede de segurança pra valores muito grandes (ex.: R$ 123.456.789,00):
      clamp() sozinho tem um piso (1.5rem) que ainda pode não caber em telas
      bem estreitas — overflow-wrap deixa quebrar em vez de estourar a largura

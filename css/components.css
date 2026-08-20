@@ -25,11 +25,15 @@
    Pra itens homogêneos empilhados (ex.: Perfil → Preferências), uma pilha de
    .cg-card individuais — cada um com a própria borda+sombra — lê como
    "excesso de card" (a queixa real: "card dentro de card dentro de card").
-   .cg-list-row é a alternativa: vive DENTRO de um único .cg-card, sem borda/
-   sombra própria, separada da vizinha só por um divisor fino. Continua tendo
-   :hover/:focus e pode ser role="button" igual antes — só perde a "flutuação"
-   visual individual. */
-.cg-list-row {
+   .cg-list-flat é a alternativa: vive DENTRO de um único .cg-card, sem
+   borda/sombra própria, separada da vizinha só por um divisor fino. Continua
+   tendo :hover/:focus e pode ser role="button" igual antes — só perde a
+   "flutuação" visual individual.
+   NUNCA renomear pra ".cg-list-row" — esse nome já existe no projeto (ver
+   abaixo) pra uma linha DIFERENTE (com borda própria, dentro de modal,
+   corrigindo truncamento) — os dois colidiram silenciosamente numa versão
+   anterior desta mudança até eu perceber o bug. */
+.cg-list-flat {
   display: flex;
   align-items: center;
   gap: var(--space-3);
@@ -38,27 +42,32 @@
   min-height: var(--touch-target);
   transition: background-color 0.15s ease;
 }
-.cg-list-row:first-child { border-top: none; }
-.cg-list-row--hoverable { cursor: pointer; }
-.cg-list-row--hoverable:hover, .cg-list-row--hoverable:focus-visible { background: var(--color-surface-alt); }
+.cg-list-flat:first-child { border-top: none; }
+.cg-list-flat--hoverable { cursor: pointer; }
+.cg-list-flat--hoverable:hover, .cg-list-flat--hoverable:focus-visible { background: var(--color-surface-alt); }
 .cg-back:hover, .cg-back:focus-visible { color: var(--color-text); background: var(--color-surface-alt); }
 
 /* ---------- Cartões ---------- */
+/* 2026-08-20 (DESIGN-SYSTEM-2027.md) — sombra marca a elevação, não borda.
+   Card com borda+sombra ao mesmo tempo é o padrão "painel administrativo"
+   que o produto está deixando pra trás; um card de app confia só na
+   elevação (sombra) pra se destacar da superfície atrás dele. */
 .cg-card {
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
   padding: var(--space-4);
-  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
 }
 
-/* Elevação sutil em cartões que representam uma ação (criar grupo, entrar
-   em grupo, linha de categoria no gerenciador) — cartões só informativos
-   (ex.: os de saldo/entradas) não usam essa classe, então ficam parados. */
+/* Elevação mais forte em cartões que representam uma ação (criar grupo,
+   entrar em grupo, linha de categoria no gerenciador) — cartões só
+   informativos (ex.: os de saldo/entradas) não usam essa classe, então
+   ficam parados. Levanta 1px de verdade (transform), não só troca sombra —
+   reforça fisicamente "isso é clicável". */
 .cg-card--hoverable:hover {
-  box-shadow: var(--shadow-md);
-  border-color: var(--color-primary);
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-1px);
 }
 
 .cg-icon-badge {
@@ -77,6 +86,10 @@
   color: var(--color-accent);
 }
 
+/* Linha com borda própria (histórico dentro de modal) — diferente de
+   .cg-list-flat (linha SEM borda, dentro de um .cg-card único). Nomes
+   parecidos de propósito (mesma família "linha reutilizável"), mas são
+   duas classes distintas — nunca unificar sem checar os dois usos. */
 .cg-list-row {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
@@ -347,16 +360,27 @@
   flex-shrink: 0;
 }
 
-/* ---------- Botões com alvo de toque grande ---------- */
+/* ---------- Botões ---------- */
+/* 2026-08-20 (DESIGN-SYSTEM-2027.md) — pill em TODO botão do Bootstrap, não
+   só .cg-btn, incluindo os que usam .btn puro sem essa classe (ex.: os
+   pequenos .btn-sm espalhados pelo app). Forma consistente entre todos,
+   diferenciados por preenchimento/contorno/cor — não por raio — é o
+   vocabulário visual de botão que fintechs modernas usam (Nubank, Revolut,
+   Wise); cantos quase retos são o que lê como "formulário de admin". */
+.btn, .btn-sm, .btn-lg {
+  --bs-btn-border-radius: var(--radius-pill);
+  font-weight: var(--font-weight-medium);
+}
+
 .cg-btn {
   min-height: var(--touch-target);
-  border-radius: var(--radius-md);
-  font-weight: 600;
+  border-radius: var(--radius-pill);
+  font-weight: var(--font-weight-bold);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding-inline: var(--space-4);
+  padding-inline: var(--space-5);
 }
 
 .cg-btn-icon {
@@ -419,15 +443,18 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 14px;
-  border-radius: var(--radius-md);
+  padding: 11px 16px;
+  border-radius: var(--radius-pill);
   color: var(--color-text-muted);
-  font-weight: 600;
+  font-weight: var(--font-weight-medium);
   text-decoration: none;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
+.cg-sidebar__item:hover { background: var(--color-surface-alt); color: var(--color-text); }
 .cg-sidebar__item.is-active {
-  background: var(--color-primary-soft);
-  color: var(--color-primary-dark);
+  background: var(--color-primary);
+  color: #fff;
+  font-weight: var(--font-weight-bold);
 }
 
 /* ---------- Navegação lateral (desktop) ---------- */
