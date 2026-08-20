@@ -52,7 +52,7 @@ export function dashboardView() {
     // era não ter nenhum corte de período). "Contas a vencer"/Recursos
     // continuam sempre olhando o estado atual, sem período — não fazem
     // sentido escopados (uma conta vencida é vencida agora, não "no mês x").
-    periodoModo: 'mes_atual', // mes_atual|mes_anterior|proximo_mes|ano_atual|ano_anterior|personalizado|tudo
+    periodoModo: 'mes_atual', // mes_atual|mes_anterior|proximo_mes|ano_atual|ano_anterior|trimestre_atual|semestre_atual|personalizado|tudo
     periodoInicio: '',
     periodoFim: '',
     // 3 gráficos independentes, cada um com sua própria quebra — trocável a
@@ -197,6 +197,16 @@ export function dashboardView() {
       if (this.periodoModo === 'personalizado') return { inicio: this.periodoInicio || null, fim: this.periodoFim || null };
       if (this.periodoModo === 'ano_atual') return { inicio: isoYMD(ano, 1, 1), fim: isoYMD(ano, 12, 31) };
       if (this.periodoModo === 'ano_anterior') return { inicio: isoYMD(ano - 1, 1, 1), fim: isoYMD(ano - 1, 12, 31) };
+      if (this.periodoModo === 'trimestre_atual') {
+        const mesInicioTrimestre = Math.floor((mes - 1) / 3) * 3 + 1; // 1, 4, 7 ou 10
+        const mesFimTrimestre = mesInicioTrimestre + 2;
+        return { inicio: isoYMD(ano, mesInicioTrimestre, 1), fim: isoYMD(ano, mesFimTrimestre, ultimoDiaDoMes(ano, mesFimTrimestre)) };
+      }
+      if (this.periodoModo === 'semestre_atual') {
+        const mesInicioSemestre = mes <= 6 ? 1 : 7;
+        const mesFimSemestre = mesInicioSemestre + 5;
+        return { inicio: isoYMD(ano, mesInicioSemestre, 1), fim: isoYMD(ano, mesFimSemestre, ultimoDiaDoMes(ano, mesFimSemestre)) };
+      }
       let alvoAno = ano;
       let alvoMes = mes;
       if (this.periodoModo === 'mes_anterior') {
@@ -222,6 +232,8 @@ export function dashboardView() {
         proximo_mes: 'Próximo mês',
         ano_atual: 'Este ano',
         ano_anterior: 'Ano anterior',
+        trimestre_atual: 'Trimestre atual',
+        semestre_atual: 'Semestre atual',
         tudo: 'Todo o período',
         personalizado: 'Período personalizado',
       };
