@@ -3,6 +3,7 @@ import { mockDb } from '../data/mockDb.js';
 import { getSupabase } from '../data/supabaseClient.js';
 import { comFallbackDeColuna } from '../utils/dbFallback.js';
 import { semAcento } from '../utils/format.js';
+import { somar } from '../utils/money.js';
 
 // Calcula o subtotal de um item: por unidade (quantidade × preço unitário)
 // ou por peso (quantidade em kg/g × preço por kg/g).
@@ -15,7 +16,7 @@ export function computeItemSubtotal(item) {
 export function computeListSummary(items) {
   const totalItens = items.length;
   const itensComprados = items.filter((i) => i.comprado).length;
-  const valorTotal = items.reduce((sum, i) => sum + (Number(i.subtotal) || 0), 0);
+  const valorTotal = somar(...items.map((i) => i.subtotal));
   return { totalItens, itensComprados, valorTotal };
 }
 

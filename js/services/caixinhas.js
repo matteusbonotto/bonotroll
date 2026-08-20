@@ -1,6 +1,7 @@
 import { isDemoMode } from '../data/config.js';
 import { mockDb } from '../data/mockDb.js';
 import { getSupabase } from '../data/supabaseClient.js';
+import { somar, subtrair } from '../utils/money.js';
 
 // Caixinhas: dinheiro guardado em bancos/corretoras, uma linha por banco
 // (nome, moeda, meta) + um histórico de movimentações (guardado/retirado).
@@ -139,13 +140,11 @@ export async function deleteMovimentacao(id) {
 
 // guardado/retirado/saldo de UMA caixinha a partir do histórico dela.
 export function computeTotais(movimentacoes) {
-  let guardado = 0;
-  let retirado = 0;
-  for (const m of movimentacoes) {
-    if (m.tipo === 'guardado') guardado += Number(m.valor) || 0;
-    else retirado += Number(m.valor) || 0;
-  }
-  return { guardado, retirado, saldo: guardado - retirado };
+  const guardados = movimentacoes.filter((m) => m.tipo === 'guardado').map((m) => m.valor);
+  const retirados = movimentacoes.filter((m) => m.tipo !== 'guardado').map((m) => m.valor);
+  const guardado = somar(...guardados);
+  const retirado = somar(...retirados);
+  return { guardado, retirado, saldo: subtrair(guardado, retirado) };
 }
 
 // 0–100 (ou null se a caixinha não tem meta definida — "progresso" não faz
@@ -170,10 +169,12 @@ export function computeProgresso(saldo, meta) {
 // `taxasPorMoeda` é opcional (default {}) pra não quebrar quem ainda chama
 // sem passar — nesse caso o comportamento cai pra "só soma BRL".
 export function somaSaldos(caixinhas, movByCaixinha, taxasPorMoeda = {}) {
-  return caixinhas.reduce((acc, c) => {
+  const parcelas = [];
+  for (const c of caixinhas) {
     const saldo = computeTotais(movByCaixinha[c.id] || []).saldo;
-    if (!c.moeda || c.moeda === 'BRL') return acc + saldo;
+    if (!c.moeda || c.moeda === 'BRL') { parcelas.push(saldo); continue; }
     const taxa = taxasPorMoeda[c.moeda];
-    return taxa ? acc + saldo * taxa : acc;
-  }, 0);
+    if (taxa) parcelas.push(saldo * taxa); // conversão de moeda não é soma monetária pura — multiplicação por taxa fica em float mesmo, arredondada só na formatação
+  }
+  return somar(...parcelas);
 }

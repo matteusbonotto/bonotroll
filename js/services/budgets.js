@@ -2,6 +2,7 @@ import { isDemoMode } from '../data/config.js';
 import { mockDb } from '../data/mockDb.js';
 import { getSupabase } from '../data/supabaseClient.js';
 import { todayIso } from '../utils/format.js';
+import { somar, percentual as calcPercentual } from '../utils/money.js';
 
 // Orçamento mensal por categoria — sempre pessoal (owner_id), mesmo com
 // grupo: cada pessoa define o próprio limite, não um limite compartilhado.
@@ -49,11 +50,11 @@ export function computeBudgetProgress(transactions, budgets, categories) {
   return budgets
     .map((b) => {
       const categoria = categories.find((c) => c.id === b.categoria_id);
-      const gasto = transactions
+      const gasto = somar(...transactions
         .filter((t) => t.tipo === 'saida' && t.categoria_id === b.categoria_id && (t.data_cadastro || '').slice(0, 7) === mesAtual)
-        .reduce((soma, t) => soma + (Number(t.valor) || 0), 0);
+        .map((t) => t.valor));
       const limite = Number(b.valor_limite) || 0;
-      const percentual = limite > 0 ? Math.round((gasto / limite) * 100) : 0;
+      const percentual = limite > 0 ? Math.round(calcPercentual(gasto, limite)) : 0;
       return { id: b.id, categoriaId: b.categoria_id, categoria, limite, gasto, percentual };
     })
     .sort((a, b) => b.percentual - a.percentual);

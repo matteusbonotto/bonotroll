@@ -5,6 +5,7 @@ import { computeStatus } from '../utils/status.js';
 import { todayIso, semAcento } from '../utils/format.js';
 import * as format from '../utils/format.js';
 import { comFallbackDeColuna } from '../utils/dbFallback.js';
+import { somar, dividirIgualmente, percentual as calcPercentual } from '../utils/money.js';
 
 export function withStatus(rows) {
   return rows.map((r) => ({ ...r, _status: computeStatus(r) }));
@@ -148,21 +149,23 @@ export function markAsUnpaid(id) {
 
 // Cálculo puro (sem I/O) — reaproveitado pela Home (pessoal/grupo) e pelos gráficos.
 export function computeSummary(transactions) {
-  let entradas = 0;
-  let saidas = 0;
+  const valoresEntrada = [];
+  const valoresSaida = [];
   let maiorGasto = null;
 
   for (const t of transactions) {
     const valor = Number(t.valor) || 0;
     if (t.tipo === 'entrada') {
-      entradas += valor;
+      valoresEntrada.push(valor);
     } else {
-      saidas += valor;
+      valoresSaida.push(valor);
       if (!maiorGasto || valor > Number(maiorGasto.valor)) maiorGasto = t;
     }
   }
 
-  return { entradas, saidas, saldo: entradas - saidas, maiorGasto };
+  const entradas = somar(...valoresEntrada);
+  const saidas = somar(...valoresSaida);
+  return { entradas, saidas, saldo: somar(entradas, -saidas), maiorGasto };
 }
 
 // ---------- Múltiplos pagadores (divisão de despesa) ----------
@@ -244,11 +247,10 @@ export function splitEqually(valor, profileIds) {
   const total = Number(valor) || 0;
   const n = profileIds.length;
   if (!n) return [];
-  const base = Math.floor((total / n) * 100) / 100;
-  const resto = Math.round((total - base * n) * 100) / 100;
+  const partes = dividirIgualmente(total, n); // sobra de centavo já vai pro primeiro, mesmo critério de sempre
   return profileIds.map((profile_id, i) => {
-    const valorMembro = i === 0 ? Math.round((base + resto) * 100) / 100 : base;
-    const percentual = total > 0 ? Math.round((valorMembro / total) * 10000) / 100 : Math.round((100 / n) * 100) / 100;
+    const valorMembro = partes[i];
+    const percentual = total > 0 ? calcPercentual(valorMembro, total) : Math.round((100 / n) * 100) / 100;
     return { profile_id, valor: valorMembro, percentual };
   });
 }
@@ -259,11 +261,13 @@ export function groupByCategory(transactions, categorias) {
     if (t.tipo !== 'saida') continue;
     const cat = categorias.find((c) => c.id === t.categoria_id);
     const key = cat?.id || 'sem-categoria';
-    const atual = porCategoria.get(key) || { nome: cat?.nome || 'Sem categoria', cor: cat?.cor || '#94A3B8', total: 0 };
-    atual.total += Number(t.valor) || 0;
+    const atual = porCategoria.get(key) || { nome: cat?.nome || 'Sem categoria', cor: cat?.cor || '#94A3B8', valores: [] };
+    atual.valores.push(Number(t.valor) || 0);
     porCategoria.set(key, atual);
   }
-  return [...porCategoria.values()].sort((a, b) => b.total - a.total);
+  return [...porCategoria.values()]
+    .map(({ valores, ...resto }) => ({ ...resto, total: somar(...valores) }))
+    .sort((a, b) => b.total - a.total);
 }
 
 const CORES_AUXILIARES = ['#0EA5E9', '#22C55E', '#A855F7', '#F97316', '#EF4444', '#EAB308', '#6366F1', '#14B8A6', '#EC4899', '#64748B'];
@@ -278,11 +282,12 @@ export function groupByCompany(transactions) {
   for (const t of transactions) {
     if (t.tipo !== 'saida') continue;
     const nome = (t.empresa_servico || '').trim() || 'Sem empresa/serviço';
-    const atual = porEmpresa.get(nome) || { nome, total: 0 };
-    atual.total += Number(t.valor) || 0;
+    const atual = porEmpresa.get(nome) || { nome, valores: [] };
+    atual.valores.push(Number(t.valor) || 0);
     porEmpresa.set(nome, atual);
   }
   return [...porEmpresa.values()]
+    .map(({ valores, ...resto }) => ({ ...resto, total: somar(...valores) }))
     .sort((a, b) => b.total - a.total)
     .map((item, i) => ({ ...item, cor: CORES_AUXILIARES[i % CORES_AUXILIARES.length] }));
 }
@@ -294,7 +299,7 @@ export function groupByCompany(transactions) {
 // pra já contar a fatia certa de despesas divididas entre 2+ pagadores.
 export function groupByMember(transactions, members, payersByTx) {
   const porMembro = new Map();
-  for (const m of members) porMembro.set(m.id, { nome: m.nome, cor: m.cor || '#64748B', total: 0 });
+  for (const m of members) porMembro.set(m.id, { nome: m.nome, cor: m.cor || '#64748B', valores: [] });
 
   for (const t of transactions) {
     if (t.tipo !== 'saida') continue;
@@ -302,12 +307,14 @@ export function groupByMember(transactions, members, payersByTx) {
     for (const m of members) {
       const fatia = shareForMember(t, payers, m.id);
       if (fatia <= 0) continue;
-      const atual = porMembro.get(m.id);
-      atual.total += fatia;
+      porMembro.get(m.id).valores.push(fatia);
     }
   }
 
-  return [...porMembro.values()].filter((m) => m.total > 0).sort((a, b) => b.total - a.total);
+  return [...porMembro.values()]
+    .map(({ valores, ...resto }) => ({ ...resto, total: somar(...valores) }))
+    .filter((m) => m.total > 0)
+    .sort((a, b) => b.total - a.total);
 }
 
 // Entrada x Saída do período — a quebra mais simples, útil como "visão geral"
@@ -345,13 +352,14 @@ export function groupByPeriod(transactions, granularidade = 'mes') {
     if (t.tipo !== 'saida') continue;
     const chave = chaveDe(t.data_cadastro);
     if (!chave) continue;
-    const atual = baldes.get(chave) || 0;
-    baldes.set(chave, atual + (Number(t.valor) || 0));
+    const atual = baldes.get(chave) || [];
+    atual.push(Number(t.valor) || 0);
+    baldes.set(chave, atual);
   }
 
   return [...baldes.entries()]
     .sort(([a], [b]) => a.localeCompare(b))
-    .map(([chave, total]) => ({ nome: rotuloDe(chave), total, cor: '#1F7A5C' }));
+    .map(([chave, valores]) => ({ nome: rotuloDe(chave), total: somar(...valores), cor: '#1F7A5C' }));
 }
 
 const MESES_ABREV = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
