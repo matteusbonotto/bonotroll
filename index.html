@@ -1795,7 +1795,7 @@
         </section>
 
         <!-- ===== GRUPO ===== -->
-        <section x-show="$store.app.view === 'grupo'" x-data="groupView()">
+        <section x-show="$store.app.view === 'grupo'" x-data="groupView()" x-init="init()">
           <div class="cg-section-title"><i class="bi bi-people"></i> Grupo</div>
 
           <template x-if="!$store.app.group">
@@ -1855,6 +1855,28 @@
                   </div>
                 </template>
               </div>
+
+              <!-- "Entre vocês" (docs/BONOTTO-2027-BLUEPRINT.md §8, fluxo de
+                   casal) — quem deve quanto pra quem, sem precisar somar de
+                   cabeça. Só aparece havendo alguma dívida líquida. -->
+              <template x-if="saldosEntreMembros.length">
+                <div class="mb-3">
+                  <div class="cg-muted small fw-semibold text-uppercase mb-2">Entre vocês</div>
+                  <div class="cg-card p-0">
+                    <template x-for="(s, i) in saldosEntreMembros" :key="i">
+                      <div class="cg-list-row px-3">
+                        <div class="cg-icon-badge"><i class="bi bi-arrow-left-right"></i></div>
+                        <div class="flex-fill">
+                          <span x-text="nomeMembro(s.devedorId)"></span> deve
+                          <strong x-text="cgFormat.formatCurrency(s.valor)"></strong>
+                          pra <span x-text="nomeMembro(s.credorId)"></span>
+                        </div>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+              </template>
+
               <div class="d-flex gap-2 flex-wrap">
                 <button type="button" class="cg-btn btn btn-outline-danger" @click="sair()"><i class="bi bi-box-arrow-left"></i> Sair do grupo</button>
                 <template x-if="souAdmin()">

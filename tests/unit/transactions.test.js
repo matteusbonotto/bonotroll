@@ -5,7 +5,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  computeSummary, splitEqually, groupByCategory, groupByCompany, groupByPeriod,
+  computeSummary, splitEqually, groupByCategory, groupByCompany, groupByPeriod, computeSaldosEntreMembros,
 } from '../../js/services/transactions.js';
 
 test('computeSummary soma entradas/saídas e acha o maior gasto', () => {
@@ -64,6 +64,39 @@ test('groupByCompany soma por empresa (texto livre), sem-empresa cai num balde s
   const r = groupByCompany(txs);
   assert.equal(r.find((x) => x.nome === 'Netflix').total, 39.9);
   assert.equal(r.find((x) => x.nome === 'Sem empresa/serviço').total, 10);
+});
+
+test('computeSaldosEntreMembros: despesa dividida e paga gera dívida do outro pagador pro responsável', () => {
+  const txs = [{ id: 't1', tipo: 'saida', responsavel_id: 'matheus', data_pagamento: '2026-08-01', valor: 200 }];
+  const payersByTx = { t1: [{ profile_id: 'matheus', valor: 100 }, { profile_id: 'beatriz', valor: 100 }] };
+  const r = computeSaldosEntreMembros(txs, payersByTx);
+  assert.equal(r.length, 1);
+  assert.deepEqual(r[0], { devedorId: 'beatriz', credorId: 'matheus', valor: 100 });
+});
+
+test('computeSaldosEntreMembros: despesa NÃO paga não gera dívida (dinheiro ainda não saiu do bolso de ninguém)', () => {
+  const txs = [{ id: 't1', tipo: 'saida', responsavel_id: 'matheus', data_pagamento: null, valor: 200 }];
+  const payersByTx = { t1: [{ profile_id: 'matheus', valor: 100 }, { profile_id: 'beatriz', valor: 100 }] };
+  assert.deepEqual(computeSaldosEntreMembros(txs, payersByTx), []);
+});
+
+test('computeSaldosEntreMembros: despesa sem divisão (1 pagador só) não gera dívida entre membros', () => {
+  const txs = [{ id: 't1', tipo: 'saida', responsavel_id: 'matheus', data_pagamento: '2026-08-01', valor: 200 }];
+  assert.deepEqual(computeSaldosEntreMembros(txs, {}), []);
+});
+
+test('computeSaldosEntreMembros: dívidas nos dois sentidos se compensam (saldo líquido)', () => {
+  const txs = [
+    { id: 't1', tipo: 'saida', responsavel_id: 'matheus', data_pagamento: '2026-08-01', valor: 100 },
+    { id: 't2', tipo: 'saida', responsavel_id: 'beatriz', data_pagamento: '2026-08-02', valor: 60 },
+  ];
+  const payersByTx = {
+    t1: [{ profile_id: 'matheus', valor: 50 }, { profile_id: 'beatriz', valor: 50 }],
+    t2: [{ profile_id: 'matheus', valor: 30 }, { profile_id: 'beatriz', valor: 30 }],
+  };
+  // beatriz devia 50 a matheus (t1); matheus devia 30 a beatriz (t2) -> líquido: beatriz deve 20 a matheus
+  const r = computeSaldosEntreMembros(txs, payersByTx);
+  assert.deepEqual(r, [{ devedorId: 'beatriz', credorId: 'matheus', valor: 20 }]);
 });
 
 test('groupByPeriod agrupa por mês e soma cada balde', () => {

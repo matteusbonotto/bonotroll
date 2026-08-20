@@ -1,4 +1,5 @@
 import * as groupsService from '../services/groups.js';
+import { listTransactions, listPayersFor, computeSaldosEntreMembros } from '../services/transactions.js';
 
 // Tela "Grupo": criar/entrar/sair de um grupo (ex.: família). Sempre opcional.
 export function groupView() {
@@ -8,6 +9,33 @@ export function groupView() {
     loading: false,
     editandoNome: false,
     novoNome: '',
+    saldosEntreMembros: [], // "Entre vocês" — ver computeSaldosEntreMembros
+
+    init() {
+      this.carregarSaldos();
+      window.addEventListener('cg:transactions-changed', () => this.carregarSaldos());
+      this.$watch('$store.app.group', () => this.carregarSaldos());
+    },
+
+    // Best-effort (padrão §14.4 do RAIO-X): "quem deve quanto" é um
+    // complemento da tela de Grupo, nunca pode impedir o resto dela (criar/
+    // entrar/sair) de funcionar se a busca falhar.
+    async carregarSaldos() {
+      const store = this.$store.app;
+      if (!store.group || !store.profile) { this.saldosEntreMembros = []; return; }
+      try {
+        const groupId = store.group.group.id;
+        const txs = await listTransactions({ ownerId: store.profile.id, groupId });
+        const payersMap = await listPayersFor(txs.map((t) => t.id));
+        this.saldosEntreMembros = computeSaldosEntreMembros(txs, Object.fromEntries(payersMap));
+      } catch {
+        this.saldosEntreMembros = [];
+      }
+    },
+
+    nomeMembro(id) {
+      return this.$store.app.profileById(id)?.nome || '—';
+    },
 
     async criar() {
       if (!this.nomeGrupo.trim()) return;

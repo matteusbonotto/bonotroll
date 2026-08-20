@@ -5,7 +5,7 @@ import { computeStatus } from '../utils/status.js';
 import { todayIso, semAcento } from '../utils/format.js';
 import * as format from '../utils/format.js';
 import { comFallbackDeColuna } from '../utils/dbFallback.js';
-import { somar, dividirIgualmente, percentual as calcPercentual } from '../utils/money.js';
+import { somar, subtrair, iguais, dividirIgualmente, percentual as calcPercentual } from '../utils/money.js';
 
 export function withStatus(rows) {
   return rows.map((r) => ({ ...r, _status: computeStatus(r) }));
@@ -315,6 +315,46 @@ export function groupByMember(transactions, members, payersByTx) {
     .map(({ valores, ...resto }) => ({ ...resto, total: somar(...valores) }))
     .filter((m) => m.total > 0)
     .sort((a, b) => b.total - a.total);
+}
+
+// "Saldo entre membros" (docs/BONOTTO-2027-BLUEPRINT.md §8, fluxo de
+// casal) — quem deve quanto pra quem, hoje. Só conta despesa PAGA (o
+// responsavel_id precisa ter de fato desembolsado o valor cheio pra fazer
+// sentido falar em "dívida" com os outros pagadores) e com divisão
+// registrada (sem transaction_payers = 100% do responsável, ninguém deve
+// nada). Devolve uma MATRIZ devedor→credor já liquidada por par (se A deve
+// R$50 a B e B deve R$20 a A, vira só "A deve R$30 a B") — desenhada pra N
+// membros desde já, mesmo o produto de hoje ser sempre casal (2).
+export function computeSaldosEntreMembros(transactions, payersByTx) {
+  const brutos = new Map(); // "devedor|credor" -> soma que devedor deve a credor
+  for (const t of transactions) {
+    if (t.tipo !== 'saida' || !t.data_pagamento) continue;
+    const payers = payersByTx[t.id] || [];
+    if (payers.length < 2) continue;
+    const credor = t.responsavel_id;
+    for (const p of payers) {
+      if (p.profile_id === credor) continue;
+      const valor = Number(p.valor) || 0;
+      if (valor <= 0) continue;
+      const key = `${p.profile_id}|${credor}`;
+      brutos.set(key, somar(brutos.get(key) || 0, valor));
+    }
+  }
+
+  const pares = new Set();
+  for (const key of brutos.keys()) pares.add(key.split('|').sort().join('|'));
+
+  const resultado = [];
+  for (const par of pares) {
+    const [x, y] = par.split('|');
+    const xDeveY = brutos.get(`${x}|${y}`) || 0;
+    const yDeveX = brutos.get(`${y}|${x}`) || 0;
+    const liquido = subtrair(xDeveY, yDeveX);
+    if (iguais(liquido, 0)) continue;
+    if (liquido > 0) resultado.push({ devedorId: x, credorId: y, valor: liquido });
+    else resultado.push({ devedorId: y, credorId: x, valor: subtrair(0, liquido) });
+  }
+  return resultado.sort((a, b) => b.valor - a.valor);
 }
 
 // Entrada x Saída do período — a quebra mais simples, útil como "visão geral"
