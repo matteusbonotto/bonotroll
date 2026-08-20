@@ -1901,7 +1901,7 @@
                     <span class="cg-room-tile__nome" x-text="c.banco_nome"></span>
                     <span class="cg-room-tile__count fw-semibold" x-text="formatMoeda(totaisFor(c.id).saldo, c.moeda)"></span>
                     <span class="cg-muted" style="font-size: 0.68rem;" x-show="conversaoBRLFor(c)" x-text="conversaoBRLFor(c)"></span>
-                    <div class="progress mt-1" style="height: 4px; width: 100%;" x-show="progressoFor(c) !== null">
+                    <div class="progress" style="height: 4px; width: 100%;" x-show="progressoFor(c) !== null">
                       <div class="progress-bar bg-success" :style="{ width: progressoFor(c) + '%' }"></div>
                     </div>
                   </div>
