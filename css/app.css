@@ -660,6 +660,13 @@ button, input, select, textarea { -webkit-tap-highlight-color: transparent; }
    de trás continua visível/esmaecido atrás, então a lista nunca "some". */
 .cg-modal-backdrop--stacked { z-index: 1060; background: rgba(10, 24, 20, .38); }
 .cg-modal--sm { max-width: 420px; }
+/* Seletor composto (.cg-modal.cg-modal--full, não só .cg-modal--full) de
+   propósito — .cg-modal já tem 2 declarações soltas de max-width/width
+   nesse arquivo (ver comentário em .cg-card--compact/components.css, mesmo
+   padrão), então uma classe de especificidade igual dependeria de ficar
+   depois das duas no arquivo pra vencer; composto vence sempre, não importa
+   a ordem. */
+.cg-modal.cg-modal--full { width: min(96vw, 1400px); max-width: min(96vw, 1400px); max-height: 92vh; }
 @media (min-width: 768px) { .cg-modal { border-radius: 16px; } }
 .cg-modal h2, .cg-modal h3 { font-size: var(--font-size-title-sm); letter-spacing: 0; }
 .cg-modal hr { border-color: var(--color-border); opacity: 1; }

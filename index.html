@@ -425,6 +425,10 @@
           <!-- 3 gráficos independentes, cada um com a própria quebra
                (categoria/empresa/fluxo/dia/mês/ano) escolhível a qualquer
                momento — a escolha de cada um fica salva por navegador. -->
+          <div class="d-flex align-items-center justify-content-between mb-2">
+            <div class="cg-section-title mb-0"><i class="bi bi-bar-chart-line"></i> Análises</div>
+            <button type="button" class="cg-btn btn btn-outline-secondary btn-sm" @click="dashboardFullAberto = true"><i class="bi bi-arrows-fullscreen"></i> Ver mais</button>
+          </div>
           <div class="row g-3 mb-4">
             <template x-for="(q, i) in quebras" :key="i">
               <div class="col-12 col-lg-4">
@@ -465,6 +469,114 @@
                 </div>
               </div>
             </template>
+          </div>
+
+          <!-- Dashboard completo: o mesmo painel "esticado" — reaproveita
+               quemVer/período/dadosParaQuebra deste MESMO x-data (não é uma
+               tela nova com dado próprio), só troca "3 gráficos escolhíveis"
+               por "todos os recortes de uma vez", em telão. -->
+          <div class="cg-modal-backdrop" x-show="dashboardFullAberto" x-cloak @click.self="dashboardFullAberto = false">
+            <div class="cg-modal cg-modal--full">
+              <div class="d-flex align-items-center justify-content-between mb-3">
+                <h2 class="h5 fw-bold mb-0"><i class="bi bi-bar-chart-line"></i> Dashboard completo</h2>
+                <button type="button" class="btn-close" @click="dashboardFullAberto = false" aria-label="Fechar"></button>
+              </div>
+
+              <!-- Filtros dinâmicos — mesmos controles/estado do topo da Home. -->
+              <div class="cg-card mb-3">
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                  <template x-if="$store.app.group">
+                    <div class="d-flex flex-wrap gap-2">
+                      <template x-for="o in opcoesQuemVer" :key="o.id">
+                        <button type="button" class="btn btn-sm rounded-pill d-flex align-items-center gap-2" :class="quemVer === o.id ? 'text-white' : 'btn-outline-secondary'" :style="quemVer === o.id ? { background: o.cor || 'var(--color-primary)', borderColor: o.cor || 'var(--color-primary)' } : {}" @click="quemVer = o.id">
+                          <span class="cg-avatar cg-avatar--sm" style="width:20px;height:20px;font-size:0.55rem;" :style="{ borderColor: o.cor || 'var(--color-primary-soft)', background: o.cor || 'var(--color-primary)' }" x-show="o.id !== 'grupo'">
+                            <template x-if="o.avatar_url"><img :src="o.avatar_url" /></template>
+                            <template x-if="!o.avatar_url"><span x-text="cgFormat.initials(o.nome)"></span></template>
+                          </span>
+                          <i class="bi bi-people" x-show="o.id === 'grupo'"></i>
+                          <span x-text="o.nome"></span>
+                        </button>
+                      </template>
+                    </div>
+                  </template>
+                  <select class="form-select form-select-sm" style="width: auto;" x-model="periodoModo">
+                    <option value="mes_atual">Este mês</option>
+                    <option value="mes_anterior">Mês anterior</option>
+                    <option value="proximo_mes">Próximo mês</option>
+                    <option value="ano_atual">Este ano</option>
+                    <option value="ano_anterior">Ano anterior</option>
+                    <option value="personalizado">Período personalizado</option>
+                    <option value="tudo">Todo o período</option>
+                  </select>
+                  <template x-if="periodoModo === 'personalizado'">
+                    <div class="d-flex align-items-center gap-2">
+                      <input type="date" class="form-control form-control-sm" x-model="periodoInicio" />
+                      <span class="cg-muted small">até</span>
+                      <input type="date" class="form-control form-control-sm" x-model="periodoFim" />
+                    </div>
+                  </template>
+                </div>
+              </div>
+
+              <!-- KPIs — mesmos números do card de saldo em destaque, em
+                   formato de linha de cards (mais fácil de comparar lado a
+                   lado do que o hero, que é feito pra ocupar a tela toda). -->
+              <div class="row g-2 mb-3">
+                <div class="col-6 col-md-3">
+                  <div class="cg-card cg-card--stat">
+                    <div class="cg-muted small text-uppercase">Entradas (pagas)</div>
+                    <div class="h5 fw-bold mb-0 text-success" :title="cgFormat.formatCurrency(resumoSelecionado.entradas)" x-text="cgFormat.formatCurrencyCompact(resumoSelecionado.entradas)"></div>
+                  </div>
+                </div>
+                <div class="col-6 col-md-3">
+                  <div class="cg-card cg-card--stat">
+                    <div class="cg-muted small text-uppercase">Saídas (pagas)</div>
+                    <div class="h5 fw-bold mb-0 text-danger" :title="cgFormat.formatCurrency(resumoSelecionado.saidas)" x-text="cgFormat.formatCurrencyCompact(resumoSelecionado.saidas)"></div>
+                  </div>
+                </div>
+                <div class="col-6 col-md-3">
+                  <div class="cg-card cg-card--stat">
+                    <div class="cg-muted small text-uppercase">Saldo</div>
+                    <div class="h5 fw-bold mb-0" :title="cgFormat.formatCurrency(resumoSelecionado.saldo)" x-text="cgFormat.formatCurrencyCompact(resumoSelecionado.saldo)"></div>
+                  </div>
+                </div>
+                <div class="col-6 col-md-3">
+                  <div class="cg-card cg-card--stat">
+                    <div class="cg-muted small text-uppercase">Maior gasto</div>
+                    <div class="h5 fw-bold mb-0" :title="resumoSelecionado.maiorGasto ? cgFormat.formatCurrency(resumoSelecionado.maiorGasto.valor) : ''" x-text="resumoSelecionado.maiorGasto ? cgFormat.formatCurrencyCompact(resumoSelecionado.maiorGasto.valor) : '—'"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Todos os recortes de uma vez (não só 3 escolhíveis) —
+                   categoria/empresa/membro/fluxo/dia/mês/ano lado a lado. -->
+              <div class="row g-3">
+                <template x-for="tipo in dashboardFullTipos" :key="tipo">
+                  <div class="col-12 col-md-6 col-xl-4">
+                    <div class="cg-card h-100">
+                      <div class="cg-section-title mb-2" x-text="dashboardTipoLabel(tipo)"></div>
+                      <template x-if="!dadosParaQuebra(tipo).length"><p class="cg-muted small mb-0">Sem dados suficientes ainda.</p></template>
+                      <template x-if="dadosParaQuebra(tipo).length">
+                        <div x-data="categoryChart()" x-init="
+                          $watch('dadosParaQuebra(\'' + tipo + '\')', v => render(v, tipoGraficoPara(tipo)));
+                          render(dadosParaQuebra(tipo), tipoGraficoPara(tipo));
+                        ">
+                          <div style="height:280px;"><canvas x-ref="canvas" role="img" :aria-label="'Gráfico ' + tipo"></canvas></div>
+                          <table class="visually-hidden">
+                            <caption>Dados do gráfico em texto</caption>
+                            <tbody>
+                              <template x-for="d in dadosParaQuebra(tipo)" :key="d.nome">
+                                <tr><th x-text="d.nome"></th><td x-text="cgFormat.formatCurrency(d.total)"></td></tr>
+                              </template>
+                            </tbody>
+                          </table>
+                        </div>
+                      </template>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </div>
           </div>
 
           <div class="cg-card">

@@ -61,6 +61,23 @@ export function dashboardView() {
     quebras: quebrasIniciais(),
     contasAVencer: [],
     recentes: [],
+
+    // ---------- Dashboard completo ("Ver mais") ----------
+    // Reaproveita TODO o estado que já existe aqui (quemVer, período,
+    // dadosParaQuebra, resumoSelecionado) — não é uma tela nova com dado
+    // próprio, é o mesmo painel "esticado": os 3 gráficos escolhíveis viram
+    // TODOS os recortes de uma vez, lado a lado, com os mesmos filtros
+    // dinâmicos no topo.
+    dashboardFullAberto: false,
+    get dashboardFullTipos() {
+      const tipos = ['categoria', 'empresa', 'fluxo', 'dia', 'mes', 'ano'];
+      if (this.$store.app.group) tipos.splice(2, 0, 'membro');
+      return tipos;
+    },
+    dashboardTipoLabel(tipo) {
+      const labels = { categoria: 'Por categoria', empresa: 'Por empresa/serviço', membro: 'Por membro do grupo', fluxo: 'Entrada x Saída', dia: 'Por dia', mes: 'Por mês', ano: 'Por ano' };
+      return labels[tipo] || tipo;
+    },
     recursosAllItems: [],
     recursosSugestoesAbertas: false,
     budgets: [], // orçamentos pessoais (sempre owner_id, nunca de grupo — ver services/budgets.js)
