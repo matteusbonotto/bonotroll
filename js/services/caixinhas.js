@@ -21,13 +21,43 @@ export async function listCaixinhas({ ownerId, groupId }) {
   return data;
 }
 
-export async function createCaixinha({ bancoNome, moeda, meta, icone, ownerId, groupId }) {
-  const row = { banco_nome: bancoNome, moeda: moeda || 'BRL', meta: meta || null, icone: icone || 'bi-piggy-bank', owner_id: ownerId, group_id: groupId || null };
+export async function createCaixinha({ bancoNome, moeda, meta, icone, iconeUrl, ownerId, groupId }) {
+  const row = {
+    banco_nome: bancoNome,
+    moeda: moeda || 'BRL',
+    meta: meta || null,
+    icone: icone || 'bi-piggy-bank',
+    icone_url: iconeUrl || null,
+    owner_id: ownerId,
+    group_id: groupId || null,
+  };
   if (isDemoMode()) return mockDb.insert('caixinhas', row);
   const supabase = await getSupabase();
   const { data, error } = await supabase.from('caixinhas').insert(row).select().single();
   if (error) throw error;
   return data;
+}
+
+// Reaproveita exatamente o padrão de uploadCompanyLogo/uploadCategoryIcon:
+// bucket "avatars" (mesmas policies, sem precisar criar bucket novo), data
+// URL base64 em modo demo. A pessoa escolhe upload OU URL — nunca uma
+// imagem adivinhada/buscada pelo sistema.
+export async function uploadCaixinhaIcone(userId, file) {
+  if (isDemoMode()) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(file);
+    });
+  }
+  const supabase = await getSupabase();
+  const ext = (file.name.split('.').pop() || 'png').toLowerCase();
+  const path = `${userId}/caixinha-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+  const { error } = await supabase.storage.from('avatars').upload(path, file);
+  if (error) throw error;
+  const { data: pub } = supabase.storage.from('avatars').getPublicUrl(path);
+  return pub.publicUrl;
 }
 
 export async function updateCaixinha(id, patch) {

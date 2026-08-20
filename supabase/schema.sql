@@ -305,6 +305,11 @@ create table if not exists caixinhas (
   criado_em timestamptz not null default now()
 );
 
+-- Ícone por upload de imagem OU URL colada pela própria pessoa (nunca
+-- adivinhada) — mesmo padrão de categories.icone_url. Com valor, vence o
+-- ícone de preset (icone) na hora de renderizar.
+alter table caixinhas add column if not exists icone_url text;
+
 create table if not exists caixinha_movimentacoes (
   id uuid primary key default uuid_generate_v4(),
   caixinha_id uuid not null references caixinhas(id) on delete cascade,

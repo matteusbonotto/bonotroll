@@ -1573,7 +1573,8 @@
                 <template x-for="c in caixinhas" :key="c.id">
                   <div class="cg-room-tile" role="button" tabindex="0" @click="selecionar(c.id)" @keydown.enter="selecionar(c.id)">
                     <button type="button" class="cg-room-tile__edit" @click="abrirEditarCaixinha(c, $event)" aria-label="Editar caixinha"><i class="bi bi-pencil"></i></button>
-                    <i class="bi" :class="c.icone"></i>
+                    <img :src="c.icone_url" x-show="c.icone_url" style="width:32px;height:32px;border-radius:50%;object-fit:cover;" />
+                    <i class="bi" :class="c.icone" x-show="!c.icone_url"></i>
                     <span class="cg-room-tile__nome" x-text="c.banco_nome"></span>
                     <span class="cg-room-tile__count fw-semibold" x-text="cgFormat.formatCurrencyCompact(totaisFor(c.id).saldo)"></span>
                     <div class="progress mt-1" style="height: 4px; width: 100%;" x-show="progressoFor(c) !== null">
@@ -1600,7 +1601,11 @@
               <div>
                 <div class="d-flex align-items-center justify-content-between mb-3">
                   <button type="button" class="btn btn-sm btn-outline-secondary" @click="voltar()"><i class="bi bi-arrow-left"></i> Caixinhas</button>
-                  <div class="cg-section-title mb-0"><i class="bi" :class="caixinhaAtiva.icone"></i> <span x-text="caixinhaAtiva.banco_nome"></span></div>
+                  <div class="cg-section-title mb-0">
+                    <img :src="caixinhaAtiva.icone_url" x-show="caixinhaAtiva.icone_url" style="width:24px;height:24px;border-radius:50%;object-fit:cover;" />
+                    <i class="bi" :class="caixinhaAtiva.icone" x-show="!caixinhaAtiva.icone_url"></i>
+                    <span x-text="caixinhaAtiva.banco_nome"></span>
+                  </div>
                   <button type="button" class="btn btn-sm btn-outline-secondary" @click="abrirEditarCaixinha(caixinhaAtiva, $event)" aria-label="Editar caixinha" style="width: 88px;"><i class="bi bi-pencil"></i> Editar</button>
                 </div>
 
@@ -1692,13 +1697,33 @@
               </div>
               <div class="mb-3">
                 <label class="form-label small">Ícone</label>
-                <div class="d-flex flex-wrap gap-1">
-                  <template x-for="ic in iconPresets" :key="ic">
-                    <button type="button" class="btn btn-sm p-0" style="width:34px;height:34px;" :class="caixinhaForm.icone === ic ? 'btn-success' : 'btn-outline-secondary'" @click="caixinhaForm.icone = ic" :aria-label="'Usar ícone ' + ic">
-                      <i :class="'bi ' + ic"></i>
-                    </button>
-                  </template>
+                <div class="btn-group btn-group-sm mb-2 w-100" role="group">
+                  <button type="button" class="btn" :class="iconeCaixinha.modo === 'preset' ? 'btn-secondary' : 'btn-outline-secondary'" @click="iconeCaixinha.modo = 'preset'">Ícone</button>
+                  <button type="button" class="btn" :class="iconeCaixinha.modo === 'upload' ? 'btn-secondary' : 'btn-outline-secondary'" @click="iconeCaixinha.modo = 'upload'">Imagem</button>
+                  <button type="button" class="btn" :class="iconeCaixinha.modo === 'url' ? 'btn-secondary' : 'btn-outline-secondary'" @click="iconeCaixinha.modo = 'url'">URL</button>
                 </div>
+                <template x-if="iconeCaixinha.modo === 'preset'">
+                  <div class="d-flex flex-wrap gap-1">
+                    <template x-for="ic in iconPresets" :key="ic">
+                      <button type="button" class="btn btn-sm p-0" style="width:34px;height:34px;" :class="caixinhaForm.icone === ic ? 'btn-success' : 'btn-outline-secondary'" @click="caixinhaForm.icone = ic" :aria-label="'Usar ícone ' + ic">
+                        <i :class="'bi ' + ic"></i>
+                      </button>
+                    </template>
+                  </div>
+                </template>
+                <template x-if="iconeCaixinha.modo === 'upload'">
+                  <div class="d-flex align-items-center gap-2">
+                    <label class="cg-btn btn btn-outline-secondary btn-sm mb-0" style="cursor:pointer;">
+                      <i class="bi bi-upload"></i>
+                      <span x-text="iconeCaixinha.uploading ? 'Enviando…' : (iconeCaixinha.url ? 'Trocar imagem' : 'Escolher imagem (PNG…)')"></span>
+                      <input type="file" accept="image/*" class="d-none" @change="onCaixinhaIconeFile($event)" :disabled="iconeCaixinha.uploading" />
+                    </label>
+                    <img :src="iconeCaixinha.url" x-show="iconeCaixinha.url" style="width:28px;height:28px;border-radius:50%;object-fit:cover;" />
+                  </div>
+                </template>
+                <template x-if="iconeCaixinha.modo === 'url'">
+                  <input type="url" class="form-control form-control-sm" placeholder="https://…" x-model="iconeCaixinha.urlInput" @change="iconeCaixinha.url = iconeCaixinha.urlInput" />
+                </template>
               </div>
               <div class="d-flex gap-2">
                 <template x-if="caixinhaForm.id">

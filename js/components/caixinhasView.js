@@ -1,6 +1,7 @@
 import * as cx from '../services/caixinhas.js';
 
 const CAIXINHA_FORM_VAZIA = () => ({ id: null, banco_nome: '', moeda: 'BRL', meta: '', icone: 'bi-piggy-bank' });
+const ICONE_CAIXINHA_VAZIO = () => ({ modo: 'preset', url: '', urlInput: '', uploading: false, editingHadUrl: false });
 const MOV_FORM_VAZIA = () => ({ tipo: 'guardado', valor: '', data: new Date().toISOString().slice(0, 10), observacoes: '' });
 
 export const CAIXINHA_ICON_PRESETS = ['bi-piggy-bank', 'bi-bank', 'bi-bank2', 'bi-wallet2', 'bi-graph-up-arrow', 'bi-cash-stack', 'bi-credit-card', 'bi-coin'];
@@ -21,6 +22,10 @@ export function caixinhasView() {
     caixinhaForm: CAIXINHA_FORM_VAZIA(),
     salvandoCaixinha: false,
     iconPresets: CAIXINHA_ICON_PRESETS,
+    // Ícone por preset (grid de Bootstrap Icons, default) OU escolhido pela
+    // própria pessoa via upload de imagem/PNG ou URL colada — mesmo par
+    // upload/URL já usado no modal de Categorias (icone_url).
+    iconeCaixinha: ICONE_CAIXINHA_VAZIO(),
 
     movModalAberto: false,
     movForm: MOV_FORM_VAZIA(),
@@ -83,6 +88,7 @@ export function caixinhasView() {
     // ---------- CRUD caixinha ----------
     abrirNovaCaixinha() {
       this.caixinhaForm = CAIXINHA_FORM_VAZIA();
+      this.iconeCaixinha = ICONE_CAIXINHA_VAZIO();
       this.caixinhaModalAberto = true;
     },
     // event.stopPropagation() é essencial: o lápis fica dentro do tile
@@ -91,22 +97,50 @@ export function caixinhasView() {
     abrirEditarCaixinha(c, event) {
       event.stopPropagation();
       this.caixinhaForm = { id: c.id, banco_nome: c.banco_nome, moeda: c.moeda, meta: c.meta || '', icone: c.icone || 'bi-piggy-bank' };
+      this.iconeCaixinha = {
+        modo: c.icone_url ? 'url' : 'preset',
+        url: c.icone_url || '',
+        urlInput: c.icone_url || '',
+        uploading: false,
+        editingHadUrl: !!c.icone_url,
+      };
       this.caixinhaModalAberto = true;
     },
     fecharCaixinhaModal() {
       this.caixinhaModalAberto = false;
+    },
+    async onCaixinhaIconeFile(event) {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      const store = this.$store.app;
+      this.iconeCaixinha.uploading = true;
+      try {
+        this.iconeCaixinha.url = await cx.uploadCaixinhaIcone(store.profile.id, file);
+      } catch (e) {
+        store.notify(e.message || 'Erro ao enviar imagem.', 'danger');
+      } finally {
+        this.iconeCaixinha.uploading = false;
+        event.target.value = '';
+      }
     },
     async salvarCaixinha() {
       if (!this.caixinhaForm.banco_nome.trim() || this.salvandoCaixinha) return;
       const store = this.$store.app;
       this.salvandoCaixinha = true;
       try {
+        const iconeUrl = this.iconeCaixinha.modo === 'preset' ? '' : this.iconeCaixinha.url || this.iconeCaixinha.urlInput;
         const patch = {
           banco_nome: this.caixinhaForm.banco_nome.trim(),
           moeda: (this.caixinhaForm.moeda || 'BRL').trim().toUpperCase() || 'BRL',
           meta: this.caixinhaForm.meta ? Number(this.caixinhaForm.meta) : null,
           icone: this.caixinhaForm.icone,
         };
+        // Só manda icone_url quando tem valor OU quando essa caixinha já
+        // tinha um antes (precisa mandar null pra limpar) — mesmo cuidado
+        // de categoryManager.js pra não quebrar edição em banco que ainda
+        // não rodou a migração que adiciona essa coluna.
+        if (iconeUrl || this.iconeCaixinha.editingHadUrl) patch.icone_url = iconeUrl || null;
+
         if (this.caixinhaForm.id) {
           const atualizada = await cx.updateCaixinha(this.caixinhaForm.id, patch);
           const idx = this.caixinhas.findIndex((c) => c.id === atualizada.id);
@@ -118,6 +152,7 @@ export function caixinhasView() {
             moeda: patch.moeda,
             meta: patch.meta,
             icone: patch.icone,
+            iconeUrl,
             ownerId: store.profile.id,
             groupId: store.group?.group?.id,
           });
