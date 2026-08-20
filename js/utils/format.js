@@ -13,6 +13,34 @@ export function formatCurrency(value) {
   return currencyFormatter.format(Number.isFinite(n) ? n : 0);
 }
 
+// ---------- Moeda por caixinha (2026-08-20) ----------
+// Símbolo próprio por moeda em vez de sempre "R$" — sem isso, uma caixinha
+// em USDT mostrava o saldo com o cifrão de Real, o que é simplesmente
+// errado, não só falta de polimento.
+export const MOEDAS_SUPORTADAS = [
+  { codigo: 'BRL', simbolo: 'R$', nome: 'Real' },
+  { codigo: 'USD', simbolo: '$', nome: 'Dólar americano' },
+  { codigo: 'EUR', simbolo: '€', nome: 'Euro' },
+  { codigo: 'GBP', simbolo: '£', nome: 'Libra esterlina' },
+  { codigo: 'USDT', simbolo: 'USDT', nome: 'Tether (stablecoin)' },
+  { codigo: 'BTC', simbolo: '₿', nome: 'Bitcoin' },
+  { codigo: 'ETH', simbolo: 'Ξ', nome: 'Ethereum' },
+];
+
+export function moedaInfo(codigo) {
+  return MOEDAS_SUPORTADAS.find((m) => m.codigo === codigo) || MOEDAS_SUPORTADAS[0];
+}
+
+// Formata com o símbolo certo da moeda — cripto usa mais casas decimais
+// (2 casas arredondaria qualquer valor pequeno de BTC/ETH pra "0,00").
+export function formatMoeda(value, codigoMoeda = 'BRL') {
+  const info = moedaInfo(codigoMoeda);
+  const n = Number(value ?? 0);
+  const casas = codigoMoeda === 'BTC' || codigoMoeda === 'ETH' ? 8 : 2;
+  const numero = (Number.isFinite(n) ? n : 0).toLocaleString('pt-BR', { minimumFractionDigits: casas, maximumFractionDigits: casas });
+  return `${info.simbolo} ${numero}`;
+}
+
 // Versão curta pra espaço apertado (cards, chips, célula de tabela): a
 // partir de R$ 10 mil vira "R$ 11,2 mil"/"R$ 1,4 mi" em vez do valor cheio
 // quebrando o layout. Abaixo de 10 mil o valor completo já é curto o
@@ -37,9 +65,17 @@ export function formatDate(isoDate) {
   return `${day}/${month}/${year}`;
 }
 
+// Bug real corrigido (2026-08-20): usava d.toISOString(), que converte pra
+// UTC — em qualquer fuso negativo (ex.: Brasil, UTC-3), isso faz "hoje"
+// virar amanhã sempre que já passou das ~21h locais (a mesma classe de bug
+// "ontem virou hoje" que o resto do projeto toma cuidado de evitar em todo
+// outro lugar). "Hoje" pra uma pessoa é sempre o dia do CALENDÁRIO LOCAL
+// dela, nunca UTC — daí ler os campos locais (getFullYear/getMonth/getDate)
+// em vez de converter. Usado em quase tudo (status, recorrência, formulário,
+// filtro de período), então essa era a correção de mais alavancagem possível.
 export function todayIso() {
   const d = new Date();
-  return d.toISOString().slice(0, 10);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
 export function parseCurrencyInput(str) {

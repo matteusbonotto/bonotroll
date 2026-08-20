@@ -20,6 +20,16 @@ function diasAte(isoData) {
   return Math.round((a - b) / 86400000);
 }
 
+function pad2(n) {
+  return String(n).padStart(2, '0');
+}
+function isoYMD(ano, mes1a12, dia) {
+  return `${ano}-${pad2(mes1a12)}-${pad2(dia)}`;
+}
+function ultimoDiaDoMes(ano, mes1a12) {
+  return new Date(ano, mes1a12, 0).getDate();
+}
+
 // Home: saldo em destaque + "Contas a vencer" (o que precisa de atenção
 // agora) antes do log de lançamentos — pago não compete por atenção com o
 // que está vencido/vencendo, então fica de fora dessa lista.
@@ -34,6 +44,16 @@ export function dashboardView() {
     escopo: [], // todas as transações visíveis (próprias + do grupo), com _status
     payersByTx: {},
     quemVer: 'eu', // 'eu' | <profile_id> | 'grupo'
+    // Resumo em destaque, comparativo e gráficos agora respeitam um período
+    // (2026-08-20) — antes eram sempre "desde o início dos tempos", o que
+    // dava um saldo/soma acumulados difíceis de interpretar (e explicava
+    // parte da suspeita de "saldo negativo" — não era a divisão de despesa,
+    // era não ter nenhum corte de período). "Contas a vencer"/Recursos
+    // continuam sempre olhando o estado atual, sem período — não fazem
+    // sentido escopados (uma conta vencida é vencida agora, não "no mês x").
+    periodoModo: 'mes_atual', // mes_atual|mes_anterior|proximo_mes|ano_atual|ano_anterior|personalizado|tudo
+    periodoInicio: '',
+    periodoFim: '',
     // 3 gráficos independentes, cada um com sua própria quebra — trocável a
     // qualquer momento, cada escolha fica salva (por navegador) pra próxima
     // visita. Cada valor: 'categoria' | 'empresa' | 'fluxo' | 'dia' | 'mes' | 'ano'.
@@ -115,6 +135,64 @@ export function dashboardView() {
       return payers.length ? payers.some((p) => p.profile_id === meuId) : t.responsavel_id === meuId;
     },
 
+    // Início/fim (ISO, inclusive) do período selecionado — null/null = sem
+    // corte nenhum ("Tudo"). Construído por soma de inteiros de calendário
+    // (nunca Date+toISOString) pra nunca correr risco de fuso horário
+    // empurrar a data um dia pra trás/frente.
+    get periodoRange() {
+      const hojeStr = todayIso();
+      const ano = Number(hojeStr.slice(0, 4));
+      const mes = Number(hojeStr.slice(5, 7));
+      if (this.periodoModo === 'tudo') return { inicio: null, fim: null };
+      if (this.periodoModo === 'personalizado') return { inicio: this.periodoInicio || null, fim: this.periodoFim || null };
+      if (this.periodoModo === 'ano_atual') return { inicio: isoYMD(ano, 1, 1), fim: isoYMD(ano, 12, 31) };
+      if (this.periodoModo === 'ano_anterior') return { inicio: isoYMD(ano - 1, 1, 1), fim: isoYMD(ano - 1, 12, 31) };
+      let alvoAno = ano;
+      let alvoMes = mes;
+      if (this.periodoModo === 'mes_anterior') {
+        alvoMes -= 1;
+        if (alvoMes < 1) {
+          alvoMes = 12;
+          alvoAno -= 1;
+        }
+      } else if (this.periodoModo === 'proximo_mes') {
+        alvoMes += 1;
+        if (alvoMes > 12) {
+          alvoMes = 1;
+          alvoAno += 1;
+        }
+      }
+      return { inicio: isoYMD(alvoAno, alvoMes, 1), fim: isoYMD(alvoAno, alvoMes, ultimoDiaDoMes(alvoAno, alvoMes)) };
+    },
+
+    get periodoLabel() {
+      const nomes = {
+        mes_atual: 'Este mês',
+        mes_anterior: 'Mês anterior',
+        proximo_mes: 'Próximo mês',
+        ano_atual: 'Este ano',
+        ano_anterior: 'Ano anterior',
+        tudo: 'Todo o período',
+        personalizado: 'Período personalizado',
+      };
+      return nomes[this.periodoModo] || '';
+    },
+
+    // Escopo (saldo/comparativo/gráficos) restrito ao período selecionado —
+    // "Contas a vencer"/Recursos usam this.escopo direto, sem esse filtro
+    // (ver comentário em periodoModo acima).
+    get escopoFiltrado() {
+      const { inicio, fim } = this.periodoRange;
+      if (!inicio && !fim) return this.escopo;
+      return this.escopo.filter((t) => {
+        const data = t.data_cadastro;
+        if (!data) return false;
+        if (inicio && data < inicio) return false;
+        if (fim && data > fim) return false;
+        return true;
+      });
+    },
+
     // Resumo pessoal de um membro específico: entrada é sempre 100% de quem
     // é o responsavel_id dela (entrada não é dividida — só despesa); saída
     // usa a fatia calculada por shareFor, que cai pra responsavel_id sozinho
@@ -123,7 +201,7 @@ export function dashboardView() {
       let entradas = 0;
       let saidas = 0;
       let maiorGasto = null;
-      for (const t of this.escopo) {
+      for (const t of this.escopoFiltrado) {
         if (t.tipo === 'entrada') {
           if (t.responsavel_id === profileId) entradas += Number(t.valor) || 0;
           continue;
@@ -155,7 +233,7 @@ export function dashboardView() {
     },
 
     get resumoSelecionado() {
-      if (this.quemVer === 'grupo') return computeSummary(this.escopo);
+      if (this.quemVer === 'grupo') return computeSummary(this.escopoFiltrado);
       return this.resumoPara(this.idQuemVer);
     },
 
@@ -195,9 +273,9 @@ export function dashboardView() {
     // usadas pelas quebras (categoria/empresa/período) — o grupo usa o
     // valor cheio de cada despesa, sem achatar por fatia.
     get linhasQuebra() {
-      if (this.quemVer === 'grupo') return this.escopo;
+      if (this.quemVer === 'grupo') return this.escopoFiltrado;
       const id = this.idQuemVer;
-      return this.escopo
+      return this.escopoFiltrado
         .filter((t) => t.tipo === 'saida')
         .map((t) => ({ ...t, valor: this.shareFor(t, id) }))
         .filter((t) => t.valor > 0);
@@ -218,7 +296,7 @@ export function dashboardView() {
       // escopo cru (não linhasQuebra, que já vem achatado pra UM membro).
       if (tipo === 'membro') {
         const membros = store.group?.members || [];
-        return groupByMember(this.escopo, membros, this.payersByTx);
+        return groupByMember(this.escopoFiltrado, membros, this.payersByTx);
       }
       // fluxo (Entrada x Saída) precisa dos dois lados — linhasQuebra é
       // saída-only (feito pra categoria/empresa/período, que são conceitos

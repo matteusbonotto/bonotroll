@@ -35,15 +35,26 @@ export function transactionsView() {
       localStorage.setItem('bonotto_view_transacoes', mode);
     },
 
-    // ---------- Agrupado: accordion por período/responsável/movimentação/categoria ----------
-    // 'periodo' agrupa em 2 níveis (ano -> mês); os outros são de 1 nível só.
+    // ---------- Agrupamento: accordion por período/responsável/movimentação/categoria ----------
+    // Filtro SEPARADO do viewMode (2026-08-20) — "agrupando" liga/desliga
+    // por cima de qualquer lista/tabela/grade/compacta já selecionado; o
+    // agrupamento é só quem decide COMO dividir as linhas em seções, o
+    // viewMode continua decidindo COMO cada seção é desenhada por dentro
+    // (tabela, cards ou grade — nunca uma renderização própria do
+    // agrupamento). Ver secoesExibidas, que é o que os templates realmente
+    // iteram agora em vez de sortedRows direto.
+    agrupando: localStorage.getItem('bonotto_agrupando_transacoes') === '1',
+    setAgrupando(valor) {
+      this.agrupando = valor;
+      localStorage.setItem('bonotto_agrupando_transacoes', valor ? '1' : '0');
+    },
     agrupamento: localStorage.getItem('bonotto_agrupamento_transacoes') || 'periodo',
     setAgrupamento(modo) {
       this.agrupamento = modo;
       localStorage.setItem('bonotto_agrupamento_transacoes', modo);
       this.overridesAbertura = {};
     },
-    // Chave (ano, "aaaa-mm", responsavel_id, tipo, categoria_id...) -> true/false
+    // Chave (mês "aaaa-mm", responsavel_id, tipo, categoria_id...) -> true/false
     // quando a pessoa já clicou pra abrir/fechar aquele grupo manualmente,
     // sobrepondo o "aberto por padrão" (ver estaAberto). Objeto plano (não
     // Map) de propósito — mesmo padrão de payersByTx/_debounceQty já usado
@@ -76,39 +87,31 @@ export function transactionsView() {
       return r;
     },
 
-    // ano -> mês ("aaaa-mm") -> linhas. Usa vencimento (ou cadastro, se não
-    // tiver vencimento) como a data que define em qual "período" a despesa
-    // cai — é a mesma data que a pessoa já olha pra saber "isso é de quando".
-    // Sem nenhuma das duas datas (bem raro) cai num grupo "Sem data" à parte
-    // em vez de sumir da lista.
+    // Por mês ("aaaa-mm", rótulo "ago/26"), 1 nível só — o ano fica embutido
+    // no rótulo em vez de virar um segundo nível de accordion (mais simples
+    // de combinar com "dentro da seção é a mesma tabela/grade de sempre").
+    // Usa vencimento (ou cadastro, se não tiver vencimento) como a data que
+    // define o período — é a mesma data que a pessoa já olha pra saber
+    // "isso é de quando". Sem nenhuma das duas (raro) cai num grupo "Sem
+    // data" à parte em vez de sumir da lista.
     get gruposPorPeriodo() {
       const hojeAnoMes = todayIso().slice(0, 7);
-      const porAno = new Map();
+      const porMes = new Map();
       for (const t of this.sortedRows) {
         const base = t.data_vencimento || t.data_cadastro || null;
-        const ano = base ? base.slice(0, 4) : 'Sem data';
         const anoMes = base ? base.slice(0, 7) : 'sem-data';
-        if (!porAno.has(ano)) porAno.set(ano, new Map());
-        const porMes = porAno.get(ano);
         if (!porMes.has(anoMes)) porMes.set(anoMes, []);
         porMes.get(anoMes).push(t);
       }
-      const anoAtual = hojeAnoMes.slice(0, 4);
-      return [...porAno.entries()]
-        .sort((a, b) => (a[0] === 'Sem data' ? 1 : b[0] === 'Sem data' ? -1 : b[0].localeCompare(a[0])))
-        .map(([ano, porMes]) => ({
-          chave: ano,
-          label: ano,
-          abertoPorPadrao: ano === anoAtual,
-          meses: [...porMes.entries()]
-            .sort(([a], [b]) => (a === 'sem-data' ? 1 : b === 'sem-data' ? -1 : b.localeCompare(a)))
-            .map(([anoMes, linhas]) => ({
-              chave: anoMes,
-              label: this.labelMes(anoMes),
-              isAtual: anoMes === hojeAnoMes,
-              linhas,
-              resumo: this.resumoGrupo(linhas),
-            })),
+      return [...porMes.entries()]
+        .sort(([a], [b]) => (a === 'sem-data' ? 1 : b === 'sem-data' ? -1 : b.localeCompare(a)))
+        .map(([anoMes, linhas]) => ({
+          chave: anoMes,
+          label: this.labelMes(anoMes),
+          isAtual: anoMes === hojeAnoMes,
+          abertoPorPadrao: anoMes === hojeAnoMes,
+          linhas,
+          resumo: this.resumoGrupo(linhas),
         }));
     },
 
@@ -132,8 +135,25 @@ export function transactionsView() {
         grupos.get(chave).linhas.push(t);
       }
       return [...grupos.values()]
-        .map((g) => ({ ...g, resumo: this.resumoGrupo(g.linhas) }))
+        .map((g) => ({ ...g, resumo: this.resumoGrupo(g.linhas), abertoPorPadrao: true }))
         .sort((a, b) => b.linhas.length - a.linhas.length);
+    },
+
+    // O que os templates de fato iteram: 1 "seção" sem rótulo (agrupamento
+    // desligado — comportamento de sempre, tudo numa lista só) ou N seções
+    // com rótulo + resumo (agrupamento ligado). Cada seção carrega só os
+    // dados; QUAL viewMode desenha o conteúdo de dentro continua sendo
+    // decidido separadamente pelos templates — agrupamento nunca decide
+    // layout, só decide "quais linhas entram em cada bloco".
+    get secoesExibidas() {
+      // resumo sempre um objeto de verdade (nunca null) mesmo na seção
+      // "sem agrupamento" — o cabeçalho do grupo é só x-if="agrupando", mas
+      // durante a MESMA transição reativa em que agrupando vira true o
+      // Alpine pode reavaliar esse x-for antes do x-if aninhado assentar;
+      // sem isso, aparecia um "Cannot read properties of null" no meio da
+      // troca (confirmado ao vivo, não só teoria).
+      if (!this.agrupando) return [{ chave: '__todos__', label: null, linhas: this.sortedRows, abertoPorPadrao: true, resumo: this.resumoGrupo([]) }];
+      return this.agrupamento === 'periodo' ? this.gruposPorPeriodo : this.gruposSimples;
     },
 
     init() {
@@ -253,6 +273,15 @@ export function transactionsView() {
       const iso = (d) => d.toISOString().slice(0, 10);
       this.filtro.dataInicio = iso(new Date(hoje.getFullYear(), hoje.getMonth(), 1));
       this.filtro.dataFim = iso(new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0));
+    },
+
+    // Ver o que já está lançado pro mês que vem — útil especialmente pra
+    // despesa recorrente/fixa, que já é gerada com antecedência.
+    aplicarProximoMes() {
+      const hoje = new Date();
+      const iso = (d) => d.toISOString().slice(0, 10);
+      this.filtro.dataInicio = iso(new Date(hoje.getFullYear(), hoje.getMonth() + 1, 1));
+      this.filtro.dataFim = iso(new Date(hoje.getFullYear(), hoje.getMonth() + 2, 0));
     },
 
     categoryFor(id) {

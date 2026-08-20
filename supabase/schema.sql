@@ -136,6 +136,14 @@ alter table transactions add column if not exists qrcode_dados text;
 alter table transactions add column if not exists recorrencia_tipo text
   check (recorrencia_tipo in ('semanal', 'mensal', 'anual', 'personalizado'));
 alter table transactions add column if not exists recorrencia_intervalo_dias int;
+-- Dia do mês (mensal) ou dia+mês do ano (anual) declarados explicitamente
+-- pela pessoa (2026-08-20) — "todo dia 10" / "todo dia 10 de março".
+-- gerarRecorrentesPendentes (js/services/recurring.js) prioriza esses
+-- campos sobre simplesmente "empurrar a data anterior em 1 mês/ano" quando
+-- presentes, então editar o dia aqui na ocorrência mais recente já
+-- redireciona as próximas geradas, sem precisar mexer em nada mais.
+alter table transactions add column if not exists recorrencia_dia_mes int check (recorrencia_dia_mes is null or (recorrencia_dia_mes between 1 and 31));
+alter table transactions add column if not exists recorrencia_mes int check (recorrencia_mes is null or (recorrencia_mes between 1 and 12));
 alter table transactions add column if not exists parcela_atual int check (parcela_atual is null or parcela_atual > 0);
 alter table transactions add column if not exists parcela_total int check (parcela_total is null or parcela_total >= parcela_atual);
 alter table transactions add column if not exists recorrencia_serie_id uuid;
@@ -564,12 +572,21 @@ create policy "Ver categorias próprias ou do grupo" on categories for select
 drop policy if exists "Criar categoria" on categories;
 create policy "Criar categoria" on categories for insert
   with check (owner_id = auth.uid());
+-- Editar/excluir: dono sempre pode. Uma categoria DE GRUPO (group_id não
+-- nulo) também pode ser editada/excluída por QUALQUER membro do grupo, não
+-- só por quem criou — ela é um recurso do grupo, não pessoal de quem
+-- clicou primeiro em "criar categoria padrão" (ver 2026-08-20: o índice
+-- único de categoria de grupo passou a ser por grupo, não por dono+grupo;
+-- RLS precisa acompanhar essa mudança de modelo, senão o "dono" vencedor
+-- do merge de duplicatas vira o único que consegue mexer nela).
 drop policy if exists "Editar/excluir categoria própria" on categories;
-create policy "Editar/excluir categoria própria" on categories for update
-  using (owner_id = auth.uid());
+drop policy if exists "Editar categoria própria ou do grupo" on categories;
+create policy "Editar categoria própria ou do grupo" on categories for update
+  using (owner_id = auth.uid() or (group_id is not null and public.is_group_member(group_id)));
 drop policy if exists "Excluir categoria própria" on categories;
-create policy "Excluir categoria própria" on categories for delete
-  using (owner_id = auth.uid());
+drop policy if exists "Excluir categoria própria ou do grupo" on categories;
+create policy "Excluir categoria própria ou do grupo" on categories for delete
+  using (owner_id = auth.uid() or (group_id is not null and public.is_group_member(group_id)));
 
 alter table category_budgets enable row level security;
 drop policy if exists "Gerenciar os próprios orçamentos" on category_budgets;
@@ -941,3 +958,105 @@ where c.id = r.id and r.rn > 1;
 drop index if exists categories_owner_group_nome_uniq;
 create unique index if not exists categories_owner_group_nome_norm_uniq
   on categories (owner_id, coalesce(group_id, '00000000-0000-0000-0000-000000000000'::uuid), lower(btrim(nome)));
+
+-- =========================================================
+-- CATEGORIA DE GRUPO: única por GRUPO, não por dono+grupo (2026-08-20)
+-- O índice acima (e o modelo até aqui) só impedia UM dono de duplicar a
+-- própria categoria — nunca impediu dois MEMBROS DIFERENTES do mesmo grupo
+-- de criarem, cada um, a própria versão de "Delivery"/"Saúde"/etc., porque
+-- owner_id sempre entrava na chave de unicidade. Na prática: cada pessoa
+-- loga, ensureDefaultCategories roda pra ela, e sem ver a categoria da
+-- OUTRA pessoa como "sua" (mesmo nome, mesmo grupo, dono diferente), cria a
+-- própria — daí a mesma categoria aparecendo duas vezes pra qualquer membro
+-- do grupo. Correção real: categoria de grupo passa a ser única pelo par
+-- (group_id, nome normalizado), point final, dono nenhum entra na conta.
+-- Categoria pessoal (group_id nulo) continua única só por dono, como
+-- sempre foi — não faz sentido impedir duas pessoas de terem cada uma sua
+-- categoria pessoal "Mercado".
+-- =========================================================
+
+-- Limpeza: junta duplicatas de categoria de GRUPO que já existem (mesmo
+-- group_id, mesmo nome normalizado, donos diferentes) — reaponta
+-- transações e itens de lista de compras pro "sobrevivente" (o mais
+-- antigo) antes de apagar os outros. category_budgets não precisa de
+-- reaponte manual: a FK dela pra categories já é "on delete cascade".
+with ranked as (
+  select id, group_id,
+         lower(btrim(nome)) as nome_norm,
+         row_number() over (partition by group_id, lower(btrim(nome)) order by criado_em) as rn
+  from categories
+  where group_id is not null
+),
+keeper_map as (
+  select d.id as dup_id, k.id as keeper_id
+  from ranked d
+  join ranked k on k.group_id = d.group_id and k.nome_norm = d.nome_norm and k.rn = 1
+  where d.rn > 1
+)
+update transactions t set categoria_id = km.keeper_id
+from keeper_map km where t.categoria_id = km.dup_id;
+
+with ranked as (
+  select id, group_id,
+         lower(btrim(nome)) as nome_norm,
+         row_number() over (partition by group_id, lower(btrim(nome)) order by criado_em) as rn
+  from categories
+  where group_id is not null
+),
+keeper_map as (
+  select d.id as dup_id, k.id as keeper_id
+  from ranked d
+  join ranked k on k.group_id = d.group_id and k.nome_norm = d.nome_norm and k.rn = 1
+  where d.rn > 1
+)
+update shopping_list_items i set categoria_id = km.keeper_id
+from keeper_map km where i.categoria_id = km.dup_id;
+
+with ranked as (
+  select id, group_id,
+         row_number() over (partition by group_id, lower(btrim(nome)) order by criado_em) as rn
+  from categories
+  where group_id is not null
+)
+delete from categories c using ranked r
+where c.id = r.id and r.rn > 1;
+
+-- Categorias com nome CORROMPIDO (encoding errado numa importação de CSV
+-- antiga — ver correção em js/services/csvImport.js) que sobraram sem
+-- nenhuma duplicata "normal" pra esse merge pegar: têm um caractere de
+-- substituição unicode (U+FFFD) no nome, o que nunca é um nome de
+-- categoria legítimo. Reaponta o que usa elas pra uma categoria "Outro" do
+-- mesmo escopo (cria se não existir) antes de apagar, em vez de simplesmente
+-- destruir a categorização de quem usava.
+do $$
+declare
+  corrompida record;
+  destino uuid;
+begin
+  for corrompida in select id, owner_id, group_id from categories where nome like '%' || chr(65533) || '%' loop
+    select id into destino from categories
+      where lower(btrim(nome)) = 'outro'
+        and (owner_id = corrompida.owner_id or coalesce(group_id, corrompida.group_id) = corrompida.group_id)
+      limit 1;
+    if destino is null then
+      insert into categories (nome, cor, icone, owner_id, group_id)
+        values ('Outro', '#64748B', 'bi-three-dots', corrompida.owner_id, corrompida.group_id)
+        returning id into destino;
+    end if;
+    update transactions set categoria_id = destino where categoria_id = corrompida.id;
+    update shopping_list_items set categoria_id = destino where categoria_id = corrompida.id;
+    delete from categories where id = corrompida.id;
+  end loop;
+end $$;
+
+drop index if exists categories_owner_group_nome_norm_uniq;
+
+-- Pessoal (group_id nulo): única por dono.
+create unique index if not exists categories_pessoal_nome_uniq
+  on categories (owner_id, lower(btrim(nome)))
+  where group_id is null;
+
+-- De grupo: única pro grupo inteiro, independente de quem criou.
+create unique index if not exists categories_grupo_nome_uniq
+  on categories (group_id, lower(btrim(nome)))
+  where group_id is not null;

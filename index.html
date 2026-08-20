@@ -267,6 +267,28 @@
             </div>
           </template>
 
+          <!-- Período do resumo/gráficos (2026-08-20) — antes era sempre
+               "desde sempre", sem filtro nenhum. "Contas a vencer"/Recursos
+               não entram aqui, são sempre "agora", sem período. -->
+          <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+            <select class="form-select form-select-sm" style="width: auto;" x-model="periodoModo">
+              <option value="mes_atual">Este mês</option>
+              <option value="mes_anterior">Mês anterior</option>
+              <option value="proximo_mes">Próximo mês</option>
+              <option value="ano_atual">Este ano</option>
+              <option value="ano_anterior">Ano anterior</option>
+              <option value="personalizado">Período personalizado</option>
+              <option value="tudo">Todo o período</option>
+            </select>
+            <template x-if="periodoModo === 'personalizado'">
+              <div class="d-flex align-items-center gap-2">
+                <input type="date" class="form-control form-control-sm" x-model="periodoInicio" />
+                <span class="cg-muted small">até</span>
+                <input type="date" class="form-control form-control-sm" x-model="periodoFim" />
+              </div>
+            </template>
+          </div>
+
           <div class="cg-hero-balance mb-4" :style="corSelecionada ? { background: `linear-gradient(135deg, ${corSelecionada}, ${corSelecionada})` } : {}">
             <span class="cg-hero-balance__label">Saldo <span x-text="quemVer === 'grupo' ? 'do grupo' : quemVer === 'eu' ? 'atual' : ('de ' + (opcoesQuemVer.find(o => o.id === quemVer)?.nome || ''))"></span></span>
             <div class="cg-hero-balance__value" :title="cgFormat.formatCurrency(resumoSelecionado.saldo)" x-text="cgFormat.formatCurrencyCompact(resumoSelecionado.saldo)"></div>
@@ -422,7 +444,6 @@
               <button type="button" :class="{ 'is-active': viewMode === 'tabela' }" @click="setViewMode('tabela')" title="Tabela (rolar pros lados)"><i class="bi bi-table"></i></button>
               <button type="button" :class="{ 'is-active': viewMode === 'grade' }" @click="setViewMode('grade')" title="Grade"><i class="bi bi-grid-3x3-gap"></i></button>
               <button type="button" :class="{ 'is-active': viewMode === 'compacta' }" @click="setViewMode('compacta')" title="Grade compacta"><i class="bi bi-grid"></i></button>
-              <button type="button" :class="{ 'is-active': viewMode === 'agrupado' }" @click="setViewMode('agrupado')" title="Agrupado"><i class="bi bi-collection"></i></button>
             </div>
           </div>
 
@@ -505,6 +526,7 @@
               </div>
               <div class="col-12 col-md-6 d-flex flex-wrap gap-2">
                 <button type="button" class="btn btn-outline-secondary btn-sm" @click="aplicarMesAtual()">Este mês</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" @click="aplicarProximoMes()">Próximo mês</button>
                 <button type="button" class="btn btn-outline-secondary btn-sm" @click="aplicarPeriodoRapido(7)">Próximos 7 dias</button>
                 <button type="button" class="btn btn-outline-secondary btn-sm" @click="aplicarPeriodoRapido(-30)">Últimos 30 dias</button>
                 <button type="button" class="btn btn-outline-secondary btn-sm ms-auto" @click="limparFiltros()"><i class="bi bi-x-circle"></i> Limpar filtros</button>
@@ -519,108 +541,60 @@
             </div>
           </template>
 
-          <!-- ===== Agrupado: accordion por período (ano -> mês) ou por
-               responsável/movimentação/categoria (1 nível). Cada grupo mostra
-               um resumo (entradas/saídas + contagem por status) e abre/fecha
-               independente dos outros — ano/mês atual já vêm abertos, o
-               resto começa fechado (ver abertoPorPadrao/isAtual em
-               gruposPorPeriodo, js/components/transactionTable.js). -->
-          <template x-if="viewMode === 'agrupado' && sortedRows.length">
-            <div class="mb-3">
-              <div class="btn-group btn-group-sm mb-3" role="group">
-                <button type="button" class="btn" :class="agrupamento === 'periodo' ? 'btn-secondary' : 'btn-outline-secondary'" @click="setAgrupamento('periodo')">Por período</button>
-                <button type="button" class="btn" :class="agrupamento === 'responsavel' ? 'btn-secondary' : 'btn-outline-secondary'" @click="setAgrupamento('responsavel')">Por responsável</button>
-                <button type="button" class="btn" :class="agrupamento === 'movimentacao' ? 'btn-secondary' : 'btn-outline-secondary'" @click="setAgrupamento('movimentacao')">Por movimentação</button>
-                <button type="button" class="btn" :class="agrupamento === 'categoria' ? 'btn-secondary' : 'btn-outline-secondary'" @click="setAgrupamento('categoria')">Por categoria</button>
+          <!-- Agrupar: filtro SEPARADO do viewMode (lista/tabela/grade/compacta
+               continuam decidindo COMO cada seção é desenhada por dentro —
+               agrupar só decide COMO dividir as linhas em seções). Por
+               período usa 1 nível (mês, com o ano embutido no rótulo "ago/26"
+               e o mês atual já vindo aberto); por responsável/movimentação/
+               categoria também é 1 nível. Ver secoesExibidas em
+               js/components/transactionTable.js. -->
+          <template x-if="sortedRows.length">
+          <div>
+            <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+              <button type="button" class="cg-btn btn btn-sm" :class="agrupando ? 'btn-secondary' : 'btn-outline-secondary'" @click="setAgrupando(!agrupando)">
+                <i class="bi bi-layers"></i> Agrupar
+              </button>
+              <div class="btn-group btn-group-sm" role="group" x-show="agrupando" x-cloak>
+                <button type="button" class="btn" :class="agrupamento === 'periodo' ? 'btn-secondary' : 'btn-outline-secondary'" @click="setAgrupamento('periodo')">Período</button>
+                <button type="button" class="btn" :class="agrupamento === 'responsavel' ? 'btn-secondary' : 'btn-outline-secondary'" @click="setAgrupamento('responsavel')">Responsável</button>
+                <button type="button" class="btn" :class="agrupamento === 'movimentacao' ? 'btn-secondary' : 'btn-outline-secondary'" @click="setAgrupamento('movimentacao')">Movimentação</button>
+                <button type="button" class="btn" :class="agrupamento === 'categoria' ? 'btn-secondary' : 'btn-outline-secondary'" @click="setAgrupamento('categoria')">Categoria</button>
               </div>
-
-              <template x-if="agrupamento === 'periodo'">
-                <div class="d-flex flex-column gap-3">
-                  <template x-for="grupoAno in gruposPorPeriodo" :key="grupoAno.chave">
-                    <div class="cg-card">
-                      <button type="button" class="btn w-100 d-flex align-items-center justify-content-between p-0 border-0 bg-transparent" @click="toggleGrupo(grupoAno.chave, grupoAno.abertoPorPadrao)">
-                        <span class="h6 fw-bold mb-0" x-text="grupoAno.label"></span>
-                        <i class="bi" :class="estaAberto(grupoAno.chave, grupoAno.abertoPorPadrao) ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
-                      </button>
-                      <div x-show="estaAberto(grupoAno.chave, grupoAno.abertoPorPadrao)" x-cloak class="d-flex flex-column gap-2 mt-3">
-                        <template x-for="grupoMes in grupoAno.meses" :key="grupoMes.chave">
-                          <div>
-                            <button type="button" class="btn w-100 d-flex flex-wrap align-items-center justify-content-between gap-2 p-2" style="background: var(--color-surface-alt); border-radius: var(--radius-md); border: 1px solid var(--color-border);" @click="toggleGrupo(grupoMes.chave, grupoMes.isAtual)">
-                              <span class="d-flex align-items-center gap-2">
-                                <span class="cg-badge cg-badge--success" style="padding: 2px 8px; font-size: 0.65rem;" x-show="grupoMes.isAtual">Agora</span>
-                                <span class="fw-semibold" x-text="grupoMes.label"></span>
-                              </span>
-                              <span class="d-flex align-items-center gap-2 small flex-wrap">
-                                <span class="text-success fw-semibold" x-show="grupoMes.resumo.entradas" x-text="'Ent. ' + cgFormat.formatCurrencyCompact(grupoMes.resumo.entradas)"></span>
-                                <span class="text-danger fw-semibold" x-show="grupoMes.resumo.saidas" x-text="'Saí. ' + cgFormat.formatCurrencyCompact(grupoMes.resumo.saidas)"></span>
-                                <span class="cg-muted" x-show="grupoMes.resumo.pago" x-text="grupoMes.resumo.pago + ' pago' + (grupoMes.resumo.pago === 1 ? '' : 's')"></span>
-                                <span class="text-danger" x-show="grupoMes.resumo.vencido" x-text="grupoMes.resumo.vencido + ' vencido' + (grupoMes.resumo.vencido === 1 ? '' : 's')"></span>
-                                <span class="text-warning" x-show="grupoMes.resumo.a_vencer" x-text="grupoMes.resumo.a_vencer + ' a vencer'"></span>
-                                <span class="cg-muted" x-show="grupoMes.resumo.pendente" x-text="grupoMes.resumo.pendente + ' pendente' + (grupoMes.resumo.pendente === 1 ? '' : 's')"></span>
-                                <i class="bi" :class="estaAberto(grupoMes.chave, grupoMes.isAtual) ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
-                              </span>
-                            </button>
-                            <div x-show="estaAberto(grupoMes.chave, grupoMes.isAtual)" x-cloak class="d-flex flex-column gap-1 mt-2">
-                              <template x-for="row in grupoMes.linhas" :key="row.id">
-                                <div class="cg-list-row d-flex align-items-center gap-2 p-2" role="button" tabindex="0" @click="editar(row)" @keydown.enter="editar(row)">
-                                  <span class="cg-badge flex-shrink-0" :class="'cg-badge--' + cgStatus.statusMeta(row._status).badge" style="padding: 4px 8px;"><i class="bi" :class="cgStatus.statusMeta(row._status).icon"></i></span>
-                                  <div class="min-w-0 flex-fill">
-                                    <div class="fw-semibold text-truncate d-flex align-items-center gap-2">
-                                      <span class="text-truncate" x-text="row.titulo"></span>
-                                      <span class="cg-parcela-tag flex-shrink-0" x-show="row.parcela_total" x-text="row.parcela_atual + '/' + row.parcela_total"></span>
-                                    </div>
-                                    <div class="cg-muted small text-truncate" x-text="(categoryFor(row.categoria_id)?.nome || 'Sem categoria') + ' · ' + (responsavelFor(row.responsavel_id)?.nome || '')"></div>
-                                  </div>
-                                  <div class="fw-semibold flex-shrink-0" :class="row.tipo === 'entrada' ? 'text-success' : ''" x-text="(row.tipo === 'entrada' ? '+ ' : '- ') + cgFormat.formatCurrencyCompact(row.valor)"></div>
-                                </div>
-                              </template>
-                            </div>
-                          </div>
-                        </template>
-                      </div>
-                    </div>
-                  </template>
-                </div>
-              </template>
-
-              <template x-if="agrupamento !== 'periodo'">
-                <div class="d-flex flex-column gap-2">
-                  <template x-for="grupo in gruposSimples" :key="grupo.chave">
-                    <div class="cg-card">
-                      <button type="button" class="btn w-100 d-flex flex-wrap align-items-center justify-content-between gap-2 p-0 border-0 bg-transparent" @click="toggleGrupo(grupo.chave, true)">
-                        <span class="fw-bold" x-text="grupo.label + ' (' + grupo.linhas.length + ')'"></span>
-                        <span class="d-flex align-items-center gap-2 small flex-wrap">
-                          <span class="text-success fw-semibold" x-show="grupo.resumo.entradas" x-text="'Ent. ' + cgFormat.formatCurrencyCompact(grupo.resumo.entradas)"></span>
-                          <span class="text-danger fw-semibold" x-show="grupo.resumo.saidas" x-text="'Saí. ' + cgFormat.formatCurrencyCompact(grupo.resumo.saidas)"></span>
-                          <span class="cg-muted" x-show="grupo.resumo.pago" x-text="grupo.resumo.pago + ' pago' + (grupo.resumo.pago === 1 ? '' : 's')"></span>
-                          <span class="text-danger" x-show="grupo.resumo.vencido" x-text="grupo.resumo.vencido + ' vencido' + (grupo.resumo.vencido === 1 ? '' : 's')"></span>
-                          <span class="text-warning" x-show="grupo.resumo.a_vencer" x-text="grupo.resumo.a_vencer + ' a vencer'"></span>
-                          <i class="bi" :class="estaAberto(grupo.chave, true) ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
-                        </span>
-                      </button>
-                      <div x-show="estaAberto(grupo.chave, true)" x-cloak class="d-flex flex-column gap-1 mt-3">
-                        <template x-for="row in grupo.linhas" :key="row.id">
-                          <div class="cg-list-row d-flex align-items-center gap-2 p-2" role="button" tabindex="0" @click="editar(row)" @keydown.enter="editar(row)">
-                            <span class="cg-badge flex-shrink-0" :class="'cg-badge--' + cgStatus.statusMeta(row._status).badge" style="padding: 4px 8px;"><i class="bi" :class="cgStatus.statusMeta(row._status).icon"></i></span>
-                            <div class="min-w-0 flex-fill">
-                              <div class="fw-semibold text-truncate d-flex align-items-center gap-2">
-                                <span class="text-truncate" x-text="row.titulo"></span>
-                                <span class="cg-parcela-tag flex-shrink-0" x-show="row.parcela_total" x-text="row.parcela_atual + '/' + row.parcela_total"></span>
-                              </div>
-                              <div class="cg-muted small text-truncate" x-text="(categoryFor(row.categoria_id)?.nome || 'Sem categoria') + ' · ' + (responsavelFor(row.responsavel_id)?.nome || '')"></div>
-                            </div>
-                            <div class="fw-semibold flex-shrink-0" :class="row.tipo === 'entrada' ? 'text-success' : ''" x-text="(row.tipo === 'entrada' ? '+ ' : '- ') + cgFormat.formatCurrencyCompact(row.valor)"></div>
-                          </div>
-                        </template>
-                      </div>
-                    </div>
-                  </template>
-                </div>
-              </template>
             </div>
-          </template>
 
-          <template x-if="(viewMode === 'lista' || viewMode === 'tabela') && sortedRows.length">
+            <template x-for="secao in secoesExibidas" :key="secao.chave">
+            <div class="mb-3">
+              <!-- Cabeçalho do grupo — x-if (não x-show) de propósito: some
+                   do DOM inteiro quando "agrupando" desliga, em vez de só
+                   ficar invisível — evita depender de display:none contra
+                   qualquer classe utilitária do Bootstrap. -->
+              <template x-if="agrupando">
+                <button type="button" class="btn w-100 d-flex flex-wrap align-items-center justify-content-between gap-2 p-2 mb-2" style="background: var(--color-surface-alt); border-radius: var(--radius-md); border: 1px solid var(--color-border);" @click="toggleGrupo(secao.chave, secao.abertoPorPadrao)">
+                  <span class="d-flex align-items-center gap-2">
+                    <span class="cg-badge cg-badge--success" style="padding: 2px 8px; font-size: 0.65rem;" x-show="secao.isAtual">Agora</span>
+                    <span class="fw-semibold" x-text="secao.label + (agrupamento !== 'periodo' ? ' (' + secao.linhas.length + ')' : '')"></span>
+                  </span>
+                  <span class="d-flex align-items-center gap-2 small flex-wrap">
+                    <span class="text-success fw-semibold" x-show="secao.resumo.entradas" x-text="'Ent. ' + cgFormat.formatCurrencyCompact(secao.resumo.entradas)"></span>
+                    <span class="text-danger fw-semibold" x-show="secao.resumo.saidas" x-text="'Saí. ' + cgFormat.formatCurrencyCompact(secao.resumo.saidas)"></span>
+                    <span class="cg-muted" x-show="secao.resumo.pago" x-text="secao.resumo.pago + ' pago' + (secao.resumo.pago === 1 ? '' : 's')"></span>
+                    <span class="text-danger" x-show="secao.resumo.vencido" x-text="secao.resumo.vencido + ' vencido' + (secao.resumo.vencido === 1 ? '' : 's')"></span>
+                    <span class="text-warning" x-show="secao.resumo.a_vencer" x-text="secao.resumo.a_vencer + ' a vencer'"></span>
+                    <span class="cg-muted" x-show="secao.resumo.pendente" x-text="secao.resumo.pendente + ' pendente' + (secao.resumo.pendente === 1 ? '' : 's')"></span>
+                    <i class="bi" :class="estaAberto(secao.chave, secao.abertoPorPadrao) ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+                  </span>
+                </button>
+              </template>
+
+              <!-- Corpo do grupo — mesmo raciocínio, x-if em vez de x-show:
+                   um grupo "fechado" precisa sumir de verdade, não só ficar
+                   com display:none (que classes .d-flex/.d-none do
+                   Bootstrap, carregando !important, já venceram mais de uma
+                   vez nesse projeto — ver RAIO-X §7.2). -->
+              <template x-if="!agrupando || estaAberto(secao.chave, secao.abertoPorPadrao)">
+              <div>
+
+          <template x-if="(viewMode === 'lista' || viewMode === 'tabela') && secao.linhas.length">
           <div class="cg-scroll-x" :class="viewMode === 'lista' ? 'd-none d-md-block' : ''">
             <table class="table cg-table align-middle">
               <thead>
@@ -638,7 +612,7 @@
                 </tr>
               </thead>
               <tbody>
-                <template x-for="row in sortedRows" :key="row.id">
+                <template x-for="row in secao.linhas" :key="row.id">
                   <tr>
                     <td>
                       <button type="button" class="btn btn-sm p-0 border-0 bg-transparent" @click="toggleTipoDespesa(row)" :aria-label="row.tipo_despesa === 'fixa' ? 'Fixa — clique para marcar como variável' : 'Variável — clique para marcar como fixa'">
@@ -750,9 +724,9 @@
           </div>
           </template>
 
-          <template x-if="viewMode === 'lista' && sortedRows.length">
+          <template x-if="viewMode === 'lista' && secao.linhas.length">
           <div class="d-flex flex-column gap-2 d-md-none">
-            <template x-for="row in sortedRows" :key="row.id">
+            <template x-for="row in secao.linhas" :key="row.id">
               <div class="cg-card cg-card--compact">
                 <div class="d-flex justify-content-between align-items-center gap-2 mb-2 min-w-0">
                   <div class="d-flex align-items-center gap-2 min-w-0">
@@ -861,8 +835,8 @@
 
           <!-- Grade / grade compacta: navegação visual, toque abre o formulário
                completo (sem edição inline campo a campo como na lista). -->
-          <div class="cg-grid-view" :class="{ 'cg-grid-view--compact': viewMode === 'compacta' }" x-show="(viewMode === 'grade' || viewMode === 'compacta') && sortedRows.length">
-            <template x-for="row in sortedRows" :key="row.id">
+          <div class="cg-grid-view" :class="{ 'cg-grid-view--compact': viewMode === 'compacta' }" x-show="(viewMode === 'grade' || viewMode === 'compacta') && secao.linhas.length">
+            <template x-for="row in secao.linhas" :key="row.id">
               <div class="cg-card cg-grid-view__card" @click="editar(row)">
                 <span class="cg-grid-view__avatar" :title="payersFor(row).length >= 2 ? 'Dividido' : (responsavelFor(row.responsavel_id)?.nome || '')">
                   <template x-if="payersFor(row).length < 2">
@@ -901,6 +875,13 @@
               </div>
             </template>
           </div>
+
+              </div>
+              </template>
+            </div>
+            </template>
+          </div>
+          </template>
         </section>
 
         <!-- ===== LISTA DE COMPRAS ===== -->
@@ -1547,8 +1528,9 @@
             <div class="cg-card mb-3" x-show="caixinhas.length">
               <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
                 <div>
-                  <div class="cg-muted small text-uppercase">Total guardado (todas as caixinhas)</div>
+                  <div class="cg-muted small text-uppercase">Total guardado em BRL</div>
                   <div class="h4 fw-bold mb-0" x-text="cgFormat.formatCurrency(somaGeral)"></div>
+                  <div class="cg-muted small" x-show="caixinhas.some(c => c.moeda && c.moeda !== 'BRL')">Caixinhas em outra moeda entram convertidas, no card de cada uma</div>
                 </div>
                 <div class="d-flex flex-wrap gap-3">
                   <template x-for="r in porResponsavel" :key="r.membro.id">
@@ -1567,16 +1549,31 @@
               </div>
             </div>
 
+            <!-- Filtro por responsável — só faz sentido mostrar com 2+ pessoas
+                 tendo caixinha (senão é um filtro pra ninguém escolher). -->
+            <div class="btn-group btn-group-sm mb-3" role="group" x-show="!activeId && responsaveisComCaixinha.length > 1">
+              <button type="button" class="btn" :class="!filtroResponsavel ? 'btn-secondary' : 'btn-outline-secondary'" @click="filtroResponsavel = ''">Todos</button>
+              <template x-for="m in responsaveisComCaixinha" :key="m.id">
+                <button type="button" class="btn" :class="filtroResponsavel === m.id ? 'btn-secondary' : 'btn-outline-secondary'" @click="filtroResponsavel = m.id" x-text="m.nome"></button>
+              </template>
+            </div>
+
             <!-- Grade de bancos -->
             <template x-if="!activeId">
               <div class="cg-room-grid">
-                <template x-for="c in caixinhas" :key="c.id">
+                <template x-for="c in caixinhasFiltradas" :key="c.id">
                   <div class="cg-room-tile" role="button" tabindex="0" @click="selecionar(c.id)" @keydown.enter="selecionar(c.id)">
                     <button type="button" class="cg-room-tile__edit" @click="abrirEditarCaixinha(c, $event)" aria-label="Editar caixinha"><i class="bi bi-pencil"></i></button>
+                    <!-- Avatar do dono — só aparece com grupo (sozinho é sempre "eu"). -->
+                    <span class="cg-avatar cg-avatar--sm" x-show="$store.app.group" style="position:absolute; top:6px; right:6px;" :style="{ borderColor: responsavelFor(c.owner_id)?.cor || 'var(--color-primary-soft)', background: responsavelFor(c.owner_id)?.cor || 'var(--color-primary)' }" :title="responsavelFor(c.owner_id)?.nome">
+                      <template x-if="responsavelFor(c.owner_id)?.avatar_url"><img :src="responsavelFor(c.owner_id).avatar_url" /></template>
+                      <template x-if="!responsavelFor(c.owner_id)?.avatar_url"><span x-text="cgFormat.initials(responsavelFor(c.owner_id)?.nome)" style="font-size:0.6rem;"></span></template>
+                    </span>
                     <img :src="c.icone_url" x-show="c.icone_url" style="width:32px;height:32px;border-radius:50%;object-fit:cover;" />
                     <i class="bi" :class="c.icone" x-show="!c.icone_url"></i>
                     <span class="cg-room-tile__nome" x-text="c.banco_nome"></span>
-                    <span class="cg-room-tile__count fw-semibold" x-text="cgFormat.formatCurrencyCompact(totaisFor(c.id).saldo)"></span>
+                    <span class="cg-room-tile__count fw-semibold" x-text="formatMoeda(totaisFor(c.id).saldo, c.moeda)"></span>
+                    <span class="cg-muted" style="font-size: 0.68rem;" x-show="conversaoBRLFor(c)" x-text="conversaoBRLFor(c)"></span>
                     <div class="progress mt-1" style="height: 4px; width: 100%;" x-show="progressoFor(c) !== null">
                       <div class="progress-bar bg-success" :style="{ width: progressoFor(c) + '%' }"></div>
                     </div>
@@ -1605,6 +1602,10 @@
                     <img :src="caixinhaAtiva.icone_url" x-show="caixinhaAtiva.icone_url" style="width:24px;height:24px;border-radius:50%;object-fit:cover;" />
                     <i class="bi" :class="caixinhaAtiva.icone" x-show="!caixinhaAtiva.icone_url"></i>
                     <span x-text="caixinhaAtiva.banco_nome"></span>
+                    <span class="cg-avatar cg-avatar--sm ms-1" x-show="$store.app.group" :style="{ borderColor: responsavelFor(caixinhaAtiva.owner_id)?.cor || 'var(--color-primary-soft)', background: responsavelFor(caixinhaAtiva.owner_id)?.cor || 'var(--color-primary)' }" :title="responsavelFor(caixinhaAtiva.owner_id)?.nome">
+                      <template x-if="responsavelFor(caixinhaAtiva.owner_id)?.avatar_url"><img :src="responsavelFor(caixinhaAtiva.owner_id).avatar_url" /></template>
+                      <template x-if="!responsavelFor(caixinhaAtiva.owner_id)?.avatar_url"><span x-text="cgFormat.initials(responsavelFor(caixinhaAtiva.owner_id)?.nome)"></span></template>
+                    </span>
                   </div>
                   <button type="button" class="btn btn-sm btn-outline-secondary" @click="abrirEditarCaixinha(caixinhaAtiva, $event)" aria-label="Editar caixinha" style="width: 88px;"><i class="bi bi-pencil"></i> Editar</button>
                 </div>
@@ -1613,19 +1614,20 @@
                   <div class="col-6 col-md-3">
                     <div class="cg-card cg-card--stat">
                       <div class="cg-muted small text-uppercase">Guardado</div>
-                      <div class="h5 fw-bold mb-0 text-success" x-text="cgFormat.formatCurrency(totaisFor(activeId).guardado)"></div>
+                      <div class="h5 fw-bold mb-0 text-success" x-text="formatMoeda(totaisFor(activeId).guardado, caixinhaAtiva.moeda)"></div>
                     </div>
                   </div>
                   <div class="col-6 col-md-3">
                     <div class="cg-card cg-card--stat">
                       <div class="cg-muted small text-uppercase">Retirado</div>
-                      <div class="h5 fw-bold mb-0 text-danger" x-text="cgFormat.formatCurrency(totaisFor(activeId).retirado)"></div>
+                      <div class="h5 fw-bold mb-0 text-danger" x-text="formatMoeda(totaisFor(activeId).retirado, caixinhaAtiva.moeda)"></div>
                     </div>
                   </div>
                   <div class="col-6 col-md-3">
                     <div class="cg-card cg-card--stat">
                       <div class="cg-muted small text-uppercase">Saldo</div>
-                      <div class="h5 fw-bold mb-0" x-text="cgFormat.formatCurrency(totaisFor(activeId).saldo)"></div>
+                      <div class="h5 fw-bold mb-0" x-text="formatMoeda(totaisFor(activeId).saldo, caixinhaAtiva.moeda)"></div>
+                      <div class="cg-muted small" x-show="conversaoBRLFor(caixinhaAtiva)" x-text="conversaoBRLFor(caixinhaAtiva)"></div>
                     </div>
                   </div>
                   <div class="col-6 col-md-3">
@@ -1633,7 +1635,7 @@
                       <div class="cg-muted small text-uppercase">Meta</div>
                       <template x-if="caixinhaAtiva.meta">
                         <div>
-                          <div class="h5 fw-bold mb-0" x-text="cgFormat.formatCurrency(caixinhaAtiva.meta)"></div>
+                          <div class="h5 fw-bold mb-0" x-text="formatMoeda(caixinhaAtiva.meta, caixinhaAtiva.moeda)"></div>
                           <div class="progress mt-1" style="height: 6px;">
                             <div class="progress-bar bg-success" :style="{ width: progressoFor(caixinhaAtiva) + '%' }"></div>
                           </div>
@@ -1644,6 +1646,9 @@
                     </div>
                   </div>
                 </div>
+
+                <!-- Cotação discreta — só aparece com moeda estrangeira e cotação já carregada. -->
+                <p class="cg-muted small mb-3" x-show="caixinhaAtiva.moeda !== 'BRL' && cotacaoLabel(caixinhaAtiva.moeda)" x-text="cotacaoLabel(caixinhaAtiva.moeda)"></p>
 
                 <div class="cg-quick-actions mb-3">
                   <button type="button" class="cg-btn btn btn-success btn-sm" @click="abrirMovimentacao('guardado')"><i class="bi bi-plus-circle"></i> Guardar</button>
@@ -1664,7 +1669,7 @@
                         <div class="fw-semibold" x-text="mov.tipo === 'guardado' ? 'Aporte' : 'Retirada'"></div>
                         <div class="cg-muted small text-truncate" x-text="cgFormat.formatDate(mov.data) + (mov.observacoes ? ' · ' + mov.observacoes : '')"></div>
                       </div>
-                      <div class="fw-semibold flex-shrink-0" :class="mov.tipo === 'guardado' ? 'text-success' : 'text-danger'" x-text="(mov.tipo === 'guardado' ? '+ ' : '- ') + cgFormat.formatCurrency(mov.valor)"></div>
+                      <div class="fw-semibold flex-shrink-0" :class="mov.tipo === 'guardado' ? 'text-success' : 'text-danger'" x-text="(mov.tipo === 'guardado' ? '+ ' : '- ') + formatMoeda(mov.valor, caixinhaAtiva.moeda)"></div>
                       <button type="button" class="btn btn-sm btn-link text-danger p-0" @click="removerMovimentacao(mov)" title="Remover"><i class="bi bi-x-circle"></i></button>
                     </div>
                   </template>
@@ -1688,12 +1693,25 @@
               <div class="row g-2 mb-3">
                 <div class="col-6">
                   <label class="form-label small">Moeda</label>
-                  <input type="text" class="form-control" maxlength="3" style="text-transform: uppercase;" x-model="caixinhaForm.moeda" placeholder="BRL" />
+                  <select class="form-select" x-model="caixinhaForm.moeda">
+                    <template x-for="m in moedasSuportadas" :key="m.codigo">
+                      <option :value="m.codigo" x-text="m.codigo + ' — ' + m.nome"></option>
+                    </template>
+                  </select>
                 </div>
                 <div class="col-6">
                   <label class="form-label small">Meta (opcional)</label>
-                  <input type="number" min="0" step="0.01" class="form-control" x-model="caixinhaForm.meta" placeholder="R$" />
+                  <input type="number" min="0" step="0.01" class="form-control" x-model="caixinhaForm.meta" :placeholder="cgFormat.moedaInfo(caixinhaForm.moeda).simbolo" />
                 </div>
+              </div>
+              <div class="mb-3" x-show="$store.app.group">
+                <label class="form-label small">Responsável</label>
+                <select class="form-select" x-model="caixinhaForm.responsavel_id">
+                  <option :value="$store.app.profile?.id" x-text="$store.app.profile?.nome"></option>
+                  <template x-for="m in ($store.app.group?.members || [])" :key="m.id">
+                    <option :value="m.id" x-text="m.nome" x-show="m.id !== $store.app.profile?.id"></option>
+                  </template>
+                </select>
               </div>
               <div class="mb-3">
                 <label class="form-label small">Ícone</label>
@@ -2052,7 +2070,7 @@
           <div class="row g-2 mb-3">
             <div class="col-6">
               <label class="form-label">Tipo de despesa</label>
-              <select class="form-select" x-model="$store.txModal.form.tipo_despesa">
+              <select class="form-select" x-model="$store.txModal.form.tipo_despesa" @change="$store.txModal.onTipoDespesaChange()">
                 <option value="variavel">Variável</option>
                 <option value="fixa">Fixa</option>
               </select>
@@ -2121,11 +2139,16 @@
           </div>
 
           <div class="row g-2 mb-3">
-            <div class="col-6">
+            <div :class="$store.txModal.usaCadenciaParaVencimento ? 'col-12' : 'col-6'">
               <label class="form-label">Cadastro</label>
               <input type="date" class="form-control" x-model="$store.txModal.form.data_cadastro" />
             </div>
-            <div class="col-6">
+            <!-- Vencimento é OU este campo (despesa variável, ou fixa sem
+                 cadência mensal/anual) OU o "dia do mês"/"dia+mês do ano" lá
+                 embaixo, dentro de "É uma despesa recorrente" — nunca os
+                 dois juntos, pra não ter duas fontes brigando pela mesma
+                 data (ver $store.txModal.usaCadenciaParaVencimento). -->
+            <div class="col-6" x-show="!$store.txModal.usaCadenciaParaVencimento" x-cloak>
               <label class="form-label">Vencimento</label>
               <input type="date" class="form-control" x-model="$store.txModal.form.data_vencimento" />
             </div>
@@ -2146,18 +2169,43 @@
               <label class="form-check-label" for="recorrente">É uma despesa recorrente</label>
             </div>
             <div class="row g-2" x-show="$store.txModal.form.recorrente" x-cloak>
-              <div :class="$store.txModal.form.recorrencia_tipo === 'personalizado' ? 'col-6' : 'col-12'">
+              <div class="col-12">
                 <select class="form-select form-select-sm" x-model="$store.txModal.form.recorrencia_tipo">
                   <option value="semanal">Toda semana</option>
                   <option value="mensal">Todo mês</option>
                   <option value="anual">Todo ano</option>
-                  <option value="personalizado">Personalizado</option>
+                  <option value="personalizado">Personalizado (a cada N dias)</option>
                 </select>
               </div>
-              <div class="col-6" x-show="$store.txModal.form.recorrencia_tipo === 'personalizado'" x-cloak>
+              <template x-if="$store.txModal.form.recorrencia_tipo === 'mensal'">
+                <div class="col-12 mt-2">
+                  <label class="form-label small mb-1">Todo dia</label>
+                  <input type="number" min="1" max="31" class="form-control form-control-sm" style="max-width: 100px;" x-model="$store.txModal.form.recorrencia_dia_mes" placeholder="Dia" />
+                  <p class="cg-muted small mb-0 mt-1" x-show="$store.txModal.form.recorrencia_dia_mes" x-text="'Próximo vencimento: ' + cgFormat.formatDate($store.txModal.proximoVencimentoPreview)"></p>
+                </div>
+              </template>
+              <template x-if="$store.txModal.form.recorrencia_tipo === 'anual'">
+                <div class="col-12 mt-2 d-flex align-items-end gap-2">
+                  <div>
+                    <label class="form-label small mb-1">Dia</label>
+                    <input type="number" min="1" max="31" class="form-control form-control-sm" style="width: 90px;" x-model="$store.txModal.form.recorrencia_dia_mes" placeholder="Dia" />
+                  </div>
+                  <div>
+                    <label class="form-label small mb-1">Mês</label>
+                    <select class="form-select form-select-sm" x-model="$store.txModal.form.recorrencia_mes">
+                      <option value="1">Janeiro</option><option value="2">Fevereiro</option><option value="3">Março</option>
+                      <option value="4">Abril</option><option value="5">Maio</option><option value="6">Junho</option>
+                      <option value="7">Julho</option><option value="8">Agosto</option><option value="9">Setembro</option>
+                      <option value="10">Outubro</option><option value="11">Novembro</option><option value="12">Dezembro</option>
+                    </select>
+                  </div>
+                  <p class="cg-muted small mb-1" x-show="$store.txModal.form.recorrencia_dia_mes" x-text="'Próximo: ' + cgFormat.formatDate($store.txModal.proximoVencimentoPreview)"></p>
+                </div>
+              </template>
+              <div class="col-6 mt-2" x-show="$store.txModal.form.recorrencia_tipo === 'personalizado'" x-cloak>
                 <div class="input-group input-group-sm">
                   <input type="number" min="1" class="form-control" placeholder="Nº" x-model="$store.txModal.form.recorrencia_intervalo_dias" />
-                  <span class="input-group-text">dias</span>
+                  <span class="input-group-text">dias, a partir do cadastro</span>
                 </div>
               </div>
             </div>

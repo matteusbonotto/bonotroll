@@ -109,6 +109,8 @@ export async function gerarRecorrentesPendentes({ ownerId, groupId }) {
         recorrente: true,
         recorrencia_tipo: ultima.recorrencia_tipo || null,
         recorrencia_intervalo_dias: ultima.recorrencia_intervalo_dias || null,
+        recorrencia_dia_mes: ultima.recorrencia_dia_mes || null,
+        recorrencia_mes: ultima.recorrencia_mes || null,
         recorrencia_serie_id: ultima.recorrencia_serie_id || null,
         parcela_atual: parcelaAtual,
         parcela_total: ultima.parcela_total ?? null,

@@ -6,6 +6,54 @@ import { startBarcodeScanner, stopBarcodeScanner, interpretScannedCode } from '.
 import { extractTextFromPdf } from '../services/pdf.js';
 import { todayIso } from '../utils/format.js';
 
+function pad2(n) {
+  return String(n).padStart(2, '0');
+}
+// Último dia de um mês 1-12 num ano — new Date(ano, mes, 0) usa o mês
+// SEGUINTE (índice 0-based == mes 1-based) com "dia 0", que o próprio JS já
+// resolve como "um dia antes do dia 1 desse mês" = último dia do mês
+// anterior (mes 1-based que queremos). Só lê getDate() de volta (nunca
+// toISOString()), então não tem conversão de fuso horário envolvida — puro
+// cálculo de calendário.
+function ultimoDiaDoMes(ano, mes1a12) {
+  return new Date(ano, mes1a12, 0).getDate();
+}
+
+// Próxima ocorrência de "todo dia X do mês" a partir de hoje — se esse dia
+// já passou neste mês, pula pro mês seguinte. Comparação por string ISO
+// (não Date), então nunca converte fuso horário.
+function calcularVencimentoMensal(diaMes) {
+  const hojeStr = todayIso();
+  let ano = Number(hojeStr.slice(0, 4));
+  let mes = Number(hojeStr.slice(5, 7));
+  let dia = Math.min(diaMes, ultimoDiaDoMes(ano, mes));
+  let candidato = `${ano}-${pad2(mes)}-${pad2(dia)}`;
+  if (candidato < hojeStr) {
+    mes += 1;
+    if (mes > 12) {
+      mes = 1;
+      ano += 1;
+    }
+    dia = Math.min(diaMes, ultimoDiaDoMes(ano, mes));
+    candidato = `${ano}-${pad2(mes)}-${pad2(dia)}`;
+  }
+  return candidato;
+}
+
+// Mesma ideia, mas "todo dia X do mês Y de cada ano".
+function calcularVencimentoAnual(diaMes, mesAlvo) {
+  const hojeStr = todayIso();
+  let ano = Number(hojeStr.slice(0, 4));
+  let dia = Math.min(diaMes, ultimoDiaDoMes(ano, mesAlvo));
+  let candidato = `${ano}-${pad2(mesAlvo)}-${pad2(dia)}`;
+  if (candidato < hojeStr) {
+    ano += 1;
+    dia = Math.min(diaMes, ultimoDiaDoMes(ano, mesAlvo));
+    candidato = `${ano}-${pad2(mesAlvo)}-${pad2(dia)}`;
+  }
+  return candidato;
+}
+
 const emptyForm = () => ({
   id: null,
   tipo: 'saida',
@@ -22,6 +70,8 @@ const emptyForm = () => ({
   recorrente: false,
   recorrencia_tipo: 'mensal',
   recorrencia_intervalo_dias: '',
+  recorrencia_dia_mes: '',
+  recorrencia_mes: '',
   recorrencia_serie_id: '',
   parcela_atual: '',
   parcela_total: '',
@@ -79,6 +129,41 @@ export function txModalStore() {
       this.pagoAoAbrir = false;
       this.categoriaEscolhidaManualmente = false;
       this.open = true;
+      // "Despesa fixa" já nasce recorrente mensal — despesa fixa que não se
+      // repete seria só uma despesa variável de nome errado.
+      if (tipoDespesa === 'fixa') this.ativarRecorrenciaPadrao();
+    },
+
+    // Liga a recorrência com um default sensato (mensal, dia de hoje) sem
+    // sobrescrever nada que a pessoa já tenha configurado.
+    ativarRecorrenciaPadrao() {
+      this.form.recorrente = true;
+      if (!this.form.recorrencia_tipo) this.form.recorrencia_tipo = 'mensal';
+      if (!this.form.recorrencia_dia_mes) {
+        const base = this.form.data_vencimento || this.form.data_cadastro || todayIso();
+        this.form.recorrencia_dia_mes = Number(base.slice(8, 10));
+        this.form.recorrencia_mes = Number(base.slice(5, 7));
+      }
+    },
+
+    // Marcar "fixa" no meio do formulário (não só ao abrir) também liga a
+    // recorrência sozinha — pedido explícito: "se eu marcar um item como
+    // fixo, já ativa o modo recorrente mensal". Virar "variável" não desliga
+    // a recorrência automaticamente (a pessoa pode ter motivo pra manter).
+    onTipoDespesaChange() {
+      if (this.form.tipo_despesa === 'fixa' && !this.form.recorrente) this.ativarRecorrenciaPadrao();
+    },
+
+    // Mesma condição usada no save() pra decidir se o campo de vencimento
+    // simples fica escondido em favor do "dia do mês"/"dia+mês do ano".
+    get usaCadenciaParaVencimento() {
+      return this.form.recorrente && (this.form.recorrencia_tipo === 'mensal' || this.form.recorrencia_tipo === 'anual') && !!this.form.recorrencia_dia_mes;
+    },
+    get proximoVencimentoPreview() {
+      if (!this.form.recorrencia_dia_mes) return '';
+      return this.form.recorrencia_tipo === 'anual'
+        ? calcularVencimentoAnual(Number(this.form.recorrencia_dia_mes), Number(this.form.recorrencia_mes) || 1)
+        : calcularVencimentoMensal(Number(this.form.recorrencia_dia_mes));
     },
 
     onTituloInput() {
@@ -114,6 +199,8 @@ export function txModalStore() {
         recorrente: !!tx.recorrente,
         recorrencia_tipo: tx.recorrencia_tipo || 'mensal',
         recorrencia_intervalo_dias: tx.recorrencia_intervalo_dias || '',
+        recorrencia_dia_mes: tx.recorrencia_dia_mes || '',
+        recorrencia_mes: tx.recorrencia_mes || '',
         recorrencia_serie_id: tx.recorrencia_serie_id || '',
         parcela_atual: tx.parcela_atual || '',
         parcela_total: tx.parcela_total || '',
@@ -382,6 +469,21 @@ export function txModalStore() {
         // reconhece as ocorrências dessa série por esse id em vez de tentar
         // adivinhar pelo título (o que colidia entre despesas homônimas).
         const serieId = this.form.recorrente ? this.form.recorrencia_serie_id || crypto.randomUUID() : null;
+        // Vencimento é OU o campo simples (despesa variável, ou fixa sem
+        // cadência mensal/anual definida) OU derivado da cadência (fixa +
+        // recorrente mensal/anual) — nunca os dois ao mesmo tempo, pra não
+        // ter uma data "esquecida" no campo simples brigando com a que a
+        // cadência calcularia. calcularVencimentoMensal/Anual sempre acham
+        // a PRÓXIMA ocorrência a partir de hoje (nunca uma data passada).
+        const usaCadenciaParaVencimento =
+          this.form.recorrente && (this.form.recorrencia_tipo === 'mensal' || this.form.recorrencia_tipo === 'anual') && this.form.recorrencia_dia_mes;
+        let dataVencimento = this.form.data_vencimento || null;
+        if (usaCadenciaParaVencimento) {
+          dataVencimento =
+            this.form.recorrencia_tipo === 'mensal'
+              ? calcularVencimentoMensal(Number(this.form.recorrencia_dia_mes))
+              : calcularVencimentoAnual(Number(this.form.recorrencia_dia_mes), Number(this.form.recorrencia_mes) || 1);
+        }
         const payload = {
           tipo: this.form.tipo,
           titulo: this.form.titulo.trim(),
@@ -391,13 +493,15 @@ export function txModalStore() {
           responsavel_id: this.form.responsavel_id || store.profile.id,
           valor: Number(this.form.valor),
           data_cadastro: this.form.data_cadastro || todayIso(),
-          data_vencimento: this.form.data_vencimento || null,
+          data_vencimento: dataVencimento,
           data_pagamento: this.form.data_pagamento || null,
           comprovante_url: this.form.comprovante_url || null,
           recorrente: this.form.recorrente,
           recorrencia_tipo: this.form.recorrente ? this.form.recorrencia_tipo : null,
           recorrencia_intervalo_dias:
             this.form.recorrente && this.form.recorrencia_tipo === 'personalizado' ? Number(this.form.recorrencia_intervalo_dias) || null : null,
+          recorrencia_dia_mes: usaCadenciaParaVencimento ? Number(this.form.recorrencia_dia_mes) : null,
+          recorrencia_mes: usaCadenciaParaVencimento && this.form.recorrencia_tipo === 'anual' ? Number(this.form.recorrencia_mes) || 1 : null,
           recorrencia_serie_id: serieId,
           parcela_atual: this.form.parcela_atual ? Number(this.form.parcela_atual) : null,
           parcela_total: this.form.parcela_total ? Number(this.form.parcela_total) : null,

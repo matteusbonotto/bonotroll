@@ -5,10 +5,27 @@ async function loadPapa() {
   return mod.default || mod;
 }
 
+// Detecta a codificação em vez de assumir UTF-8 cegamente — um CSV salvo
+// pelo Excel no Windows (locale pt-BR) sai em ANSI/Windows-1252 por padrão,
+// não UTF-8. Alimentar esses bytes direto num parser UTF-8 não dá erro
+// nenhum, só produz texto errado silenciosamente ("Salário" vira
+// "Sal�rio") — bug real encontrado em produção (categoria criada com
+// nome corrompido pela importação). UTF-8 é validado de forma estrita
+// (`fatal: true`); só cai pra Windows-1252 se o arquivo não for UTF-8 válido.
+async function lerArquivoComoTexto(file) {
+  const buffer = await file.arrayBuffer();
+  try {
+    return new TextDecoder('utf-8', { fatal: true }).decode(buffer);
+  } catch {
+    return new TextDecoder('windows-1252').decode(buffer);
+  }
+}
+
 export async function parseCsvFile(file) {
   const Papa = await loadPapa();
+  const texto = await lerArquivoComoTexto(file);
   return new Promise((resolve, reject) => {
-    Papa.parse(file, {
+    Papa.parse(texto, {
       header: true,
       skipEmptyLines: true,
       complete: (results) => resolve({ headers: results.meta.fields || [], rows: results.data }),

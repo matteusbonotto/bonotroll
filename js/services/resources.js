@@ -1,6 +1,7 @@
 import { isDemoMode } from '../data/config.js';
 import { mockDb } from '../data/mockDb.js';
 import { getSupabase } from '../data/supabaseClient.js';
+import { comFallbackDeColuna } from '../utils/dbFallback.js';
 
 // Cômodos e subcategorias são listas FIXAS (o usuário não cria/exclui
 // cômodo) — só os produtos dentro delas são livres. Escritório/Sala/
@@ -208,17 +209,17 @@ export async function createItem(data) {
   const row = { quantidade: 0, data_validade: null, foto_url: null, category_id: null, ...data };
   if (isDemoMode()) return mockDb.insert('resource_items', row);
   const supabase = await getSupabase();
-  const { data: created, error } = await supabase.from('resource_items').insert(row).select().single();
-  if (error) throw error;
-  return created;
+  // comFallbackDeColuna: sem isso, um banco que ainda não rodou a migração
+  // mais recente (ex.: coluna "icone", adicionada 2026-08-19) faz o insert
+  // inteiro falhar por causa de UM campo novo — inclusive numa importação
+  // de CSV inteira, linha a linha, sem nenhum aviso claro do motivo.
+  return comFallbackDeColuna((obj) => supabase.from('resource_items').insert(obj).select().single(), row);
 }
 
 export async function updateItem(id, patch) {
   if (isDemoMode()) return mockDb.update('resource_items', id, patch);
   const supabase = await getSupabase();
-  const { data, error } = await supabase.from('resource_items').update(patch).eq('id', id).select().single();
-  if (error) throw error;
-  return data;
+  return comFallbackDeColuna((obj) => supabase.from('resource_items').update(obj).eq('id', id).select().single(), patch);
 }
 
 export async function deleteItem(id) {
