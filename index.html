@@ -2128,9 +2128,8 @@
         <!-- Entrada rápida (docs/BONOTTO-2027-BLUEPRINT.md, Conflito 1) — só
              em lançamento novo (edição já vem com título/valor preenchidos).
              Preenche título+valor abaixo; nunca salva sozinha. -->
-        <div class="mb-3" x-show="!$store.txModal.form.id" x-cloak>
-          <label class="form-label">Entrada rápida <span class="cg-muted small fw-normal">(opcional)</span></label>
-          <input type="text" class="form-control" x-model="$store.txModal.entradaRapida" @input="$store.txModal.onEntradaRapidaInput()" placeholder="Ex: Mercado 184,90" />
+        <div class="mb-2" x-show="!$store.txModal.form.id" x-cloak>
+          <input type="text" class="form-control form-control-sm" x-model="$store.txModal.entradaRapida" @input="$store.txModal.onEntradaRapidaInput()" placeholder="Entrada rápida: Mercado 184,90 (opcional)" />
         </div>
 
         <div class="btn-group w-100 mb-3" role="group">
@@ -2172,7 +2171,7 @@
              nenhum campo (risco zero de quebrar validação/binding). -->
         <div x-show="$store.txModal.showMore" x-cloak>
           <div class="cg-muted small fw-semibold text-uppercase mb-2">Detalhes</div>
-          <div class="mb-3">
+          <div class="mb-2">
             <label class="form-label">Empresa / Serviço</label>
             <div class="d-flex align-items-center gap-2">
               <span class="cg-avatar cg-avatar--sm flex-shrink-0" style="background: var(--color-surface-alt);" x-show="$store.txModal.empresaLogoPreview">
@@ -2197,7 +2196,7 @@
           </div>
 
           <div class="cg-muted small fw-semibold text-uppercase mb-2 pt-2 border-top">Quem paga</div>
-          <div class="row g-2 mb-3">
+          <div class="row g-2 mb-2">
             <div class="col-6">
               <label class="form-label">Tipo de despesa</label>
               <select class="form-select" x-model="$store.txModal.form.tipo_despesa" @change="$store.txModal.onTipoDespesaChange()">
@@ -2219,7 +2218,7 @@
           <!-- Divisão entre pagadores: por padrão é só o Responsável acima (100%);
                "Adicionar pagador" transforma em divisão entre 2+ pessoas, com %/R$
                editáveis por pessoa (default: igual entre todos). -->
-          <div class="mb-3" x-show="($store.app.group?.members || []).length">
+          <div class="mb-2" x-show="($store.app.group?.members || []).length">
             <div class="d-flex align-items-center justify-content-between mb-2">
               <label class="form-label mb-0">Dividir com mais alguém?</label>
               <div class="position-relative" x-data="{ open: false }" @click.outside="open = false">
@@ -2269,7 +2268,7 @@
           </div>
 
           <div class="cg-muted small fw-semibold text-uppercase mb-2 pt-2 border-top">Quando</div>
-          <div class="row g-2 mb-3">
+          <div class="row g-2 mb-2">
             <div :class="$store.txModal.usaCadenciaParaVencimento ? 'col-12' : 'col-6'">
               <label class="form-label">Cadastro</label>
               <input type="date" class="form-control" x-model="$store.txModal.form.data_cadastro" />
@@ -2285,7 +2284,7 @@
             </div>
           </div>
 
-          <div class="mb-3">
+          <div class="mb-2">
             <div class="form-check mb-2">
               <input type="checkbox" class="form-check-input" id="marcarPago" :checked="!!$store.txModal.form.data_pagamento" @change="$store.txModal.onPagoChange($event.target.checked)" />
               <label class="form-check-label" for="marcarPago">Já está pago</label>
@@ -2294,7 +2293,7 @@
               <input type="date" class="form-control" style="max-width: 200px;" x-model="$store.txModal.form.data_pagamento" />
             </template>
           </div>
-          <div class="mb-3">
+          <div class="mb-2">
             <div class="form-check mb-2">
               <input type="checkbox" class="form-check-input" id="recorrente" x-model="$store.txModal.form.recorrente" />
               <label class="form-check-label" for="recorrente">É uma despesa recorrente</label>
@@ -2346,7 +2345,7 @@
                tanto uma série gerada automaticamente com limite (ex.: financiamento
                5/48) quanto um lançamento manual/importado já no meio de uma série
                (ex.: CSV começando na parcela 5 de 10). -->
-          <div class="mb-3">
+          <div class="mb-2">
             <label class="form-label">Parcela (opcional)</label>
             <div class="d-flex align-items-center gap-2" style="max-width: 220px;">
               <input type="number" min="1" class="form-control form-control-sm" placeholder="Atual" x-model="$store.txModal.form.parcela_atual" />
@@ -2355,10 +2354,8 @@
             </div>
           </div>
 
-          <div class="cg-muted small fw-semibold text-uppercase mb-2 pt-2 border-top">Comprovante</div>
-          <div class="mb-3">
-            <label class="form-label">Comprovante / fatura / boleto</label>
-            <p class="cg-muted small mb-2">Foto, arquivo, código de barras do boleto ou QR (Pix/nota fiscal) — todos tentam preencher título, valor, vencimento e categoria sozinhos (confira antes de salvar, a leitura não é 100% confiável).</p>
+          <div class="cg-muted small fw-semibold text-uppercase mb-2 pt-2 border-top">Comprovante <span class="cg-muted fw-normal text-lowercase" title="Foto, arquivo, código de barras do boleto ou QR (Pix/nota fiscal) — tenta preencher título, valor, vencimento e categoria sozinho; confira antes de salvar.">(preenche sozinho, confira antes de salvar)</span></div>
+          <div class="mb-2">
             <div class="d-flex align-items-center gap-2 flex-wrap">
               <label class="cg-btn btn btn-outline-secondary btn-sm" style="cursor:pointer;">
                 <i class="bi bi-camera"></i>
@@ -2389,7 +2386,7 @@
             </p>
           </div>
 
-          <div class="mb-3">
+          <div class="mb-2">
             <label class="form-label">Observações</label>
             <textarea class="form-control" rows="2" x-model="$store.txModal.form.observacoes" placeholder="Opcional"></textarea>
           </div>
