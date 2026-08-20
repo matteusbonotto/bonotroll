@@ -154,6 +154,7 @@
 
 /* ---------- Avatar ---------- */
 .cg-avatar {
+  position: relative;
   width: 56px;
   height: 56px;
   border-radius: 50%;
@@ -169,6 +170,28 @@
   border: 2px solid var(--color-primary-soft);
 }
 .cg-avatar img { width: 100%; height: 100%; object-fit: cover; }
+/* Selo pequeno no canto (ex.: logo da empresa/serviço sobre a foto de quem
+   pagou) — "a pessoa continua sendo o avatar principal, a empresa vira só
+   um detalhe no canto", pedido explícito, em vez do logo sozinho tomando o
+   lugar do avatar da pessoa. overflow:hidden do .cg-avatar cortaria o
+   selo se ele ficasse DENTRO dele — por isso o selo é filho do CONTAINER
+   (não do .cg-avatar), posicionado por cima usando as mesmas coordenadas. */
+.cg-avatar-badge-wrap { position: relative; display: inline-flex; flex-shrink: 0; }
+.cg-avatar__badge {
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid var(--color-surface);
+  background: var(--color-surface);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cg-avatar__badge img { width: 100%; height: 100%; object-fit: cover; }
 .cg-avatar--sm { width: 36px; height: 36px; font-size: 0.85rem; }
 
 /* ---------- Avatar stack (despesa com 2+ pagadores, "estilo card do Jira") ---------- */

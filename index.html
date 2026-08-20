@@ -472,17 +472,14 @@
               <template x-for="r in recentes" :key="r.id">
                 <div class="d-flex align-items-center justify-content-between border-bottom pb-2 min-w-0">
                   <div class="d-flex align-items-center gap-2 min-w-0">
-                    <!-- Logo da empresa/serviço — antes só existia o
-                         avatar-stack de pagadores (só pra despesa dividida);
-                         nenhuma logo aparecia aqui em nenhum caso, dividida
-                         ou não (bug real reportado). Mostra a logo quando
-                         existe; cai pro avatar-stack de pagadores quando é
-                         dividida; sem nenhum dos dois, sem espaço reservado
-                         (não sobra "buraco" vazio à toa). -->
-                    <span class="cg-company-logo flex-shrink-0" x-show="$store.app.companyByName(r.empresa_servico)?.logo_url" x-cloak>
-                      <img :src="$store.app.companyByName(r.empresa_servico)?.logo_url" :alt="r.empresa_servico" />
-                    </span>
-                    <span class="cg-avatar-stack" x-show="!$store.app.companyByName(r.empresa_servico)?.logo_url && payersFor(r).length >= 2">
+                    <!-- Dividida (2+ pagadores): avatar-stack de quem pagou.
+                         Um pagador só: a FOTO dessa pessoa é o avatar
+                         principal — se a transação também tem empresa/
+                         serviço com logo, o logo vira um selo pequeno no
+                         canto (não toma o lugar da foto da pessoa, era o
+                         que acontecia antes: "Salário" mostrava só o logo
+                         da empresa, sem nenhum sinal de quem recebeu). -->
+                    <span class="cg-avatar-stack" x-show="payersFor(r).length >= 2">
                       <template x-for="p in payersFor(r).slice(0, 3)" :key="p.profile_id">
                         <span class="cg-avatar cg-avatar--sm" :style="{ borderColor: responsavelFor(p.profile_id)?.cor || 'var(--color-primary-soft)', background: responsavelFor(p.profile_id)?.cor || 'var(--color-primary)' }">
                           <template x-if="responsavelFor(p.profile_id)?.avatar_url"><img :src="responsavelFor(p.profile_id).avatar_url" /></template>
@@ -490,12 +487,27 @@
                         </span>
                       </template>
                     </span>
+                    <span class="cg-avatar-badge-wrap" x-show="payersFor(r).length < 2">
+                      <span class="cg-avatar cg-avatar--sm" :style="{ borderColor: responsavelFor(r.responsavel_id)?.cor || 'var(--color-primary-soft)', background: responsavelFor(r.responsavel_id)?.cor || 'var(--color-primary)' }">
+                        <template x-if="responsavelFor(r.responsavel_id)?.avatar_url"><img :src="responsavelFor(r.responsavel_id).avatar_url" /></template>
+                        <template x-if="!responsavelFor(r.responsavel_id)?.avatar_url"><span x-text="cgFormat.initials(responsavelFor(r.responsavel_id)?.nome)"></span></template>
+                      </span>
+                      <span class="cg-avatar__badge" x-show="$store.app.companyByName(r.empresa_servico)?.logo_url" x-cloak>
+                        <img :src="$store.app.companyByName(r.empresa_servico)?.logo_url" :alt="r.empresa_servico" />
+                      </span>
+                    </span>
                     <div class="min-w-0">
                       <div class="fw-semibold text-truncate d-flex align-items-center gap-2">
                         <span class="text-truncate" x-text="r.titulo"></span>
                         <span class="cg-parcela-tag flex-shrink-0" x-show="r.parcela_total" x-text="r.parcela_atual + '/' + r.parcela_total"></span>
                       </div>
-                      <div class="cg-muted small" x-text="(categoryFor(r.categoria_id)?.nome || 'Sem categoria') + ' · ' + (responsavelFor(r.responsavel_id)?.nome || '')"></div>
+                      <div class="cg-muted small text-truncate" x-show="r.empresa_servico" x-text="r.empresa_servico"></div>
+                      <div class="d-flex align-items-center gap-1 mt-1">
+                        <span class="cg-chip" :style="{ background: categoryFor(r.categoria_id)?.cor || '#94A3B8' }">
+                          <span x-text="categoryFor(r.categoria_id)?.nome || 'Sem categoria'"></span>
+                        </span>
+                        <span class="cg-muted small" x-text="responsavelFor(r.responsavel_id)?.nome || ''"></span>
+                      </div>
                     </div>
                   </div>
                   <div class="text-end ms-2">
