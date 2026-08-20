@@ -14,9 +14,9 @@
 - [x] `<input type="color">` virando blob oval — corrigido, commit `34424fb`.
 - [x] Botão "Nova despesa" ilegível no escuro — corrigido, commit `34424fb`.
 - [x] **Sidebar não fica fixa/sticky no desktop** — causa raiz: era regressão MINHA (o `overflow-x:hidden` que eu tinha posto em `.cg-app-shell` pra outro bug fazia o navegador computar `overflow-y:auto` nele também, virando a âncora errada do `position:sticky`). Movido pra `.cg-main` (irmã da sidebar). Verificado rolando 1500px via Playwright.
-- [ ] **Tabela de Transações não usa a largura disponível no desktop** — mesmo com espaço de sobra, as colunas ficam com largura fixa somada maior que o container, forçando scroll horizontal que não deveria ser necessário nessa largura de tela.
-- [ ] **Cor da barra de instalação/atualização muito clara/feia** (`.cg-update-banner` ou similar) — trocar por algo mais sóbrio, alinhado à paleta nova.
-- [ ] **Logo de empresa/serviço só aparece quando a despesa é dividida** — deveria aparecer sempre que a transação tiver uma empresa com logo cadastrado, dividida ou não.
+- [~] **Tabela de Transações não usa a largura disponível no desktop** — INVESTIGADO, não resolvido: tentei forçar `width`/`max-width` menor em `input[type="date"]` e `.cg-pill-trigger` (Resp.) — sem efeito nenhum, confirmado via computed style (o Chromium impõe ~150px de largura mínima própria pro controle nativo de data, CSS de largura não controla isso). Correção de verdade precisa trocar o input sempre-editável por um texto formatado que só vira `<input type="date">` ao clicar (mudança estrutural, não CSS solto) — fica pra próxima rodada.
+- [x] **Cor da barra de instalação/atualização muito clara/feia** — era efeito colateral do fix de tema escuro (`--color-primary-dark` virou claro, usado como fundo sólido aqui). Trocado pra `--color-primary`. Commit `fd74324`.
+- [x] **Logo de empresa/serviço nunca aparecia em "Lançamentos recentes" (Início)** — não era "só aparece se dividida", era um widget que nunca tinha lógica de logo nenhuma, só avatar-stack de pagadores. Adicionada. Commit `fd74324`.
 
 ## Pedidos de redesign (prioridade 2 — visual agressivo, item por item)
 
