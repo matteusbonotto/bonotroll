@@ -313,11 +313,57 @@ a { color: var(--color-primary); }
   }
   /* Continua sendo a ação principal da tela (Iniciar/Encerrar Compra) —
      não fica do tamanho de botão secundário, só um pouco menos dominante
-     numa tela de ~390px de largura. */
+     numa tela de ~390px de largura. Reduzido de novo (era 48px/0.95rem)
+     depois de feedback direto no celular: "botões grande em lista de
+     compra" — ainda maior que os .btn-sm ao lado (é a ação primária da
+     tela), só não do tamanho de antes. */
   .cg-shopping-toggle {
-    min-height: 48px;
-    font-size: 0.95rem;
-    padding-inline: var(--space-4);
+    min-height: 42px;
+    font-size: 0.82rem;
+    padding-inline: var(--space-3);
+    gap: 6px;
+  }
+  .cg-shopping-toggle i {
+    font-size: 0.9rem;
+  }
+
+  /* Painel de topo da Lista de Compras (toggle Iniciar/Pausar/Retomar/
+     Cancelar, Itens/Total, Ver gráfico/Histórico/Importar CSV, Mercado,
+     Limite de gasto) — reportado com print: no celular esse bloco de
+     controles dominava a tela toda, empurrando a lista de itens (o que a
+     pessoa quer ver de verdade enquanto compra) pra baixo do fold. Reduz
+     só o padding do card em si; o espaçamento ENTRE as seções internas já
+     foi ajustado direto no HTML (classes responsivas gap-*/pt-*/g-* com
+     variante -md- pra manter o desktop como estava). */
+  .cg-shopping-panel {
+    padding: var(--space-3);
+  }
+
+  /* Ações rápidas da Início (Nova despesa/Despesa fixa/Nova entrada/Lista
+     de compras) — reportado com print: grid 2x2 (a regra base logo acima)
+     virava 2 linhas no celular, empurrando o resto do dashboard pra baixo
+     à toa. Escopado só à Início (section[x-data^="dashboardView"]) porque
+     .cg-quick-actions também é usado em Transações (4 botões, cabem numa
+     linha larga o bastante) e Caixinhas (só 2 botões — 4 colunas quebraria
+     o layout lá) — mudar a regra base agiria nos dois sem necessidade.
+     4 colunas numa linha só, ícone empilhado sobre o rótulo (mais estreito
+     que ícone+texto lado a lado, que não cabe em ~85px de coluna). */
+  section[x-data^="dashboardView"] .cg-quick-actions {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+  }
+  section[x-data^="dashboardView"] .cg-quick-actions .cg-btn {
+    flex-direction: column;
+    gap: 2px;
+    padding-inline: 2px;
+    padding-block: 8px;
+    min-height: 54px;
+    font-size: 0.64rem;
+    line-height: 1.15;
+    white-space: normal;
+  }
+  section[x-data^="dashboardView"] .cg-quick-actions .cg-btn i {
+    font-size: 1rem;
   }
 }
 
