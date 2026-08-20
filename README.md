@@ -78,6 +78,18 @@ supabase/
 assets/icons/                 ícones do PWA (SVG placeholder — ver abaixo)
 ```
 
+## Testes
+
+O app em si continua sem build step. `package.json`/`node_modules` existem só como *tooling de teste* (Playwright + o test runner nativo do Node), não afetam como o app roda no navegador.
+
+```bash
+npm install              # uma vez
+npm run test:unit        # funções puras (dinheiro, data, status) — rápido, sem navegador
+npm test                 # E2E (Playwright) contra o app real em modo demo (?demo=1, nunca toca em js/data/config.js)
+```
+
+Ver `docs/BONOTTO-2027-BLUEPRINT.md` (Fase 1) e `docs/RAIO-X-2.0.md` (§5) para o porquê: cobre primeiro os bugs que já se repetiram mais de uma vez em produção.
+
 ## Sobre os ícones
 
 `assets/icons/icon.svg` e `icon-maskable.svg` são placeholders funcionais (o manifest já aponta para eles). Antes de publicar de verdade, gere PNGs nos tamanhos 192×192 e 512×512 (e uma versão maskable) a partir de um logo definitivo — ferramentas como [realfavicongenerator.net](https://realfavicongenerator.net) fazem isso automaticamente a partir do SVG.
