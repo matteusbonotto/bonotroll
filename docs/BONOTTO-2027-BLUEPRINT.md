@@ -264,25 +264,23 @@ Já detalhado por especialista em §1.4. Ações concretas resultantes: pinar ve
 
 Nenhum módulo recomendado para remoção — o inventário de funcionalidades já reflete uso real do domínio (casa + casal + finanças), sem indício de feature claramente supérflua.
 
-## 15. Roadmap / plano de migração (incremental, com checkpoints — §72/§74)
+## 15. Roadmap / plano de migração (incremental, com checkpoints — §72/§74) — ✅ concluído em 2026-08-20
 
-Ordem deliberada: rede de segurança primeiro (senão qualquer fase seguinte corre risco de regressão sem detecção), depois correção monetária (silenciosa, sem mudança visível), depois produto (visível, testável pelo casal), depois polish transversal.
+Ordem realmente executada (recalibrada uma vez, ver `docs/DESIGN-SYSTEM-2027.md` §11: visual/navegação subiu pra Fase 2, na frente do Money Engine, por ser a dor que você relatou com mais força):
 
-**Fase 0 — Baseline.** Nenhuma mudança de código. Este documento + aprovação explícita sua = o baseline.
+- **✅ Fase 1 — Rede de segurança.** `tests/unit/` (node:test) + `tests/e2e/` (Playwright), cobrindo os bugs já documentados que se repetiram (soma de moeda em Caixinhas, `todayIso()`/status, accordion `x-show`×`x-if`). `?demo=1` em `js/data/config.js` — testes nunca tocam as credenciais reais.
+- **✅ Fase 2 — Design System.** Escala tipográfica (aditiva, migração de componentes existentes NÃO feita — ver nota abaixo); `.cg-back` substituindo os 3 botões de voltar divergentes; Esc + devolução de foco centralizados em `js/app.js` pros ~12 modais; achatamento de "card dentro de card" em Perfil→Preferências (`.cg-list-row`).
+- **✅ Fase 3 — Money Engine.** `js/utils/money.js` (centavos inteiros) integrado em `caixinhas.js`, `transactions.js`, `budgets.js`, `shoppingList.js`.
+- **✅ Fase 4 — Produto visível.** Orçamento restante no card de saldo; saldo entre membros do grupo ("Entre vocês"); entrada rápida no formulário de despesa; toast "Desfazer" substituindo `confirm()` nas 3 exclusões frequentes.
+- **✅ Fase 5 — Acessibilidade/perf.** `prefers-reduced-motion`; alternativa textual (tabela `.visually-hidden`) nos 2 gráficos; resize de imagem antes de upload (avatar/ícone/logo, nunca em foto que passa por OCR); orientação de instalação iOS; pin de versão exata das libs CDN; link "Ver demonstração" na tela de entrada real.
+- **✅ Fase 6 — Documentação/housekeeping.** README corrigido; exportação de dados em Perfil (LGPD-friendly); severidade de notificação (info/atenção/crítico); CI leve rodando a suíte a cada push/PR.
 
-**Fase 1 — Rede de segurança.** `tests/*.spec.js` com Playwright, cobrindo primeiro os bugs já documentados que se repetiram (categorias duplicadas, accordion `x-show`, sincronização entre telas, soma de moeda em Caixinhas). Critério de conclusão: os 4 cenários rodam localmente (`npx playwright test`) contra modo demo e passam.
+**Deliberadamente NÃO feito nesta rodada** (não por esquecimento — decisão registrada):
+- **Migração completa da tipografia solta** (os 15+ `font-size` ad hoc identificados no diagnóstico) pros tokens novos — os tokens existem e estão prontos, mas aplicá-los em todo componente muda tamanho visível em várias telas de uma vez. Dado que "decisão visual arbitrária sem sua revisão" foi exatamente a queixa que motivou toda esta rodada, isso fica pra você olhar e decidir explicitamente, tela por tela, em vez de eu decidir sozinho sem você ver antes.
+- **Auditoria completa de `aria-label`** em todo botão só-ícone do HTML (~2.500 linhas) — cobertura ficou mais forte nos pontos tocados nesta rodada (gráficos, `.cg-back`, exportar dados), mas não é uma varredura exaustiva do arquivo inteiro.
+- **Ponte automática Compras↔Recursos** — risco de falso-positivo no matching por nome supera o ganho (ver §8).
 
-**Fase 2 — Money Engine.** `js/utils/money.js` + substituição nos 4 arquivos que fazem soma monetária. Critério de conclusão: os testes de Fase 1 continuam passando + um teste novo específico de soma com muitas parcelas confirmando ausência de erro de centavo.
-
-**Fase 3 — Produto (visível).** Entrada rápida no modal de despesa; linha de orçamento restante no card de saldo; saldo entre casal (Grupo); toast "Desfazer" nas exclusões frequentes. Cada item shippado e testado (manual + Playwright) antes do próximo começar — não os quatro simultaneamente.
-
-**Fase 4 — Acessibilidade e polish transversal.** Alternativa textual a gráficos; `prefers-reduced-motion`; resize de imagem antes de upload; orientação de instalação iOS; pin de versão das libs CDN.
-
-**Fase 5 — Documentação e housekeeping.** README atualizado; exportação de dados em Perfil (LGPD-friendly); CI leve rodando os testes da Fase 1 a cada push (opcional, só se você quiser esse nível de automação).
-
-**Fase 6 — Severidade de notificação.** Níveis info/attention/warning/critical — deixada por último porque é a que menos urge (RAIO-X não documenta nenhuma reclamação real de fadiga de notificação ainda).
-
-Nenhuma fase mexe em mais de um punhado de arquivos por vez; cada uma termina com o app num estado funcional e testável — nunca 40 arquivos alterados simultaneamente (§74).
+Nenhuma fase mexeu em mais de um punhado de arquivos por vez; cada commit terminou com o app num estado funcional e com a suíte de testes passando (55 testes ao final — 39 unitários + 16 E2E).
 
 ## 16. Definition of Done (§76, aplicada a cada item das fases acima)
 
