@@ -1199,6 +1199,10 @@ body { font-size: var(--font-size-body); }
   color: var(--color-text);
   background-color: var(--color-surface-alt);
 }
+/* Mesmo problema: trilho da barra de progresso (limite de gasto em Compras,
+   meta de Caixinha) ficava cinza-claro fixo do Bootstrap em cima de um
+   card escuro, um retângulo branco destoando de tudo em volta. */
+.progress { background-color: var(--color-surface-alt); }
 
 .cg-card--stat, .cg-room-tile, .cg-resource-item, .cg-grid-view__card, .cg-item-row {
   border-radius: var(--radius-md);
