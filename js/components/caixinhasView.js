@@ -42,7 +42,15 @@ export function caixinhasView() {
     movForm: MOV_FORM_VAZIA(),
     salvandoMov: false,
 
-    async init() {
+    init() {
+      this.carregarCaixinhas();
+      // Gerenciar (criar/editar/excluir) também é possível direto de
+      // "Perfil → Caixinhas" agora (ver js/components/caixinhaManager.js) —
+      // sem isso, mudanças feitas por lá só apareceriam aqui num reload.
+      window.addEventListener('cg:caixinhas-changed', () => this.carregarCaixinhas());
+    },
+
+    async carregarCaixinhas() {
       const store = this.$store.app;
       if (!store.profile) return;
       this.loading = true;
@@ -52,6 +60,10 @@ export function caixinhasView() {
         const map = await cx.listMovimentacoesFor(this.caixinhas.map((c) => c.id));
         this.movByCaixinha = Object.fromEntries(map);
         this.carregarTaxas();
+        // Se a caixinha aberta foi excluída por "Perfil → Caixinhas"
+        // enquanto essa tela estava montada, volta pra grade em vez de
+        // ficar num detalhe de algo que não existe mais.
+        if (this.activeId && !this.caixinhas.some((c) => c.id === this.activeId)) this.activeId = null;
       } catch (e) {
         store.notify(e.message || 'Não consegui carregar as caixinhas.', 'danger');
       } finally {

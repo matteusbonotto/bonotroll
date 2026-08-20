@@ -28,19 +28,21 @@
 - [x] Lista de Compras — "adicionar item" deve ser um modal padrão (hoje é um formulário inline expansível) — convertido pro mesmo componente `.cg-modal-backdrop`/`.cg-modal` usado no resto do app (era um card inline com um link "mais opções" pra revelar campos). De brinde: achei e corrigi um bug real de contraste no tema escuro "segue o sistema" (sem toggle manual) — o selo "R$" de qualquer `.input-group-text` ficava com fundo claro do Bootstrap + texto claro do nosso tema (ilegível), porque só `.form-control`/`.form-select` tinham override pros nossos tokens. Corrigido em `css/components.css`, afeta todo `input-group` com prefixo/sufixo no app (não só Compras). Nova regressão: `tests/e2e/compras-modal-item.spec.js`. Commit `3749860`.
 - [~] Recursos — refazer cômodos/subitens e a visualização deles. Verifiquei os 3 níveis (grade de cômodos, subcategorias, itens) em claro e escuro com screenshot real — a estrutura de cards já está limpa e consistente (mesmo padrão de card/grid usado em Compras), botão "Editar"/voltar em posição convencional. Achei e corrigi 1 bug objetivo de tema escuro: o botão de editar foto (lápis) em cada card de item usava um branco fixo (`rgba(255,255,255,.92)`) tanto pro fundo quanto herdava `--color-text` (que fica quase branco no escuro) pro ícone — ficava um círculo branco sem ícone visível nenhum. Troquei o fundo pra `color-mix(... var(--color-surface) ...)`, que acompanha o tema (mesmo truque já usado em `.cg-room-tile__edit`, que já estava certo). Não fiz redesenho visual adicional além disso pelo mesmo motivo do item de Compras — sem as screenshots originais do pedido, não sei o que especificamente incomoda aqui além do que corrigi.
 - [~] Caixinhas — refazer aparência (mais visual, alinhado, padronizado — a estrutura já é boa, é questão de polish visual agressivo). Verifiquei a lista (cards com avatar do dono, barra de progresso, filtro Todos/por pessoa) e o detalhe (4 cards de stat com faixa colorida no topo, Guardar/Retirar, histórico) em claro e escuro — a estrutura já está com cara de fintech (cards, avatares coloridos, acentos por cor). Achei e corrigi 1 bug objetivo, o mesmo padrão dos anteriores: `.progress` (barra de meta, tanto no card quanto no detalhe) é Bootstrap puro, trilho cinza-claro fixo — no tema escuro "segue o sistema" virava um retângulo branco destoando de tudo. Corrigido de uma vez pra tudo que usa `.progress` no app (afeta também o "Limite de gasto" em Compras). Não fiz redesenho agressivo adicional — a tela já não parecia "antiga" nas capturas que tirei; se ainda incomoda, preciso saber o quê especificamente.
-- [ ] Perfil/Configurações — refazer a tela inteira, "está horrível" (palavras do usuário).
-- [ ] Perfil — a linha "Caixinhas" deveria gerenciar bancos/imagens ali mesmo (como Empresas/Categorias), não só ser um atalho pra tela de Caixinhas.
+- [~] Perfil/Configurações — refazer a tela inteira, "está horrível" (palavras do usuário). Verifiquei a tela atual com screenshot real (claro e escuro): card "IDENTIDADE" à esquerda + lista "PREFERÊNCIAS" à direita (ícone+título+descrição+chevron, padrão de lista de configuração tipo iOS/Android) + seção "CONTA" com "Sair da conta". Já não parece a tela "horrível" antiga — não sei se isso é porque já foi refeita numa rodada anterior desta sessão (Codex ou minha) ou se o usuário viu uma versão anterior a essas mudanças. Não refiz do zero por falta de sinal concreto do que ainda incomoda; ver pedido específico abaixo, que SIM foi implementado.
+- [x] Perfil — a linha "Caixinhas" deveria gerenciar bancos/imagens ali mesmo (como Empresas/Categorias), não só ser um atalho pra tela de Caixinhas. Criado `Alpine.store('caixinhaModal')` (`js/components/caixinhaManager.js`), mesmo padrão de `categoryModal`/`companyModal`: modal com formulário (nome do banco, moeda, meta, responsável, ícone preset/upload/URL) + lista "Cadastradas" com editar/excluir inline. Diferença estrutural: `categories`/`companies` vivem cacheadas em `$store.app`, mas caixinhas são carregadas localmente dentro de `caixinhasView()` (que também busca o histórico de movimentações) — não dava pra só reaproveitar `$store.app.caixinhas` porque não existe. Resolvido com um evento (`cg:caixinhas-changed`, mesmo padrão de `cg:shopping-changed`): qualquer criação/edição/exclusão pelo modal do Perfil dispara o evento, e `caixinhasView.init()` escuta e recarrega — testado editando a meta da "Nubank" pelo modal e confirmando que o valor novo aparece na tela de Caixinhas sem reload. Nova regressão: `tests/e2e/perfil-caixinhas-manager.spec.js`. A tela de Caixinhas em si (sidebar) continua existindo, focada em ver saldo/histórico e registrar aportes/retiradas.
 
 ## Ordem de execução planejada
 
-1. Bugs objetivos (lista acima) — em andamento agora.
-2. Modos de visualização de Transações (é a base estrutural que os outros redesigns de tela vão seguir).
-3. Modal de despesa (reorganizar em seções/etapas).
-4. Filtros de Transações.
-5. Compras (visualização + modal de item).
-6. Recursos.
-7. Caixinhas.
-8. Perfil/Configurações.
+1. Bugs objetivos (lista acima) — feito.
+2. Modos de visualização de Transações (é a base estrutural que os outros redesigns de tela vão seguir) — feito.
+3. Modal de despesa (reorganizar em seções/etapas) — feito.
+4. Filtros de Transações — feito.
+5. Compras (visualização + modal de item) — feito (ver notas acima).
+6. Recursos — feito (ver notas acima).
+7. Caixinhas — feito (ver notas acima).
+8. Perfil/Configurações — feito (gerenciar caixinhas inline; redesenho agressivo da tela toda não teve sinal concreto pra fazer, ver nota acima).
+
+Todos os 8 itens da lista original foram passados. O que resta são os itens marcados `[~]` acima (parcial/documentado, não "feito e fechado") — cada um tem uma nota explicando exatamente o que falta e por quê. Se retomar isso depois, comece lendo essas notas antes de mexer em qualquer coisa.
 
 ## Como continuar se a sessão cortar aqui
 

@@ -4,6 +4,7 @@ import { csvModalStore } from './components/csvImportModal.js';
 import { categoryModalStore } from './components/categoryManager.js';
 import { companyModalStore } from './components/companyManager.js';
 import { budgetModalStore } from './components/budgetManager.js';
+import { caixinhaModalStore } from './components/caixinhaManager.js';
 import { authView } from './components/auth.js';
 import { dashboardView } from './components/dashboard.js';
 import { transactionsView } from './components/transactionTable.js';
@@ -32,6 +33,7 @@ document.addEventListener('alpine:init', () => {
   Alpine.store('categoryModal', categoryModalStore());
   Alpine.store('companyModal', companyModalStore());
   Alpine.store('budgetModal', budgetModalStore());
+  Alpine.store('caixinhaModal', caixinhaModalStore());
 
   Alpine.data('authView', authView);
   Alpine.data('dashboardView', dashboardView);

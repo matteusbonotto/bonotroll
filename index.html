@@ -2034,7 +2034,7 @@
                   <i class="bi bi-chevron-right cg-muted"></i>
                 </div>
 
-                <div class="cg-list-flat cg-list-flat--hoverable px-3" role="button" @click="$store.app.setView('caixinhas')">
+                <div class="cg-list-flat cg-list-flat--hoverable px-3" role="button" @click="$store.caixinhaModal.openManage()">
                   <div class="cg-icon-badge"><i class="bi bi-piggy-bank"></i></div>
                   <div class="flex-fill">
                     <h2 class="h6 fw-bold mb-1">Caixinhas</h2>
@@ -2584,6 +2584,106 @@
           </div>
         </template>
         <p class="cg-muted small mb-0" x-show="!$store.app.companies.length">Nenhuma empresa cadastrada ainda.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ MODAL: CAIXINHAS (gerenciar) ============ -->
+  <div class="cg-modal-backdrop" x-show="$store.caixinhaModal.open" x-cloak @click.self="$store.caixinhaModal.close()">
+    <div class="cg-modal" x-show="$store.caixinhaModal.open" x-transition>
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <div>
+          <h2 class="h6 fw-bold mb-1">Caixinhas</h2>
+          <p class="cg-muted small mb-0">Bancos, metas, moeda e imagem — o mesmo cadastro usado na tela de Caixinhas.</p>
+        </div>
+        <button type="button" class="btn-close" @click="$store.caixinhaModal.close()" aria-label="Fechar"></button>
+      </div>
+
+      <div class="cg-manager-form mb-3">
+        <strong x-text="$store.caixinhaModal.editingId ? 'Editar caixinha' : 'Nova caixinha'"></strong>
+        <div class="mb-2 mt-2">
+          <label class="form-label small">Nome do banco</label>
+          <input type="text" class="form-control" x-model="$store.caixinhaModal.bancoNome" placeholder="Ex: Nubank, Inter, XP…" @keydown.enter.prevent="$store.caixinhaModal.salvar()" required />
+        </div>
+        <div class="row g-2 mb-2">
+          <div class="col-6">
+            <label class="form-label small">Moeda</label>
+            <select class="form-select" x-model="$store.caixinhaModal.moeda">
+              <template x-for="m in $store.caixinhaModal.moedasSuportadas" :key="m.codigo">
+                <option :value="m.codigo" x-text="m.codigo + ' — ' + m.nome"></option>
+              </template>
+            </select>
+          </div>
+          <div class="col-6">
+            <label class="form-label small">Meta (opcional)</label>
+            <input type="number" min="0" step="0.01" class="form-control" x-model="$store.caixinhaModal.meta" :placeholder="cgFormat.moedaInfo($store.caixinhaModal.moeda).simbolo" />
+          </div>
+        </div>
+        <div class="mb-2" x-show="$store.app.group">
+          <label class="form-label small">Responsável</label>
+          <select class="form-select" x-model="$store.caixinhaModal.responsavelId">
+            <template x-for="m in $store.caixinhaModal.membros" :key="m.id">
+              <option :value="m.id" x-text="m.nome"></option>
+            </template>
+          </select>
+        </div>
+        <div class="mb-2">
+          <label class="form-label small">Ícone</label>
+          <div class="btn-group btn-group-sm mb-2 w-100" role="group">
+            <button type="button" class="btn" :class="$store.caixinhaModal.modoIcone === 'preset' ? 'btn-secondary' : 'btn-outline-secondary'" @click="$store.caixinhaModal.modoIcone = 'preset'">Ícone</button>
+            <button type="button" class="btn" :class="$store.caixinhaModal.modoIcone === 'upload' ? 'btn-secondary' : 'btn-outline-secondary'" @click="$store.caixinhaModal.modoIcone = 'upload'">Imagem</button>
+            <button type="button" class="btn" :class="$store.caixinhaModal.modoIcone === 'url' ? 'btn-secondary' : 'btn-outline-secondary'" @click="$store.caixinhaModal.modoIcone = 'url'">URL</button>
+          </div>
+          <template x-if="$store.caixinhaModal.modoIcone === 'preset'">
+            <div class="d-flex flex-wrap gap-1">
+              <template x-for="ic in $store.caixinhaModal.iconePresets" :key="ic">
+                <button type="button" class="btn btn-sm p-0" style="width:34px;height:34px;" :class="$store.caixinhaModal.icone === ic ? 'btn-success' : 'btn-outline-secondary'" @click="$store.caixinhaModal.icone = ic" :aria-label="'Usar ícone ' + ic">
+                  <i :class="'bi ' + ic"></i>
+                </button>
+              </template>
+            </div>
+          </template>
+          <template x-if="$store.caixinhaModal.modoIcone === 'upload'">
+            <div class="d-flex align-items-center gap-2">
+              <label class="cg-btn btn btn-outline-secondary btn-sm mb-0" style="cursor:pointer;">
+                <i class="bi bi-upload"></i>
+                <span x-text="$store.caixinhaModal.uploadingIcone ? 'Enviando…' : ($store.caixinhaModal.iconeUrl ? 'Trocar imagem' : 'Escolher imagem')"></span>
+                <input type="file" accept="image/*" class="d-none" @change="$store.caixinhaModal.onIconeFile($event)" :disabled="$store.caixinhaModal.uploadingIcone" />
+              </label>
+              <img :src="$store.caixinhaModal.iconeUrl" x-show="$store.caixinhaModal.iconeUrl" style="width:28px;height:28px;border-radius:50%;object-fit:cover;" />
+            </div>
+          </template>
+          <template x-if="$store.caixinhaModal.modoIcone === 'url'">
+            <input type="url" class="form-control form-control-sm" placeholder="https://…" x-model="$store.caixinhaModal.iconeUrlInput" />
+          </template>
+        </div>
+        <div class="d-flex gap-2">
+          <button type="button" class="cg-btn btn btn-success flex-fill" :disabled="$store.caixinhaModal.saving" @click="$store.caixinhaModal.salvar()">
+            <span x-text="$store.caixinhaModal.editingId ? 'Salvar alterações' : 'Criar caixinha'"></span>
+          </button>
+          <button type="button" class="btn btn-outline-secondary btn-sm" x-show="$store.caixinhaModal.editingId" @click="$store.caixinhaModal.resetForm()">Cancelar</button>
+        </div>
+      </div>
+
+      <div class="d-flex align-items-center justify-content-between mb-2">
+        <h3 class="h6 fw-bold mb-0">Cadastradas</h3>
+        <span class="cg-badge cg-badge--secondary" x-text="$store.caixinhaModal.items.length"></span>
+      </div>
+      <p class="cg-muted small" x-show="$store.caixinhaModal.loading">Carregando…</p>
+      <div class="cg-manager-list" x-show="!$store.caixinhaModal.loading">
+        <template x-for="c in $store.caixinhaModal.items" :key="c.id">
+          <div class="cg-manager-row">
+            <span class="cg-chip cg-chip--icon-only" style="background: #64748B;">
+              <template x-if="c.icone_url"><img :src="c.icone_url" class="cg-chip__icon-img" /></template>
+              <template x-if="!c.icone_url"><i :class="'bi ' + (c.icone || 'bi-piggy-bank')"></i></template>
+            </span>
+            <span class="flex-fill text-truncate fw-semibold" x-text="c.banco_nome"></span>
+            <span class="cg-muted small flex-shrink-0" x-text="c.moeda"></span>
+            <button type="button" class="btn btn-sm btn-outline-secondary" @click="$store.caixinhaModal.edit(c)" :aria-label="'Editar ' + c.banco_nome"><i class="bi bi-pencil"></i></button>
+            <button type="button" class="btn btn-sm btn-outline-danger" @click="$store.caixinhaModal.excluir(c)" :aria-label="'Excluir ' + c.banco_nome"><i class="bi bi-trash"></i></button>
+          </div>
+        </template>
+        <p class="cg-muted small mb-0" x-show="!$store.caixinhaModal.items.length">Nenhuma caixinha cadastrada ainda.</p>
       </div>
     </div>
   </div>
