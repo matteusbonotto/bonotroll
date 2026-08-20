@@ -4,7 +4,7 @@ import { notifyPayment } from '../services/notifications.js';
 import { recognizeText, parseReceiptText } from '../services/ocr.js';
 import { startBarcodeScanner, stopBarcodeScanner, interpretScannedCode } from '../services/barcode.js';
 import { extractTextFromPdf } from '../services/pdf.js';
-import { todayIso } from '../utils/format.js';
+import { todayIso, parseCurrencyInput } from '../utils/format.js';
 
 function pad2(n) {
   return String(n).padStart(2, '0');
@@ -111,6 +111,12 @@ export function txModalStore() {
     // notifyPayment só nesse momento, não em toda edição de uma despesa já paga).
     pagoAoAbrir: false,
 
+    // Entrada rápida — campo único (só em criação nova, nunca em edição) que
+    // pré-preenche título+valor (ver onEntradaRapidaInput). Puramente uma
+    // conveniência de digitação: nunca persistida, o form.titulo/form.valor
+    // continuam a fonte de verdade real e continuam editáveis por baixo.
+    entradaRapida: '',
+
     // Mesma lógica da lista de compras: sugere categoria pelo título
     // digitado, mas nunca sobrescreve uma escolha manual — só preenche o
     // campo, não trava ele.
@@ -128,6 +134,7 @@ export function txModalStore() {
       this.empresaLogoModoUrl = false;
       this.pagoAoAbrir = false;
       this.categoriaEscolhidaManualmente = false;
+      this.entradaRapida = '';
       this.open = true;
       // "Despesa fixa" já nasce recorrente mensal — despesa fixa que não se
       // repete seria só uma despesa variável de nome errado.
@@ -170,6 +177,24 @@ export function txModalStore() {
       if (this.categoriaEscolhidaManualmente) return;
       const sugestao = guessCategoryByTitle(this.form.titulo, Alpine.store('app').categories);
       if (sugestao) this.form.categoria_id = sugestao.id;
+    },
+
+    // Entrada rápida (docs/BONOTTO-2027-BLUEPRINT.md, Conflito 1): "Mercado
+    // 184,90" -> pré-preenche título e valor nos campos de sempre, que
+    // continuam visíveis e editáveis embaixo — nunca salva sozinho, só
+    // poupa o trabalho de digitar duas vezes. Regra simples e explícita:
+    // o ÚLTIMO token separado por espaço que parece um número vira o valor;
+    // o resto vira o título. Ambíguo? A pessoa só corrige o campo errado
+    // antes de confirmar — nunca pior que digitar os dois campos na mão.
+    onEntradaRapidaInput() {
+      const texto = this.entradaRapida;
+      const m = texto.match(/^(.*\S)\s+([\d.,]+)\s*$/);
+      if (!m) { this.form.titulo = texto.trim(); return; }
+      const valor = parseCurrencyInput(m[2]);
+      if (!(valor > 0)) { this.form.titulo = texto.trim(); return; }
+      this.form.titulo = m[1].trim();
+      this.form.valor = valor;
+      this.onTituloInput();
     },
 
     onCategoriaChange() {

@@ -2044,6 +2044,14 @@
       </div>
 
       <form @submit.prevent="$store.txModal.save()">
+        <!-- Entrada rápida (docs/BONOTTO-2027-BLUEPRINT.md, Conflito 1) — só
+             em lançamento novo (edição já vem com título/valor preenchidos).
+             Preenche título+valor abaixo; nunca salva sozinha. -->
+        <div class="mb-3" x-show="!$store.txModal.form.id" x-cloak>
+          <label class="form-label">Entrada rápida <span class="cg-muted small fw-normal">(opcional)</span></label>
+          <input type="text" class="form-control" x-model="$store.txModal.entradaRapida" @input="$store.txModal.onEntradaRapidaInput()" placeholder="Ex: Mercado 184,90" />
+        </div>
+
         <div class="btn-group w-100 mb-3" role="group">
           <input type="radio" class="btn-check" value="saida" x-model="$store.txModal.form.tipo" id="tipoSaida" />
           <label class="btn btn-outline-danger cg-touch" for="tipoSaida"><i class="bi bi-dash-circle"></i> Saída</label>
