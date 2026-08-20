@@ -2746,6 +2746,7 @@
       <template x-if="$store.csvModal.step === 'resultado'">
         <div>
           <div class="alert alert-success" x-text="$store.csvModal.result.ok + ' registro(s) importado(s) com sucesso.'"></div>
+          <div class="alert alert-info" x-show="$store.csvModal.result.pulados" x-text="$store.csvModal.result.pulados + ' linha(s) pulada(s) — já existia um item com esse nome nesse cômodo/subcategoria.'"></div>
           <template x-if="$store.csvModal.result.erros.length">
             <div class="alert alert-warning">
               <p class="fw-semibold mb-1">Linhas com erro:</p>

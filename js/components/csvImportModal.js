@@ -17,7 +17,7 @@ export function csvModalStore() {
     headers: [],
     rawRows: [],
     mapping: {},
-    result: { ok: 0, erros: [] },
+    result: { ok: 0, pulados: 0, erros: [] },
     IMPORT_TARGETS,
 
     openFor(target, listId = null) {
@@ -27,12 +27,14 @@ export function csvModalStore() {
       this.headers = [];
       this.rawRows = [];
       this.mapping = {};
-      this.result = { ok: 0, erros: [] };
-      // Cache de cômodos/subcategorias já resolvidos NESTE import (ver
-      // resolveComodo/resolveSubcategoria) — zerado a cada abertura pra não
-      // arrastar estado de uma importação anterior na mesma sessão.
+      this.result = { ok: 0, pulados: 0, erros: [] };
+      // Cache de cômodos/subcategorias/itens já resolvidos NESTE import (ver
+      // resolveComodo/resolveSubcategoria/itemDuplicado) — zerado a cada
+      // abertura pra não arrastar estado de uma importação anterior na
+      // mesma sessão.
       this._roomsCache = null;
       this._catCache = {};
+      this._itemsCache = null;
       this.open = true;
     },
 
@@ -107,7 +109,18 @@ export function csvModalStore() {
             if (!row.comodo_nome) throw new Error('cômodo é obrigatório');
             const room = await this.resolveComodo(row.comodo_nome);
             const categoria = await this.resolveSubcategoria(room, row.subcategoria_nome);
-            await res.createItem({
+            // Sem isso, reimportar o mesmo CSV (ex.: reabrir o mesmo
+            // arquivo de itens essenciais por engano) duplicava tudo — cada
+            // linha virava um item NOVO sempre, nunca reaproveitando um já
+            // existente com o mesmo nome no mesmo cômodo/subcategoria
+            // (reportado pelo usuário). "Já existe" pula a linha (não é
+            // erro, só não cria de novo); quem quiser AJUSTAR quantidade de
+            // um item repetido faz isso na tela de Recursos mesmo.
+            if (await this.itemDuplicado(room, categoria, row.nome)) {
+              this.result.pulados++;
+              continue;
+            }
+            const criado = await res.createItem({
               nome: row.nome,
               room_id: room.id,
               category_id: categoria?.id || null,
@@ -118,6 +131,7 @@ export function csvModalStore() {
               owner_id: store.profile.id,
               group_id: store.group?.group?.id ?? null,
             });
+            this._itemsCache.push(criado);
           } else {
             if (!row.nome) throw new Error('nome do item é obrigatório');
             const unidade = ['kg', 'g'].includes((row.unidade || '').toLowerCase()) ? row.unidade.toLowerCase() : 'un';
@@ -171,6 +185,21 @@ export function csvModalStore() {
         this._catCache[room.id].push(categoria);
       }
       return categoria;
+    },
+
+    // Mesmo nome (normalizado), mesmo cômodo E mesma subcategoria já
+    // existente — "Arroz" em Cozinha/Armário não conta como duplicata de
+    // "Arroz" em Cozinha/Geladeira, são coisas diferentes de verdade.
+    async itemDuplicado(room, categoria, nome) {
+      if (!this._itemsCache) {
+        const store = Alpine.store('app');
+        this._itemsCache = await res.listAllItems({ ownerId: store.profile.id, groupId: store.group?.group?.id });
+      }
+      const alvo = nome.trim().toLowerCase();
+      const categoriaId = categoria?.id || null;
+      return this._itemsCache.some(
+        (it) => it.room_id === room.id && (it.category_id || null) === categoriaId && it.nome.trim().toLowerCase() === alvo
+      );
     },
 
     async resolveCategoria(nome) {
