@@ -44,6 +44,24 @@
 
 Todos os 8 itens da lista original foram passados. O que resta são os itens marcados `[~]` acima (parcial/documentado, não "feito e fechado") — cada um tem uma nota explicando exatamente o que falta e por quê. Se retomar isso depois, comece lendo essas notas antes de mexer em qualquer coisa.
 
+## Rodada 2 — pedidos novos depois do checklist original (2026-08-20, mesma sessão)
+
+O checklist acima (8 itens) foi todo concluído. Depois disso vieram mais pedidos, um atrás do outro — esta seção é o status REAL deles, sem enrolação, pra você ver o que falta e por quê.
+
+- [x] Modal de "adicionar item" em Compras impossível de fechar/cancelar — INVESTIGADO A FUNDO, não reproduzi: testei fechar pelo X, pelo botão "Fechar" (com e sem nome digitado no campo), e clicando fora do modal — os três fecharam certinho em todas as tentativas. Se acontecer de novo, preciso saber EXATAMENTE o que você fez antes de travar (que campo preenchido, clicou em quê) pra eu conseguir reproduzir.
+- [x] Logo oficial (você mandou 4 variantes: colorida/branco/preto/verde) substituindo o ícone provisório — favicon, manifest (PWA), apple-touch-icon (PNG, splash do iOS), e nos 3 lugares que o app mostra a própria marca (tela de entrada, sidebar, menu mobile). Commit `418477b`.
+- [x] Logo de empresa/serviço em Transações estava ao lado do TÍTULO, não do nome da empresa — corrigido nas duas views (tabela e cards mobile). Mesmo commit `418477b`.
+- [x] Bancos duplicados nas Caixinhas ("Nubank" da Matheus e "Nubank" da Beatriz sem relação nenhuma) — banco virou entidade compartilhada (nome+logo únicos, reaproveitados por qualquer caixinha). Commit `418477b`, com um bug crítico de LOGIN quebrado corrigido no mesmo commit (conta real sem a migração nova travava inteira — resolvido).
+- [x] Botão "Sair do modo demonstração" (antes ficava preso lá pra sempre) — commit `f51469b`.
+- [x] Barra de progresso "toda torta, uns centralizados outros não" — ancorada embaixo do card via CSS. Commit `3d4f3af`.
+- [x] Itens vencidos/em falta com destaque vermelho pulsando — commit `3d4f3af`.
+- [x] Separar "gerenciar banco" (nome+logo) de "criar/editar caixinha" (meta/moeda/responsável) — antes misturado no mesmo modal, agora dois modais: "Perfil → Bancos" / "Gerenciar bancos" (dentro de Caixinhas) só lista+form de banco; "Nova/editar caixinha" só o resto, com um seletor de banco (+ "Novo banco…" abre o formulário de banco EMPILHADO por cima, modal sobre modal). Commit `3d4f3af`.
+- [ ] **"Isso deve ser componentizado pra funcionar com Categorias e Empresas também"** — PENDENTE. O padrão de modal empilhado (`.cg-modal-backdrop--stacked`, CSS já pronto) só foi aplicado a Bancos até agora. Categorias e Empresas (Perfil → Categorias / Empresas e serviços) ainda misturam lista+formulário no mesmo modal, do jeito antigo. Fica pra próxima rodada — é mecânico (o padrão já existe, é replicar a estrutura), só não deu tempo ainda.
+- [x] Tabela de Transações não aproveitava a largura da tela (sobrava espaço nas laterais, tabela cortava coluna mesmo assim) — `.cg-main` tinha `max-width` fixo em pixel (1180px), trocado pra `min(96vw, 1600px)`. Commit `01c1c0a`.
+- [x] Importação de CSV de Recursos duplicando item já existente — agora pula (não duplica) item com mesmo nome no mesmo cômodo/subcategoria. "Nenhum item tem foto" não é bug: o CSV de exemplo nunca teve `foto_url` preenchida de propósito (app não hotlinka imagem de fora). Commit `8f47cdc`.
+- [ ] **"Modo demonstração deve ter dados 100% fakes, mockados, com todos os exemplos possíveis cadastrados"** — PENDENTE, não iniciado. Pedido grande e um pouco aberto ("todos os exemplos possíveis") — antes de sair criando dado fake solto, vale alinhar com você o que exatamente está faltando no seed atual (`js/data/mockDb.js`) que te fez notar isso. Por enquanto: ainda tem categoria com dado disperso, nenhum banco/empresa pré-cadastrado com logo, etc.
+- [ ] **Widget "Lançamentos recentes" (Início) — avatar e ordem da legenda errados** — PENDENTE, começando agora. Pedido específico: transação de UMA pessoa só deveria mostrar a FOTO dela (hoje só mostra avatar-stack quando é dividida, senão fica sem nada); transação dividida continua mostrando os 2 avatares empilhados (isso já tá certo); transação com empresa/serviço (ex. "Salário" com logo "MB Labs") deveria mostrar a foto da PESSOA como avatar principal, com o logo da empresa como selo pequeno no canto inferior direito (estilo "badge"), não o logo sozinho tomando o lugar do avatar. Ordem da legenda embaixo do título: hoje é "categoria · nome" — devia virar empresa/serviço (linha própria) → badge colorido da categoria → nome da pessoa por último.
+
 ## Como continuar se a sessão cortar aqui
 
 - Tudo commitado até aqui está em `git log` na branch `bonotto-2027-blueprint`.
