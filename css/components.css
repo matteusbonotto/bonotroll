@@ -869,7 +869,12 @@
   height: 30px;
   border-radius: 50%;
   border: none;
-  background: rgba(255, 255, 255, 0.92);
+  /* Fica em cima da foto/placeholder, então precisa continuar translúcido
+     (destaca sobre qualquer imagem embaixo) — mas era um branco fixo, que
+     virava um círculo branco com ícone branco (invisível) no tema escuro.
+     color-mix com --color-surface acompanha o tema em vez de ficar preso
+     no claro. */
+  background: color-mix(in srgb, var(--color-surface) 92%, transparent);
   color: var(--color-text);
   display: flex;
   align-items: center;
