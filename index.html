@@ -1036,11 +1036,9 @@
                   <input type="number" min="0" step="1" class="form-control" placeholder="Sem limite" :value="list?.limite_gasto || ''" @change="salvarLimiteGasto($event.target.value)" />
                 </div>
                 <template x-if="statusLimiteGasto">
-                  <div>
-                    <div class="progress" style="height: 6px;">
-                      <div class="progress-bar" :class="'bg-' + statusLimiteGasto.cor" :style="{ width: Math.min(100, statusLimiteGasto.percentual) + '%' }"></div>
-                    </div>
-                    <span class="cg-muted small" x-text="statusLimiteGasto.percentual + '% do limite'"></span>
+                  <div class="cg-limite-kpi" :class="'cg-limite-kpi--' + statusLimiteGasto.nivel">
+                    <i class="bi" :class="statusLimiteGasto.nivel === 'passou' ? 'bi-exclamation-triangle-fill' : 'bi-circle-fill'"></i>
+                    <span x-text="statusLimiteGasto.percentual + '% do limite'"></span>
                   </div>
                 </template>
               </div>
@@ -1767,7 +1765,7 @@
                     <div class="cg-card cg-card--stat">
                       <div class="cg-muted small text-uppercase">Meta</div>
                       <template x-if="caixinhaAtiva.meta">
-                        <div>
+                        <div class="mt-auto">
                           <div class="h5 fw-bold mb-0" x-text="formatMoeda(caixinhaAtiva.meta, caixinhaAtiva.moeda)"></div>
                           <div class="progress mt-1" style="height: 6px;">
                             <div class="progress-bar bg-success" :style="{ width: progressoFor(caixinhaAtiva) + '%' }"></div>
@@ -1775,7 +1773,7 @@
                           <div class="small cg-muted mt-1" x-text="progressoFor(caixinhaAtiva) + '% da meta'"></div>
                         </div>
                       </template>
-                      <template x-if="!caixinhaAtiva.meta"><div class="cg-muted small">Sem meta definida</div></template>
+                      <template x-if="!caixinhaAtiva.meta"><div class="cg-muted small mt-auto">Sem meta definida</div></template>
                     </div>
                   </div>
                 </div>

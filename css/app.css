@@ -237,6 +237,29 @@ a { color: var(--color-primary); }
   border-color: var(--color-danger);
 }
 
+/* KPI de "limite de gasto" (Compras) — pedido explícito: tirar a barrinha
+   de progresso e mostrar o valor grande/bold com graduação de cor (padrão
+   verde, próximo amarelo, atingiu laranja, passou vermelho pulsante com
+   ícone de alerta), "tipo um KPI mesmo". */
+.cg-limite-kpi {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 800;
+  font-size: 1.05rem;
+  margin-top: 2px;
+}
+.cg-limite-kpi i { font-size: 0.6rem; }
+.cg-limite-kpi--ok { color: var(--color-success); }
+.cg-limite-kpi--proximo { color: var(--color-warning); }
+.cg-limite-kpi--atingiu { color: #F97316; }
+.cg-limite-kpi--passou {
+  color: var(--color-danger);
+  animation: cg-pulse-danger 1.4s ease-in-out infinite;
+  border-radius: var(--radius-sm);
+}
+.cg-limite-kpi--passou i { font-size: 1rem; }
+
 /* Painel de filtros (Transações/Compras/Recursos): recolhido por padrão no
    mobile — o botão "Filtros" alterna .is-open. No desktop (≥992px) sempre
    visível, ignorando o estado do botão (não tem o problema de espaço que

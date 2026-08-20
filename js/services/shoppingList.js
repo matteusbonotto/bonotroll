@@ -80,14 +80,16 @@ export const linkListToTransaction = (id, transacaoId) => updateList(id, { trans
 export const setNomeMercado = (id, nomeMercado) => updateList(id, { nome_mercado: nomeMercado || null });
 export const setLimiteGasto = (id, limiteGasto) => updateList(id, { limite_gasto: limiteGasto || null });
 
-// Verde/amarelo/vermelho conforme o total da lista se aproxima ou passa do
-// limite — mesma faixa (80%/100%) já usada nos orçamentos por categoria
-// (ver computeBudgetProgress em js/services/budgets.js).
+// 4 níveis (pedido explícito: "padrão verde, próximo amarelo, atingiu
+// laranja, passou vermelho pulsante") conforme o total da lista se
+// aproxima/atinge/passa do limite — usado só aqui (Compras); orçamento por
+// categoria (computeBudgetProgress em budgets.js) continua com a régua
+// própria dele, sem mudança.
 export function computeListLimitStatus(total, limite) {
   if (!limite) return null;
   const percentual = Math.round((total / limite) * 100);
-  const cor = percentual >= 100 ? 'danger' : percentual >= 80 ? 'warning' : 'success';
-  return { percentual, cor };
+  const nivel = percentual >= 110 ? 'passou' : percentual >= 100 ? 'atingiu' : percentual >= 80 ? 'proximo' : 'ok';
+  return { percentual, nivel };
 }
 
 export async function listItems(listId) {
