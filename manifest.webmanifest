@@ -6,8 +6,8 @@
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "background_color": "#F7F7F5",
-  "theme_color": "#1F7A5C",
+  "background_color": "#F6F8F7",
+  "theme_color": "#0E9F6E",
   "lang": "pt-BR",
   "icons": [
     {

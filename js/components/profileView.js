@@ -7,7 +7,7 @@ import { exportarMeusDados, baixarComoJson } from '../services/dataExport.js';
 export function profileView() {
   return {
     nome: '',
-    cor: '#1F7A5C',
+    cor: '#0E9F6E',
     saving: false,
     uploadingAvatar: false,
     pushSuportado: isPushSupported(),
@@ -17,7 +17,7 @@ export function profileView() {
 
     async init() {
       this.nome = this.$store.app.profile?.nome || '';
-      this.cor = this.$store.app.profile?.cor || '#1F7A5C';
+      this.cor = this.$store.app.profile?.cor || '#0E9F6E';
       if (this.pushSuportado) {
         try {
           this.pushAtivo = !!(await getExistingSubscription());

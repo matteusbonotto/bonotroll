@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="96" fill="#1F7A5C"/>
+  <rect width="512" height="512" rx="96" fill="#0E9F6E"/>
   <path d="M256 100 L410 210 V400 C410 411 401 420 390 420 H318 V320 C318 308 308 298 296 298 H216 C204 298 194 308 194 320 V420 H122 C111 420 102 411 102 400 V210 Z" fill="#FFFFFF"/>
-  <circle cx="256" cy="176" r="26" fill="#FF7A45"/>
-  <text x="256" y="188" font-family="Arial, sans-serif" font-size="30" font-weight="700" fill="#1F7A5C" text-anchor="middle">R$</text>
+  <circle cx="256" cy="176" r="26" fill="#FF6B4A"/>
+  <text x="256" y="188" font-family="Arial, sans-serif" font-size="30" font-weight="700" fill="#0E9F6E" text-anchor="middle">R$</text>
 </svg>

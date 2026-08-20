@@ -1,29 +1,44 @@
 :root {
-  --color-bg: #F7F7F5;
+  /* Paleta 2026-08-20 (segunda rodada — a primeira só arredondou cantos e
+     não mudou cor nem escala nenhuma, resultado imperceptível). Verde
+     continua a base (trocar pra outra cor seria um pivô de marca que
+     ninguém pediu), mas MUITO mais saturado e confiante — o antigo #1F7A5C
+     é um verde-floresta discreto, perto de qualquer verde "institucional"
+     genérico; o novo é um verde-esmeralda vívido, o mesmo território visual
+     de apps financeiros modernos (sem copiar nenhum específico). */
+  --color-bg: #F6F8F7;
   --color-surface: #FFFFFF;
-  --color-surface-alt: #F1F3F0;
-  --color-text: #1A1D1B;
-  --color-text-muted: #5B615D;
-  --color-border: #E4E7E2;
+  --color-surface-alt: #EEF2F0;
+  --color-text: #101828;
+  --color-text-muted: #667085;
+  --color-border: #E4E8E6;
 
-  --color-primary: #1F7A5C;
-  --color-primary-dark: #145C44;
-  --color-primary-soft: #E4F2ED;
-  --color-accent: #FF7A45;
+  --color-primary: #0E9F6E;
+  --color-primary-rgb: 14, 159, 110;
+  --color-primary-dark: #06724E;
+  --color-primary-soft: #DCFCE9;
+  --color-accent: #FF6B4A;
 
   --color-success: #16A34A;
-  --color-danger: #DC2626;
+  --color-danger: #E11D48;
   --color-warning: #D97706;
   --color-info: #0EA5E9;
   --color-secondary: #64748B;
 
-  /* Raio maior (2026-08-20) — cantos mais arredondados leem como "app",
-     cantos quase retos leem como "painel administrativo". Cards saltaram de
-     22px pra 28px, pill continua pill (botão de ação principal também vira
-     pill agora — ver .cg-btn--primary em components.css). */
-  --radius-sm: 12px;
-  --radius-md: 18px;
-  --radius-lg: 28px;
+  /* Escala de raio CONSOLIDADA (2026-08-20, segunda rodada) — a primeira
+     rodada misturava sm/md/lg/pill quase aleatoriamente entre elementos sem
+     relação nenhuma entre si (input com um raio, card com outro, tile com
+     um terceiro), o que lia como desproporcional mesmo cada peça sendo
+     "arredondada". Agora cada raio tem um papel fixo, sem exceção:
+     --radius-sm  = controles pequenos/badges/tags (nunca cards)
+     --radius-md  = controles padrão: input, select, botão pequeno, tile
+     --radius-lg  = cartão/modal/superfície grande (nunca controle)
+     --radius-pill = SÓ botão de ação principal e chip/badge — nunca nav,
+                     nunca item de lista, nunca elemento largo/multi-linha
+                     (isso é o que ficou "estranho" na primeira rodada). */
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
   --radius-pill: 999px;
 
   --space-1: 4px;
@@ -104,13 +119,13 @@
 }
 
 :root[data-bs-theme="light"] {
-  --color-bg: #F7F7F5;
+  --color-bg: #F6F8F7;
   --color-surface: #FFFFFF;
-  --color-surface-alt: #F1F3F0;
-  --color-text: #1A1D1B;
-  --color-text-muted: #5B615D;
-  --color-border: #E4E7E2;
-  --color-primary-soft: #E4F2ED;
+  --color-surface-alt: #EEF2F0;
+  --color-text: #101828;
+  --color-text-muted: #667085;
+  --color-border: #E4E8E6;
+  --color-primary-soft: #DCFCE9;
   --shadow-sm: 0 2px 8px rgba(20, 30, 25, 0.07);
   --shadow-md: 0 12px 32px rgba(20, 30, 25, 0.12);
   --shadow-lg: 0 20px 48px rgba(20, 30, 25, 0.16);
@@ -123,7 +138,7 @@
    com o resto do app quando data-bs-theme muda, de graça. */
 :root {
   --bs-primary: var(--color-primary);
-  --bs-primary-rgb: 31, 122, 92;
+  --bs-primary-rgb: var(--color-primary-rgb);
   --bs-success: var(--color-success);
   --bs-danger: var(--color-danger);
   --bs-warning: var(--color-warning);

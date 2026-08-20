@@ -151,7 +151,7 @@ function seedDatabase() {
 
   return {
     profiles: [
-      { id: matheusId, nome: 'Matheus', avatar_url: null, cor: '#1F7A5C', criado_em: new Date().toISOString() },
+      { id: matheusId, nome: 'Matheus', avatar_url: null, cor: '#0E9F6E', criado_em: new Date().toISOString() },
       { id: beatrizId, nome: 'Beatriz', avatar_url: null, cor: '#FF7A45', criado_em: new Date().toISOString() },
     ],
     groups: [{ id: groupId, nome: 'Família', criado_por: matheusId, codigo: 'FAMILIA-DEMO', criado_em: new Date().toISOString() }],

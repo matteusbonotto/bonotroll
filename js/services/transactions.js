@@ -399,7 +399,7 @@ export function groupByPeriod(transactions, granularidade = 'mes') {
 
   return [...baldes.entries()]
     .sort(([a], [b]) => a.localeCompare(b))
-    .map(([chave, valores]) => ({ nome: rotuloDe(chave), total: somar(...valores), cor: '#1F7A5C' }));
+    .map(([chave, valores]) => ({ nome: rotuloDe(chave), total: somar(...valores), cor: '#0E9F6E' }));
 }
 
 const MESES_ABREV = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];

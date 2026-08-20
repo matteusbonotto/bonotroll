@@ -430,10 +430,14 @@ a { color: var(--color-primary); }
   margin-bottom: 2px;
 }
 
-.form-label { font-weight: 600; }
+.form-label { font-weight: var(--font-weight-medium); }
 .form-control, .form-select {
   min-height: var(--touch-target);
-  border-radius: var(--radius-sm);
+  /* --radius-md, igual a botão pequeno/tile — não --radius-sm: era essa
+     mistura (input com um raio, botão com outro, card com um terceiro) que
+     lia como desproporcional (ver tokens.css, escala de raio consolidada). */
+  border-radius: var(--radius-md);
+  border-color: var(--color-border);
   /* Sem isso, "Alto contraste" do Windows (ou o force-dark de alguns
      navegadores) pinta os <select>/<input> nativos com as cores do sistema
      por cima das nossas — o resto da tela (cg-card, cg-badge etc., que não
@@ -443,5 +447,5 @@ a { color: var(--color-primary); }
 }
 .form-control:focus, .form-select:focus {
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 0.2rem rgba(31, 122, 92, 0.18);
+  box-shadow: 0 0 0 0.2rem rgba(var(--color-primary-rgb), 0.18);
 }
