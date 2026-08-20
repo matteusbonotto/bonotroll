@@ -321,6 +321,8 @@
               <option value="proximo_mes">Próximo mês</option>
               <option value="ano_atual">Este ano</option>
               <option value="ano_anterior">Ano anterior</option>
+              <option value="trimestre_atual">Trimestre atual</option>
+              <option value="semestre_atual">Semestre atual</option>
               <option value="personalizado">Período personalizado</option>
               <option value="tudo">Todo o período</option>
             </select>
@@ -512,6 +514,8 @@
                     <option value="proximo_mes">Próximo mês</option>
                     <option value="ano_atual">Este ano</option>
                     <option value="ano_anterior">Ano anterior</option>
+                    <option value="trimestre_atual">Trimestre atual</option>
+                    <option value="semestre_atual">Semestre atual</option>
                     <option value="personalizado">Período personalizado</option>
                     <option value="tudo">Todo o período</option>
                   </select>
@@ -644,12 +648,21 @@
         <section x-show="$store.app.view === 'transacoes'" x-data="transactionsView()" x-init="init()">
           <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
             <div class="cg-section-title mb-0"><i class="bi bi-table"></i> Transações</div>
-            <!-- 2 grupos independentes (2026-08-20) — layout (lista/grade)
-                 e densidade (normal/compacta) SEMPRE combináveis, no lugar
-                 de 4 botões soltos sem relação clara entre si. -->
+            <!-- 2 grupos independentes (2026-08-20) — layout (lista/tabela/
+                 grade) e densidade (normal/compacta) SEMPRE combináveis, no
+                 lugar de 4 botões soltos sem relação clara entre si.
+                 "tabela" (2026-08-20) NÃO é o antigo modo "tabela" removido
+                 na reestruturação acima (aquele era quase idêntico a
+                 "lista" — tabela no desktop, cards no mobile igualzinho, daí
+                 a fusão). Este é um mode novo e deliberadamente diferente:
+                 força a MESMA marcação de tabela do desktop a aparecer
+                 também no mobile (em vez do cards-stack), dentro de uma
+                 caixa com scroll horizontal E vertical (ver .cg-scroll-xy em
+                 css/app.css) — pedido explícito de "planilha" no celular. -->
             <div class="d-flex flex-wrap gap-2">
               <div class="cg-view-toggle">
                 <button type="button" :class="{ 'is-active': layout === 'lista' }" @click="setLayout('lista')" title="Lista"><i class="bi bi-list-ul"></i></button>
+                <button type="button" :class="{ 'is-active': layout === 'tabela' }" @click="setLayout('tabela')" title="Tabela"><i class="bi bi-table"></i></button>
                 <button type="button" :class="{ 'is-active': layout === 'grade' }" @click="setLayout('grade')" title="Grade"><i class="bi bi-grid-3x3-gap"></i></button>
               </div>
               <div class="cg-view-toggle">
@@ -666,7 +679,7 @@
               </button>
             </div>
           </div>
-          <div class="btn-group btn-group-sm flex-wrap mb-3" role="group" x-show="agrupando" x-cloak>
+          <div class="btn-group btn-group-sm flex-wrap mb-3 cg-agrupar-toggle" role="group" x-show="agrupando" x-cloak>
             <button type="button" class="btn" :class="agrupamento === 'periodo' ? 'btn-secondary' : 'btn-outline-secondary'" @click="setAgrupamento('periodo')">Período</button>
             <button type="button" class="btn" :class="agrupamento === 'responsavel' ? 'btn-secondary' : 'btn-outline-secondary'" @click="setAgrupamento('responsavel')">Responsável</button>
             <button type="button" class="btn" :class="agrupamento === 'movimentacao' ? 'btn-secondary' : 'btn-outline-secondary'" @click="setAgrupamento('movimentacao')">Movimentação</button>
@@ -813,8 +826,14 @@
               <template x-if="!agrupando || estaAberto(secao.chave, secao.abertoPorPadrao)">
               <div>
 
-          <template x-if="layout === 'lista' && secao.linhas.length">
-          <div class="cg-scroll-x d-none d-md-block" :class="{ 'cg-table--compact': densidade === 'compacta' }">
+          <!-- Mesma marcação de tabela serve os 2 modos: "lista" (só desktop
+               — mobile usa o card-stack logo abaixo, ver x-if seguinte) e
+               "tabela" (força tabela em QUALQUER largura, dentro de uma
+               caixa com scroll duplo — .cg-scroll-xy, css/app.css — pra
+               virar uma "planilha" rolável em vez de espremer/cortar coluna
+               no mobile). -->
+          <template x-if="(layout === 'lista' || layout === 'tabela') && secao.linhas.length">
+          <div class="cg-scroll-x" :class="{ 'cg-table--compact': densidade === 'compacta', 'd-none d-md-block': layout === 'lista', 'cg-scroll-xy': layout === 'tabela' }">
             <table class="table cg-table align-middle">
               <thead>
                 <tr>

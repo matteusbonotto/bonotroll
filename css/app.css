@@ -321,6 +321,24 @@ a { color: var(--color-primary); }
   }
 }
 
+/* "Agrupar" (Transações) — bug puro do Bootstrap 5, não CSS nosso: todo
+   ".btn-group > .btn" recebe "flex: 1 1 auto" por padrão, então com
+   ".flex-wrap" cada linha de 2 botões estica os 2 pra ~50% da largura cada
+   — reportado como "período virou um pill gigante tipo col-12" no mobile.
+   Escopado só por essa classe nova (.cg-agrupar-toggle), não em ".btn-group"
+   geral — os outros ".btn-group" do app (dono de caixinha, tipo de
+   movimentação no modal, importação CSV) não têm ".flex-wrap" e não sofrem
+   esse bug; não tocar neles. */
+.cg-agrupar-toggle > .btn {
+  flex: 0 0 auto;
+}
+@media (max-width: 480px) {
+  .cg-agrupar-toggle > .btn {
+    padding: 4px 8px;
+    font-size: 0.75rem;
+  }
+}
+
 .cg-grid-dashboard {
   display: grid;
   grid-template-columns: 1fr;
@@ -376,6 +394,24 @@ a { color: var(--color-primary); }
     linear-gradient(to right, rgba(16, 24, 40, 0.12), transparent) left / 24px 100% no-repeat scroll,
     linear-gradient(to left, rgba(16, 24, 40, 0.12), transparent) right / 24px 100% no-repeat scroll;
   background-color: var(--color-surface);
+}
+
+/* Modo "tabela" de Transações (2026-08-20) — mesma tabela do desktop,
+   forçada a aparecer em QUALQUER largura (ver layout==='tabela' em
+   index.html), dentro de uma caixa com altura travada e scroll nos 2 eixos
+   (spreadsheet: rola pro lado E rola pra baixo, sem empurrar o resto da
+   página). overflow-x já vem de .cg-scroll-x — por spec, um elemento com
+   overflow-x diferente de "visible" já computa overflow-y como "auto"
+   mesmo se declarado "visible" (ver comentário de .cg-pill-menu em
+   components.css); aqui só tornamos isso explícito e travamos a altura. */
+.cg-scroll-xy {
+  max-height: min(65vh, 560px);
+  overflow-y: auto;
+}
+.cg-scroll-xy thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 
 .cg-empty-state {

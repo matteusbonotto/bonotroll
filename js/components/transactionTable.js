@@ -31,12 +31,21 @@ export function transactionsView() {
     // "lista" já SEMPRE tinha sido tabela-no-desktop/cards-no-mobile —
     // reportado como "lista não funciona em desktop" porque coexistir com
     // um "tabela" quase idêntico só confundia qual escolher):
-    //   layout    = 'lista' (linhas, edição inline) | 'grade' (cards, toca
-    //               pra abrir o formulário completo)
+    //   layout    = 'lista' (linhas, edição inline; tabela no desktop, cards
+    //               no mobile) | 'tabela' (mesma tabela de 'lista', mas
+    //               forçada em QUALQUER largura — pedido explícito de
+    //               "planilha" no celular, com scroll horizontal E vertical
+    //               em vez do card-stack; ver .cg-scroll-xy em css/app.css.
+    //               Reintroduzido em 2026-08-20 — NÃO é o "tabela" antigo
+    //               acima: aquele não diferia de 'lista' em lugar nenhum,
+    //               este só existe pra resolver o mobile, então não
+    //               reproduz a confusão "quase idêntico" que motivou a
+    //               fusão original) | 'grade' (cards, toca pra abrir o
+    //               formulário completo)
     //   densidade = 'normal' | 'compacta' (mais denso, menos respiro)
-    // Os dois se combinam livremente — lista normal, lista compacta, grade
-    // normal, grade compacta — e "Agrupar" continua um terceiro filtro
-    // totalmente independente dos dois (ver agrupando/secoesExibidas).
+    // Os eixos se combinam livremente — inclusive tabela+compacta — e
+    // "Agrupar" continua um terceiro filtro totalmente independente dos
+    // dois (ver agrupando/secoesExibidas).
     layout: localStorage.getItem('bonotto_layout_transacoes') || 'lista',
     densidade: localStorage.getItem('bonotto_densidade_transacoes') || 'normal',
     setLayout(v) {
