@@ -544,6 +544,15 @@
 }
 .cg-shopping-toggle--start { background: var(--color-primary); }
 .cg-shopping-toggle--finish { background: var(--color-accent); }
+/* Pausar/Retomar são ação SECUNDÁRIA nesta tela (Iniciar/Encerrar é a
+   primária) — mesma família (pílula, mesma altura) do botão principal,
+   só sem preenchimento, pra ficar claro que pertencem ao mesmo grupo de
+   controle em vez de parecer 2 sistemas de botão diferentes na mesma
+   tela (DESIGN-SYSTEM-2027.md §5: navegação/ação nunca confundidas —
+   aqui o problema real não era isso, era 2 FAMÍLIAS de botão diferentes
+   uma do lado da outra: pílula preenchida vs. retângulo com borda). */
+.cg-shopping-toggle--outline { background: transparent; border: 1.5px solid var(--color-warning); color: var(--color-warning); }
+.cg-shopping-toggle--outline:hover { background: color-mix(in srgb, var(--color-warning) 12%, transparent); }
 
 /* ---------- Item de lista de compras ---------- */
 .cg-item-row {

@@ -1119,8 +1119,8 @@
                   <i class="bi" :class="emCompra ? 'bi-flag-fill' : 'bi-play-fill'"></i>
                   <span x-text="emCompra ? 'Encerrar Compra' : 'Iniciar Compra'"></span>
                 </button>
-                <button type="button" class="cg-btn btn btn-outline-warning" x-show="emCompra" @click="pausar()"><i class="bi bi-pause-fill"></i> Pausar</button>
-                <button type="button" class="cg-btn btn btn-outline-warning" x-show="pausada" @click="retomar()"><i class="bi bi-play-fill"></i> Retomar</button>
+                <button type="button" class="cg-shopping-toggle cg-shopping-toggle--outline" x-show="emCompra" @click="pausar()"><i class="bi bi-pause-fill"></i> Pausar</button>
+                <button type="button" class="cg-shopping-toggle cg-shopping-toggle--outline" x-show="pausada" @click="retomar()"><i class="bi bi-play-fill"></i> Retomar</button>
               </div>
             </div>
 
