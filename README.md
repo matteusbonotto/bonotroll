@@ -101,6 +101,8 @@ npm test                 # E2E (Playwright) contra o app real em modo demo (?dem
 
 Ver `docs/BONOTTO-2027-BLUEPRINT.md` (Fase 1) e `docs/RAIO-X-2.0.md` (§5) para o porquê: cobre primeiro os bugs que já se repetiram mais de uma vez em produção.
 
+Roda automaticamente a cada push/PR contra `main` via GitHub Actions ([`.github/workflows/tests.yml`](./.github/workflows/tests.yml)) — só testa, não builda nem faz deploy (isso continua manual, como sempre foi).
+
 ## Sobre os ícones
 
 `assets/icons/icon.svg` e `icon-maskable.svg` são placeholders funcionais (o manifest já aponta para eles). Antes de publicar de verdade, gere PNGs nos tamanhos 192×192 e 512×512 (e uma versão maskable) a partir de um logo definitivo — ferramentas como [realfavicongenerator.net](https://realfavicongenerator.net) fazem isso automaticamente a partir do SVG.
