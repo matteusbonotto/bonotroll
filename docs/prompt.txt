@@ -139,10 +139,12 @@ O Bõnotto atualmente é um PWA doméstico que unifica:
 
 ### CAIXINHAS
 
-* dinheiro guardado em bancos/corretoras (nome do banco, moeda, meta opcional);
+* dinheiro guardado em bancos/corretoras (nome do banco, meta opcional, responsável atribuível);
+* moeda própria por caixinha (BRL/USD/EUR/GBP/USDT/BTC/ETH) com símbolo certo e conversão ao vivo pra BRL (discreta, best-effort);
 * histórico de aportes/retiradas (guardado/retirado/saldo sempre derivados do histórico, nunca coluna própria);
 * métricas por banco (guardado, retirado, saldo, % da meta);
-* soma de todas as caixinhas;
+* filtro por responsável na grade + avatar do dono em cada caixinha;
+* soma de todas as caixinhas (em BRL);
 * soma por responsável (individual e somada com o grupo).
 
 ### COMPRAS
@@ -210,15 +212,20 @@ O documento de referência também registra problemas reais já corrigidos envol
 * atualização do Service Worker;
 * divergência entre README e código;
 * estado entre componentes (checkbox otimista, accordions com `!important` do Bootstrap batendo o `x-show` do Alpine);
-* duplicidade de categorias (índice único do banco comparava nome literal, não normalizado — corrigido pra comparar `lower(btrim(nome))`, igual o app já fazia);
+* duplicidade de categorias — **causa raiz real** (não só normalização de texto, que foi uma primeira tentativa incompleta em 19/08): o índice único sempre incluiu o dono na chave, então nunca impediu dois membros do MESMO grupo de criarem cada um sua própria cópia da mesma categoria de grupo; corrigido trocando por dois índices de escopo diferente (pessoal único por dono, de grupo único pelo grupo inteiro) + RLS de editar/excluir estendida a qualquer membro do grupo — ver RAIO-X §14.6;
+* encoding de importação de CSV: arquivo salvo em ANSI/Windows-1252 (Excel no Windows) corrompia acentuação silenciosamente (`Salário` virava `Sal�rio`) — corrigido decodificando UTF-8 estrito primeiro, com fallback pra Windows-1252 (RAIO-X §14.6);
+* `todayIso()` usava `toISOString()` (UTC) em vez do calendário local — em fuso negativo (Brasil), "hoje" podia virar amanhã à noite; usado em quase tudo (status, recorrência, formulário, filtro de período) — RAIO-X §14.7;
 * `<select>` de mapeamento da importação de CSV não refletindo visualmente o auto-match de coluna (afetava os 3 alvos de importação: transações, itens de compra, recursos — causa era um `x-for` filho de options que ainda não tinha montado quando o `x-model` tentava aplicar o valor inicial);
-* tela de Recursos não se atualizando quando um item era criado por FORA dela (ex.: pela importação de CSV, que grava direto pelo service em vez de passar pelas ações da própria tela).
+* tela de Recursos não se atualizando quando um item era criado por FORA dela (ex.: pela importação de CSV, que grava direto pelo service em vez de passar pelas ações da própria tela);
+* accordion de agrupamento em Transações "não minimizava" — mesmo padrão `x-show`+`.d-flex !important` de sempre, corrigido com `x-if`.
 
 **Não trate esses problemas como exemplos hipotéticos. Eles fazem parte do histórico de engenharia do produto e devem influenciar a arquitetura futura.**
 
 **Estado do sistema de notificações/push em 19/08/2026 (não trate como "infraestrutura opcional e não testada"):** o pipeline de push está deployado e confirmado funcionando ponta a ponta em produção — trigger `security definer` reage a pagamento em tempo real, varredura `pg_cron` a cada 5 minutos cobre vencimento/estoque/validade pro grupo inteiro (não só o dono do dado), e subscriptions órfãs (expiradas ou de uma rotação de chave VAPID) se auto-podam. Isso já foi testado com as duas contas reais da casa, app aberto e fechado, tela bloqueada e desbloqueada. Ao investigar esse módulo, parta desse estado confirmado (RAIO-X §11) em vez de redescobrir do zero se push "funciona" — o trabalho relevante agora é sobre desenho/UX/arquitetura do sistema de notificações, não sobre se a entrega técnica existe.
 
 **Estado dos módulos adicionados em 19/08/2026 (segunda rodada do mesmo dia — não trate como esboço/protótipo):** Caixinhas (módulo novo, schema + service + tela completos), recorrência com cadência/parcelas, a visão agrupada em accordion de Transações, o gráfico "por membro do grupo" no dashboard, o ícone de empresa por URL e a importação de CSV pra Recursos foram todos implementados E testados de ponta a ponta em navegador real (Playwright, modo demo) antes de serem considerados prontos — incluindo os 2 bugs de sincronização listados acima, que só apareceram durante esse teste, não por inspeção de código. Ver RAIO-X §8.3, §8.5, §8.6, §10.6 e §20 pros detalhes de cada um. Ao investigar esses módulos, parta do estado "existe e funciona" — o trabalho relevante agora é sobre desenho/UX/arquitetura, não sobre se a entrega técnica existe.
+
+**Estado da terceira rodada, 20/08/2026 (revisão crítica sobre a rodada anterior — trate como definitivo, não como "ainda em ajuste"):** a duplicidade de categorias, o agrupamento de Transações e a recorrência foram **redesenhados**, não só remendados, depois de feedback direto sobre a rodada de 19/08 estar incompleta/errada em pontos específicos. Cada correção foi verificada contra o banco de produção real via CLI (não só o modo demo) antes de ser considerada pronta — inclusive consultando o estado exato das categorias duplicadas/corrompidas antes e depois da migração. Agrupamento agora é um filtro independente do modo de visualização (não mais um 5º modo); recorrência tem dia do mês/dia+mês do ano explícitos com vencimento derivado da cadência; Caixinhas tem responsável, filtro por membro e moeda própria com conversão ao vivo; a Home tem filtro de período. Ver RAIO-X §7.4, §8.3, §8.5, §14.6, §14.7 e §20.4–20.5. Ao revisar essas áreas, parta desse estado — reabrir a mesma investigação do zero seria redundante; o trabalho relevante agora é próximo passo (UX/produto), não "será que funciona".
 
 ---
 
