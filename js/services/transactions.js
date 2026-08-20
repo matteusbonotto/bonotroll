@@ -147,25 +147,47 @@ export function markAsUnpaid(id) {
   return updateTransaction(id, { data_pagamento: null });
 }
 
-// Cálculo puro (sem I/O) — reaproveitado pela Home (pessoal/grupo) e pelos gráficos.
+// Cálculo puro (sem I/O) — reaproveitado pela Home (pessoal/grupo) e pelos
+// gráficos. `entradas`/`saidas`/`saldo` contam só o que já foi PAGO
+// (data_pagamento preenchida) — é "quanto eu realmente tenho", não uma
+// projeção. `entradasPrevistas`/`saidasPrevistas` contam TUDO (pago ou não)
+// — "quanto deve entrar/sair no total" — pedido explícito do usuário: "só
+// conta se estiver como pago; previsto considera pago ou não". Antes não
+// existia essa distinção nenhuma: "Entradas"/"Saídas" somavam tudo, o que
+// misturava dinheiro que já entrou/saiu com o que só está agendado.
 export function computeSummary(transactions) {
-  const valoresEntrada = [];
-  const valoresSaida = [];
+  const pagasEntrada = [];
+  const pagasSaida = [];
+  const todasEntrada = [];
+  const todasSaida = [];
   let maiorGasto = null;
 
   for (const t of transactions) {
     const valor = Number(t.valor) || 0;
+    const pago = !!t.data_pagamento;
     if (t.tipo === 'entrada') {
-      valoresEntrada.push(valor);
+      todasEntrada.push(valor);
+      if (pago) pagasEntrada.push(valor);
     } else {
-      valoresSaida.push(valor);
+      todasSaida.push(valor);
+      if (pago) pagasSaida.push(valor);
       if (!maiorGasto || valor > Number(maiorGasto.valor)) maiorGasto = t;
     }
   }
 
-  const entradas = somar(...valoresEntrada);
-  const saidas = somar(...valoresSaida);
-  return { entradas, saidas, saldo: somar(entradas, -saidas), maiorGasto };
+  const entradas = somar(...pagasEntrada);
+  const saidas = somar(...pagasSaida);
+  const entradasPrevistas = somar(...todasEntrada);
+  const saidasPrevistas = somar(...todasSaida);
+  return {
+    entradas,
+    saidas,
+    saldo: somar(entradas, -saidas),
+    entradasPrevistas,
+    saidasPrevistas,
+    saldoPrevisto: somar(entradasPrevistas, -saidasPrevistas),
+    maiorGasto,
+  };
 }
 
 // ---------- Múltiplos pagadores (divisão de despesa) ----------

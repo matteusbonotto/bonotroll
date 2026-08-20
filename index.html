@@ -347,15 +347,17 @@
               <div class="cg-hero-stat">
                 <i class="bi bi-download"></i>
                 <div>
-                  <span class="cg-hero-stat__label">Entradas</span>
+                  <span class="cg-hero-stat__label">Entradas <span class="cg-muted">(pagas)</span></span>
                   <span class="cg-hero-stat__value" :title="cgFormat.formatCurrency(resumoSelecionado.entradas)" x-text="cgFormat.formatCurrencyCompact(resumoSelecionado.entradas)"></span>
+                  <span class="cg-hero-stat__delta" :title="cgFormat.formatCurrency(resumoSelecionado.entradasPrevistas)">Previsto:&nbsp;<span x-text="cgFormat.formatCurrencyCompact(resumoSelecionado.entradasPrevistas)"></span></span>
                 </div>
               </div>
               <div class="cg-hero-stat">
                 <i class="bi bi-upload"></i>
                 <div>
-                  <span class="cg-hero-stat__label">Saídas</span>
+                  <span class="cg-hero-stat__label">Saídas <span class="cg-muted">(pagas)</span></span>
                   <span class="cg-hero-stat__value" :title="cgFormat.formatCurrency(resumoSelecionado.saidas)" x-text="cgFormat.formatCurrencyCompact(resumoSelecionado.saidas)"></span>
+                  <span class="cg-hero-stat__delta" :title="cgFormat.formatCurrency(resumoSelecionado.saidasPrevistas)">Previsto:&nbsp;<span x-text="cgFormat.formatCurrencyCompact(resumoSelecionado.saidasPrevistas)"></span></span>
                   <span class="cg-hero-stat__delta" x-show="comparativoMesAnterior.percentual !== null" :title="'Este mês: ' + cgFormat.formatCurrency(comparativoMesAnterior.atual) + ' · Mês passado: ' + cgFormat.formatCurrency(comparativoMesAnterior.passado)">
                     <i class="bi" :class="comparativoMesAnterior.percentual > 0 ? 'bi-arrow-up-short' : (comparativoMesAnterior.percentual < 0 ? 'bi-arrow-down-short' : 'bi-dash')"></i><span x-text="Math.abs(comparativoMesAnterior.percentual) + '% vs mês passado'"></span>
                   </span>

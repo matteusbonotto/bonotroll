@@ -230,21 +230,43 @@ export function dashboardView() {
     // é o responsavel_id dela (entrada não é dividida — só despesa); saída
     // usa a fatia calculada por shareFor, que cai pra responsavel_id sozinho
     // quando a despesa não tem divisão.
+    // entradas/saidas: só o que já foi PAGO (data_pagamento preenchida) —
+    // "quanto eu realmente tenho". entradasPrevistas/saidasPrevistas: tudo,
+    // pago ou não — "quanto deve entrar/sair no total". Mesma distinção de
+    // computeSummary em services/transactions.js (usado pra "grupo"); esta
+    // aqui é a versão por pessoa (entrada não é dividida, saída usa a
+    // fatia de shareFor).
     resumoPara(profileId) {
       let entradas = 0;
       let saidas = 0;
+      let entradasPrevistas = 0;
+      let saidasPrevistas = 0;
       let maiorGasto = null;
       for (const t of this.escopoFiltrado) {
+        const pago = !!t.data_pagamento;
         if (t.tipo === 'entrada') {
-          if (t.responsavel_id === profileId) entradas += Number(t.valor) || 0;
+          if (t.responsavel_id === profileId) {
+            const valor = Number(t.valor) || 0;
+            entradasPrevistas += valor;
+            if (pago) entradas += valor;
+          }
           continue;
         }
         const fatia = this.shareFor(t, profileId);
         if (fatia <= 0) continue;
-        saidas += fatia;
+        saidasPrevistas += fatia;
+        if (pago) saidas += fatia;
         if (!maiorGasto || fatia > maiorGasto.valor) maiorGasto = { ...t, valor: fatia };
       }
-      return { entradas, saidas, saldo: entradas - saidas, maiorGasto };
+      return {
+        entradas,
+        saidas,
+        saldo: entradas - saidas,
+        entradasPrevistas,
+        saidasPrevistas,
+        saldoPrevisto: entradasPrevistas - saidasPrevistas,
+        maiorGasto,
+      };
     },
 
     get idQuemVer() {

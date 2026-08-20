@@ -8,22 +8,26 @@ import {
   computeSummary, splitEqually, groupByCategory, groupByCompany, groupByPeriod, computeSaldosEntreMembros,
 } from '../../js/services/transactions.js';
 
-test('computeSummary soma entradas/saídas e acha o maior gasto', () => {
+test('computeSummary soma entradas/saídas PAGAS e acha o maior gasto — pendente não conta, só em "prevista"', () => {
   const txs = [
-    { tipo: 'entrada', valor: 1000 },
-    { tipo: 'saida', valor: 300.5 },
-    { tipo: 'saida', valor: 45.25 },
+    { tipo: 'entrada', valor: 1000, data_pagamento: '2026-08-01' },
+    { tipo: 'entrada', valor: 200 }, // pendente — não entra em "entradas", só em "entradasPrevistas"
+    { tipo: 'saida', valor: 300.5, data_pagamento: '2026-08-02' },
+    { tipo: 'saida', valor: 45.25 }, // pendente — não entra em "saidas", só em "saidasPrevistas"
   ];
   const r = computeSummary(txs);
   assert.equal(r.entradas, 1000);
-  assert.equal(r.saidas, 345.75);
-  assert.equal(r.saldo, 654.25);
+  assert.equal(r.saidas, 300.5);
+  assert.equal(r.saldo, 699.5);
+  assert.equal(r.entradasPrevistas, 1200);
+  assert.equal(r.saidasPrevistas, 345.75);
+  assert.equal(r.saldoPrevisto, 854.25);
   assert.equal(r.maiorGasto.valor, 300.5);
 });
 
 test('computeSummary sem transação nenhuma não quebra (saldo 0, sem maior gasto)', () => {
   const r = computeSummary([]);
-  assert.deepEqual(r, { entradas: 0, saidas: 0, saldo: 0, maiorGasto: null });
+  assert.deepEqual(r, { entradas: 0, saidas: 0, saldo: 0, entradasPrevistas: 0, saidasPrevistas: 0, saldoPrevisto: 0, maiorGasto: null });
 });
 
 test('splitEqually: 3 pessoas, valor não divide certinho — sobra vai pra primeira, soma bate exata', () => {
