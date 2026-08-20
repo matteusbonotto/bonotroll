@@ -1,7 +1,7 @@
 // PapaParse é carregado sob demanda — só baixa esse script quando o usuário
 // realmente abre a tela de importação/exportação de CSV.
 async function loadPapa() {
-  const mod = await import('https://esm.sh/papaparse@5');
+  const mod = await import('https://esm.sh/papaparse@5.6.0');
   return mod.default || mod;
 }
 

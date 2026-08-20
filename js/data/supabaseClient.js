@@ -9,7 +9,7 @@ export function getSupabase() {
     throw new Error('Supabase não configurado — o app está em modo demonstração (veja js/data/config.js).');
   }
   if (!clientPromise) {
-    clientPromise = import('https://esm.sh/@supabase/supabase-js@2').then(({ createClient }) =>
+    clientPromise = import('https://esm.sh/@supabase/supabase-js@2.112.3').then(({ createClient }) =>
       createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
     );
   }

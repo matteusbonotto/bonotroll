@@ -3,7 +3,7 @@
 let scannerInstance = null;
 
 export async function startBarcodeScanner(elementId, onDetected) {
-  const mod = await import('https://esm.sh/html5-qrcode@2');
+  const mod = await import('https://esm.sh/html5-qrcode@2.3.8');
   const Html5Qrcode = mod.Html5Qrcode || mod.default?.Html5Qrcode;
   const Formats = mod.Html5QrcodeSupportedFormats || mod.default?.Html5QrcodeSupportedFormats;
   if (!Html5Qrcode) throw new Error('Não foi possível carregar o leitor de código de barras.');

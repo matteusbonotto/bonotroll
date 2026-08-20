@@ -7,7 +7,7 @@ let workerPromise = null;
 async function getWorker() {
   if (!workerPromise) {
     workerPromise = (async () => {
-      const { createWorker } = await import('https://esm.sh/tesseract.js@5');
+      const { createWorker } = await import('https://esm.sh/tesseract.js@5.1.1');
       return createWorker('por');
     })();
   }

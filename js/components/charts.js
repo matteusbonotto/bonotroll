@@ -18,7 +18,7 @@ export function categoryChart() {
       // deve mais mexer no chart — sem isso, a resposta mais lenta podia
       // "vencer" e sobrescrever o gráfico com dados/tipo já trocados de novo.
       const token = ++this.renderToken;
-      const mod = await import('https://esm.sh/chart.js@4/auto');
+      const mod = await import('https://esm.sh/chart.js@4.5.1/auto');
       const Chart = mod.Chart || mod.default;
       if (token !== this.renderToken || !this.$refs.canvas) return;
 
