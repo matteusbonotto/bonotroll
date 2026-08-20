@@ -9,7 +9,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { somaSaldos, computeTotais, computeProgresso } from '../../js/services/caixinhas.js';
 import { todayIso } from '../../js/utils/format.js';
-import { computeStatus } from '../../js/utils/status.js';
+import { computeStatus, severidadeDe } from '../../js/utils/status.js';
 
 test('computeTotais soma guardado/retirado/saldo a partir do histórico bruto', () => {
   const movs = [
@@ -75,6 +75,30 @@ test('computeStatus: sem vencimento e sem pagamento é pendente, nunca vencido',
 
 test('computeStatus: vencimento no passado sem pagamento é vencido', () => {
   assert.equal(computeStatus({ data_pagamento: null, data_vencimento: '2000-01-01' }), 'vencido');
+});
+
+test('severidadeDe: pagamento é sempre info (notícia neutra/positiva)', () => {
+  assert.equal(severidadeDe({ tipo: 'pagamento', titulo: 'x' }), 'info');
+});
+
+test('severidadeDe: estoque em falta é attention, não crítico (chato, não é crise)', () => {
+  assert.equal(severidadeDe({ tipo: 'estoque', titulo: '"Arroz" está em falta' }), 'attention');
+});
+
+test('severidadeDe: despesa já vencida é critical', () => {
+  assert.equal(severidadeDe({ tipo: 'vencimento_despesa', titulo: '"Aluguel" está vencida' }), 'critical');
+});
+
+test('severidadeDe: despesa a vencer (ainda dá tempo) é warning, não critical', () => {
+  assert.equal(severidadeDe({ tipo: 'vencimento_despesa', titulo: '"Aluguel" vence em breve' }), 'warning');
+});
+
+test('severidadeDe: item de Recursos já vencido é critical', () => {
+  assert.equal(severidadeDe({ tipo: 'validade', titulo: '"Leite" venceu' }), 'critical');
+});
+
+test('severidadeDe: item de Recursos vencendo é warning', () => {
+  assert.equal(severidadeDe({ tipo: 'validade', titulo: '"Leite" está vencendo' }), 'warning');
 });
 
 test('computeStatus: vencimento dentro de 7 dias é a_vencer', () => {

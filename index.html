@@ -212,9 +212,12 @@
                 </template>
                 <div class="d-flex flex-column gap-1">
                   <template x-for="n in $store.app.notifications" :key="n.id">
-                    <button type="button" class="cg-pill-option d-block text-start" :class="{ 'fw-semibold': !n.lida }" @click="$store.app.markNotificationRead(n.id)">
-                      <div x-text="n.titulo"></div>
-                      <div class="cg-muted small" x-show="n.corpo" x-text="n.corpo"></div>
+                    <button type="button" class="cg-pill-option d-flex align-items-start gap-2 text-start" :class="{ 'fw-semibold': !n.lida }" @click="$store.app.markNotificationRead(n.id)">
+                      <i class="bi flex-shrink-0" :class="[cgStatus.severityMeta(n).icon, 'text-' + cgStatus.severityMeta(n).badge]" :title="cgStatus.severityMeta(n).label" aria-hidden="true"></i>
+                      <span class="flex-fill">
+                        <div x-text="n.titulo"></div>
+                        <div class="cg-muted small" x-show="n.corpo" x-text="n.corpo"></div>
+                      </span>
                     </button>
                   </template>
                 </div>

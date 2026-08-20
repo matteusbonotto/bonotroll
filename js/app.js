@@ -13,13 +13,13 @@ import { groupView } from './components/groupView.js';
 import { profileView } from './components/profileView.js';
 import { categoryChart } from './components/charts.js';
 import * as format from './utils/format.js';
-import { STATUS_META, statusMeta } from './utils/status.js';
+import { STATUS_META, statusMeta, severityMeta } from './utils/status.js';
 import { generateForProfile } from './services/notifications.js';
 
 // Exposto globalmente só para uso direto nas expressões do template (index.html),
 // que não passa por bundler e não pode importar módulos ES ali.
 window.cgFormat = format;
-window.cgStatus = { STATUS_META, statusMeta };
+window.cgStatus = { STATUS_META, statusMeta, severityMeta };
 
 // Este listener precisa ser registrado ANTES do script do Alpine (carregado com
 // `defer` no index.html, depois deste módulo) para garantir que os stores e

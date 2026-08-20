@@ -58,3 +58,32 @@ export function computeExpiryStatus(item) {
 export function expiryStatusMeta(statusKey) {
   return EXPIRY_STATUS_META[statusKey] || EXPIRY_STATUS_META.ok;
 }
+
+// ---------- Severidade de notificação (Fase 6, prompt master §33) ----------
+// Antes, todo evento (vencimento/estoque/validade/pagamento) chegava com o
+// mesmo peso visual — sino sem hierarquia nenhuma. §33 pede 4 níveis
+// (info/attention/warning/critical) e "não usar vermelho pra tudo". A tabela
+// `notifications` não guarda o sub-estado (vencido × a_vencer, em_falta ×
+// vencendo) como coluna própria — em vez de migrar o schema só por isto,
+// deriva do texto que generateForProfile já escreve (services/notifications.js),
+// que já carrega essa distinção ("está vencida" × "vence em breve" etc.).
+export const SEVERITY_META = {
+  critical: { label: 'Crítico', badge: 'danger', icon: 'bi-exclamation-octagon-fill' },
+  warning: { label: 'Atenção', badge: 'warning', icon: 'bi-clock-fill' },
+  attention: { label: 'Info', badge: 'info', icon: 'bi-info-circle-fill' },
+  info: { label: 'Novidade', badge: 'success', icon: 'bi-check-circle-fill' },
+};
+
+export function severidadeDe(notificacao) {
+  const titulo = (notificacao.titulo || '').toLowerCase();
+  if (notificacao.tipo === 'pagamento') return 'info';
+  if (notificacao.tipo === 'estoque') return 'attention'; // em falta é chato, não é crise
+  // vencimento_despesa e validade compartilham a mesma dualidade textual
+  if (/vencid|venceu|falta/.test(titulo)) return 'critical'; // já passou/já acabou
+  if (/vence|vencendo/.test(titulo)) return 'warning'; // ainda dá tempo de agir
+  return 'attention';
+}
+
+export function severityMeta(notificacao) {
+  return SEVERITY_META[severidadeDe(notificacao)] || SEVERITY_META.attention;
+}
