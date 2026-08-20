@@ -123,6 +123,25 @@
             </p>
           </form>
         </template>
+
+        <!-- "Ver demonstração" (pedido original desta rodada) — link
+             discreto, não um botão grande, só quando ainda não está em modo
+             demo. Usa o mesmo ?demo=1 que a suíte de testes já usa (ver
+             js/data/config.js) — nunca precisa editar credenciais. -->
+        <template x-if="!$store.app.isDemoMode">
+          <p class="text-center mt-3 mb-0 small">
+            <a href="?demo=1">Ver demonstração com dados de exemplo</a>
+          </p>
+        </template>
+
+        <!-- iOS Safari nunca dispara beforeinstallprompt (ver comentário em
+             store.js) — sem isto, quem usa iPhone nunca vê NENHUMA
+             orientação de como instalar o app. -->
+        <template x-if="$store.app.isIOSSemInstalar">
+          <p class="cg-muted small text-center mt-3 mb-0">
+            <i class="bi bi-share"></i> Pra instalar no iPhone: toque em Compartilhar e depois em "Adicionar à Tela de Início".
+          </p>
+        </template>
       </div>
     </div>
   </template>
@@ -408,7 +427,19 @@
                       $watch('dadosParaQuebra(quebras[' + i + '])', v => render(v, tipoGraficoPara(quebras[i])));
                       render(dadosParaQuebra(quebras[i]), tipoGraficoPara(quebras[i]));
                     ">
-                      <div style="height:220px;"><canvas x-ref="canvas"></canvas></div>
+                      <div style="height:220px;"><canvas x-ref="canvas" role="img" :aria-label="'Gráfico ' + quebras[i]"></canvas></div>
+                      <!-- Alternativa textual (prompt master §45: "gráficos
+                           nunca devem ser a única forma de transmitir
+                           informação") — mesmos dados do canvas, só pra
+                           leitor de tela, nunca visível. -->
+                      <table class="visually-hidden">
+                        <caption>Dados do gráfico em texto</caption>
+                        <tbody>
+                          <template x-for="d in dadosParaQuebra(quebras[i])" :key="d.nome">
+                            <tr><th x-text="d.nome"></th><td x-text="cgFormat.formatCurrency(d.total)"></td></tr>
+                          </template>
+                        </tbody>
+                      </table>
                     </div>
                   </template>
                 </div>
@@ -1210,7 +1241,15 @@
               <template x-if="!resumoPorCategoria.length"><p class="cg-muted small">Ainda não há itens comprados com valor.</p></template>
               <template x-if="resumoPorCategoria.length">
                 <div x-data="categoryChart()" x-init="$watch('resumoPorCategoria', v => render(v)); render(resumoPorCategoria)">
-                  <div style="height:240px;"><canvas x-ref="canvas"></canvas></div>
+                  <div style="height:240px;"><canvas x-ref="canvas" role="img" aria-label="Gráfico de gastos por categoria"></canvas></div>
+                  <table class="visually-hidden">
+                    <caption>Dados do gráfico em texto</caption>
+                    <tbody>
+                      <template x-for="d in resumoPorCategoria" :key="d.nome">
+                        <tr><th x-text="d.nome"></th><td x-text="cgFormat.formatCurrency(d.total)"></td></tr>
+                      </template>
+                    </tbody>
+                  </table>
                 </div>
               </template>
               <button type="button" class="cg-btn btn btn-outline-secondary w-100 mt-3" @click="graficoAberto = false">Fechar</button>

@@ -35,6 +35,17 @@ export function appStore() {
     // "Adicionar à Tela de Início", sem prompt programático possível).
     installPrompt: null,
     navOpen: false,
+
+    // Fase 5 (DESIGN-SYSTEM-2027.md/blueprint §12) — iOS Safari nunca
+    // dispara beforeinstallprompt (comentário acima), então sem isto a
+    // pessoa nunca vê NENHUMA orientação de como instalar. `standalone` só
+    // existe no Safari; já rodando instalado, não faz sentido mostrar dica
+    // de instalar de novo.
+    get isIOSSemInstalar() {
+      const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
+      const jaInstalado = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+      return ios && !jaInstalado;
+    },
     // 'dark' | 'light' | null (null = segue o tema do sistema). O valor
     // inicial já foi aplicado no <html> por um script inline no <head>
     // antes do CSS carregar (evita flash do tema errado) — aqui só

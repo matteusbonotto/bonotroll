@@ -4,6 +4,19 @@ html, body {
   min-height: 100vh;
 }
 
+/* Acessibilidade (2026-08-20, DESIGN-SYSTEM-2027.md §12/Fase 5) — respeita
+   quem pediu ao sistema operacional pra reduzir movimento. Regra global (não
+   por componente) porque cobre também qualquer x-transition do Alpine, que
+   nada aqui mais controla individualmente. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 /* O Bootstrap NÃO tem uma utility ".min-w-0" pronta (só existe ".mw-100" pro
    lado do max-width) — só reparei nisso quando um teste com título bem
    comprido continuou vazando pra fora do card mesmo depois de eu já ter
