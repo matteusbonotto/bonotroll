@@ -587,6 +587,12 @@ button, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 .cg-pill-menu { border: 1px solid var(--color-border); box-shadow: var(--shadow-md); }
 
 .cg-table { border-collapse: separate; border-spacing: 0; }
+/* Densidade "compacta" (2026-08-20) — linha mais baixa, fonte um degrau
+   menor, mesma informação. Só muda espaçamento/tamanho, nunca esconde
+   coluna (informação sumir sem avisar é pior que uma linha mais alta). */
+.cg-table--compact thead th { padding: 7px 10px; font-size: 0.62rem; }
+.cg-table--compact tbody td { padding: 7px 10px; font-size: var(--font-size-body-sm); }
+.cg-table--compact .cg-avatar--sm { width: 26px; height: 26px; }
 /* Reportado: "a tabela não usa a largura disponível no desktop, precisa
    rolar mesmo tendo espaço de sobra". Medido: com as 9 colunas no tamanho
    natural (table-layout:auto), a tabela pede ~1205px. Tentei forçar largura

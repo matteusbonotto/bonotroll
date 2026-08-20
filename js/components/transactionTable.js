@@ -26,13 +26,26 @@ export function transactionsView() {
     ordemDesc: true,
     STATUS_META,
 
-    // Lista (tabela desktop / cards empilhados mobile, com edição inline) é
-    // o default. Grade e grade compacta são visões de navegação — tocar num
-    // card abre o formulário completo em vez de editar campo a campo.
-    viewMode: localStorage.getItem('bonotto_view_transacoes') || 'lista',
-    setViewMode(mode) {
-      this.viewMode = mode;
-      localStorage.setItem('bonotto_view_transacoes', mode);
+    // 2 eixos independentes (2026-08-20, reestruturado — antes eram 4 modos
+    // soltos: lista/tabela/grade/compacta, sem relação clara entre si, e
+    // "lista" já SEMPRE tinha sido tabela-no-desktop/cards-no-mobile —
+    // reportado como "lista não funciona em desktop" porque coexistir com
+    // um "tabela" quase idêntico só confundia qual escolher):
+    //   layout    = 'lista' (linhas, edição inline) | 'grade' (cards, toca
+    //               pra abrir o formulário completo)
+    //   densidade = 'normal' | 'compacta' (mais denso, menos respiro)
+    // Os dois se combinam livremente — lista normal, lista compacta, grade
+    // normal, grade compacta — e "Agrupar" continua um terceiro filtro
+    // totalmente independente dos dois (ver agrupando/secoesExibidas).
+    layout: localStorage.getItem('bonotto_layout_transacoes') || 'lista',
+    densidade: localStorage.getItem('bonotto_densidade_transacoes') || 'normal',
+    setLayout(v) {
+      this.layout = v;
+      localStorage.setItem('bonotto_layout_transacoes', v);
+    },
+    setDensidade(v) {
+      this.densidade = v;
+      localStorage.setItem('bonotto_densidade_transacoes', v);
     },
 
     // ---------- Agrupamento: accordion por período/responsável/movimentação/categoria ----------

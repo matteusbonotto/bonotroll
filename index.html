@@ -504,11 +504,18 @@
         <section x-show="$store.app.view === 'transacoes'" x-data="transactionsView()" x-init="init()">
           <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
             <div class="cg-section-title mb-0"><i class="bi bi-table"></i> Transações</div>
-            <div class="cg-view-toggle">
-              <button type="button" :class="{ 'is-active': viewMode === 'lista' }" @click="setViewMode('lista')" title="Lista"><i class="bi bi-list-ul"></i></button>
-              <button type="button" :class="{ 'is-active': viewMode === 'tabela' }" @click="setViewMode('tabela')" title="Tabela (rolar pros lados)"><i class="bi bi-table"></i></button>
-              <button type="button" :class="{ 'is-active': viewMode === 'grade' }" @click="setViewMode('grade')" title="Grade"><i class="bi bi-grid-3x3-gap"></i></button>
-              <button type="button" :class="{ 'is-active': viewMode === 'compacta' }" @click="setViewMode('compacta')" title="Grade compacta"><i class="bi bi-grid"></i></button>
+            <!-- 2 grupos independentes (2026-08-20) — layout (lista/grade)
+                 e densidade (normal/compacta) SEMPRE combináveis, no lugar
+                 de 4 botões soltos sem relação clara entre si. -->
+            <div class="d-flex gap-2">
+              <div class="cg-view-toggle">
+                <button type="button" :class="{ 'is-active': layout === 'lista' }" @click="setLayout('lista')" title="Lista"><i class="bi bi-list-ul"></i></button>
+                <button type="button" :class="{ 'is-active': layout === 'grade' }" @click="setLayout('grade')" title="Grade"><i class="bi bi-grid-3x3-gap"></i></button>
+              </div>
+              <div class="cg-view-toggle">
+                <button type="button" :class="{ 'is-active': densidade === 'normal' }" @click="setDensidade('normal')" title="Normal"><i class="bi bi-arrows-vertical"></i></button>
+                <button type="button" :class="{ 'is-active': densidade === 'compacta' }" @click="setDensidade('compacta')" title="Compacta"><i class="bi bi-list"></i></button>
+              </div>
             </div>
           </div>
 
@@ -664,8 +671,8 @@
               <template x-if="!agrupando || estaAberto(secao.chave, secao.abertoPorPadrao)">
               <div>
 
-          <template x-if="(viewMode === 'lista' || viewMode === 'tabela') && secao.linhas.length">
-          <div class="cg-scroll-x" :class="viewMode === 'lista' ? 'd-none d-md-block' : ''">
+          <template x-if="layout === 'lista' && secao.linhas.length">
+          <div class="cg-scroll-x d-none d-md-block" :class="{ 'cg-table--compact': densidade === 'compacta' }">
             <table class="table cg-table align-middle">
               <thead>
                 <tr>
@@ -797,7 +804,7 @@
           </div>
           </template>
 
-          <template x-if="viewMode === 'lista' && secao.linhas.length">
+          <template x-if="layout === 'lista' && secao.linhas.length">
           <div class="d-flex flex-column gap-2 d-md-none">
             <template x-for="row in secao.linhas" :key="row.id">
               <div class="cg-card cg-card--compact">
@@ -911,7 +918,7 @@
 
           <!-- Grade / grade compacta: navegação visual, toque abre o formulário
                completo (sem edição inline campo a campo como na lista). -->
-          <div class="cg-grid-view" :class="{ 'cg-grid-view--compact': viewMode === 'compacta' }" x-show="(viewMode === 'grade' || viewMode === 'compacta') && secao.linhas.length">
+          <div class="cg-grid-view" :class="{ 'cg-grid-view--compact': densidade === 'compacta' }" x-show="layout === 'grade' && secao.linhas.length">
             <template x-for="row in secao.linhas" :key="row.id">
               <div class="cg-card cg-grid-view__card" @click="editar(row)">
                 <span class="cg-grid-view__avatar" :title="payersFor(row).length >= 2 ? 'Dividido' : (responsavelFor(row.responsavel_id)?.nome || '')">
