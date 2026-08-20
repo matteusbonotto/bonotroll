@@ -13,7 +13,7 @@
 - [x] Tema escuro incompleto (`--color-primary-dark`, sombras, gatilho de sistema faltando) — corrigido, commit `34424fb`.
 - [x] `<input type="color">` virando blob oval — corrigido, commit `34424fb`.
 - [x] Botão "Nova despesa" ilegível no escuro — corrigido, commit `34424fb`.
-- [ ] **Sidebar não fica fixa/sticky no desktop** — ao rolar a página, o conteúdo da sidebar "escapa" pra cima e some, ficando só um vazio + "Sair" embaixo. `position: sticky` do Codex não está funcionando como deveria.
+- [x] **Sidebar não fica fixa/sticky no desktop** — causa raiz: era regressão MINHA (o `overflow-x:hidden` que eu tinha posto em `.cg-app-shell` pra outro bug fazia o navegador computar `overflow-y:auto` nele também, virando a âncora errada do `position:sticky`). Movido pra `.cg-main` (irmã da sidebar). Verificado rolando 1500px via Playwright.
 - [ ] **Tabela de Transações não usa a largura disponível no desktop** — mesmo com espaço de sobra, as colunas ficam com largura fixa somada maior que o container, forçando scroll horizontal que não deveria ser necessário nessa largura de tela.
 - [ ] **Cor da barra de instalação/atualização muito clara/feia** (`.cg-update-banner` ou similar) — trocar por algo mais sóbrio, alinhado à paleta nova.
 - [ ] **Logo de empresa/serviço só aparece quando a despesa é dividida** — deveria aparecer sempre que a transação tiver uma empresa com logo cadastrado, dividida ou não.

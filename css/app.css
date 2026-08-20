@@ -316,7 +316,12 @@ a { color: var(--color-primary); }
 }
 
 .cg-update-banner {
-  background: var(--color-primary-dark);
+  /* --color-primary (não --color-primary-dark): essa variável agora serve
+     de COR DE TEXTO sobre fundo suave no tema escuro (fica clara de
+     propósito, ver tokens.css) — usada aqui como FUNDO SÓLIDO, ficava um
+     verde claro feio ("a cor da barra tá muito clara", reportado). Precisa
+     de um token que continue escuro/saturado nos dois temas. */
+  background: var(--color-primary);
   color: #fff;
   text-align: center;
   font-size: 0.85rem;
@@ -582,6 +587,17 @@ button, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 .cg-pill-menu { border: 1px solid var(--color-border); box-shadow: var(--shadow-md); }
 
 .cg-table { border-collapse: separate; border-spacing: 0; }
+/* Reportado: "a tabela não usa a largura disponível no desktop, precisa
+   rolar mesmo tendo espaço de sobra". Medido: com as 9 colunas no tamanho
+   natural (table-layout:auto), a tabela pede ~1205px. Tentei forçar largura
+   menor em input[type="date"] e no .cg-pill-trigger (Resp.) — width/max-
+   width explícito NÃO teve efeito nenhum (confirmado via computed style: o
+   navegador mantém ~150px de largura mínima própria pro <input
+   type="date">, um limite conhecido do controle nativo, não controlável só
+   por CSS de largura). Documentado no checklist como pendência que precisa
+   de mudança estrutural (trocar o input sempre-editável por um texto
+   formatado que só vira input ao clicar) em vez de CSS — não forcei uma
+   solução malfeita só pra marcar como "resolvido". */
 .cg-table thead th { padding: 11px 12px; background: var(--color-surface-alt); color: var(--color-text-muted); font-size: .66rem; font-weight: 800; letter-spacing: .08em; }
 .cg-table thead th:first-child { border-radius: 8px 0 0 8px; }
 .cg-table thead th:last-child { border-radius: 0 8px 8px 0; }

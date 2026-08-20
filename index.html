@@ -464,7 +464,17 @@
               <template x-for="r in recentes" :key="r.id">
                 <div class="d-flex align-items-center justify-content-between border-bottom pb-2 min-w-0">
                   <div class="d-flex align-items-center gap-2 min-w-0">
-                    <span class="cg-avatar-stack" x-show="payersFor(r).length >= 2">
+                    <!-- Logo da empresa/serviço — antes só existia o
+                         avatar-stack de pagadores (só pra despesa dividida);
+                         nenhuma logo aparecia aqui em nenhum caso, dividida
+                         ou não (bug real reportado). Mostra a logo quando
+                         existe; cai pro avatar-stack de pagadores quando é
+                         dividida; sem nenhum dos dois, sem espaço reservado
+                         (não sobra "buraco" vazio à toa). -->
+                    <span class="cg-company-logo flex-shrink-0" x-show="$store.app.companyByName(r.empresa_servico)?.logo_url" x-cloak>
+                      <img :src="$store.app.companyByName(r.empresa_servico)?.logo_url" :alt="r.empresa_servico" />
+                    </span>
+                    <span class="cg-avatar-stack" x-show="!$store.app.companyByName(r.empresa_servico)?.logo_url && payersFor(r).length >= 2">
                       <template x-for="p in payersFor(r).slice(0, 3)" :key="p.profile_id">
                         <span class="cg-avatar cg-avatar--sm" :style="{ borderColor: responsavelFor(p.profile_id)?.cor || 'var(--color-primary-soft)', background: responsavelFor(p.profile_id)?.cor || 'var(--color-primary)' }">
                           <template x-if="responsavelFor(p.profile_id)?.avatar_url"><img :src="responsavelFor(p.profile_id).avatar_url" /></template>
