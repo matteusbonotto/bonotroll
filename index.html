@@ -292,6 +292,20 @@
           <div class="cg-hero-balance mb-4" :style="corSelecionada ? { background: `linear-gradient(135deg, ${corSelecionada}, ${corSelecionada})` } : {}">
             <span class="cg-hero-balance__label">Saldo <span x-text="quemVer === 'grupo' ? 'do grupo' : quemVer === 'eu' ? 'atual' : ('de ' + (opcoesQuemVer.find(o => o.id === quemVer)?.nome || ''))"></span></span>
             <div class="cg-hero-balance__value" :title="cgFormat.formatCurrency(resumoSelecionado.saldo)" x-text="cgFormat.formatCurrencyCompact(resumoSelecionado.saldo)"></div>
+            <!-- "Quanto ainda posso gastar" (docs/BONOTTO-2027-BLUEPRINT.md,
+                 Conflito 2) — só aparece quando há algo a decidir (categoria
+                 a 80%+ do orçamento); silêncio nos outros casos. -->
+            <div class="cg-hero-balance__row" x-show="orcamentoAlerta" x-cloak style="margin-top: -8px; margin-bottom: 8px;">
+              <span class="small" style="opacity: 0.9;">
+                <i class="bi" :class="orcamentoAlerta?.estourado ? 'bi-exclamation-triangle-fill' : 'bi-piggy-bank'"></i>
+                <template x-if="!orcamentoAlerta?.estourado">
+                  <span>Restam <strong x-text="cgFormat.formatCurrency(orcamentoAlerta?.restante)"></strong> do orçamento de <span x-text="orcamentoAlerta?.categoriaNome"></span></span>
+                </template>
+                <template x-if="orcamentoAlerta?.estourado">
+                  <span>Orçamento de <span x-text="orcamentoAlerta?.categoriaNome"></span> já passou do limite (<span x-text="orcamentoAlerta?.percentual"></span>%)</span>
+                </template>
+              </span>
+            </div>
             <div class="cg-hero-balance__row">
               <div class="cg-hero-stat">
                 <i class="bi bi-download"></i>

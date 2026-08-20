@@ -1,5 +1,6 @@
 import { listTransactions, computeSummary, groupByCategory, groupByCompany, groupByMember, groupByPeriod, listPayersFor, shareForMember } from '../services/transactions.js';
 import { listAllItems as listAllResourceItems } from '../services/resources.js';
+import { listBudgets, computeBudgetProgress } from '../services/budgets.js';
 import { computeExpiryStatus, expiryStatusMeta } from '../utils/status.js';
 import { todayIso } from '../utils/format.js';
 
@@ -62,6 +63,7 @@ export function dashboardView() {
     recentes: [],
     recursosAllItems: [],
     recursosSugestoesAbertas: false,
+    budgets: [], // orçamentos pessoais (sempre owner_id, nunca de grupo — ver services/budgets.js)
 
     init() {
       this.load();
@@ -115,7 +117,38 @@ export function dashboardView() {
         if (!silent) store.notify(e.message || 'Não consegui carregar o painel.', 'danger');
       }
 
+      // Best-effort (padrão §14.4 do RAIO-X): orçamento é só um complemento
+      // discreto no card de saldo (ver orcamentoAlerta) — uma falha aqui
+      // nunca pode derrubar o resto do painel.
+      try {
+        this.budgets = await listBudgets(store.profile.id);
+      } catch {
+        this.budgets = [];
+      }
+
       if (!silent) this.loading = false;
+    },
+
+    // "Quanto ainda posso gastar" (docs/BONOTTO-2027-BLUEPRINT.md, Conflito 2)
+    // — só pra "Eu" (orçamento é sempre pessoal, nunca faz sentido pra
+    // Grupo/outro membro) e só quando alguma categoria já está a 80%+ do
+    // limite (silêncio quando não há nada a decidir, "antecipar sem
+    // invadir" — princípio do prompt master §60). Sempre olha o MÊS ATUAL de
+    // verdade (computeBudgetProgress), independente do periodoModo
+    // selecionado — orçamento é sempre "este mês", nunca "mês anterior".
+    get orcamentoAlerta() {
+      if (this.quemVer !== 'eu' || !this.budgets.length) return null;
+      const store = this.$store.app;
+      const minhas = this.escopo.filter((t) => t.responsavel_id === store.profile?.id);
+      const progresso = computeBudgetProgress(minhas, this.budgets, store.categories);
+      const critico = progresso.find((p) => p.limite > 0 && p.percentual >= 80);
+      if (!critico) return null;
+      return {
+        categoriaNome: critico.categoria?.nome || 'categoria',
+        percentual: critico.percentual,
+        restante: Math.max(0, critico.limite - critico.gasto),
+        estourado: critico.percentual >= 100,
+      };
     },
 
     // Pagadores de uma transação (vazio = caso simples, só o responsável).
