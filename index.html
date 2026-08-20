@@ -100,7 +100,8 @@
                 </button>
               </template>
             </div>
-            <p class="cg-muted small mt-3 mb-0">Os dados são fictícios e ficam só no seu navegador. Quando o Supabase for configurado, essa seção some.</p>
+            <p class="cg-muted small mt-3 mb-2">Os dados são fictícios e ficam só no seu navegador. Quando o Supabase for configurado, essa seção some.</p>
+            <button type="button" class="btn btn-link btn-sm px-0" @click="$store.app.exitDemoMode()">Sair do modo demonstração</button>
           </div>
         </template>
 
@@ -2039,8 +2040,11 @@
                     <div class="cg-icon-badge"><i class="bi bi-stars"></i></div>
                     <div class="flex-fill">
                       <h2 class="h6 fw-bold mb-1">Modo demonstração</h2>
-                      <p class="cg-muted small mb-2">Configure o Supabase (veja o README) para sair do modo demonstração e usar dados reais.</p>
-                      <button type="button" class="cg-btn btn btn-outline-secondary btn-sm" @click="resetarDemo()"><i class="bi bi-arrow-clockwise"></i> Restaurar dados de exemplo</button>
+                      <p class="cg-muted small mb-2">Os dados aqui são de exemplo e ficam só neste navegador. Se você entrou com <code>?demo=1</code> ou pelo link "Ver demonstração", isso fica salvo — "Sair da conta" sozinho não tira daqui, é preciso sair do modo demonstração de fato.</p>
+                      <div class="d-flex flex-wrap gap-2">
+                        <button type="button" class="cg-btn btn btn-outline-secondary btn-sm" @click="resetarDemo()"><i class="bi bi-arrow-clockwise"></i> Restaurar dados de exemplo</button>
+                        <button type="button" class="cg-btn btn btn-outline-primary btn-sm" @click="$store.app.exitDemoMode()"><i class="bi bi-box-arrow-left"></i> Sair do modo demonstração</button>
+                      </div>
                     </div>
                   </div>
                 </template>

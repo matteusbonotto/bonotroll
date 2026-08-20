@@ -221,6 +221,18 @@ export function appStore() {
       this.clearSession();
     },
 
+    // "Sair do modo demonstração" (Perfil) — sem isso, quem visitou com
+    // ?demo=1 uma vez (ou clicou em "Ver demonstração") ficava PRESO nele
+    // pra sempre: a flag persiste em localStorage (bonotto_force_demo,
+    // ver js/data/config.js) e nada na UI a limpava, mesmo com credenciais
+    // reais do Supabase já configuradas — "Sair da conta" só encerrava o
+    // perfil demo escolhido, voltando pra mesma tela de demo (reportado:
+    // "impossível voltar pro modo normal"). ?demo=0 é o mecanismo que já
+    // existe em config.js pra limpar a flag; só faltava um botão pra isso.
+    exitDemoMode() {
+      location.href = location.pathname + '?demo=0';
+    },
+
     // theme: 'dark' | 'light' | null (null = volta a seguir o sistema).
     applyTheme(theme) {
       if (theme) {
