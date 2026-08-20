@@ -2189,7 +2189,13 @@
           <span x-text="$store.txModal.showMore ? 'Menos opções' : 'Mais opções'"></span>
         </button>
 
+        <!-- Seções com rótulo (2026-08-20) — antes era um único bloco corrido
+             de 8 campos sem agrupamento nenhum ("modal muito poluído",
+             reportado). Mesma linguagem visual já usada em Perfil
+             (IDENTIDADE/PREFERÊNCIAS) — só rótulo+divisor, sem reordenar
+             nenhum campo (risco zero de quebrar validação/binding). -->
         <div x-show="$store.txModal.showMore" x-cloak>
+          <div class="cg-muted small fw-semibold text-uppercase mb-2">Detalhes</div>
           <div class="mb-3">
             <label class="form-label">Empresa / Serviço</label>
             <div class="d-flex align-items-center gap-2">
@@ -2214,6 +2220,7 @@
             </datalist>
           </div>
 
+          <div class="cg-muted small fw-semibold text-uppercase mb-2 pt-2 border-top">Quem paga</div>
           <div class="row g-2 mb-3">
             <div class="col-6">
               <label class="form-label">Tipo de despesa</label>
@@ -2285,6 +2292,7 @@
             </template>
           </div>
 
+          <div class="cg-muted small fw-semibold text-uppercase mb-2 pt-2 border-top">Quando</div>
           <div class="row g-2 mb-3">
             <div :class="$store.txModal.usaCadenciaParaVencimento ? 'col-12' : 'col-6'">
               <label class="form-label">Cadastro</label>
@@ -2371,6 +2379,7 @@
             </div>
           </div>
 
+          <div class="cg-muted small fw-semibold text-uppercase mb-2 pt-2 border-top">Comprovante</div>
           <div class="mb-3">
             <label class="form-label">Comprovante / fatura / boleto</label>
             <p class="cg-muted small mb-2">Foto, arquivo, código de barras do boleto ou QR (Pix/nota fiscal) — todos tentam preencher título, valor, vencimento e categoria sozinhos (confira antes de salvar, a leitura não é 100% confiável).</p>

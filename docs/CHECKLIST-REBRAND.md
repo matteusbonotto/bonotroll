@@ -23,12 +23,7 @@
 - [ ] Aparência geral ainda parecida demais com a versão anterior — quer algo visualmente mais distinto/moderno em TODO o projeto, não só nos pontos já tocados.
 - [ ] Modal de "Nova despesa" muito poluído — precisa de hierarquia/organização, não só empilhar tudo.
 - [ ] Filtros de Transações mal posicionados/feios (o grupo Agrupar + Período/Responsável/Movimentação/Categoria) — reposicionar e redesenhar.
-- [ ] Modos de visualização de Transações — problema estrutural:
-  - "Lista" não funciona em desktop.
-  - "Tabela" é o que está sendo aplicado de fato.
-  - "Grade" funciona mas pode melhorar.
-  - "Grade compacta" existe, mas não existe "lista compacta".
-  - Pedido: separar em dois eixos independentes — **lista vs. grade** × **normal vs. compacto** — mais o agrupamento como um terceiro filtro independente (isso já existe como conceito, só precisa the UI refletir bem).
+- [x] Modos de visualização de Transações — reestruturado em 2 eixos independentes: `layout` (lista|grade) × `densidade` (normal|compacta), livremente combináveis (lista compacta agora existe). Agrupar continua terceiro filtro independente. Commit `35e40c9`.
 - [ ] Lista de Compras — refazer a visualização inteira.
 - [ ] Lista de Compras — "adicionar item" deve ser um modal padrão (hoje é um formulário inline expansível).
 - [ ] Recursos — refazer cômodos/subitens e a visualização deles.
