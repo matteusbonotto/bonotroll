@@ -20,6 +20,27 @@
   transition: color 0.15s ease, background-color 0.15s ease;
 }
 .cg-back i { font-size: 1.1em; }
+
+/* ---------- Linha de lista dentro de um card (2026-08-20, DESIGN-SYSTEM-2027.md §7) ----------
+   Pra itens homogêneos empilhados (ex.: Perfil → Preferências), uma pilha de
+   .cg-card individuais — cada um com a própria borda+sombra — lê como
+   "excesso de card" (a queixa real: "card dentro de card dentro de card").
+   .cg-list-row é a alternativa: vive DENTRO de um único .cg-card, sem borda/
+   sombra própria, separada da vizinha só por um divisor fino. Continua tendo
+   :hover/:focus e pode ser role="button" igual antes — só perde a "flutuação"
+   visual individual. */
+.cg-list-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-1);
+  border-top: 1px solid var(--color-border);
+  min-height: var(--touch-target);
+  transition: background-color 0.15s ease;
+}
+.cg-list-row:first-child { border-top: none; }
+.cg-list-row--hoverable { cursor: pointer; }
+.cg-list-row--hoverable:hover, .cg-list-row--hoverable:focus-visible { background: var(--color-surface-alt); }
 .cg-back:hover, .cg-back:focus-visible { color: var(--color-text); background: var(--color-surface-alt); }
 
 /* ---------- Cartões ---------- */

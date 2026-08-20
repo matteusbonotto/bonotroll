@@ -1885,8 +1885,11 @@
 
             <div class="col-12 col-lg-7">
               <div class="cg-muted small fw-semibold text-uppercase mb-2">Preferências</div>
-              <div class="cg-card cg-card--hoverable mb-3" role="button" @click="$store.categoryModal.openManage()">
-                <div class="d-flex align-items-center gap-3">
+              <!-- Um único .cg-card com linhas .cg-list-row dentro (2026-08-20,
+                   DESIGN-SYSTEM-2027.md §7) — antes eram 6 .cg-card empilhados,
+                   cada um com a própria borda+sombra ("card dentro de card"). -->
+              <div class="cg-card p-0">
+                <div class="cg-list-row cg-list-row--hoverable px-3" role="button" @click="$store.categoryModal.openManage()">
                   <div class="cg-icon-badge"><i class="bi bi-tags"></i></div>
                   <div class="flex-fill">
                     <h2 class="h6 fw-bold mb-1">Categorias</h2>
@@ -1894,10 +1897,8 @@
                   </div>
                   <i class="bi bi-chevron-right cg-muted"></i>
                 </div>
-              </div>
 
-              <div class="cg-card cg-card--hoverable mb-3" role="button" @click="$store.budgetModal.openManage()">
-                <div class="d-flex align-items-center gap-3">
+                <div class="cg-list-row cg-list-row--hoverable px-3" role="button" @click="$store.budgetModal.openManage()">
                   <div class="cg-icon-badge"><i class="bi bi-piggy-bank"></i></div>
                   <div class="flex-fill">
                     <h2 class="h6 fw-bold mb-1">Orçamentos</h2>
@@ -1905,10 +1906,8 @@
                   </div>
                   <i class="bi bi-chevron-right cg-muted"></i>
                 </div>
-              </div>
 
-              <div class="cg-card cg-card--hoverable mb-3" x-show="$store.app.installPrompt" x-cloak role="button" @click="$store.app.promptInstall()">
-                <div class="d-flex align-items-center gap-3">
+                <div class="cg-list-row cg-list-row--hoverable px-3" x-show="$store.app.installPrompt" x-cloak role="button" @click="$store.app.promptInstall()">
                   <div class="cg-icon-badge"><i class="bi bi-download"></i></div>
                   <div class="flex-fill">
                     <h2 class="h6 fw-bold mb-1">Instalar app</h2>
@@ -1916,10 +1915,8 @@
                   </div>
                   <i class="bi bi-chevron-right cg-muted"></i>
                 </div>
-              </div>
 
-              <div class="cg-card mb-3">
-                <div class="d-flex align-items-center gap-3">
+                <div class="cg-list-row px-3">
                   <div class="cg-icon-badge"><i class="bi bi-bell"></i></div>
                   <div class="flex-fill">
                     <h2 class="h6 fw-bold mb-1">Notificações push</h2>
@@ -1930,10 +1927,8 @@
                     <input class="form-check-input" type="checkbox" role="switch" style="width:2.5em;height:1.4em;" :checked="pushAtivo" :disabled="pushCarregando" @change="alternarPush()" />
                   </div>
                 </div>
-              </div>
 
-              <div class="cg-card cg-card--hoverable mb-3" role="button" @click="confirm('Limpar todo o cache e recarregar o app? Útil se algo parecer desatualizado ou travado.') && $store.app.limparCache()">
-                <div class="d-flex align-items-center gap-3">
+                <div class="cg-list-row cg-list-row--hoverable px-3" role="button" @click="confirm('Limpar todo o cache e recarregar o app? Útil se algo parecer desatualizado ou travado.') && $store.app.limparCache()">
                   <div class="cg-icon-badge"><i class="bi bi-trash3"></i></div>
                   <div class="flex-fill">
                     <h2 class="h6 fw-bold mb-1">Limpar cache</h2>
@@ -1941,15 +1936,18 @@
                   </div>
                   <i class="bi bi-chevron-right cg-muted"></i>
                 </div>
-              </div>
 
-              <template x-if="$store.app.isDemoMode">
-                <div class="cg-card mb-3">
-                  <h2 class="h6 fw-bold"><i class="bi bi-stars"></i> Modo demonstração</h2>
-                  <p class="cg-muted small">Configure o Supabase (veja o README) para sair do modo demonstração e usar dados reais.</p>
-                  <button type="button" class="cg-btn btn btn-outline-secondary" @click="resetarDemo()"><i class="bi bi-arrow-clockwise"></i> Restaurar dados de exemplo</button>
-                </div>
-              </template>
+                <template x-if="$store.app.isDemoMode">
+                  <div class="cg-list-row px-3" style="align-items: flex-start;">
+                    <div class="cg-icon-badge"><i class="bi bi-stars"></i></div>
+                    <div class="flex-fill">
+                      <h2 class="h6 fw-bold mb-1">Modo demonstração</h2>
+                      <p class="cg-muted small mb-2">Configure o Supabase (veja o README) para sair do modo demonstração e usar dados reais.</p>
+                      <button type="button" class="cg-btn btn btn-outline-secondary btn-sm" @click="resetarDemo()"><i class="bi bi-arrow-clockwise"></i> Restaurar dados de exemplo</button>
+                    </div>
+                  </div>
+                </template>
+              </div>
 
               <div class="cg-muted small fw-semibold text-uppercase mb-2">Conta</div>
               <button type="button" class="cg-btn btn btn-outline-danger" @click="$store.app.logout()"><i class="bi bi-box-arrow-right"></i> Sair da conta</button>
