@@ -1185,6 +1185,16 @@ body { font-size: var(--font-size-body); }
 }
 .form-select:focus, .form-control:focus { border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(18,107,92,.12); }
 
+/* Bootstrap não usa nossos tokens aqui por padrão (só reage ao ATRIBUTO
+   data-bs-theme, que só existe com o toggle explícito) — sem isso, no tema
+   escuro "segue o sistema" (sem toggle manual) o selo ficava com fundo
+   claro do Bootstrap + texto claro do nosso tema, ilegível. */
+.input-group-text {
+  border-color: var(--color-border);
+  color: var(--color-text);
+  background-color: var(--color-surface-alt);
+}
+
 .cg-card--stat, .cg-room-tile, .cg-resource-item, .cg-grid-view__card, .cg-item-row {
   border-radius: var(--radius-md);
   box-shadow: none;

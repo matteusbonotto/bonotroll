@@ -1022,83 +1022,95 @@
             </div>
           </div>
 
-          <!-- Adicionar item: começa fechado (@click no FAB abaixo) pra deixar a
-               tela mais limpa por padrão — só aparece quando a pessoa realmente
-               quer adicionar algo. -->
-          <div class="cg-card mb-3" x-show="itemFormAberto" x-transition x-cloak>
-            <div class="cg-section-title mb-2"><i class="bi bi-plus-circle"></i> Adicionar item</div>
-            <form class="d-flex gap-2 flex-wrap" @submit.prevent="addItem()">
-              <input type="text" class="form-control flex-fill" style="min-width: 160px;" x-ref="inputNovoItem" x-model="novoItem.nome" @input="onNomeInput()" placeholder="Ex: Arroz 5kg" required />
-              <button type="submit" class="cg-btn btn btn-success" title="Adicionar"><i class="bi bi-plus-lg"></i></button>
-              <button type="button" class="cg-btn btn btn-outline-secondary" @click="abrirScanner()" title="Ler código de barras"><i class="bi bi-upc-scan"></i></button>
-              <label class="cg-btn btn btn-outline-secondary mb-0" style="cursor:pointer;" title="Tirar foto do item">
-                <span x-show="!lendoFotoItem"><i class="bi bi-camera"></i></span>
-                <span x-show="lendoFotoItem" class="spinner-border spinner-border-sm"></span>
-                <input type="file" accept="image/*" capture="environment" class="d-none" @change="onFotoItem($event)" :disabled="lendoFotoItem" />
-              </label>
-              <label class="cg-btn btn btn-outline-secondary mb-0" style="cursor:pointer;" title="Enviar foto da galeria">
-                <span x-show="!lendoFotoItem"><i class="bi bi-image"></i></span>
-                <span x-show="lendoFotoItem" class="spinner-border spinner-border-sm"></span>
-                <input type="file" accept="image/*" class="d-none" @change="onFotoItem($event)" :disabled="lendoFotoItem" />
-              </label>
-            </form>
-            <a href="#" class="small d-inline-flex align-items-center gap-1 mt-2" @click.prevent="maisOpcoesItem = !maisOpcoesItem">
-              <i class="bi" :class="maisOpcoesItem ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
-              <span x-text="maisOpcoesItem ? 'Menos opções' : 'Preço, categoria, validade, unidade e quantidade'"></span>
-            </a>
-            <div class="row g-2 mt-2" x-show="maisOpcoesItem" x-cloak>
-              <div class="col-12 col-md-4">
-                <label class="form-label small">Categoria <span class="cg-muted" x-show="novoItem.categoria_id && !categoriaEscolhidaManualmente">(sugerida)</span></label>
-                <select class="form-select form-select-sm" x-model="novoItem.categoria_id" @change="onCategoriaManual()">
-                  <option value="">Sem categoria</option>
-                  <template x-for="c in $store.app.categories" :key="c.id"><option :value="c.id" x-text="c.nome"></option></template>
-                </select>
+          <button type="button" class="cg-fab" @click="toggleItemForm()" aria-label="Adicionar item">
+            <i class="bi bi-plus-lg"></i>
+          </button>
+
+          <!-- Adicionar item: modal padrão (mesmo componente cg-modal usado no
+               resto do app), aberto pelo FAB acima. Fica aberto entre adições
+               (pra colocar vários itens seguidos sem reabrir a cada um), só
+               fecha quando a pessoa manda fechar. -->
+          <div class="cg-modal-backdrop" x-show="itemFormAberto" x-cloak @click.self="fecharItemForm()">
+            <div class="cg-modal">
+              <div class="d-flex align-items-center justify-content-between mb-3">
+                <h2 class="h6 fw-bold mb-0"><i class="bi bi-cart-plus"></i> Adicionar item</h2>
+                <button type="button" class="btn-close" @click="fecharItemForm()" aria-label="Fechar"></button>
               </div>
-              <div class="col-6 col-md-4">
-                <label class="form-label small">Unidade</label>
-                <select class="form-select form-select-sm" x-model="novoItem.unidade">
-                  <option value="un">Unidade</option>
-                  <option value="kg">Kg</option>
-                  <option value="g">Gramas</option>
-                  <option value="l">Litros</option>
-                  <option value="ml">Mililitros</option>
-                </select>
-              </div>
-              <div class="col-6 col-md-4">
-                <label class="form-label small" x-text="novoItem.unidade === 'un' ? 'Qtde.' : ('Peso (' + novoItem.unidade + ')')"></label>
-                <div class="cg-num-stepper">
-                  <button type="button" class="cg-num-stepper__btn" data-repeat @click="novoItem.quantidade = Math.max(0, (Number(novoItem.quantidade) || 0) - (novoItem.unidade === 'un' ? 1 : 0.1))" aria-label="Diminuir"><i class="bi bi-dash"></i></button>
-                  <input type="number" min="0" step="0.001" class="form-control form-control-sm text-center" x-model="novoItem.quantidade" />
-                  <button type="button" class="cg-num-stepper__btn" data-repeat @click="novoItem.quantidade = (Number(novoItem.quantidade) || 0) + (novoItem.unidade === 'un' ? 1 : 0.1)" aria-label="Aumentar"><i class="bi bi-plus"></i></button>
+              <form @submit.prevent="addItem()">
+                <div class="mb-3">
+                  <label class="form-label small">Nome</label>
+                  <div class="d-flex gap-2">
+                    <input type="text" class="form-control" x-ref="inputNovoItem" x-model="novoItem.nome" @input="onNomeInput()" placeholder="Ex: Arroz 5kg" required />
+                    <button type="button" class="cg-btn btn btn-outline-secondary flex-shrink-0" @click="abrirScanner()" title="Ler código de barras"><i class="bi bi-upc-scan"></i></button>
+                    <label class="cg-btn btn btn-outline-secondary mb-0 flex-shrink-0" style="cursor:pointer;" title="Tirar foto do item">
+                      <span x-show="!lendoFotoItem"><i class="bi bi-camera"></i></span>
+                      <span x-show="lendoFotoItem" class="spinner-border spinner-border-sm"></span>
+                      <input type="file" accept="image/*" capture="environment" class="d-none" @change="onFotoItem($event)" :disabled="lendoFotoItem" />
+                    </label>
+                    <label class="cg-btn btn btn-outline-secondary mb-0 flex-shrink-0" style="cursor:pointer;" title="Enviar foto da galeria">
+                      <span x-show="!lendoFotoItem"><i class="bi bi-image"></i></span>
+                      <span x-show="lendoFotoItem" class="spinner-border spinner-border-sm"></span>
+                      <input type="file" accept="image/*" class="d-none" @change="onFotoItem($event)" :disabled="lendoFotoItem" />
+                    </label>
+                  </div>
                 </div>
-              </div>
-              <div class="col-6 col-md-4">
-                <label class="form-label small" x-text="'Preço' + (novoItem.unidade === 'un' ? ' (un.)' : ' (por ' + novoItem.unidade + ')')"></label>
-                <div class="input-group input-group-sm">
-                  <span class="input-group-text">R$</span>
-                  <input type="number" min="0" step="0.01" class="form-control" placeholder="Se souber" x-model="novoItem.preco" />
+                <div class="mb-3">
+                  <label class="form-label small">Categoria <span class="cg-muted" x-show="novoItem.categoria_id && !categoriaEscolhidaManualmente">(sugerida)</span></label>
+                  <select class="form-select" x-model="novoItem.categoria_id" @change="onCategoriaManual()">
+                    <option value="">Sem categoria</option>
+                    <template x-for="c in $store.app.categories" :key="c.id"><option :value="c.id" x-text="c.nome"></option></template>
+                  </select>
                 </div>
-              </div>
-              <div class="col-6 col-md-4">
-                <label class="form-label small">Validade (opcional)</label>
-                <input type="date" class="form-control form-control-sm" x-model="novoItem.data_validade" />
-              </div>
-              <div class="col-12">
-                <label class="form-label small d-block">Prioridade</label>
-                <div class="cg-star-picker">
-                  <template x-for="n in [1,2,3,4,5]" :key="n">
-                    <button type="button" @click="novoItem.prioridade = n" :aria-label="'Prioridade ' + n">
-                      <i class="bi" :class="n <= novoItem.prioridade ? 'bi-star-fill' : 'bi-star'"></i>
-                    </button>
-                  </template>
+                <div class="row g-2 mb-3">
+                  <div class="col-6">
+                    <label class="form-label small">Unidade</label>
+                    <select class="form-select" x-model="novoItem.unidade">
+                      <option value="un">Unidade</option>
+                      <option value="kg">Kg</option>
+                      <option value="g">Gramas</option>
+                      <option value="l">Litros</option>
+                      <option value="ml">Mililitros</option>
+                    </select>
+                  </div>
+                  <div class="col-6">
+                    <label class="form-label small" x-text="novoItem.unidade === 'un' ? 'Qtde.' : ('Peso (' + novoItem.unidade + ')')"></label>
+                    <div class="cg-num-stepper">
+                      <button type="button" class="cg-num-stepper__btn" data-repeat @click="novoItem.quantidade = Math.max(0, (Number(novoItem.quantidade) || 0) - (novoItem.unidade === 'un' ? 1 : 0.1))" aria-label="Diminuir"><i class="bi bi-dash"></i></button>
+                      <input type="number" min="0" step="0.001" class="form-control text-center" x-model="novoItem.quantidade" />
+                      <button type="button" class="cg-num-stepper__btn" data-repeat @click="novoItem.quantidade = (Number(novoItem.quantidade) || 0) + (novoItem.unidade === 'un' ? 1 : 0.1)" aria-label="Aumentar"><i class="bi bi-plus"></i></button>
+                    </div>
+                  </div>
                 </div>
-              </div>
+                <div class="row g-2 mb-3">
+                  <div class="col-6">
+                    <label class="form-label small" x-text="'Preço' + (novoItem.unidade === 'un' ? ' (un.)' : ' (por ' + novoItem.unidade + ')')"></label>
+                    <div class="input-group">
+                      <span class="input-group-text">R$</span>
+                      <input type="number" min="0" step="0.01" class="form-control" placeholder="Se souber" x-model="novoItem.preco" />
+                    </div>
+                  </div>
+                  <div class="col-6">
+                    <label class="form-label small">Validade (opcional)</label>
+                    <input type="date" class="form-control" x-model="novoItem.data_validade" />
+                  </div>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label small d-block">Prioridade</label>
+                  <div class="cg-star-picker">
+                    <template x-for="n in [1,2,3,4,5]" :key="n">
+                      <button type="button" @click="novoItem.prioridade = n" :aria-label="'Prioridade ' + n">
+                        <i class="bi" :class="n <= novoItem.prioridade ? 'bi-star-fill' : 'bi-star'"></i>
+                      </button>
+                    </template>
+                  </div>
+                </div>
+                <div class="d-flex gap-2">
+                  <button type="button" class="cg-btn btn btn-outline-secondary flex-fill" @click="fecharItemForm()">Fechar</button>
+                  <button type="submit" class="cg-btn btn btn-success flex-fill" :disabled="salvandoItem"><i class="bi bi-plus-lg"></i> Adicionar</button>
+                </div>
+              </form>
             </div>
           </div>
-
-          <button type="button" class="cg-fab" @click="toggleItemForm()" :aria-label="itemFormAberto ? 'Fechar adicionar item' : 'Adicionar item'">
-            <i class="bi" :class="itemFormAberto ? 'bi-x-lg' : 'bi-plus-lg'"></i>
-          </button>
 
           <template x-if="items.length">
             <div class="d-flex justify-content-between align-items-center mb-2">

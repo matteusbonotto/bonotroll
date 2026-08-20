@@ -22,10 +22,10 @@
 
 - [ ] Aparência geral ainda parecida demais com a versão anterior — quer algo visualmente mais distinto/moderno em TODO o projeto, não só nos pontos já tocados.
 - [x] Modal de "Nova despesa" muito poluído — seções com rótulo (Detalhes/Quem paga/Quando/Comprovante). Commit `16eecbe`.
-- [ ] Filtros de Transações mal posicionados/feios (o grupo Agrupar + Período/Responsável/Movimentação/Categoria) — reposicionar e redesenhar.
+- [x] Filtros de Transações mal posicionados (Agrupar + dimensão) — movido pro toolbar de layout/densidade, dimensão vira fileira de pills logo abaixo do cabeçalho. Commit `614db1e`.
 - [x] Modos de visualização de Transações — reestruturado em 2 eixos independentes: `layout` (lista|grade) × `densidade` (normal|compacta), livremente combináveis (lista compacta agora existe). Agrupar continua terceiro filtro independente. Commit `35e40c9`.
 - [ ] Lista de Compras — refazer a visualização inteira.
-- [ ] Lista de Compras — "adicionar item" deve ser um modal padrão (hoje é um formulário inline expansível).
+- [x] Lista de Compras — "adicionar item" deve ser um modal padrão (hoje é um formulário inline expansível) — convertido pro mesmo componente `.cg-modal-backdrop`/`.cg-modal` usado no resto do app (era um card inline com um link "mais opções" pra revelar campos). De brinde: achei e corrigi um bug real de contraste no tema escuro "segue o sistema" (sem toggle manual) — o selo "R$" de qualquer `.input-group-text` ficava com fundo claro do Bootstrap + texto claro do nosso tema (ilegível), porque só `.form-control`/`.form-select` tinham override pros nossos tokens. Corrigido em `css/components.css`, afeta todo `input-group` com prefixo/sufixo no app (não só Compras). Nova regressão: `tests/e2e/compras-modal-item.spec.js`. Commit pendente.
 - [ ] Recursos — refazer cômodos/subitens e a visualização deles.
 - [ ] Caixinhas — refazer aparência (mais visual, alinhado, padronizado — a estrutura já é boa, é questão de polish visual agressivo).
 - [ ] Perfil/Configurações — refazer a tela inteira, "está horrível" (palavras do usuário).
