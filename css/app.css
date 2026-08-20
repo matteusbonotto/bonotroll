@@ -209,6 +209,26 @@ a { color: var(--color-primary); }
 .cg-due-row--soon .cg-due-row__icon { background: color-mix(in srgb, var(--color-warning) 18%, transparent); color: var(--color-warning); }
 .cg-due-row--soon .cg-due-row__meta { color: var(--color-warning); }
 
+/* Destaque vermelho pulsando pra "já é urgente agora" (vencido, item em
+   falta) — pedido explícito, distinto de "vencendo"/"a vencer" (amber, sem
+   pulso: ainda dá tempo, não é a mesma urgência). @keyframes já respeita
+   prefers-reduced-motion via a regra global no topo deste arquivo (zera
+   qualquer animation-duration), então não precisa de guarda própria aqui.
+   .cg-due-row--overdue reaproveita o pulso (despesa vencida no Início,
+   item vencido/em falta nas "Sugestões" de Recursos — mesma classe já
+   usada nos dois); .cg-resource-item.is-critico é o card de item em si. */
+@keyframes cg-pulse-danger {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-danger) 45%, transparent); }
+  50% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--color-danger) 0%, transparent); }
+}
+.cg-due-row--overdue .cg-due-row__icon,
+.cg-resource-item.is-critico {
+  animation: cg-pulse-danger 1.8s ease-in-out infinite;
+}
+.cg-resource-item.is-critico {
+  border-color: var(--color-danger);
+}
+
 /* Painel de filtros (Transações/Compras/Recursos): recolhido por padrão no
    mobile — o botão "Filtros" alterna .is-open. No desktop (≥992px) sempre
    visível, ignorando o estado do botão (não tem o problema de espaço que
@@ -575,6 +595,13 @@ button, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 
 .cg-modal-backdrop { background: rgba(10, 24, 20, .52); backdrop-filter: blur(6px); padding: 16px; }
 .cg-modal { width: min(100%, 600px); max-height: min(90vh, 760px); border: 1px solid color-mix(in srgb, var(--color-border) 85%, transparent); border-radius: 16px 16px 0 0; box-shadow: 0 24px 80px rgba(4, 16, 12, .32); }
+/* Modal-sobre-modal: "gerenciar X" (lista) abre "criar/editar X" (formulário)
+   por cima, em vez de misturar lista+formulário no mesmo modal (pedido
+   explícito: "nada de exibir o formulário dentro do próprio modal, é feio").
+   z-index maior que o padrão (1050) empilha visualmente por cima; o backdrop
+   de trás continua visível/esmaecido atrás, então a lista nunca "some". */
+.cg-modal-backdrop--stacked { z-index: 1060; background: rgba(10, 24, 20, .38); }
+.cg-modal--sm { max-width: 420px; }
 @media (min-width: 768px) { .cg-modal { border-radius: 16px; } }
 .cg-modal h2, .cg-modal h3 { font-size: var(--font-size-title-sm); letter-spacing: 0; }
 .cg-modal hr { border-color: var(--color-border); opacity: 1; }

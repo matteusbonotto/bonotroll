@@ -1476,7 +1476,7 @@
 
               <div class="cg-resource-grid">
                 <template x-for="item in items" :key="item.id">
-                  <div class="cg-resource-item" :class="{ 'is-alerta': expiryKey(item) !== 'ok' }">
+                  <div class="cg-resource-item" :class="{ 'is-alerta': expiryKey(item) === 'vencendo', 'is-critico': expiryKey(item) === 'vencido' || expiryKey(item) === 'em_falta' }">
                     <button type="button" class="cg-resource-item__edit" @click="abrirEditarItem(item)" aria-label="Editar"><i class="bi bi-pencil"></i></button>
                     <label class="cg-resource-item__foto" :class="{ 'has-foto': item.foto_url }">
                       <template x-if="item.foto_url"><img :src="item.foto_url" :alt="item.nome" /></template>
@@ -1630,7 +1630,10 @@
 
         <!-- ===== CAIXINHAS ===== -->
         <section x-show="$store.app.view === 'caixinhas'" x-data="caixinhasView()" x-init="init()">
-          <div class="cg-section-title"><i class="bi bi-piggy-bank"></i> Caixinhas</div>
+          <div class="d-flex align-items-center justify-content-between mb-2">
+            <div class="cg-section-title mb-0"><i class="bi bi-piggy-bank"></i> Caixinhas</div>
+            <button type="button" class="cg-btn btn btn-outline-secondary btn-sm" @click="$store.bankModal.openManage()"><i class="bi bi-bank2"></i> Gerenciar bancos</button>
+          </div>
 
           <template x-if="loading">
             <div class="cg-empty-state"><div class="spinner-border text-success" role="status"></div></div>
@@ -1696,7 +1699,7 @@
                     </div>
                   </div>
                 </template>
-                <button type="button" class="cg-room-tile cg-room-tile--add" @click="$store.caixinhaModal.openManage()">
+                <button type="button" class="cg-room-tile cg-room-tile--add" @click="$store.caixinhaModal.openNew()">
                   <i class="bi bi-plus-lg"></i>
                   <span class="cg-room-tile__nome">Nova caixinha</span>
                 </button>
@@ -1977,11 +1980,11 @@
                   <i class="bi bi-chevron-right cg-muted"></i>
                 </div>
 
-                <div class="cg-list-flat cg-list-flat--hoverable px-3" role="button" @click="$store.caixinhaModal.openManage()">
-                  <div class="cg-icon-badge"><i class="bi bi-piggy-bank"></i></div>
+                <div class="cg-list-flat cg-list-flat--hoverable px-3" role="button" @click="$store.bankModal.openManage()">
+                  <div class="cg-icon-badge"><i class="bi bi-bank2"></i></div>
                   <div class="flex-fill">
-                    <h2 class="h6 fw-bold mb-1">Caixinhas</h2>
-                    <p class="cg-muted small mb-0">Edite bancos, metas, moeda e imagem de cada caixinha.</p>
+                    <h2 class="h6 fw-bold mb-1">Bancos</h2>
+                    <p class="cg-muted small mb-0">Nomes e logos dos bancos usados nas Caixinhas.</p>
                   </div>
                   <i class="bi bi-chevron-right cg-muted"></i>
                 </div>
@@ -2534,87 +2537,119 @@
     </div>
   </div>
 
-  <!-- ============ MODAL: CAIXINHAS (gerenciar) ============ -->
+  <!-- ============ MODAL: CAIXINHA (criar/editar UMA — banco+moeda+meta+responsável) ============ -->
   <div class="cg-modal-backdrop" x-show="$store.caixinhaModal.open" x-cloak @click.self="$store.caixinhaModal.close()">
-    <div class="cg-modal" x-show="$store.caixinhaModal.open" x-transition>
+    <div class="cg-modal cg-modal--sm" x-show="$store.caixinhaModal.open" x-transition>
       <div class="d-flex align-items-center justify-content-between mb-3">
-        <div>
-          <h2 class="h6 fw-bold mb-1">Caixinhas</h2>
-          <p class="cg-muted small mb-0">Bancos, metas, moeda e imagem — o mesmo cadastro usado na tela de Caixinhas.</p>
-        </div>
+        <h2 class="h6 fw-bold mb-0" x-text="$store.caixinhaModal.editingId ? 'Editar caixinha' : 'Nova caixinha'"></h2>
         <button type="button" class="btn-close" @click="$store.caixinhaModal.close()" aria-label="Fechar"></button>
       </div>
 
-      <div class="cg-manager-form mb-3">
-        <strong x-text="$store.caixinhaModal.editingId ? 'Editar caixinha' : 'Nova caixinha'"></strong>
-        <div class="mb-2 mt-2">
-          <label class="form-label small">Nome do banco</label>
-          <input type="text" class="form-control" x-model="$store.caixinhaModal.bancoNome" placeholder="Ex: Nubank, Inter, XP…" @keydown.enter.prevent="$store.caixinhaModal.salvar()" required />
-        </div>
-        <div class="row g-2 mb-2">
-          <div class="col-6">
-            <label class="form-label small">Moeda</label>
-            <select class="form-select" x-model="$store.caixinhaModal.moeda">
-              <template x-for="m in $store.caixinhaModal.moedasSuportadas" :key="m.codigo">
-                <option :value="m.codigo" x-text="m.codigo + ' — ' + m.nome"></option>
-              </template>
-            </select>
-          </div>
-          <div class="col-6">
-            <label class="form-label small">Meta (opcional)</label>
-            <input type="number" min="0" step="0.01" class="form-control" x-model="$store.caixinhaModal.meta" :placeholder="cgFormat.moedaInfo($store.caixinhaModal.moeda).simbolo" />
-          </div>
-        </div>
-        <div class="mb-2" x-show="$store.app.group">
-          <label class="form-label small">Responsável</label>
-          <select class="form-select" x-model="$store.caixinhaModal.responsavelId">
-            <template x-for="m in $store.caixinhaModal.membros" :key="m.id">
-              <option :value="m.id" x-text="m.nome"></option>
+      <div class="mb-3">
+        <label class="form-label small">Banco</label>
+        <select class="form-select" x-model="$store.caixinhaModal.bancoId" @change="$store.caixinhaModal.onBancoChange()">
+          <option value="" disabled>Escolha um banco…</option>
+          <template x-for="b in $store.app.banks" :key="b.id">
+            <option :value="b.id" x-text="b.nome"></option>
+          </template>
+          <option value="__novo__">+ Novo banco…</option>
+        </select>
+      </div>
+      <div class="row g-2 mb-3">
+        <div class="col-6">
+          <label class="form-label small">Moeda</label>
+          <select class="form-select" x-model="$store.caixinhaModal.moeda">
+            <template x-for="m in $store.caixinhaModal.moedasSuportadas" :key="m.codigo">
+              <option :value="m.codigo" x-text="m.codigo + ' — ' + m.nome"></option>
             </template>
           </select>
         </div>
-        <div class="mb-2">
-          <label class="form-label small">
-            Logo do banco
-            <span class="cg-muted" x-show="$store.caixinhaModal.bancoExistente">(já cadastrado — reaproveitado em qualquer caixinha desse banco)</span>
-          </label>
-          <div class="d-flex align-items-center gap-2">
-            <label class="cg-btn btn btn-outline-secondary btn-sm mb-0" style="cursor:pointer;">
-              <i class="bi bi-upload"></i>
-              <span x-text="$store.caixinhaModal.uploadingLogo ? 'Enviando…' : ($store.caixinhaModal.bancoLogoPreview ? 'Trocar imagem' : 'Escolher imagem')"></span>
-              <input type="file" accept="image/*" class="d-none" @change="$store.caixinhaModal.onLogoFile($event)" :disabled="$store.caixinhaModal.uploadingLogo" />
-            </label>
-            <img :src="$store.caixinhaModal.bancoLogoPreview" x-show="$store.caixinhaModal.bancoLogoPreview" style="width:28px;height:28px;border-radius:50%;object-fit:cover;" />
-          </div>
-          <input type="url" class="form-control form-control-sm mt-2" placeholder="…ou cole uma URL de imagem" x-model="$store.caixinhaModal.bancoLogoUrlInput" />
+        <div class="col-6">
+          <label class="form-label small">Meta (opcional)</label>
+          <input type="number" min="0" step="0.01" class="form-control" x-model="$store.caixinhaModal.meta" :placeholder="cgFormat.moedaInfo($store.caixinhaModal.moeda).simbolo" />
         </div>
-        <div class="d-flex gap-2">
-          <button type="button" class="cg-btn btn btn-success flex-fill" :disabled="$store.caixinhaModal.saving" @click="$store.caixinhaModal.salvar()">
-            <span x-text="$store.caixinhaModal.editingId ? 'Salvar alterações' : 'Criar caixinha'"></span>
-          </button>
-          <button type="button" class="btn btn-outline-secondary btn-sm" x-show="$store.caixinhaModal.editingId" @click="$store.caixinhaModal.resetForm()">Cancelar</button>
+      </div>
+      <div class="mb-3" x-show="$store.app.group">
+        <label class="form-label small">Responsável</label>
+        <select class="form-select" x-model="$store.caixinhaModal.responsavelId">
+          <template x-for="m in $store.caixinhaModal.membros" :key="m.id">
+            <option :value="m.id" x-text="m.nome"></option>
+          </template>
+        </select>
+      </div>
+      <div class="d-flex gap-2">
+        <template x-if="$store.caixinhaModal.editingId">
+          <button type="button" class="btn btn-outline-danger" @click="$store.caixinhaModal.excluir()" title="Excluir"><i class="bi bi-trash"></i></button>
+        </template>
+        <button type="button" class="cg-btn btn btn-outline-secondary flex-fill" @click="$store.caixinhaModal.close()">Cancelar</button>
+        <button type="button" class="cg-btn btn btn-success flex-fill" :disabled="$store.caixinhaModal.saving || !$store.caixinhaModal.bancoId || $store.caixinhaModal.bancoId === '__novo__'" @click="$store.caixinhaModal.salvar()">
+          <span x-text="$store.caixinhaModal.editingId ? 'Salvar' : 'Criar caixinha'"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ MODAL: BANCOS (gerenciar — lista) + formulário empilhado ============ -->
+  <div class="cg-modal-backdrop" x-show="$store.bankModal.open" x-cloak @click.self="$store.bankModal.closeManage()">
+    <div class="cg-modal" x-show="$store.bankModal.open" x-transition>
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <div>
+          <h2 class="h6 fw-bold mb-1">Bancos</h2>
+          <p class="cg-muted small mb-0">Nome e logo — reaproveitados por qualquer caixinha que use o mesmo banco.</p>
         </div>
+        <button type="button" class="btn-close" @click="$store.bankModal.closeManage()" aria-label="Fechar"></button>
       </div>
 
-      <div class="d-flex align-items-center justify-content-between mb-2">
-        <h3 class="h6 fw-bold mb-0">Cadastradas</h3>
-        <span class="cg-badge cg-badge--secondary" x-text="$store.caixinhaModal.items.length"></span>
-      </div>
-      <p class="cg-muted small" x-show="$store.caixinhaModal.loading">Carregando…</p>
-      <div class="cg-manager-list" x-show="!$store.caixinhaModal.loading">
-        <template x-for="c in $store.caixinhaModal.items" :key="c.id">
+      <button type="button" class="cg-btn btn btn-success btn-sm mb-3" @click="$store.bankModal.openCreate(null)"><i class="bi bi-plus-lg"></i> Novo banco</button>
+
+      <p class="cg-muted small" x-show="$store.bankModal.loading">Carregando…</p>
+      <div class="cg-manager-list" x-show="!$store.bankModal.loading">
+        <template x-for="b in $store.bankModal.items" :key="b.id">
           <div class="cg-manager-row">
             <span class="cg-chip cg-chip--icon-only" style="background: #64748B;">
-              <template x-if="$store.app.bankByName(c.banco_nome)?.logo_url"><img :src="$store.app.bankByName(c.banco_nome).logo_url" class="cg-chip__icon-img" /></template>
-              <template x-if="!$store.app.bankByName(c.banco_nome)?.logo_url"><i class="bi bi-bank2"></i></template>
+              <template x-if="b.logo_url"><img :src="b.logo_url" class="cg-chip__icon-img" /></template>
+              <template x-if="!b.logo_url"><i class="bi bi-bank2"></i></template>
             </span>
-            <span class="flex-fill text-truncate fw-semibold" x-text="c.banco_nome"></span>
-            <span class="cg-muted small flex-shrink-0" x-text="c.moeda"></span>
-            <button type="button" class="btn btn-sm btn-outline-secondary" @click="$store.caixinhaModal.edit(c)" :aria-label="'Editar ' + c.banco_nome"><i class="bi bi-pencil"></i></button>
-            <button type="button" class="btn btn-sm btn-outline-danger" @click="$store.caixinhaModal.excluir(c)" :aria-label="'Excluir ' + c.banco_nome"><i class="bi bi-trash"></i></button>
+            <span class="flex-fill text-truncate fw-semibold" x-text="b.nome"></span>
+            <button type="button" class="btn btn-sm btn-outline-secondary" @click="$store.bankModal.edit(b)" :aria-label="'Editar ' + b.nome"><i class="bi bi-pencil"></i></button>
+            <button type="button" class="btn btn-sm btn-outline-danger" @click="$store.bankModal.excluir(b)" :aria-label="'Excluir ' + b.nome"><i class="bi bi-trash"></i></button>
           </div>
         </template>
-        <p class="cg-muted small mb-0" x-show="!$store.caixinhaModal.items.length">Nenhuma caixinha cadastrada ainda.</p>
+        <p class="cg-muted small mb-0" x-show="!$store.bankModal.items.length">Nenhum banco cadastrado ainda.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Formulário de banco — empilhado por cima da lista quando ela também
+       está aberta ("Gerenciar bancos"), ou sozinho quando aberto direto do
+       seletor de banco no formulário de caixinha ("+ Novo banco…"). -->
+  <div class="cg-modal-backdrop" :class="{ 'cg-modal-backdrop--stacked': $store.bankModal.open }" x-show="$store.bankModal.formOpen" x-cloak @click.self="$store.bankModal.closeForm()">
+    <div class="cg-modal cg-modal--sm" x-show="$store.bankModal.formOpen" x-transition>
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <h2 class="h6 fw-bold mb-0" x-text="$store.bankModal.editingId ? 'Editar banco' : 'Novo banco'"></h2>
+        <button type="button" class="btn-close" @click="$store.bankModal.closeForm()" aria-label="Fechar"></button>
+      </div>
+      <div class="mb-3">
+        <label class="form-label small">Nome do banco</label>
+        <input type="text" class="form-control" x-model="$store.bankModal.nome" placeholder="Ex: Nubank, Inter, XP…" @keydown.enter.prevent="$store.bankModal.salvar()" required />
+      </div>
+      <div class="mb-3">
+        <label class="form-label small">Logo (opcional)</label>
+        <div class="d-flex align-items-center gap-2">
+          <label class="cg-btn btn btn-outline-secondary btn-sm mb-0" style="cursor:pointer;">
+            <i class="bi bi-upload"></i>
+            <span x-text="$store.bankModal.uploading ? 'Enviando…' : ($store.bankModal.logoUrl ? 'Trocar imagem' : 'Escolher imagem')"></span>
+            <input type="file" accept="image/*" class="d-none" @change="$store.bankModal.onLogoFile($event)" :disabled="$store.bankModal.uploading" />
+          </label>
+          <img :src="$store.bankModal.logoUrl" x-show="$store.bankModal.logoUrl" style="width:28px;height:28px;border-radius:50%;object-fit:cover;" />
+        </div>
+        <input type="url" class="form-control form-control-sm mt-2" placeholder="…ou cole uma URL de imagem" x-model="$store.bankModal.logoUrlInput" />
+      </div>
+      <div class="d-flex gap-2">
+        <button type="button" class="cg-btn btn btn-outline-secondary flex-fill" @click="$store.bankModal.closeForm()">Cancelar</button>
+        <button type="button" class="cg-btn btn btn-success flex-fill" :disabled="$store.bankModal.saving" @click="$store.bankModal.salvar()">
+          <span x-text="$store.bankModal.editingId ? 'Salvar' : 'Criar banco'"></span>
+        </button>
       </div>
     </div>
   </div>
