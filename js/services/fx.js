@@ -13,8 +13,12 @@ const CRIPTO = { USDT: 'tether', BTC: 'bitcoin', ETH: 'ethereum' };
 const cache = new Map(); // codigo -> { taxa, expiraEm }
 const TTL_MS = 5 * 60 * 1000;
 
+// Bug real corrigido (2026-08-20): api.frankfurter.app foi descontinuado e
+// hoje só devolve um 301 pra api.frankfurter.dev/v1/... — em vez de confiar
+// no navegador seguir o redirect direito (nem sempre confiável entre
+// domínios), chama o domínio novo direto.
 async function buscarTaxaFiat(codigo) {
-  const resp = await fetch(`https://api.frankfurter.app/latest?from=${codigo}&to=BRL`);
+  const resp = await fetch(`https://api.frankfurter.dev/v1/latest?from=${codigo}&to=BRL`);
   if (!resp.ok) throw new Error('Frankfurter respondeu ' + resp.status);
   const data = await resp.json();
   return data.rates?.BRL ?? null;
@@ -40,7 +44,11 @@ export async function taxaParaBRL(codigoMoeda) {
     const taxa = CRIPTO[codigoMoeda] ? await buscarTaxaCripto(codigoMoeda) : await buscarTaxaFiat(codigoMoeda);
     if (taxa) cache.set(codigoMoeda, { taxa, expiraEm: Date.now() + TTL_MS });
     return taxa || null;
-  } catch {
+  } catch (e) {
+    // Nunca quebra a tela por causa disso, mas fica registrado — antes essa
+    // falha era 100% invisível, o que escondeu o bug do domínio migrado do
+    // Frankfurter até alguém notar a cotação faltando na tela.
+    console.error('taxaParaBRL falhou pra', codigoMoeda, e);
     return null;
   }
 }

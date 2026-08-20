@@ -158,6 +158,17 @@ export function computeProgresso(saldo, meta) {
 // Soma o saldo de um grupo de caixinhas (todas juntas, ou já filtradas por
 // banco/responsável antes de chamar) — usado pros totalizadores "soma dos
 // bancos" e "por responsável" da tela.
+//
+// Bug real corrigido (2026-08-20): essa função somava o saldo BRUTO de
+// QUALQUER caixinha passada, sem olhar pra moeda — uma caixinha de US$ 903
+// entrava na conta como se fosse R$ 903, inflando o "total em BRL" errado.
+// O filtro fica AQUI DENTRO (não em quem chama) de propósito: depender de
+// cada chamador lembrar de filtrar por moeda antes foi exatamente o que deu
+// errado da primeira vez — `porResponsavel` filtrava, `somaGeral` não.
+// Moeda estrangeira não entra na soma (sem conversão embutida aqui; quem
+// quiser o valor convertido usa taxaParaBRL/conversaoBRLFor por caixinha).
 export function somaSaldos(caixinhas, movByCaixinha) {
-  return caixinhas.reduce((acc, c) => acc + computeTotais(movByCaixinha[c.id] || []).saldo, 0);
+  return caixinhas
+    .filter((c) => !c.moeda || c.moeda === 'BRL')
+    .reduce((acc, c) => acc + computeTotais(movByCaixinha[c.id] || []).saldo, 0);
 }
