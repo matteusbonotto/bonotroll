@@ -89,6 +89,23 @@ create table if not exists companies (
 create unique index if not exists companies_owner_group_nome_uniq
   on companies (owner_id, coalesce(group_id, '00000000-0000-0000-0000-000000000000'::uuid), nome);
 
+-- Banco de uma Caixinha, mesma ideia de companies acima: nome distinto vira
+-- uma linha aqui (find-or-create ao salvar a caixinha), com logo
+-- reaproveitado por qualquer caixinha que use o mesmo banco — antes cada
+-- caixinha guardava o próprio icone/icone_url, então duas caixinhas do
+-- mesmo banco (ex.: uma do Matheus, uma da Beatriz, ambas "Nubank") não
+-- tinham relação nenhuma entre si (bug relatado).
+create table if not exists banks (
+  id uuid primary key default uuid_generate_v4(),
+  owner_id uuid not null references profiles(id) on delete cascade,
+  group_id uuid references groups(id) on delete cascade,
+  nome text not null,
+  logo_url text,
+  criado_em timestamptz not null default now()
+);
+create unique index if not exists banks_owner_group_nome_uniq
+  on banks (owner_id, coalesce(group_id, '00000000-0000-0000-0000-000000000000'::uuid), nome);
+
 create table if not exists transactions (
   id uuid primary key default uuid_generate_v4(),
   owner_id uuid not null references profiles(id) on delete cascade,
@@ -606,6 +623,20 @@ create policy "Editar/excluir empresa própria" on companies for update
   using (owner_id = auth.uid());
 drop policy if exists "Excluir empresa própria" on companies;
 create policy "Excluir empresa própria" on companies for delete
+  using (owner_id = auth.uid());
+
+alter table banks enable row level security;
+drop policy if exists "Ver bancos próprios ou do grupo" on banks;
+create policy "Ver bancos próprios ou do grupo" on banks for select
+  using (owner_id = auth.uid() or public.is_group_member(group_id));
+drop policy if exists "Criar banco" on banks;
+create policy "Criar banco" on banks for insert
+  with check (owner_id = auth.uid());
+drop policy if exists "Editar banco próprio" on banks;
+create policy "Editar banco próprio" on banks for update
+  using (owner_id = auth.uid());
+drop policy if exists "Excluir banco próprio" on banks;
+create policy "Excluir banco próprio" on banks for delete
   using (owner_id = auth.uid());
 
 -- with check só em "owner_id = auth.uid()" (sem o "or is_group_member")

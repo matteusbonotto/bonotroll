@@ -163,6 +163,7 @@ function seedDatabase() {
     transactions,
     transaction_payers: [],
     companies: [],
+    banks: [],
     shopping_lists: shoppingLists,
     shopping_list_items: shoppingListItems,
     resource_rooms: rooms,

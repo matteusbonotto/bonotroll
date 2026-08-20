@@ -19,7 +19,14 @@
 
   <link rel="manifest" href="./manifest.webmanifest" />
   <link rel="icon" href="./assets/icons/icon.svg" type="image/svg+xml" />
-  <link rel="apple-touch-icon" href="./assets/icons/icon.svg" />
+  <!-- iOS não renderiza favicon/apple-touch-icon em SVG de forma confiável
+       (mesmo em versões recentes) — precisa de um PNG raster de verdade,
+       tanto pro ícone da tela de início quanto pra splash screen que o
+       iOS gera sozinho a partir dele + o theme-color acima. -->
+  <link rel="apple-touch-icon" href="./assets/icons/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Bõnotto" />
 
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
@@ -74,7 +81,7 @@
     <div x-data="authView()" class="d-flex align-items-center justify-content-center p-3" style="min-height:100vh;">
       <div class="cg-card" style="max-width: 420px; width:100%;">
         <div class="text-center mb-4">
-          <img src="./assets/icons/icon.svg" width="56" height="56" alt="" class="mb-2" />
+          <img src="./assets/logos/logo-colorida.svg" width="72" height="78" alt="" class="mb-2" />
           <h1 class="h4 fw-bold mb-1">Bõnotto</h1>
           <p class="cg-muted mb-0">Seu dinheiro e suas compras, num só lugar.</p>
         </div>
@@ -160,7 +167,7 @@
       <!-- Sidebar (desktop) -->
       <aside class="cg-sidebar">
         <div class="d-flex align-items-center gap-2 mb-4 px-1">
-          <img src="./assets/icons/icon.svg" width="32" height="32" alt="" />
+          <img src="./assets/logos/logo-colorida.svg" width="30" height="33" alt="" />
           <span class="fw-bold">Bõnotto</span>
         </div>
         <a href="#" class="cg-sidebar__item" :class="{ 'is-active': $store.app.view === 'home' }" @click.prevent="$store.app.setView('home')">
@@ -749,13 +756,15 @@
                     </td>
                     <td>
                       <div class="fw-semibold d-flex align-items-center gap-2 min-w-0">
-                        <template x-if="$store.app.companyByName(row.empresa_servico)?.logo_url">
-                          <img class="cg-company-logo" :src="$store.app.companyByName(row.empresa_servico).logo_url" :alt="row.empresa_servico" />
-                        </template>
                         <span x-text="row.titulo"></span>
                         <span class="cg-parcela-tag" x-show="row.parcela_total" x-text="row.parcela_atual + '/' + row.parcela_total"></span>
                       </div>
-                      <div class="cg-muted small" x-text="row.empresa_servico || ''"></div>
+                      <div class="cg-muted small d-flex align-items-center gap-1" x-show="row.empresa_servico">
+                        <template x-if="$store.app.companyByName(row.empresa_servico)?.logo_url">
+                          <img class="cg-company-logo cg-company-logo--inline" :src="$store.app.companyByName(row.empresa_servico).logo_url" :alt="row.empresa_servico" />
+                        </template>
+                        <span x-text="row.empresa_servico"></span>
+                      </div>
                     </td>
                     <td class="fw-semibold" :title="cgFormat.formatCurrency(row.valor)" x-text="cgFormat.formatCurrencyCompact(row.valor)"></td>
                     <td x-data="{ open: false }" @click.outside="open = false">
@@ -851,13 +860,15 @@
                     </div>
                     <div class="min-w-0">
                       <div class="fw-semibold text-truncate d-flex align-items-center gap-2">
-                        <template x-if="$store.app.companyByName(row.empresa_servico)?.logo_url">
-                          <img class="cg-company-logo" :src="$store.app.companyByName(row.empresa_servico).logo_url" :alt="row.empresa_servico" />
-                        </template>
                         <span class="text-truncate" x-text="row.titulo"></span>
                         <span class="cg-parcela-tag flex-shrink-0" x-show="row.parcela_total" x-text="row.parcela_atual + '/' + row.parcela_total"></span>
                       </div>
-                      <div class="cg-muted small text-truncate" x-text="row.empresa_servico || ''"></div>
+                      <div class="cg-muted small text-truncate d-flex align-items-center gap-1" x-show="row.empresa_servico">
+                        <template x-if="$store.app.companyByName(row.empresa_servico)?.logo_url">
+                          <img class="cg-company-logo cg-company-logo--inline" :src="$store.app.companyByName(row.empresa_servico).logo_url" :alt="row.empresa_servico" />
+                        </template>
+                        <span class="text-truncate" x-text="row.empresa_servico"></span>
+                      </div>
                     </div>
                   </div>
                   <div class="d-flex align-items-center gap-2 flex-shrink-0">
@@ -1668,14 +1679,14 @@
               <div class="cg-room-grid">
                 <template x-for="c in caixinhasFiltradas" :key="c.id">
                   <div class="cg-room-tile" role="button" tabindex="0" @click="selecionar(c.id)" @keydown.enter="selecionar(c.id)">
-                    <button type="button" class="cg-room-tile__edit" @click="abrirEditarCaixinha(c, $event)" aria-label="Editar caixinha"><i class="bi bi-pencil"></i></button>
+                    <button type="button" class="cg-room-tile__edit" @click="$event.stopPropagation(); $store.caixinhaModal.openEdit(c)" aria-label="Editar caixinha"><i class="bi bi-pencil"></i></button>
                     <!-- Avatar do dono — só aparece com grupo (sozinho é sempre "eu"). -->
                     <span class="cg-avatar cg-avatar--sm" x-show="$store.app.group" style="position:absolute; top:6px; right:6px;" :style="{ borderColor: responsavelFor(c.owner_id)?.cor || 'var(--color-primary-soft)', background: responsavelFor(c.owner_id)?.cor || 'var(--color-primary)' }" :title="responsavelFor(c.owner_id)?.nome">
                       <template x-if="responsavelFor(c.owner_id)?.avatar_url"><img :src="responsavelFor(c.owner_id).avatar_url" /></template>
                       <template x-if="!responsavelFor(c.owner_id)?.avatar_url"><span x-text="cgFormat.initials(responsavelFor(c.owner_id)?.nome)" style="font-size:0.6rem;"></span></template>
                     </span>
-                    <img :src="c.icone_url" x-show="c.icone_url" style="width:32px;height:32px;border-radius:50%;object-fit:cover;" />
-                    <i class="bi" :class="c.icone" x-show="!c.icone_url"></i>
+                    <img :src="bankFor(c.banco_nome)?.logo_url" x-show="bankFor(c.banco_nome)?.logo_url" style="width:32px;height:32px;border-radius:50%;object-fit:cover;" />
+                    <i class="bi bi-bank2" x-show="!bankFor(c.banco_nome)?.logo_url"></i>
                     <span class="cg-room-tile__nome" x-text="c.banco_nome"></span>
                     <span class="cg-room-tile__count fw-semibold" x-text="formatMoeda(totaisFor(c.id).saldo, c.moeda)"></span>
                     <span class="cg-muted" style="font-size: 0.68rem;" x-show="conversaoBRLFor(c)" x-text="conversaoBRLFor(c)"></span>
@@ -1684,7 +1695,7 @@
                     </div>
                   </div>
                 </template>
-                <button type="button" class="cg-room-tile cg-room-tile--add" @click="abrirNovaCaixinha()">
+                <button type="button" class="cg-room-tile cg-room-tile--add" @click="$store.caixinhaModal.openManage()">
                   <i class="bi bi-plus-lg"></i>
                   <span class="cg-room-tile__nome">Nova caixinha</span>
                 </button>
@@ -1704,15 +1715,15 @@
                 <div class="d-flex align-items-center justify-content-between mb-3">
                   <button type="button" class="cg-back" @click="voltar()" aria-label="Voltar para Caixinhas"><i class="bi bi-chevron-left" aria-hidden="true"></i> Caixinhas</button>
                   <div class="cg-section-title mb-0">
-                    <img :src="caixinhaAtiva.icone_url" x-show="caixinhaAtiva.icone_url" style="width:24px;height:24px;border-radius:50%;object-fit:cover;" />
-                    <i class="bi" :class="caixinhaAtiva.icone" x-show="!caixinhaAtiva.icone_url"></i>
+                    <img :src="bankFor(caixinhaAtiva.banco_nome)?.logo_url" x-show="bankFor(caixinhaAtiva.banco_nome)?.logo_url" style="width:24px;height:24px;border-radius:50%;object-fit:cover;" />
+                    <i class="bi bi-bank2" x-show="!bankFor(caixinhaAtiva.banco_nome)?.logo_url"></i>
                     <span x-text="caixinhaAtiva.banco_nome"></span>
                     <span class="cg-avatar cg-avatar--sm ms-1" x-show="$store.app.group" :style="{ borderColor: responsavelFor(caixinhaAtiva.owner_id)?.cor || 'var(--color-primary-soft)', background: responsavelFor(caixinhaAtiva.owner_id)?.cor || 'var(--color-primary)' }" :title="responsavelFor(caixinhaAtiva.owner_id)?.nome">
                       <template x-if="responsavelFor(caixinhaAtiva.owner_id)?.avatar_url"><img :src="responsavelFor(caixinhaAtiva.owner_id).avatar_url" /></template>
                       <template x-if="!responsavelFor(caixinhaAtiva.owner_id)?.avatar_url"><span x-text="cgFormat.initials(responsavelFor(caixinhaAtiva.owner_id)?.nome)"></span></template>
                     </span>
                   </div>
-                  <button type="button" class="btn btn-sm btn-outline-secondary" @click="abrirEditarCaixinha(caixinhaAtiva, $event)" aria-label="Editar caixinha" style="width: 88px;"><i class="bi bi-pencil"></i> Editar</button>
+                  <button type="button" class="btn btn-sm btn-outline-secondary" @click="$store.caixinhaModal.openEdit(caixinhaAtiva)" aria-label="Editar caixinha" style="width: 88px;"><i class="bi bi-pencil"></i> Editar</button>
                 </div>
 
                 <div class="row g-3 mb-3">
@@ -1784,79 +1795,10 @@
           </div>
           </template>
 
-          <!-- Criar/editar caixinha -->
-          <div class="cg-modal-backdrop" x-show="caixinhaModalAberto" x-cloak @click.self="fecharCaixinhaModal()">
-            <div class="cg-modal">
-              <div class="d-flex align-items-center justify-content-between mb-3">
-                <h2 class="h6 fw-bold mb-0" x-text="caixinhaForm.id ? 'Editar caixinha' : 'Nova caixinha'"></h2>
-                <button type="button" class="btn-close" @click="fecharCaixinhaModal()" aria-label="Fechar"></button>
-              </div>
-              <div class="mb-3">
-                <label class="form-label small">Nome do banco</label>
-                <input type="text" class="form-control" x-model="caixinhaForm.banco_nome" placeholder="Ex: Nubank, Inter, XP…" @keydown.enter="salvarCaixinha()" required />
-              </div>
-              <div class="row g-2 mb-3">
-                <div class="col-6">
-                  <label class="form-label small">Moeda</label>
-                  <select class="form-select" x-model="caixinhaForm.moeda">
-                    <template x-for="m in moedasSuportadas" :key="m.codigo">
-                      <option :value="m.codigo" x-text="m.codigo + ' — ' + m.nome"></option>
-                    </template>
-                  </select>
-                </div>
-                <div class="col-6">
-                  <label class="form-label small">Meta (opcional)</label>
-                  <input type="number" min="0" step="0.01" class="form-control" x-model="caixinhaForm.meta" :placeholder="cgFormat.moedaInfo(caixinhaForm.moeda).simbolo" />
-                </div>
-              </div>
-              <div class="mb-3" x-show="$store.app.group">
-                <label class="form-label small">Responsável</label>
-                <select class="form-select" x-model="caixinhaForm.responsavel_id">
-                  <option :value="$store.app.profile?.id" x-text="$store.app.profile?.nome"></option>
-                  <template x-for="m in ($store.app.group?.members || [])" :key="m.id">
-                    <option :value="m.id" x-text="m.nome" x-show="m.id !== $store.app.profile?.id"></option>
-                  </template>
-                </select>
-              </div>
-              <div class="mb-3">
-                <label class="form-label small">Ícone</label>
-                <div class="btn-group btn-group-sm mb-2 w-100" role="group">
-                  <button type="button" class="btn" :class="iconeCaixinha.modo === 'preset' ? 'btn-secondary' : 'btn-outline-secondary'" @click="iconeCaixinha.modo = 'preset'">Ícone</button>
-                  <button type="button" class="btn" :class="iconeCaixinha.modo === 'upload' ? 'btn-secondary' : 'btn-outline-secondary'" @click="iconeCaixinha.modo = 'upload'">Imagem</button>
-                  <button type="button" class="btn" :class="iconeCaixinha.modo === 'url' ? 'btn-secondary' : 'btn-outline-secondary'" @click="iconeCaixinha.modo = 'url'">URL</button>
-                </div>
-                <template x-if="iconeCaixinha.modo === 'preset'">
-                  <div class="d-flex flex-wrap gap-1">
-                    <template x-for="ic in iconPresets" :key="ic">
-                      <button type="button" class="btn btn-sm p-0" style="width:34px;height:34px;" :class="caixinhaForm.icone === ic ? 'btn-success' : 'btn-outline-secondary'" @click="caixinhaForm.icone = ic" :aria-label="'Usar ícone ' + ic">
-                        <i :class="'bi ' + ic"></i>
-                      </button>
-                    </template>
-                  </div>
-                </template>
-                <template x-if="iconeCaixinha.modo === 'upload'">
-                  <div class="d-flex align-items-center gap-2">
-                    <label class="cg-btn btn btn-outline-secondary btn-sm mb-0" style="cursor:pointer;">
-                      <i class="bi bi-upload"></i>
-                      <span x-text="iconeCaixinha.uploading ? 'Enviando…' : (iconeCaixinha.url ? 'Trocar imagem' : 'Escolher imagem (PNG…)')"></span>
-                      <input type="file" accept="image/*" class="d-none" @change="onCaixinhaIconeFile($event)" :disabled="iconeCaixinha.uploading" />
-                    </label>
-                    <img :src="iconeCaixinha.url" x-show="iconeCaixinha.url" style="width:28px;height:28px;border-radius:50%;object-fit:cover;" />
-                  </div>
-                </template>
-                <template x-if="iconeCaixinha.modo === 'url'">
-                  <input type="url" class="form-control form-control-sm" placeholder="https://…" x-model="iconeCaixinha.urlInput" @change="iconeCaixinha.url = iconeCaixinha.urlInput" />
-                </template>
-              </div>
-              <div class="d-flex gap-2">
-                <template x-if="caixinhaForm.id">
-                  <button type="button" class="btn btn-outline-danger" @click="excluirCaixinha()" title="Excluir"><i class="bi bi-trash"></i></button>
-                </template>
-                <button type="button" class="cg-btn btn btn-outline-secondary flex-fill" @click="fecharCaixinhaModal()">Cancelar</button>
-                <button type="button" class="cg-btn btn btn-success flex-fill" :disabled="salvandoCaixinha" @click="salvarCaixinha()">Salvar</button>
-              </div>
-            </div>
-          </div>
+          <!-- Criar/editar caixinha: Alpine.store('caixinhaModal') agora,
+               mesmo modal usado por "Perfil → Caixinhas" (ver markup dele
+               perto do fim do arquivo) — sem duplicar formulário aqui. -->
+
 
           <!-- Registrar aporte/retirada -->
           <div class="cg-modal-backdrop" x-show="movModalAberto" x-cloak @click.self="fecharMovModal()">
@@ -2118,7 +2060,7 @@
         <aside class="cg-drawer" x-show="$store.app.navOpen" x-transition>
           <div class="d-flex align-items-center justify-content-between mb-4">
             <div class="d-flex align-items-center gap-2">
-              <img src="./assets/icons/icon.svg" width="28" height="28" alt="" />
+              <img src="./assets/logos/logo-colorida.svg" width="26" height="28" alt="" />
               <span class="fw-bold">Bõnotto</span>
             </div>
             <button type="button" class="btn-close" @click="$store.app.navOpen = false" aria-label="Fechar menu"></button>
@@ -2628,34 +2570,19 @@
           </select>
         </div>
         <div class="mb-2">
-          <label class="form-label small">Ícone</label>
-          <div class="btn-group btn-group-sm mb-2 w-100" role="group">
-            <button type="button" class="btn" :class="$store.caixinhaModal.modoIcone === 'preset' ? 'btn-secondary' : 'btn-outline-secondary'" @click="$store.caixinhaModal.modoIcone = 'preset'">Ícone</button>
-            <button type="button" class="btn" :class="$store.caixinhaModal.modoIcone === 'upload' ? 'btn-secondary' : 'btn-outline-secondary'" @click="$store.caixinhaModal.modoIcone = 'upload'">Imagem</button>
-            <button type="button" class="btn" :class="$store.caixinhaModal.modoIcone === 'url' ? 'btn-secondary' : 'btn-outline-secondary'" @click="$store.caixinhaModal.modoIcone = 'url'">URL</button>
+          <label class="form-label small">
+            Logo do banco
+            <span class="cg-muted" x-show="$store.caixinhaModal.bancoExistente">(já cadastrado — reaproveitado em qualquer caixinha desse banco)</span>
+          </label>
+          <div class="d-flex align-items-center gap-2">
+            <label class="cg-btn btn btn-outline-secondary btn-sm mb-0" style="cursor:pointer;">
+              <i class="bi bi-upload"></i>
+              <span x-text="$store.caixinhaModal.uploadingLogo ? 'Enviando…' : ($store.caixinhaModal.bancoLogoPreview ? 'Trocar imagem' : 'Escolher imagem')"></span>
+              <input type="file" accept="image/*" class="d-none" @change="$store.caixinhaModal.onLogoFile($event)" :disabled="$store.caixinhaModal.uploadingLogo" />
+            </label>
+            <img :src="$store.caixinhaModal.bancoLogoPreview" x-show="$store.caixinhaModal.bancoLogoPreview" style="width:28px;height:28px;border-radius:50%;object-fit:cover;" />
           </div>
-          <template x-if="$store.caixinhaModal.modoIcone === 'preset'">
-            <div class="d-flex flex-wrap gap-1">
-              <template x-for="ic in $store.caixinhaModal.iconePresets" :key="ic">
-                <button type="button" class="btn btn-sm p-0" style="width:34px;height:34px;" :class="$store.caixinhaModal.icone === ic ? 'btn-success' : 'btn-outline-secondary'" @click="$store.caixinhaModal.icone = ic" :aria-label="'Usar ícone ' + ic">
-                  <i :class="'bi ' + ic"></i>
-                </button>
-              </template>
-            </div>
-          </template>
-          <template x-if="$store.caixinhaModal.modoIcone === 'upload'">
-            <div class="d-flex align-items-center gap-2">
-              <label class="cg-btn btn btn-outline-secondary btn-sm mb-0" style="cursor:pointer;">
-                <i class="bi bi-upload"></i>
-                <span x-text="$store.caixinhaModal.uploadingIcone ? 'Enviando…' : ($store.caixinhaModal.iconeUrl ? 'Trocar imagem' : 'Escolher imagem')"></span>
-                <input type="file" accept="image/*" class="d-none" @change="$store.caixinhaModal.onIconeFile($event)" :disabled="$store.caixinhaModal.uploadingIcone" />
-              </label>
-              <img :src="$store.caixinhaModal.iconeUrl" x-show="$store.caixinhaModal.iconeUrl" style="width:28px;height:28px;border-radius:50%;object-fit:cover;" />
-            </div>
-          </template>
-          <template x-if="$store.caixinhaModal.modoIcone === 'url'">
-            <input type="url" class="form-control form-control-sm" placeholder="https://…" x-model="$store.caixinhaModal.iconeUrlInput" />
-          </template>
+          <input type="url" class="form-control form-control-sm mt-2" placeholder="…ou cole uma URL de imagem" x-model="$store.caixinhaModal.bancoLogoUrlInput" />
         </div>
         <div class="d-flex gap-2">
           <button type="button" class="cg-btn btn btn-success flex-fill" :disabled="$store.caixinhaModal.saving" @click="$store.caixinhaModal.salvar()">
@@ -2674,8 +2601,8 @@
         <template x-for="c in $store.caixinhaModal.items" :key="c.id">
           <div class="cg-manager-row">
             <span class="cg-chip cg-chip--icon-only" style="background: #64748B;">
-              <template x-if="c.icone_url"><img :src="c.icone_url" class="cg-chip__icon-img" /></template>
-              <template x-if="!c.icone_url"><i :class="'bi ' + (c.icone || 'bi-piggy-bank')"></i></template>
+              <template x-if="$store.app.bankByName(c.banco_nome)?.logo_url"><img :src="$store.app.bankByName(c.banco_nome).logo_url" class="cg-chip__icon-img" /></template>
+              <template x-if="!$store.app.bankByName(c.banco_nome)?.logo_url"><i class="bi bi-bank2"></i></template>
             </span>
             <span class="flex-fill text-truncate fw-semibold" x-text="c.banco_nome"></span>
             <span class="cg-muted small flex-shrink-0" x-text="c.moeda"></span>

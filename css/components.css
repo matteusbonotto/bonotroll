@@ -741,6 +741,14 @@
   border-color: var(--color-primary);
   transform: translateY(-1px);
 }
+/* Barra de progresso (meta de Caixinha) sempre encostada embaixo do card,
+   nunca "flutuando" na altura onde o conteúdo de cima terminou — sem isso,
+   cards vizinhos com quantidades diferentes de conteúdo acima (com/sem
+   conversão de moeda, com/sem meta) deixavam a barra em alturas diferentes
+   lado a lado, parecendo desalinhado (reportado). margin-top:auto num
+   filho de flex-column empurra ele (e resto abaixo, aqui não tem nada) pro
+   fim do container. */
+.cg-room-tile .progress { margin-top: auto; }
 /* Subcategoria/cômodo selecionado (o filtro "Todas"/tile ativo dentro de um
    cômodo) — mesmo tratamento visual do resto do app pra estado ativo
    (fundo suave + borda na cor primária, ver .cg-sidebar__item.is-active). */

@@ -1,23 +1,23 @@
 import * as cx from '../services/caixinhas.js';
+import * as banksService from '../services/banks.js';
 import { resizeImage } from '../utils/image.js';
 import { MOEDAS_SUPORTADAS } from '../utils/format.js';
-import { CAIXINHA_ICON_PRESETS } from './caixinhasView.js';
 
-const FORM_VAZIO = () => ({ bancoNome: '', moeda: 'BRL', meta: '', icone: 'bi-piggy-bank', responsavelId: '' });
+const FORM_VAZIO = () => ({ bancoNome: '', moeda: 'BRL', meta: '', responsavelId: '' });
 
-// Modal único (Alpine.store('caixinhaModal')), mesmo padrão de
-// categoryModalStore/companyModalStore: gerencia (lista + cria + edita +
-// exclui) direto de "Perfil → Caixinhas", sem precisar navegar pra tela de
-// Caixinhas (que continua existindo, focada em ver saldo/histórico e
-// registrar aportes/retiradas — não em cadastro).
+// Modal único (Alpine.store('caixinhaModal')) usado tanto por "Perfil →
+// Caixinhas" (gerenciar todas) quanto pela própria tela de Caixinhas
+// (FAB "Nova caixinha" e lápis de editar em cada card) — mesmo padrão de
+// dupla entrada já usado por categoryModal (openManage vs openCreate).
 //
-// Diferente de categories/companies (que ficam cacheadas em
-// Alpine.store('app')), a lista de caixinhas é carregada aqui mesmo — a
-// tela de Caixinhas também carrega a dela por conta própria (tem que
-// buscar as movimentações junto). Depois de qualquer criação/edição/
-// exclusão por aqui, dispara 'cg:caixinhas-changed' pra tela de Caixinhas
-// recarregar se estiver montada — mesmo padrão de 'cg:shopping-changed'
-// em shoppingList.js.
+// Banco deixou de ser um campo livre com ícone PRÓPRIO por caixinha (bug
+// relatado: "criei Nubank pra Matheus e Nubank pra Beatriz, viraram dois
+// bancos sem relação, o logo de um não aparecia no outro"). Agora banco é
+// uma entidade compartilhada (js/services/banks.js, mesmo padrão de
+// companies/empresa-serviço): a caixinha guarda só o NOME do banco, e o
+// logo é resolvido por nome contra a lista de bancos (Alpine.store('app').bankByName)
+// — encontrar-ou-criar (findOrCreateBank) garante que nunca existam dois
+// bancos com o mesmo nome.
 export function caixinhaModalStore() {
   return {
     open: false,
@@ -25,22 +25,17 @@ export function caixinhaModalStore() {
     items: [],
     editingId: null,
     ...FORM_VAZIO(),
-    iconeUrl: '',
-    iconeUrlInput: '',
-    modoIcone: 'preset',
-    uploadingIcone: false,
-    editingHadIconeUrl: false,
+    bancoLogoUrl: '',
+    bancoLogoUrlInput: '',
+    uploadingLogo: false,
     saving: false,
-    iconePresets: CAIXINHA_ICON_PRESETS,
     moedasSuportadas: MOEDAS_SUPORTADAS,
 
     resetForm() {
       Object.assign(this, FORM_VAZIO());
       this.editingId = null;
-      this.iconeUrl = '';
-      this.iconeUrlInput = '';
-      this.modoIcone = 'preset';
-      this.editingHadIconeUrl = false;
+      this.bancoLogoUrl = '';
+      this.bancoLogoUrlInput = '';
       const store = Alpine.store('app');
       if (store.profile) this.responsavelId = store.profile.id;
     },
@@ -51,10 +46,28 @@ export function caixinhaModalStore() {
       return [store.profile, ...(store.group?.members || []).filter((m) => m.id !== store.profile.id)];
     },
 
+    // Banco já cadastrado com esse nome (se existir) — usado tanto pra
+    // mostrar o logo já salvo (sem precisar reanexar) quanto pra decidir
+    // se "salvar" atualiza um banco existente ou cria um novo.
+    get bancoExistente() {
+      return Alpine.store('app').bankByName(this.bancoNome);
+    },
+    get bancoLogoPreview() {
+      return this.bancoLogoUrl || this.bancoExistente?.logo_url || null;
+    },
+
     async openManage() {
       this.resetForm();
       this.open = true;
       await this.carregar();
+    },
+    // Editar uma caixinha específica a partir da própria tela de Caixinhas
+    // (lápis no card) — mesmo modal, já carrega a lista completa junto
+    // (aparece embaixo do formulário, como em "Perfil → Caixinhas").
+    async openEdit(c) {
+      this.open = true;
+      await this.carregar();
+      this.edit(c);
     },
     close() {
       this.open = false;
@@ -79,26 +92,40 @@ export function caixinhaModalStore() {
       this.bancoNome = c.banco_nome;
       this.moeda = c.moeda || 'BRL';
       this.meta = c.meta || '';
-      this.icone = c.icone || 'bi-piggy-bank';
       this.responsavelId = c.owner_id;
-      this.iconeUrl = c.icone_url || '';
-      this.iconeUrlInput = c.icone_url || '';
-      this.modoIcone = c.icone_url ? 'url' : 'preset';
-      this.editingHadIconeUrl = !!c.icone_url;
+      this.bancoLogoUrl = '';
+      this.bancoLogoUrlInput = '';
     },
 
-    async onIconeFile(event) {
+    async onLogoFile(event) {
       const file = event.target.files?.[0];
       if (!file) return;
       const store = Alpine.store('app');
-      this.uploadingIcone = true;
+      this.uploadingLogo = true;
       try {
-        this.iconeUrl = await cx.uploadCaixinhaIcone(store.profile.id, await resizeImage(file));
+        this.bancoLogoUrl = await banksService.uploadBankLogo(store.profile.id, await resizeImage(file));
       } catch (e) {
-        store.notify(e.message || 'Erro ao enviar imagem.', 'danger');
+        store.notify(e.message || 'Erro ao enviar logo.', 'danger');
       } finally {
-        this.uploadingIcone = false;
+        this.uploadingLogo = false;
         event.target.value = '';
+      }
+    },
+
+    // Garante que o banco digitado vira/atualiza uma linha em `banks`
+    // (encontra-ou-cria pelo nome, nunca duplica) — mesmo papel de
+    // syncEmpresa em transactionForm.js. Best-effort: `banks` é tabela nova,
+    // exige migração manual (supabase/schema.sql) que nem todo mundo já
+    // rodou — sem isso a CAIXINHA (que só guarda banco_nome como texto)
+    // continua salvando normalmente, só sem o logo compartilhado ainda.
+    async syncBanco(nome, store) {
+      const groupId = store.group?.group?.id ?? null;
+      const logoUrl = this.bancoLogoUrl || this.bancoLogoUrlInput || null;
+      try {
+        await banksService.findOrCreateBank({ nome, logoUrl, ownerId: store.profile.id, groupId, existingBanks: store.banks });
+        await store.refreshBanks();
+      } catch {
+        // silencioso de propósito — ver comentário acima.
       }
     },
 
@@ -107,16 +134,14 @@ export function caixinhaModalStore() {
       const store = Alpine.store('app');
       this.saving = true;
       try {
-        if (this.modoIcone === 'url') this.iconeUrl = this.iconeUrlInput;
-        const iconeUrl = this.modoIcone === 'preset' ? '' : (this.iconeUrl || this.iconeUrlInput);
+        const nome = this.bancoNome.trim();
+        await this.syncBanco(nome, store);
         const patch = {
-          banco_nome: this.bancoNome.trim(),
+          banco_nome: nome,
           moeda: this.moeda || 'BRL',
           meta: this.meta ? Number(this.meta) : null,
-          icone: this.icone,
           owner_id: this.responsavelId || store.profile.id,
         };
-        if (iconeUrl || this.editingHadIconeUrl) patch.icone_url = iconeUrl || null;
 
         if (this.editingId) {
           const atualizada = await cx.updateCaixinha(this.editingId, patch);
@@ -128,8 +153,8 @@ export function caixinhaModalStore() {
             bancoNome: patch.banco_nome,
             moeda: patch.moeda,
             meta: patch.meta,
-            icone: patch.icone,
-            iconeUrl,
+            icone: 'bi-piggy-bank',
+            iconeUrl: null,
             ownerId: patch.owner_id,
             groupId: store.group?.group?.id,
           });

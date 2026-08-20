@@ -8,7 +8,7 @@
 // segundo plano (evento "install" roda de novo) e ficar em estado "waiting"
 // até alguém assumir — é esse "waiting" que js/app.js detecta pra mostrar o
 // banner "Nova versão disponível" (ver updateNotifier em js/app.js).
-const CACHE_NAME = 'bonotto-v3';
+const CACHE_NAME = 'bonotto-v4';
 
 const APP_SHELL = [
   './',
@@ -27,6 +27,7 @@ const APP_SHELL = [
   './js/services/auth.js',
   './js/services/categories.js',
   './js/services/companies.js',
+  './js/services/banks.js',
   './js/services/groups.js',
   './js/services/transactions.js',
   './js/services/resources.js',
@@ -36,8 +37,18 @@ const APP_SHELL = [
   './js/services/csvImport.js',
   './js/services/barcode.js',
   './js/services/ocr.js',
+  './js/services/caixinhas.js',
+  './js/services/budgets.js',
+  './js/services/dataExport.js',
+  './js/services/fx.js',
+  './js/services/pdf.js',
+  './js/services/recurring.js',
   './js/components/store.js',
   './js/components/categoryManager.js',
+  './js/components/companyManager.js',
+  './js/components/budgetManager.js',
+  './js/components/caixinhaManager.js',
+  './js/components/caixinhasView.js',
   './js/components/auth.js',
   './js/components/dashboard.js',
   './js/components/transactionForm.js',
@@ -48,8 +59,13 @@ const APP_SHELL = [
   './js/components/groupView.js',
   './js/components/profileView.js',
   './js/components/charts.js',
+  './js/utils/dbFallback.js',
+  './js/utils/image.js',
+  './js/utils/money.js',
   './assets/icons/icon.svg',
   './assets/icons/icon-maskable.svg',
+  './assets/icons/apple-touch-icon.png',
+  './assets/logos/logo-colorida.svg',
 ];
 
 self.addEventListener('install', (event) => {
@@ -86,8 +102,10 @@ self.addEventListener('push', (event) => {
   event.waitUntil(
     self.registration.showNotification(payload.title, {
       body: payload.body,
-      icon: './assets/icons/icon.svg',
-      badge: './assets/icons/icon.svg',
+      // PNG, não SVG: notificação nativa (Android/Chrome) não renderiza SVG
+      // aqui — silenciosamente cai num ícone genérico do sistema.
+      icon: './assets/icons/apple-touch-icon.png',
+      badge: './assets/icons/apple-touch-icon.png',
       tag: payload.tag || 'bonotto-generico',
       data: { url: payload.url || './index.html' },
     })

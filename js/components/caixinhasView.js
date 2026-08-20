@@ -1,13 +1,8 @@
 import * as cx from '../services/caixinhas.js';
 import { taxaParaBRL } from '../services/fx.js';
 import { MOEDAS_SUPORTADAS, formatMoeda, moedaInfo } from '../utils/format.js';
-import { resizeImage } from '../utils/image.js';
 
-const CAIXINHA_FORM_VAZIA = () => ({ id: null, banco_nome: '', moeda: 'BRL', meta: '', icone: 'bi-piggy-bank', responsavel_id: '' });
-const ICONE_CAIXINHA_VAZIO = () => ({ modo: 'preset', url: '', urlInput: '', uploading: false, editingHadUrl: false });
 const MOV_FORM_VAZIA = () => ({ tipo: 'guardado', valor: '', data: new Date().toISOString().slice(0, 10), observacoes: '' });
-
-export const CAIXINHA_ICON_PRESETS = ['bi-piggy-bank', 'bi-bank', 'bi-bank2', 'bi-wallet2', 'bi-graph-up-arrow', 'bi-cash-stack', 'bi-credit-card', 'bi-coin'];
 
 // Tela "Caixinhas": dinheiro guardado em bancos/corretoras. Mesma navegação
 // em 2 passos de Recursos (grade de bancos -> dentro de um, histórico +
@@ -28,15 +23,6 @@ export function caixinhasView() {
     // do card em vez de mostrar um erro).
     taxasPorMoeda: {},
     moedasSuportadas: MOEDAS_SUPORTADAS,
-
-    caixinhaModalAberto: false,
-    caixinhaForm: CAIXINHA_FORM_VAZIA(),
-    salvandoCaixinha: false,
-    iconPresets: CAIXINHA_ICON_PRESETS,
-    // Ícone por preset (grid de Bootstrap Icons, default) OU escolhido pela
-    // própria pessoa via upload de imagem/PNG ou URL colada — mesmo par
-    // upload/URL já usado no modal de Categorias (icone_url).
-    iconeCaixinha: ICONE_CAIXINHA_VAZIO(),
 
     movModalAberto: false,
     movForm: MOV_FORM_VAZIA(),
@@ -161,115 +147,13 @@ export function caixinhasView() {
       }));
     },
 
-    // ---------- CRUD caixinha ----------
-    abrirNovaCaixinha() {
-      const store = this.$store.app;
-      this.caixinhaForm = { ...CAIXINHA_FORM_VAZIA(), responsavel_id: store.profile.id };
-      this.iconeCaixinha = ICONE_CAIXINHA_VAZIO();
-      this.caixinhaModalAberto = true;
-    },
-    // event.stopPropagation() é essencial: o lápis fica dentro do tile
-    // clicável (que abre a caixinha) — mesmo padrão de abrirEditarRoom em
-    // resourcesView.js.
-    abrirEditarCaixinha(c, event) {
-      event.stopPropagation();
-      this.caixinhaForm = {
-        id: c.id,
-        banco_nome: c.banco_nome,
-        moeda: c.moeda,
-        meta: c.meta || '',
-        icone: c.icone || 'bi-piggy-bank',
-        responsavel_id: c.owner_id,
-      };
-      this.iconeCaixinha = {
-        modo: c.icone_url ? 'url' : 'preset',
-        url: c.icone_url || '',
-        urlInput: c.icone_url || '',
-        uploading: false,
-        editingHadUrl: !!c.icone_url,
-      };
-      this.caixinhaModalAberto = true;
-    },
-    fecharCaixinhaModal() {
-      this.caixinhaModalAberto = false;
-    },
-    async onCaixinhaIconeFile(event) {
-      const file = event.target.files?.[0];
-      if (!file) return;
-      const store = this.$store.app;
-      this.iconeCaixinha.uploading = true;
-      try {
-        this.iconeCaixinha.url = await cx.uploadCaixinhaIcone(store.profile.id, await resizeImage(file));
-      } catch (e) {
-        store.notify(e.message || 'Erro ao enviar imagem.', 'danger');
-      } finally {
-        this.iconeCaixinha.uploading = false;
-        event.target.value = '';
-      }
-    },
-    async salvarCaixinha() {
-      if (!this.caixinhaForm.banco_nome.trim() || this.salvandoCaixinha) return;
-      const store = this.$store.app;
-      this.salvandoCaixinha = true;
-      try {
-        const iconeUrl = this.iconeCaixinha.modo === 'preset' ? '' : this.iconeCaixinha.url || this.iconeCaixinha.urlInput;
-        const patch = {
-          banco_nome: this.caixinhaForm.banco_nome.trim(),
-          moeda: this.caixinhaForm.moeda || 'BRL',
-          meta: this.caixinhaForm.meta ? Number(this.caixinhaForm.meta) : null,
-          icone: this.caixinhaForm.icone,
-        };
-        // Só manda icone_url quando tem valor OU quando essa caixinha já
-        // tinha um antes (precisa mandar null pra limpar) — mesmo cuidado
-        // de categoryManager.js pra não quebrar edição em banco que ainda
-        // não rodou a migração que adiciona essa coluna.
-        if (iconeUrl || this.iconeCaixinha.editingHadUrl) patch.icone_url = iconeUrl || null;
-
-        if (this.caixinhaForm.id) {
-          // Dono pode ser trocado na edição (ex.: cadastrou como Matheus e
-          // era pra ser da Beatriz) — reaponta owner_id junto do resto.
-          patch.owner_id = this.caixinhaForm.responsavel_id || store.profile.id;
-          const atualizada = await cx.updateCaixinha(this.caixinhaForm.id, patch);
-          const idx = this.caixinhas.findIndex((c) => c.id === atualizada.id);
-          if (idx >= 0) this.caixinhas[idx] = atualizada;
-          store.notify('Caixinha atualizada.');
-        } else {
-          const criada = await cx.createCaixinha({
-            bancoNome: patch.banco_nome,
-            moeda: patch.moeda,
-            meta: patch.meta,
-            icone: patch.icone,
-            iconeUrl,
-            ownerId: this.caixinhaForm.responsavel_id || store.profile.id,
-            groupId: store.group?.group?.id,
-          });
-          this.caixinhas.push(criada);
-          this.movByCaixinha[criada.id] = [];
-          store.notify('Caixinha criada.');
-        }
-        this.caixinhaModalAberto = false;
-        this.carregarTaxas();
-      } catch (e) {
-        store.notify(e.message || 'Não foi possível salvar a caixinha.', 'danger');
-      } finally {
-        this.salvandoCaixinha = false;
-      }
-    },
-    async excluirCaixinha() {
-      if (!this.caixinhaForm.id) return;
-      if (!confirm(`Excluir a caixinha "${this.caixinhaForm.banco_nome}"? O histórico de movimentações dela também será excluído — essa ação não pode ser desfeita.`)) return;
-      const store = this.$store.app;
-      try {
-        await cx.deleteCaixinha(this.caixinhaForm.id);
-        const idExcluida = this.caixinhaForm.id;
-        this.caixinhas = this.caixinhas.filter((c) => c.id !== idExcluida);
-        delete this.movByCaixinha[idExcluida];
-        this.caixinhaModalAberto = false;
-        if (this.activeId === idExcluida) this.voltar();
-        store.notify('Caixinha excluída.');
-      } catch (e) {
-        store.notify(e.message || 'Não foi possível excluir a caixinha.', 'danger');
-      }
+    // Criar/editar/excluir caixinha agora é tudo no Alpine.store('caixinhaModal')
+    // (js/components/caixinhaManager.js) — mesmo modal usado por "Perfil →
+    // Caixinhas", aberto daqui também (FAB e lápis no card). Essa tela só
+    // dispara $store.caixinhaModal.openManage()/openEdit(c) e escuta
+    // 'cg:caixinhas-changed' (init() acima) pra recarregar depois.
+    bankFor(bancoNome) {
+      return this.$store.app.bankByName(bancoNome);
     },
 
     // ---------- Movimentações (aportes/retiradas) ----------

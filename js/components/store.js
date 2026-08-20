@@ -3,6 +3,8 @@ import * as categoriesService from '../services/categories.js';
 import * as groupsService from '../services/groups.js';
 import * as companiesService from '../services/companies.js';
 import { findCompanyByName } from '../services/companies.js';
+import * as banksService from '../services/banks.js';
+import { findBankByName } from '../services/banks.js';
 import * as notificationsService from '../services/notifications.js';
 import { gerarRecorrentesPendentes } from '../services/recurring.js';
 import { isDemoMode } from '../data/config.js';
@@ -18,6 +20,7 @@ export function appStore() {
     group: null, // { group, members } | null — grupo é sempre opcional
     categories: [],
     companies: [],
+    banks: [],
     notifications: [],
     // Vem da URL (#/transacoes etc.) pra sobreviver a um F5 — antes sempre
     // recarregava direto na Home, perdendo onde a pessoa estava.
@@ -95,12 +98,19 @@ export function appStore() {
       if (!this.isDemoMode) await categoriesService.ensureDefaultCategories(profile.id, groupId);
       const categories = await categoriesService.listCategories({ ownerId: profile.id, groupId });
       const companies = await companiesService.listCompanies({ ownerId: profile.id, groupId });
+      // `banks` é tabela nova (js/services/banks.js) — precisa da migração
+      // manual em supabase/schema.sql, que nem todo mundo já rodou. Sem
+      // isso não pode travar o LOGIN inteiro (era o caso: erro "Could not
+      // find the table 'public.banks'" impedia entrar) — cai pra lista
+      // vazia (só perde o logo compartilhado de banco até migrar).
+      const banks = await banksService.listBanks({ ownerId: profile.id, groupId }).catch(() => []);
 
       this.session = session;
       this.profile = profile;
       this.group = group;
       this.categories = categories;
       this.companies = companies;
+      this.banks = banks;
 
       // Best-effort: varredura de notificações não deve travar o login se
       // falhar (ex.: tabela ainda não migrada no Supabase do usuário).
@@ -132,6 +142,7 @@ export function appStore() {
       this.group = null;
       this.categories = [];
       this.companies = [];
+      this.banks = [];
       this.notifications = [];
       this.view = 'home';
       history.replaceState(null, '', location.pathname + location.search);
@@ -172,6 +183,16 @@ export function appStore() {
 
     companyByName(nome) {
       return findCompanyByName(this.companies, nome);
+    },
+
+    async refreshBanks() {
+      if (!this.profile) return;
+      const groupId = this.group?.group?.id;
+      this.banks = await banksService.listBanks({ ownerId: this.profile.id, groupId });
+    },
+
+    bankByName(nome) {
+      return findBankByName(this.banks, nome);
     },
 
     async refreshGroup() {

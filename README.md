@@ -86,7 +86,8 @@ supabase/
   notifications_push.sql      trigger + agendamentos (pg_cron) das notificações — opcional
   functions/                  Edge Functions: keepalive · notify-scan · notify-payment
   NOTIFICACOES.md              passo a passo do push real + keepalive
-assets/icons/                 ícones do PWA (SVG placeholder — ver abaixo)
+assets/icons/                 favicon, ícone do manifest, ícone maskable e apple-touch-icon (PNG)
+assets/logos/                 logo Bõnotto original (colorida/branco/preto/verde), fonte dos ícones acima
 ```
 
 ## Testes
@@ -105,7 +106,7 @@ Roda automaticamente a cada push/PR contra `main` via GitHub Actions ([`.github/
 
 ## Sobre os ícones
 
-`assets/icons/icon.svg` e `icon-maskable.svg` são placeholders funcionais (o manifest já aponta para eles). Antes de publicar de verdade, gere PNGs nos tamanhos 192×192 e 512×512 (e uma versão maskable) a partir de um logo definitivo — ferramentas como [realfavicongenerator.net](https://realfavicongenerator.net) fazem isso automaticamente a partir do SVG.
+`assets/logos/` tem a logo original em 4 variantes (colorida, branco, preto, verde), a partir das quais `assets/icons/icon.svg` (favicon + manifest), `icon-maskable.svg` (ícone adaptativo Android, fundo cheio) e `apple-touch-icon.png` (PNG raster — iOS não confia em SVG pra isso, nem pro splash screen que ele gera sozinho a partir dele) foram montados. Pra gerar variações novas a partir da logo (ex.: outros tamanhos de PNG), reaproveite o mesmo recorte/posicionamento já usado nesses dois SVGs como referência.
 
 ## O que ainda não está implementado
 
