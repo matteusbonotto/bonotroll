@@ -318,7 +318,7 @@
             </template>
           </div>
 
-          <div class="cg-hero-balance mb-4" :style="corSelecionada ? { background: `linear-gradient(135deg, ${corSelecionada}, ${corSelecionada})` } : {}">
+          <div class="cg-hero-balance mb-4" :style="corSelecionada ? { background: corSelecionada } : {}">
             <span class="cg-hero-balance__label">Saldo <span x-text="quemVer === 'grupo' ? 'do grupo' : quemVer === 'eu' ? 'atual' : ('de ' + (opcoesQuemVer.find(o => o.id === quemVer)?.nome || ''))"></span></span>
             <div class="cg-hero-balance__value" :title="cgFormat.formatCurrency(resumoSelecionado.saldo)" x-text="cgFormat.formatCurrencyCompact(resumoSelecionado.saldo)"></div>
             <!-- "Quanto ainda posso gastar" (docs/BONOTTO-2027-BLUEPRINT.md,
@@ -729,7 +729,10 @@
                       </div>
                     </td>
                     <td>
-                      <div class="fw-semibold d-flex align-items-center gap-2">
+                      <div class="fw-semibold d-flex align-items-center gap-2 min-w-0">
+                        <template x-if="$store.app.companyByName(row.empresa_servico)?.logo_url">
+                          <img class="cg-company-logo" :src="$store.app.companyByName(row.empresa_servico).logo_url" :alt="row.empresa_servico" />
+                        </template>
                         <span x-text="row.titulo"></span>
                         <span class="cg-parcela-tag" x-show="row.parcela_total" x-text="row.parcela_atual + '/' + row.parcela_total"></span>
                       </div>
@@ -829,6 +832,9 @@
                     </div>
                     <div class="min-w-0">
                       <div class="fw-semibold text-truncate d-flex align-items-center gap-2">
+                        <template x-if="$store.app.companyByName(row.empresa_servico)?.logo_url">
+                          <img class="cg-company-logo" :src="$store.app.companyByName(row.empresa_servico).logo_url" :alt="row.empresa_servico" />
+                        </template>
                         <span class="text-truncate" x-text="row.titulo"></span>
                         <span class="cg-parcela-tag flex-shrink-0" x-show="row.parcela_total" x-text="row.parcela_atual + '/' + row.parcela_total"></span>
                       </div>
@@ -1979,11 +1985,29 @@
                    DESIGN-SYSTEM-2027.md §7) — antes eram 6 .cg-card empilhados,
                    cada um com a própria borda+sombra ("card dentro de card"). -->
               <div class="cg-card p-0">
+                <div class="cg-list-flat cg-list-flat--hoverable px-3" role="button" @click="$store.companyModal.openManage()">
+                  <div class="cg-icon-badge"><i class="bi bi-buildings"></i></div>
+                  <div class="flex-fill">
+                    <h2 class="h6 fw-bold mb-1">Empresas e servi&ccedil;os</h2>
+                    <p class="cg-muted small mb-0">Gerencie nomes e logos usados nos seus lan&ccedil;amentos.</p>
+                  </div>
+                  <i class="bi bi-chevron-right cg-muted"></i>
+                </div>
+
                 <div class="cg-list-flat cg-list-flat--hoverable px-3" role="button" @click="$store.categoryModal.openManage()">
                   <div class="cg-icon-badge"><i class="bi bi-tags"></i></div>
                   <div class="flex-fill">
                     <h2 class="h6 fw-bold mb-1">Categorias</h2>
                     <p class="cg-muted small mb-0">Crie, edite ou exclua as categorias usadas em lançamentos e na lista de compras.</p>
+                  </div>
+                  <i class="bi bi-chevron-right cg-muted"></i>
+                </div>
+
+                <div class="cg-list-flat cg-list-flat--hoverable px-3" role="button" @click="$store.app.setView('caixinhas')">
+                  <div class="cg-icon-badge"><i class="bi bi-piggy-bank"></i></div>
+                  <div class="flex-fill">
+                    <h2 class="h6 fw-bold mb-1">Caixinhas</h2>
+                    <p class="cg-muted small mb-0">Edite bancos, metas, moeda e imagem de cada caixinha.</p>
                   </div>
                   <i class="bi bi-chevron-right cg-muted"></i>
                 </div>
@@ -2465,6 +2489,65 @@
   </div>
 
   <!-- ============ MODAL: ORÇAMENTOS ============ -->
+  <div class="cg-modal-backdrop" x-show="$store.companyModal.open" x-cloak @click.self="$store.companyModal.close()">
+    <div class="cg-modal" x-show="$store.companyModal.open" x-transition>
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <div>
+          <h2 class="h6 fw-bold mb-1">Empresas e servi&ccedil;os</h2>
+          <p class="cg-muted small mb-0">Nomes e logos dispon&iacute;veis nos lan&ccedil;amentos.</p>
+        </div>
+        <button type="button" class="btn-close" @click="$store.companyModal.close()" aria-label="Fechar"></button>
+      </div>
+
+      <div class="cg-manager-form mb-3">
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <span class="cg-company-logo cg-company-logo--large">
+            <img x-show="$store.companyModal.logoUrl" :src="$store.companyModal.logoUrl" alt="" />
+            <i class="bi bi-buildings" x-show="!$store.companyModal.logoUrl"></i>
+          </span>
+          <div>
+            <strong x-text="$store.companyModal.editingId ? 'Editar empresa' : 'Nova empresa'"></strong>
+            <div class="cg-muted small">A imagem aparece nas transa&ccedil;&otilde;es.</div>
+          </div>
+        </div>
+        <label class="form-label">Nome</label>
+        <input type="text" class="form-control mb-2" placeholder="Ex: Nubank, iFood" x-model="$store.companyModal.nome" @keydown.enter.prevent="$store.companyModal.save()" />
+        <label class="form-label">Logo por URL</label>
+        <input type="url" class="form-control mb-2" placeholder="https://..." x-model="$store.companyModal.logoUrl" />
+        <div class="d-flex gap-2">
+          <label class="cg-btn btn btn-outline-secondary flex-fill mb-0" style="cursor:pointer;">
+            <i class="bi bi-image"></i>
+            <span x-text="$store.companyModal.uploading ? 'Enviando...' : 'Enviar imagem'"></span>
+            <input type="file" accept="image/*" class="d-none" @change="$store.companyModal.onLogoFile($event)" :disabled="$store.companyModal.uploading" />
+          </label>
+          <button type="button" class="cg-btn btn btn-success flex-fill" :disabled="$store.companyModal.saving" @click="$store.companyModal.save()">
+            <span x-text="$store.companyModal.editingId ? 'Salvar' : 'Adicionar'"></span>
+          </button>
+        </div>
+        <button type="button" class="btn btn-link btn-sm mt-2 px-0" x-show="$store.companyModal.editingId" @click="$store.companyModal.resetForm()">Cancelar edi&ccedil;&atilde;o</button>
+      </div>
+
+      <div class="d-flex align-items-center justify-content-between mb-2">
+        <h3 class="h6 fw-bold mb-0">Cadastradas</h3>
+        <span class="cg-badge cg-badge--secondary" x-text="$store.app.companies.length"></span>
+      </div>
+      <div class="cg-manager-list">
+        <template x-for="company in $store.app.companies" :key="company.id">
+          <div class="cg-manager-row">
+            <span class="cg-company-logo">
+              <img x-show="company.logo_url" :src="company.logo_url" :alt="company.nome" />
+              <i class="bi bi-buildings" x-show="!company.logo_url"></i>
+            </span>
+            <span class="flex-fill text-truncate fw-semibold" x-text="company.nome"></span>
+            <button type="button" class="btn btn-sm btn-outline-secondary" @click="$store.companyModal.edit(company)" :aria-label="'Editar ' + company.nome"><i class="bi bi-pencil"></i></button>
+            <button type="button" class="btn btn-sm btn-outline-danger" @click="$store.companyModal.remove(company)" :aria-label="'Excluir ' + company.nome"><i class="bi bi-trash"></i></button>
+          </div>
+        </template>
+        <p class="cg-muted small mb-0" x-show="!$store.app.companies.length">Nenhuma empresa cadastrada ainda.</p>
+      </div>
+    </div>
+  </div>
+
   <div class="cg-modal-backdrop" x-show="$store.budgetModal.open" x-cloak @click.self="$store.budgetModal.close()">
     <div class="cg-modal" x-show="$store.budgetModal.open" x-transition>
       <div class="d-flex align-items-center justify-content-between mb-3">

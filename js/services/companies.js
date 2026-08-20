@@ -34,6 +34,13 @@ export async function updateCompany(id, patch) {
   return data;
 }
 
+export async function deleteCompany(id) {
+  if (isDemoMode()) return mockDb.remove('companies', id);
+  const supabase = await getSupabase();
+  const { error } = await supabase.from('companies').delete().eq('id', id);
+  if (error) throw error;
+}
+
 // Acha por nome (case-insensitive) dentro do escopo owner/grupo já
 // carregado — evita duplicar "iFood" e "ifood" como empresas diferentes.
 export function findCompanyByName(companies, nome) {

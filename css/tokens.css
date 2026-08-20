@@ -25,6 +25,15 @@
   --color-info: #0EA5E9;
   --color-secondary: #64748B;
 
+  /* "Tinta" — preenchimento sólido neutro de alto contraste (ex.: botão de
+     despesa no estilo "quase preto", visual editorial). Nunca usar
+     --color-text direto pra isso: --color-text INVERTE entre os temas (quase
+     preto no claro, quase branco no escuro) e sem --color-on-ink acompanhando
+     o texto do botão, o par fundo+texto vira claro-sobre-claro no escuro —
+     bug real visto em produção (botão "Nova despesa" quase invisível). */
+  --color-ink: var(--color-text);
+  --color-on-ink: #FFFFFF;
+
   /* Escala de raio CONSOLIDADA (2026-08-20, segunda rodada) — a primeira
      rodada misturava sm/md/lg/pill quase aleatoriamente entre elementos sem
      relação nenhuma entre si (input com um raio, card com outro, tile com
@@ -100,6 +109,7 @@
     --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
     --shadow-md: 0 12px 32px rgba(0, 0, 0, 0.4);
     --shadow-lg: 0 20px 48px rgba(0, 0, 0, 0.5);
+    --color-on-ink: #0E1512;
     color-scheme: dark;
   }
 }
@@ -115,6 +125,7 @@
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
   --shadow-md: 0 12px 32px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 20px 48px rgba(0, 0, 0, 0.5);
+  --color-on-ink: #0E1512;
   color-scheme: dark;
 }
 
@@ -129,6 +140,7 @@
   --shadow-sm: 0 2px 8px rgba(20, 30, 25, 0.07);
   --shadow-md: 0 12px 32px rgba(20, 30, 25, 0.12);
   --shadow-lg: 0 20px 48px rgba(20, 30, 25, 0.16);
+  --color-on-ink: #FFFFFF;
   color-scheme: light;
 }
 

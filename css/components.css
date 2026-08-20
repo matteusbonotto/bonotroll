@@ -949,3 +949,260 @@
   min-height: var(--touch-target);
   min-width: var(--touch-target);
 }
+
+/* --------------------------------------------------------------------------
+   Product interface refresh
+   A quiet, information-first financial interface. These overrides intentionally
+   keep the app's existing component contracts while replacing its visual model.
+   -------------------------------------------------------------------------- */
+:root {
+  --color-bg: #f4f5f6;
+  --color-surface: #ffffff;
+  --color-surface-alt: #eef1f2;
+  --color-text: #182321;
+  --color-text-muted: #687573;
+  --color-border: #dfe5e3;
+  --color-primary: #126b5c;
+  --color-primary-rgb: 18, 107, 92;
+  --color-primary-dark: #0a4d42;
+  --color-primary-soft: #e3f2ed;
+  --color-accent: #d96b45;
+  --color-danger: #c8374e;
+  --color-success: #168360;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-pill: 999px;
+  --shadow-sm: 0 1px 2px rgba(19, 35, 30, 0.04);
+  --shadow-md: 0 8px 24px rgba(19, 35, 30, 0.08);
+  --shadow-lg: 0 16px 36px rgba(19, 35, 30, 0.13);
+}
+
+/* Bug real reportado ("tema escuro quebrado"): este bloco redefinia bg/
+   surface/text/border/primary-soft pro escuro, mas ESQUECIA de redefinir
+   --color-primary-dark e as sombras — como --color-primary-dark é usado como
+   COR DE TEXTO em cima de --color-primary-soft em vários lugares (banner de
+   demo, ícone ativo da sidebar, toggle de visualização...), o valor escuro
+   (feito pra funcionar sobre um soft CLARO) ficava quase invisível sobre o
+   soft ESCURO — texto escuro em fundo escuro. Precisa virar um tom CLARO
+   aqui, não o mesmo valor do modo claro. Também faltava o gatilho de "escuro
+   por preferência do sistema" (só existia o toggle manual [data-bs-theme]) —
+   sem isso, quem nunca clicou no botão de tema mas usa o SO em escuro via
+   prefers-color-scheme não via nada disto, só o de tokens.css. */
+:root[data-bs-theme="dark"] {
+  --color-bg: #111917;
+  --color-surface: #182321;
+  --color-surface-alt: #22302d;
+  --color-text: #edf5f1;
+  --color-text-muted: #a5b3ae;
+  --color-border: #2d3d39;
+  --color-primary-soft: #163b32;
+  --color-primary-dark: #5EEAB0;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 16px 36px rgba(0, 0, 0, 0.55);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-bs-theme="light"]) {
+    --color-bg: #111917;
+    --color-surface: #182321;
+    --color-surface-alt: #22302d;
+    --color-text: #edf5f1;
+    --color-text-muted: #a5b3ae;
+    --color-border: #2d3d39;
+    --color-primary-soft: #163b32;
+    --color-primary-dark: #5EEAB0;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+    --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
+    --shadow-lg: 0 16px 36px rgba(0, 0, 0, 0.55);
+  }
+}
+/* [data-bs-theme="light"] explícito precisa reafirmar os valores claros de
+   --color-primary-dark, senão escolher "claro" na mão enquanto o SO está em
+   escuro herdaria o --color-primary-dark claro do bloco de cima por engano
+   (mesma lógica de precedência já usada pros outros tokens, ver tokens.css). */
+:root[data-bs-theme="light"] {
+  --color-primary-dark: #0a4d42;
+}
+
+body { font-size: var(--font-size-body); }
+
+.cg-app-shell { background: var(--color-bg); }
+
+.cg-sidebar {
+  background: var(--color-surface);
+  border-right: 1px solid var(--color-border);
+}
+@media (min-width: 992px) {
+  .cg-sidebar {
+    width: 264px;
+    padding: 22px 14px;
+  }
+  .cg-sidebar::before {
+    content: 'B\00f5notto';
+    display: block;
+    color: var(--color-text);
+    font-size: 1.25rem;
+    font-weight: 800;
+    letter-spacing: 0;
+    padding: 0 10px 22px 42px;
+    background: url('../assets/icons/icon.svg') no-repeat 10px 0 / 25px 25px;
+  }
+  .cg-sidebar > .d-flex:first-child { display: none !important; }
+  .cg-sidebar > .cg-sidebar__item:nth-of-type(1)::before { content: 'GERAL'; }
+  .cg-sidebar > .cg-sidebar__item:nth-of-type(3)::before { content: 'CASA'; }
+  .cg-sidebar > .cg-sidebar__item:nth-of-type(6)::before { content: 'CONTA'; }
+  .cg-sidebar > .cg-sidebar__item::before {
+    display: none;
+    color: var(--color-text-muted);
+    font-size: 0.66rem;
+    font-weight: 800;
+    letter-spacing: .08em;
+    position: absolute;
+    top: -23px;
+    left: 10px;
+  }
+  .cg-sidebar > .cg-sidebar__item:nth-of-type(1),
+  .cg-sidebar > .cg-sidebar__item:nth-of-type(3),
+  .cg-sidebar > .cg-sidebar__item:nth-of-type(6) { margin-top: 25px; }
+  .cg-sidebar > .cg-sidebar__item:nth-of-type(1) { margin-top: 0; }
+  .cg-sidebar > .cg-sidebar__item:nth-of-type(1)::before,
+  .cg-sidebar > .cg-sidebar__item:nth-of-type(3)::before,
+  .cg-sidebar > .cg-sidebar__item:nth-of-type(6)::before { display: block; }
+}
+
+.cg-sidebar__item {
+  position: relative;
+  min-height: 44px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-body-sm);
+  font-weight: 650;
+}
+.cg-sidebar__item i { width: 18px; text-align: center; font-size: 1.05rem; }
+.cg-sidebar__item:hover { background: var(--color-surface-alt); color: var(--color-text); }
+.cg-sidebar__item.is-active {
+  background: var(--color-primary-soft);
+  color: var(--color-primary-dark);
+  box-shadow: inset 3px 0 0 var(--color-primary);
+}
+
+.cg-main { max-width: 1320px; padding: 18px; }
+@media (min-width: 992px) { .cg-main { padding: 24px 42px 48px; } }
+
+.cg-topbar {
+  min-height: 58px;
+  border-bottom: 1px solid var(--color-border);
+  margin: 0 -18px 28px;
+  padding: 0 18px;
+}
+@media (min-width: 992px) {
+  .cg-topbar { margin: -24px -42px 34px; padding: 0 42px; }
+  .cg-topbar::before { content: 'Painel financeiro'; font-size: var(--font-size-title-sm); font-weight: 750; }
+  .cg-topbar > :first-child { display: none !important; }
+}
+.cg-topbar .cg-touch { border-radius: 50%; }
+.cg-topbar .cg-touch:hover { background: var(--color-surface-alt) !important; }
+
+.cg-section-title {
+  font-size: var(--font-size-title-sm);
+  font-weight: 750;
+  letter-spacing: 0;
+  margin-bottom: 14px;
+}
+.cg-section-title > i { display: none; }
+
+.cg-hero-balance {
+  background: var(--color-primary);
+  border-radius: var(--radius-lg);
+  box-shadow: none;
+  padding: 28px 30px 24px;
+  position: relative;
+  overflow: hidden;
+}
+.cg-hero-balance::after {
+  content: '';
+  position: absolute;
+  width: 260px;
+  height: 260px;
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 50%;
+  right: -100px;
+  top: -150px;
+}
+.cg-hero-balance__label { font-size: .69rem; letter-spacing: .1em; }
+.cg-hero-balance__value { font-size: clamp(2rem, 4vw, 3rem); margin: 6px 0 22px; }
+.cg-hero-balance__row { position: relative; z-index: 1; gap: 12px; }
+.cg-hero-stat {
+  border-left: 1px solid rgba(255,255,255,.25);
+  padding-left: 14px;
+  gap: 0;
+}
+.cg-hero-stat i { display: none; }
+.cg-hero-stat__label { font-size: .67rem; letter-spacing: .07em; }
+.cg-hero-stat__value { font-size: 1rem; }
+
+.cg-quick-actions { gap: 10px; }
+.cg-btn {
+  min-height: 42px;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-body-sm);
+  padding-inline: 16px;
+  box-shadow: none;
+}
+.cg-quick-actions .btn-danger { background: var(--color-ink); border-color: var(--color-ink); color: var(--color-on-ink); }
+.cg-quick-actions .btn-outline-danger { color: var(--color-text); border-color: var(--color-border); }
+.cg-quick-actions .btn-outline-success { color: var(--color-primary-dark); border-color: var(--color-primary); }
+.cg-quick-actions .btn-outline-secondary { color: var(--color-text); border-color: var(--color-border); }
+
+.cg-card {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: none;
+  background: var(--color-surface);
+  padding: 20px;
+}
+.cg-grid-dashboard { gap: 16px; }
+.cg-due-row,
+.cg-due-row--overdue,
+.cg-due-row--soon {
+  border: 0;
+  border-radius: 0;
+  border-bottom: 1px solid var(--color-border);
+  padding: 11px 0;
+}
+.cg-due-row:last-child { border-bottom: 0; }
+.cg-due-row__icon { width: 34px; height: 34px; border-radius: var(--radius-sm); }
+.cg-due-row__meta { font-size: var(--font-size-caption); }
+
+.form-select, .form-control {
+  min-height: 42px;
+  border-color: var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  background-color: var(--color-surface);
+  font-size: var(--font-size-body-sm);
+}
+.form-select:focus, .form-control:focus { border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(18,107,92,.12); }
+
+.cg-card--stat, .cg-room-tile, .cg-resource-item, .cg-grid-view__card, .cg-item-row {
+  border-radius: var(--radius-md);
+  box-shadow: none;
+}
+.cg-room-tile { min-height: 100px; }
+.cg-resource-item { border-color: var(--color-border); }
+.cg-table th { background: transparent; font-size: .67rem; letter-spacing: .08em; }
+.cg-table td { border-color: var(--color-border); vertical-align: middle; }
+
+.cg-modal { border-radius: 12px 12px 0 0; box-shadow: var(--shadow-lg); }
+@media (min-width: 768px) { .cg-modal { border-radius: var(--radius-lg); } }
+.cg-demo-banner { border-radius: var(--radius-sm); border-color: color-mix(in srgb, var(--color-primary) 25%, var(--color-border)); background: var(--color-primary-soft); }
+
+@media (max-width: 767px) {
+  .cg-main { padding: 14px; }
+  .cg-topbar { margin: 0 -14px 22px; padding: 0 14px; min-height: 56px; }
+  .cg-hero-balance { padding: 22px 20px; }
+  .cg-hero-stat { flex-basis: 100px; padding-left: 10px; }
+  .cg-card { padding: 16px; }
+  .cg-section-title { font-size: 1.1rem; }
+}
