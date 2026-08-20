@@ -153,6 +153,21 @@
   white-space: nowrap;
   line-height: 1.2;
 }
+/* Contador de parcela ("5/10") ao lado do título — bem menor/discreto que um
+   .cg-badge normal de propósito: é um detalhe de apoio, não deve competir
+   visualmente com o título ou o valor. */
+.cg-parcela-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 7px;
+  border-radius: var(--radius-pill);
+  font-size: 0.68rem;
+  font-weight: 600;
+  line-height: 1.4;
+  background: var(--color-surface-alt);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
 .cg-badge--success { background: #DCFCE7; color: #14532D; }
 .cg-badge--danger  { background: #FEE2E2; color: #7F1D1D; }
 .cg-badge--warning { background: #FEF3C7; color: #78350F; }

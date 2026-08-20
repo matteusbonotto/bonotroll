@@ -131,6 +131,24 @@ function seedDatabase() {
     { id: uid('res'), room_id: 'room-quarto', category_id: 'rc-quarto-guardaroupa', nome: 'Cobertor extra', quantidade: 1, data_validade: null, foto_url: null },
   ].map((i) => ({ ...i, owner_id: matheusId, group_id: groupId, criado_em: new Date().toISOString() }));
 
+  // Caixinhas (dinheiro guardado em bancos) — valor guardado/retirado/saldo
+  // NUNCA vêm daqui, são somados de caixinha_movimentacoes no cliente (ver
+  // js/services/caixinhas.js), então a seed só precisa da config de cada
+  // banco + o histórico de aportes/retiradas.
+  const caixinhas = [
+    { id: 'caixa-nubank', owner_id: matheusId, group_id: groupId, banco_nome: 'Nubank', moeda: 'BRL', meta: 5000, icone: 'bi-piggy-bank' },
+    { id: 'caixa-inter', owner_id: matheusId, group_id: groupId, banco_nome: 'Inter', moeda: 'BRL', meta: 2000, icone: 'bi-piggy-bank' },
+    { id: 'caixa-beatriz-c6', owner_id: beatrizId, group_id: groupId, banco_nome: 'C6 Bank', moeda: 'BRL', meta: null, icone: 'bi-piggy-bank' },
+  ].map((c) => ({ ...c, criado_em: new Date().toISOString() }));
+
+  const caixinhaMovimentacoes = [
+    { id: uid('caixamov'), caixinha_id: 'caixa-nubank', tipo: 'guardado', valor: 1500, data: isoDaysFromNow(-40), observacoes: null },
+    { id: uid('caixamov'), caixinha_id: 'caixa-nubank', tipo: 'guardado', valor: 500, data: isoDaysFromNow(-10), observacoes: 'Sobra do mês' },
+    { id: uid('caixamov'), caixinha_id: 'caixa-nubank', tipo: 'retirado', valor: 200, data: isoDaysFromNow(-3), observacoes: null },
+    { id: uid('caixamov'), caixinha_id: 'caixa-inter', tipo: 'guardado', valor: 800, data: isoDaysFromNow(-20), observacoes: null },
+    { id: uid('caixamov'), caixinha_id: 'caixa-beatriz-c6', tipo: 'guardado', valor: 1200, data: isoDaysFromNow(-15), observacoes: null },
+  ].map((m) => ({ ...m, criado_em: new Date().toISOString() }));
+
   return {
     profiles: [
       { id: matheusId, nome: 'Matheus', avatar_url: null, cor: '#1F7A5C', criado_em: new Date().toISOString() },
@@ -150,6 +168,8 @@ function seedDatabase() {
     resource_rooms: rooms,
     resource_categories: roomCategories,
     resource_items: resourceItems,
+    caixinhas,
+    caixinha_movimentacoes: caixinhaMovimentacoes,
     notifications: [],
     push_subscriptions: [],
     category_budgets: [

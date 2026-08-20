@@ -20,6 +20,11 @@ const emptyForm = () => ({
   data_pagamento: '',
   comprovante_url: '',
   recorrente: false,
+  recorrencia_tipo: 'mensal',
+  recorrencia_intervalo_dias: '',
+  recorrencia_serie_id: '',
+  parcela_atual: '',
+  parcela_total: '',
   observacoes: '',
   codigo_barras: '',
   qrcode_dados: '',
@@ -48,6 +53,9 @@ export function txModalStore() {
     // nesta sessão do formulário (ainda não persistido em `companies`).
     empresaLogoUrl: null,
     uploadingEmpresaLogo: false,
+    // false = botão de upload; true = campo de texto pra colar uma URL de
+    // imagem já existente (mesmo par upload/URL do modal de categorias).
+    empresaLogoModoUrl: false,
 
     // Pra detectar a TRANSIÇÃO de "não paga" -> "paga" no save() (dispara
     // notifyPayment só nesse momento, não em toda edição de uma despesa já paga).
@@ -67,6 +75,7 @@ export function txModalStore() {
       this.comprovantePreviewUrl = null;
       this.pagadores = [];
       this.empresaLogoUrl = null;
+      this.empresaLogoModoUrl = false;
       this.pagoAoAbrir = false;
       this.categoriaEscolhidaManualmente = false;
       this.open = true;
@@ -103,6 +112,11 @@ export function txModalStore() {
         data_pagamento: tx.data_pagamento || '',
         comprovante_url: tx.comprovante_url || '',
         recorrente: !!tx.recorrente,
+        recorrencia_tipo: tx.recorrencia_tipo || 'mensal',
+        recorrencia_intervalo_dias: tx.recorrencia_intervalo_dias || '',
+        recorrencia_serie_id: tx.recorrencia_serie_id || '',
+        parcela_atual: tx.parcela_atual || '',
+        parcela_total: tx.parcela_total || '',
         observacoes: tx.observacoes || '',
         codigo_barras: tx.codigo_barras || '',
         qrcode_dados: tx.qrcode_dados || '',
@@ -111,6 +125,7 @@ export function txModalStore() {
       this.comprovantePreviewUrl = null;
       this.pagadores = [];
       this.empresaLogoUrl = null;
+      this.empresaLogoModoUrl = false;
       this.pagoAoAbrir = !!tx.data_pagamento;
       // Editando um lançamento existente a categoria já foi escolhida antes
       // (por sugestão ou à mão) — não deixa o próximo @input no título
@@ -202,6 +217,13 @@ export function txModalStore() {
 
     get empresaLogoPreview() {
       return this.empresaLogoUrl || this.empresaExistente?.logo_url || null;
+    },
+
+    // Colar uma URL de imagem já existente em vez de fazer upload — a URL é
+    // sempre a que o próprio usuário digitou/colou, nunca uma que eu tenha
+    // adivinhado ou buscado sozinho.
+    onEmpresaLogoUrlInput(url) {
+      this.empresaLogoUrl = url.trim() || null;
     },
 
     async onEmpresaLogoChange(event) {
@@ -354,6 +376,12 @@ export function txModalStore() {
       }
       this.saving = true;
       try {
+        // Uma série só existe enquanto "recorrente" está marcado. Novo id
+        // gerado aqui (não no banco) na primeira vez que a pessoa liga a
+        // recorrência — dali em diante gerarRecorrentesPendentes (recurring.js)
+        // reconhece as ocorrências dessa série por esse id em vez de tentar
+        // adivinhar pelo título (o que colidia entre despesas homônimas).
+        const serieId = this.form.recorrente ? this.form.recorrencia_serie_id || crypto.randomUUID() : null;
         const payload = {
           tipo: this.form.tipo,
           titulo: this.form.titulo.trim(),
@@ -367,6 +395,12 @@ export function txModalStore() {
           data_pagamento: this.form.data_pagamento || null,
           comprovante_url: this.form.comprovante_url || null,
           recorrente: this.form.recorrente,
+          recorrencia_tipo: this.form.recorrente ? this.form.recorrencia_tipo : null,
+          recorrencia_intervalo_dias:
+            this.form.recorrente && this.form.recorrencia_tipo === 'personalizado' ? Number(this.form.recorrencia_intervalo_dias) || null : null,
+          recorrencia_serie_id: serieId,
+          parcela_atual: this.form.parcela_atual ? Number(this.form.parcela_atual) : null,
+          parcela_total: this.form.parcela_total ? Number(this.form.parcela_total) : null,
           observacoes: this.form.observacoes.trim() || null,
           codigo_barras: this.form.codigo_barras || null,
           qrcode_dados: this.form.qrcode_dados || null,

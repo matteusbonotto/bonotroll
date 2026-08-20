@@ -120,6 +120,26 @@ create table if not exists transactions (
 alter table transactions add column if not exists codigo_barras text;
 alter table transactions add column if not exists qrcode_dados text;
 
+-- Recorrência com cadência configurável + parcelas (2026-08-19). Antes
+-- "recorrente" era só um booleano (sempre mensal, sem contagem de parcela).
+-- recorrencia_tipo controla de quanto em quanto tempo gerarRecorrentesPendentes
+-- (js/services/recurring.js) avança pra próxima ocorrência; 'personalizado'
+-- usa recorrencia_intervalo_dias em vez de uma cadência fixa. parcela_atual/
+-- parcela_total são independentes da cadência — cobrem tanto uma recorrência
+-- com número de vezes limitado (ex.: financiamento 5/48) quanto uma despesa
+-- lançada manualmente já no meio de uma série (ex.: importação de CSV
+-- começando na parcela 5 de 10, sem que as 4 anteriores existam no app).
+-- recorrencia_serie_id agrupa as ocorrências de uma mesma série de forma
+-- confiável — antes gerarRecorrentesPendentes reconhecia a série só por
+-- "título + categoria + tipo", o que colidia se a pessoa tivesse duas
+-- despesas recorrentes homônimas.
+alter table transactions add column if not exists recorrencia_tipo text
+  check (recorrencia_tipo in ('semanal', 'mensal', 'anual', 'personalizado'));
+alter table transactions add column if not exists recorrencia_intervalo_dias int;
+alter table transactions add column if not exists parcela_atual int check (parcela_atual is null or parcela_atual > 0);
+alter table transactions add column if not exists parcela_total int check (parcela_total is null or parcela_total >= parcela_atual);
+alter table transactions add column if not exists recorrencia_serie_id uuid;
+
 -- Divisão de despesa entre múltiplos pagadores. Uma transação SEM nenhuma
 -- linha aqui continua sendo 100% do responsavel_id dela (retrocompatível —
 -- despesas antigas não precisam de migração). Linhas aqui só existem quando
@@ -169,6 +189,13 @@ create table if not exists resource_items (
   foto_url text,
   criado_em timestamptz not null default now()
 );
+
+-- Ícone (Bootstrap Icons) pra ilustrar o item quando não há foto real —
+-- usado pela importação de CSV de Recursos (não hotlinka foto nenhuma de
+-- fora, ver importacao/recursos-essenciais.csv), mas também disponível pra
+-- edição manual. Item sem icone E sem foto_url continua caindo no ícone
+-- genérico de "adicionar foto" (comportamento de antes, sem mudança).
+alter table resource_items add column if not exists icone text;
 
 -- =========================================================
 -- LIMPEZA DE CÔMODOS/SUBCATEGORIAS DUPLICADOS + ÍNDICES ÚNICOS
@@ -256,6 +283,37 @@ where c.id = rk.id and rk.rn > 1;
 
 create unique index if not exists resource_categories_room_nome_uniq
   on resource_categories (room_id, nome);
+
+-- =========================================================
+-- CAIXINHAS: dinheiro guardado em bancos/corretoras (2026-08-19)
+-- Mesma apresentação de Recursos (grade de "cômodos", aqui cada tile é um
+-- banco), mas os valores guardado/retirado NUNCA são colunas próprias —
+-- são sempre derivados da soma de caixinha_movimentacoes (mesmo princípio
+-- de "status não é coluna" já usado em transactions/resource_items, ver
+-- js/utils/status.js): a caixinha guarda só a config (banco, moeda, meta),
+-- o histórico de aportes/retiradas é a fonte de verdade de quanto tem nela.
+-- =========================================================
+
+create table if not exists caixinhas (
+  id uuid primary key default uuid_generate_v4(),
+  owner_id uuid not null references profiles(id) on delete cascade,
+  group_id uuid references groups(id) on delete set null,
+  banco_nome text not null,
+  moeda text not null default 'BRL',
+  meta numeric(12, 2) check (meta is null or meta > 0),
+  icone text not null default 'bi-piggy-bank',
+  criado_em timestamptz not null default now()
+);
+
+create table if not exists caixinha_movimentacoes (
+  id uuid primary key default uuid_generate_v4(),
+  caixinha_id uuid not null references caixinhas(id) on delete cascade,
+  tipo text not null check (tipo in ('guardado', 'retirado')),
+  valor numeric(12, 2) not null check (valor > 0),
+  data date not null default current_date,
+  observacoes text,
+  criado_em timestamptz not null default now()
+);
 
 create table if not exists shopping_lists (
   id uuid primary key default uuid_generate_v4(),
@@ -576,6 +634,22 @@ create policy "Ver e editar itens próprios ou do grupo" on resource_items for a
   using (owner_id = auth.uid() or public.is_group_member(group_id))
   with check (owner_id = auth.uid() or public.is_group_member(group_id));
 
+alter table caixinhas enable row level security;
+drop policy if exists "Ver e editar caixinhas próprias ou do grupo" on caixinhas;
+create policy "Ver e editar caixinhas próprias ou do grupo" on caixinhas for all
+  using (owner_id = auth.uid() or public.is_group_member(group_id))
+  with check (owner_id = auth.uid() or public.is_group_member(group_id));
+
+alter table caixinha_movimentacoes enable row level security;
+drop policy if exists "Ver e editar movimentações de caixinhas visíveis" on caixinha_movimentacoes;
+create policy "Ver e editar movimentações de caixinhas visíveis" on caixinha_movimentacoes for all
+  using (caixinha_id in (
+    select id from caixinhas where owner_id = auth.uid() or public.is_group_member(group_id)
+  ))
+  with check (caixinha_id in (
+    select id from caixinhas where owner_id = auth.uid() or public.is_group_member(group_id)
+  ));
+
 alter table notifications enable row level security;
 drop policy if exists "Ver as próprias notificações" on notifications;
 create policy "Ver as próprias notificações" on notifications for select
@@ -795,3 +869,70 @@ where c.id = r.id and r.rn > 1;
 -- o mesmo nome não seriam pegas como duplicata pelo Postgres.
 create unique index if not exists categories_owner_group_nome_uniq
   on categories (owner_id, coalesce(group_id, '00000000-0000-0000-0000-000000000000'::uuid), nome);
+
+-- =========================================================
+-- CATEGORIAS DUPLICADAS POR MAIÚSCULA/ESPAÇO (2026-08-19)
+-- O índice acima compara o texto LITERAL de "nome" — "Casa", "casa" e
+-- "Casa " (espaço sobrando) não colidem entre si pra ele, mesmo o app
+-- (ensureDefaultCategories, guessCategoryByTitle) já tratando os três como
+-- a MESMA categoria ao comparar (case-insensitive + trim). Essa divergência
+-- entre "o que o índice barra" e "o que o app considera duplicata" é a causa
+-- real de categorias duplicadas continuarem aparecendo mesmo com o índice
+-- de cima no ar. Troca pra um índice de expressão sobre lower(btrim(nome)),
+-- que passa a ser a mesma régua usada no app — e limpa antes o que já
+-- duplicou por essa via (mesmo padrão de reapontar/apagar usado acima,
+-- agora particionando pelo nome NORMALIZADO em vez do literal).
+-- =========================================================
+
+with ranked as (
+  select id, owner_id,
+         coalesce(group_id, '00000000-0000-0000-0000-000000000000'::uuid) as gkey,
+         lower(btrim(nome)) as nome_norm,
+         row_number() over (
+           partition by owner_id, coalesce(group_id, '00000000-0000-0000-0000-000000000000'::uuid), lower(btrim(nome))
+           order by criado_em
+         ) as rn
+  from categories
+),
+keeper_map as (
+  select d.id as dup_id, k.id as keeper_id
+  from ranked d
+  join ranked k on k.owner_id = d.owner_id and k.gkey = d.gkey and k.nome_norm = d.nome_norm and k.rn = 1
+  where d.rn > 1
+)
+update transactions t set categoria_id = km.keeper_id
+from keeper_map km where t.categoria_id = km.dup_id;
+
+with ranked as (
+  select id, owner_id,
+         coalesce(group_id, '00000000-0000-0000-0000-000000000000'::uuid) as gkey,
+         lower(btrim(nome)) as nome_norm,
+         row_number() over (
+           partition by owner_id, coalesce(group_id, '00000000-0000-0000-0000-000000000000'::uuid), lower(btrim(nome))
+           order by criado_em
+         ) as rn
+  from categories
+),
+keeper_map as (
+  select d.id as dup_id, k.id as keeper_id
+  from ranked d
+  join ranked k on k.owner_id = d.owner_id and k.gkey = d.gkey and k.nome_norm = d.nome_norm and k.rn = 1
+  where d.rn > 1
+)
+update shopping_list_items i set categoria_id = km.keeper_id
+from keeper_map km where i.categoria_id = km.dup_id;
+
+with ranked as (
+  select id,
+         row_number() over (
+           partition by owner_id, coalesce(group_id, '00000000-0000-0000-0000-000000000000'::uuid), lower(btrim(nome))
+           order by criado_em
+         ) as rn
+  from categories
+)
+delete from categories c using ranked r
+where c.id = r.id and r.rn > 1;
+
+drop index if exists categories_owner_group_nome_uniq;
+create unique index if not exists categories_owner_group_nome_norm_uniq
+  on categories (owner_id, coalesce(group_id, '00000000-0000-0000-0000-000000000000'::uuid), lower(btrim(nome)));

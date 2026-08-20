@@ -1,4 +1,4 @@
-import { listTransactions, computeSummary, groupByCategory, groupByCompany, groupByPeriod, listPayersFor, shareForMember } from '../services/transactions.js';
+import { listTransactions, computeSummary, groupByCategory, groupByCompany, groupByMember, groupByPeriod, listPayersFor, shareForMember } from '../services/transactions.js';
 import { listAllItems as listAllResourceItems } from '../services/resources.js';
 import { computeExpiryStatus, expiryStatusMeta } from '../utils/status.js';
 import { todayIso } from '../utils/format.js';
@@ -212,6 +212,14 @@ export function dashboardView() {
       const store = this.$store.app;
       if (tipo === 'categoria') return groupByCategory(rows, store.categories);
       if (tipo === 'empresa') return groupByCompany(rows);
+      // Por membro sempre olha o grupo inteiro (não a fatia de quemVer) —
+      // é exatamente o gráfico que responde "quem gastou quanto", então
+      // escopar por membro selecionado não faria sentido aqui. Usa o
+      // escopo cru (não linhasQuebra, que já vem achatado pra UM membro).
+      if (tipo === 'membro') {
+        const membros = store.group?.members || [];
+        return groupByMember(this.escopo, membros, this.payersByTx);
+      }
       // fluxo (Entrada x Saída) precisa dos dois lados — linhasQuebra é
       // saída-only (feito pra categoria/empresa/período, que são conceitos
       // só-de-gasto), então usar ela aqui zerava entradas sempre. resumoSelecionado

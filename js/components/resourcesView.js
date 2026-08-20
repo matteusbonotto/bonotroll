@@ -65,21 +65,40 @@ export function resourcesView() {
       } finally {
         this.loading = false;
       }
+
+      // Mudanças vindas de fora desta tela (ex.: importação de CSV, que
+      // cria itens direto pelo service em vez de passar por salvarItem()
+      // aqui) não atualizavam allItems/items sozinhas — a grade de cômodos
+      // ficava com contagem velha até um F5. Chama _recarregarAllItems
+      // (SEM dispatch) direto, não carregarSugestoes — carregarSugestoes
+      // dispatcha esse mesmo evento no final, então chamar ela aqui viraria
+      // um loop infinito (dispatch → listener → carregarSugestoes → dispatch → …).
+      window.addEventListener('cg:recursos-changed', () => {
+        this._recarregarAllItems();
+        if (this.activeRoomId) this.carregarItens();
+      });
     },
 
-    async carregarSugestoes() {
+    async _recarregarAllItems() {
       const store = this.$store.app;
       try {
         this.allItems = await res.listAllItems({ ownerId: store.profile.id, groupId: store.group?.group?.id });
-        // Dashboard tem seu próprio card "Recursos em falta" com os mesmos
-        // dados (ver js/components/dashboard.js) — como as telas ficam
-        // todas montadas ao mesmo tempo (x-show, não x-if), sem esse evento
-        // ele nunca sabia que algo mudou aqui e ficava com a lista velha até
-        // um F5. Mesmo padrão já usado por cg:transactions-changed etc.
-        window.dispatchEvent(new CustomEvent('cg:recursos-changed'));
       } catch (e) {
         store.notify(e.message || 'Não consegui carregar as sugestões.', 'danger');
       }
+    },
+
+    // Usado pelas ações desta PRÓPRIA tela (salvar/excluir item, cômodo,
+    // subcategoria) — recarrega e avisa o resto do app (Dashboard tem seu
+    // próprio card "Recursos em falta" com os mesmos dados, ver
+    // js/components/dashboard.js; as telas ficam todas montadas ao mesmo
+    // tempo, x-show não x-if, então sem esse evento ele nunca saberia que
+    // algo mudou aqui). Mudanças vindas de FORA (ex.: importação de CSV)
+    // caem no listener acima, que chama só _recarregarAllItems (sem
+    // dispatch) pra não duplicar o evento.
+    async carregarSugestoes() {
+      await this._recarregarAllItems();
+      window.dispatchEvent(new CustomEvent('cg:recursos-changed'));
     },
 
     // Entrar num cômodo mostra só os tiles de subcategoria (Todas + as que

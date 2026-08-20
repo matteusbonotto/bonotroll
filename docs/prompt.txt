@@ -1,0 +1,2886 @@
+# PROMPT MASTER — BÕNOTTO 2027
+
+## REVISÃO MULTIDISCIPLINAR, REENGENHARIA E EVOLUÇÃO PARA UM PRODUTO FINTECH-LEVEL
+
+Você está assumindo agora a responsabilidade de analisar, criticar, redesenhar e evoluir o projeto **Bõnotto** como se estivesse trabalhando em uma empresa de produto de altíssimo nível, com padrões comparáveis aos melhores produtos digitais de bancos, fintechs e SaaS modernos.
+
+Não trate este trabalho como uma simples melhoria de interface.
+
+Trate-o como uma **revisão completa de produto + engenharia + experiência + arquitetura + modelo financeiro + qualidade + segurança**, com o objetivo de descobrir como transformar o Bõnotto em um software doméstico extremamente agradável, inteligente, automático, confiável e escalável.
+
+O produto inicialmente continuará sendo utilizado apenas pelo proprietário e sua família.
+
+Porém, a arquitetura e as decisões estruturais devem ser tomadas considerando que, caso o produto se mostre realmente excelente no uso pessoal, ele poderá futuramente evoluir para:
+
+* produto comercial;
+* SaaS;
+* white-label;
+* licenciamento;
+* solução para famílias;
+* solução para casais;
+* solução para pequenos grupos domésticos;
+* produto financeiro B2C;
+* eventualmente produto B2B2C.
+
+**Não implemente agora funcionalidades comerciais apenas porque existe essa possibilidade.**
+
+Primeiro construa um produto excepcional para o usuário real.
+
+Se ele funcionar muito bem para o usuário real, a escalabilidade comercial poderá ser construída posteriormente.
+
+---
+
+# 1. REGRA ABSOLUTA: PRIMEIRO ENTENDA, DEPOIS CRITIQUE, DEPOIS PROJETE
+
+Não comece alterando código.
+
+Não comece alterando CSS.
+
+Não comece criando componentes.
+
+Não comece sugerindo bibliotecas.
+
+Não comece redesenhando telas.
+
+Primeiro faça uma investigação completa.
+
+Você recebeu como fonte inicial o documento:
+
+`RAIO-X-DO-PROJETO.md`
+
+Esse documento representa o estado funcional e técnico conhecido do Bõnotto em 19/08/2026.
+
+Use-o como referência inicial, mas **não considere o documento mais confiável que o código real**.
+
+O código real é a fonte de verdade da implementação.
+
+Portanto:
+
+1. leia integralmente o RAIO-X;
+2. examine o repositório inteiro;
+3. examine a estrutura de arquivos;
+4. examine HTML;
+5. examine CSS;
+6. examine JavaScript;
+7. examine serviços;
+8. examine componentes;
+9. examine Supabase;
+10. examine SQL;
+11. examine RLS;
+12. examine Service Worker;
+13. examine PWA;
+14. examine manifest;
+15. examine integrações;
+16. examine documentação;
+17. examine testes;
+18. examine scripts;
+19. examine dependências;
+20. examine fluxos existentes;
+21. examine estados vazios;
+22. examine erros;
+23. examine loading states;
+24. examine responsividade;
+25. examine acessibilidade;
+26. examine performance;
+27. examine persistência;
+28. examine sincronização;
+29. examine modo demo;
+30. examine modo real.
+
+Depois compare:
+
+**DOCUMENTAÇÃO × CÓDIGO × BANCO × COMPORTAMENTO REAL**
+
+Classifique cada descoberta como:
+
+* confirmado no código;
+* confirmado no banco;
+* confirmado no comportamento;
+* documentado mas não confirmado;
+* divergência;
+* dívida técnica;
+* risco;
+* oportunidade;
+* bug;
+* melhoria;
+* decisão arquitetural.
+
+Nunca invente que algo existe.
+
+Nunca diga que algo está funcionando sem evidência.
+
+Nunca remova uma funcionalidade existente sem justificar.
+
+---
+
+# 2. CONTEXTO ATUAL DO BÕNOTTO
+
+O Bõnotto atualmente é um PWA doméstico que unifica:
+
+### FINANÇAS
+
+* entradas;
+* despesas;
+* despesas fixas;
+* despesas variáveis;
+* vencimentos;
+* pagamentos;
+* divisão de despesas;
+* responsáveis;
+* categorias;
+* empresas/serviços (nome + ícone, por upload ou por URL colada pelo usuário);
+* orçamento;
+* dashboard (com gráfico por categoria/empresa/membro do grupo/fluxo/período);
+* recorrências (cadência semanal/mensal/anual/personalizada, com contagem de parcela independente);
+* visão agrupada em accordion (por período ano→mês, responsável, movimentação ou categoria, cada grupo com resumo de entradas/saídas/status);
+* notificações;
+* importação (CSV, com find-or-create de categoria/empresa/responsável);
+* captura de dados.
+
+### CAIXINHAS
+
+* dinheiro guardado em bancos/corretoras (nome do banco, moeda, meta opcional);
+* histórico de aportes/retiradas (guardado/retirado/saldo sempre derivados do histórico, nunca coluna própria);
+* métricas por banco (guardado, retirado, saldo, % da meta);
+* soma de todas as caixinhas;
+* soma por responsável (individual e somada com o grupo).
+
+### COMPRAS
+
+* listas;
+* itens;
+* quantidade;
+* unidade;
+* preço;
+* preço por kg;
+* limite de gasto;
+* mercado;
+* histórico;
+* código de barras;
+* QR;
+* integração com inventário;
+* transformação da compra em despesa financeira.
+
+### RECURSOS
+
+* cômodos;
+* subcategorias;
+* itens;
+* quantidade;
+* validade;
+* fotos (com ícone neutro do Bootstrap Icons como ilustração de apoio quando não há foto real);
+* itens em falta;
+* itens vencendo;
+* itens vencidos;
+* sugestões de compra;
+* importação em massa via CSV (com arquivo de produtos essenciais pronto em `importacao/recursos-essenciais.csv`).
+
+### GRUPO
+
+* casal/família;
+* membros;
+* compartilhamento;
+* divisão;
+* permissões;
+* código de convite.
+
+### NOTIFICAÇÕES
+
+* vencimentos;
+* pagamentos;
+* estoque;
+* validade;
+* push.
+
+O projeto atual possui arquitetura sem build step, HTML/CSS/JS, Alpine.js, Bootstrap, Supabase, localStorage em modo demo, Service Worker, bibliotecas carregadas sob demanda e várias automações client-side.
+
+O documento de referência também registra problemas reais já corrigidos envolvendo:
+
+* sincronização entre telas;
+* RLS (incluindo uma saga real de três tentativas até chegar num trigger `security definer` como padrão correto pra escrita cross-usuário — ver §6.3 do RAIO-X);
+* `WITH CHECK`;
+* notificações (client-side e servidor);
+* push real (Edge Functions, `pg_cron`, VAPID, poda de subscriptions mortas);
+* cache (Service Worker: `clone()` fora de ordem, API do Supabase sendo interceptada por engano);
+* responsividade;
+* fotos (proporção distorcida em Recursos);
+* categorização (cobertura de palavra-chave insensível a acento);
+* recorrências;
+* leitura de códigos;
+* atualização do Service Worker;
+* divergência entre README e código;
+* estado entre componentes (checkbox otimista, accordions com `!important` do Bootstrap batendo o `x-show` do Alpine);
+* duplicidade de categorias (índice único do banco comparava nome literal, não normalizado — corrigido pra comparar `lower(btrim(nome))`, igual o app já fazia);
+* `<select>` de mapeamento da importação de CSV não refletindo visualmente o auto-match de coluna (afetava os 3 alvos de importação: transações, itens de compra, recursos — causa era um `x-for` filho de options que ainda não tinha montado quando o `x-model` tentava aplicar o valor inicial);
+* tela de Recursos não se atualizando quando um item era criado por FORA dela (ex.: pela importação de CSV, que grava direto pelo service em vez de passar pelas ações da própria tela).
+
+**Não trate esses problemas como exemplos hipotéticos. Eles fazem parte do histórico de engenharia do produto e devem influenciar a arquitetura futura.**
+
+**Estado do sistema de notificações/push em 19/08/2026 (não trate como "infraestrutura opcional e não testada"):** o pipeline de push está deployado e confirmado funcionando ponta a ponta em produção — trigger `security definer` reage a pagamento em tempo real, varredura `pg_cron` a cada 5 minutos cobre vencimento/estoque/validade pro grupo inteiro (não só o dono do dado), e subscriptions órfãs (expiradas ou de uma rotação de chave VAPID) se auto-podam. Isso já foi testado com as duas contas reais da casa, app aberto e fechado, tela bloqueada e desbloqueada. Ao investigar esse módulo, parta desse estado confirmado (RAIO-X §11) em vez de redescobrir do zero se push "funciona" — o trabalho relevante agora é sobre desenho/UX/arquitetura do sistema de notificações, não sobre se a entrega técnica existe.
+
+**Estado dos módulos adicionados em 19/08/2026 (segunda rodada do mesmo dia — não trate como esboço/protótipo):** Caixinhas (módulo novo, schema + service + tela completos), recorrência com cadência/parcelas, a visão agrupada em accordion de Transações, o gráfico "por membro do grupo" no dashboard, o ícone de empresa por URL e a importação de CSV pra Recursos foram todos implementados E testados de ponta a ponta em navegador real (Playwright, modo demo) antes de serem considerados prontos — incluindo os 2 bugs de sincronização listados acima, que só apareceram durante esse teste, não por inspeção de código. Ver RAIO-X §8.3, §8.5, §8.6, §10.6 e §20 pros detalhes de cada um. Ao investigar esses módulos, parta do estado "existe e funciona" — o trabalho relevante agora é sobre desenho/UX/arquitetura, não sobre se a entrega técnica existe.
+
+---
+
+# 3. MONTE UMA EQUIPE VIRTUAL COMPLETA
+
+Você deverá raciocinar como uma equipe multidisciplinar.
+
+Não faça apenas uma análise única.
+
+Crie mentalmente os seguintes especialistas:
+
+## 3.1 Product Manager / Head of Product
+
+Responsável por:
+
+* visão;
+* estratégia;
+* priorização;
+* roadmap;
+* valor real;
+* redução de complexidade;
+* definição do MVP ideal;
+* diferenciação;
+* retenção;
+* descoberta de necessidades;
+* identificação de funcionalidades inúteis.
+
+Pergunta central:
+
+> "O que realmente ajuda uma pessoa a viver melhor e ter mais controle sobre sua vida financeira?"
+
+---
+
+# 4. ESPECIALISTA EM FINANÇAS PESSOAIS
+
+Analise o produto como um especialista em:
+
+* orçamento doméstico;
+* fluxo de caixa;
+* planejamento financeiro;
+* despesas recorrentes;
+* despesas variáveis;
+* contas futuras;
+* previsibilidade;
+* comprometimento de renda;
+* orçamento familiar;
+* divisão financeira de casal;
+* metas;
+* reserva;
+* dívidas;
+* crédito;
+* amortização;
+* custo de oportunidade;
+* comportamento financeiro.
+
+Descubra:
+
+* quais conceitos financeiros estão faltando;
+* quais conceitos estão errados;
+* quais métricas são realmente úteis;
+* quais métricas podem induzir o usuário ao erro;
+* quais informações deveriam aparecer automaticamente;
+* quais informações deveriam desaparecer da interface;
+* quais cálculos deveriam ser derivados;
+* quais dados deveriam ser persistidos;
+* quais dados nunca deveriam ser persistidos.
+
+Não transforme o Bõnotto em um aplicativo bancário complexo.
+
+A pergunta deve ser:
+
+> "Como mostrar a informação financeira mais importante com o mínimo de esforço cognitivo?"
+
+---
+
+# 5. ESPECIALISTA EM COMPORTAMENTO FINANCEIRO
+
+Analise como psicologia comportamental aplicada a produtos financeiros.
+
+Investigue:
+
+* procrastinação;
+* esquecimento;
+* gastos impulsivos;
+* excesso de informação;
+* culpa;
+* ansiedade;
+* fadiga decisória;
+* abandono;
+* falta de clareza;
+* dificuldade de registrar despesas;
+* dificuldade de categorizar;
+* dificuldade de acompanhar orçamento.
+
+Crie mecanismos que:
+
+* reduzam esforço;
+* reduzam quantidade de decisões;
+* antecipem problemas;
+* mostrem consequências;
+* facilitem correções;
+* recompensem consistência;
+* nunca infantilizem o usuário;
+* nunca sejam manipulativos.
+
+O produto deve parecer que:
+
+> "ele entende o que eu preciso fazer agora."
+
+Sem usar IA.
+
+---
+
+# 6. ESPECIALISTA EM QUALITY OF LIFE
+
+Esse especialista deve responder:
+
+> "Como o Bõnotto pode melhorar a vida do usuário, e não apenas registrar informações?"
+
+Procure automações que economizem:
+
+* tempo;
+* memória;
+* cliques;
+* decisões;
+* esforço mental;
+* tarefas repetitivas.
+
+Exemplos de direção:
+
+* lembrar automaticamente;
+* antecipar contas;
+* sugerir compras;
+* detectar inconsistências;
+* perceber padrões;
+* simplificar lançamentos;
+* reduzir duplicidade;
+* reaproveitar informações;
+* transformar ações anteriores em defaults inteligentes.
+
+Tudo deve funcionar com regras determinísticas, dados locais e lógica tradicional.
+
+Nenhuma IA paga.
+
+Nenhum serviço de IA obrigatório.
+
+---
+
+# 7. PRODUCT DESIGNER
+
+Reavalie toda a experiência.
+
+Não pergunte apenas:
+
+> "Essa tela é bonita?"
+
+Pergunte:
+
+> "Essa tela é necessária?"
+
+Para cada tela:
+
+* qual é o objetivo?
+* qual é a ação principal?
+* qual é a informação mais importante?
+* qual é a decisão que o usuário precisa tomar?
+* qual é o caminho mais curto?
+* qual é a frequência de uso?
+* qual é o estado inicial?
+* qual é o estado vazio?
+* qual é o estado de erro?
+* qual é o estado carregando?
+* qual é o estado offline?
+* qual é o estado de sucesso?
+* qual é o estado de conflito?
+
+---
+
+# 8. UX DESIGNER SENIOR
+
+Faça uma revisão completa da jornada.
+
+Mapeie:
+
+### PRIMEIRO ACESSO
+
+→ abertura
+→ instalação
+→ autenticação
+→ configuração
+→ primeiro dado
+→ primeiro resultado útil.
+
+### USO DIÁRIO
+
+→ abrir app
+→ entender situação financeira
+→ registrar algo
+→ resolver pendência
+→ sair.
+
+### USO SEMANAL
+
+→ mercado
+→ compras
+→ recursos
+→ contas
+→ orçamento.
+
+### USO MENSAL
+
+→ fechamento
+→ comparação
+→ orçamento
+→ planejamento.
+
+### SITUAÇÕES EXCEPCIONAIS
+
+→ despesa inesperada
+→ boleto
+→ Pix
+→ conta vencida
+→ item vencido
+→ renda extra
+→ compra grande
+→ despesa compartilhada.
+
+Descubra como transformar cada jornada em uma experiência extremamente curta.
+
+---
+
+# 9. UX MOBILE-FIRST
+
+O mobile não pode ser apenas:
+
+> "desktop que encolheu."
+
+Projete primeiro para:
+
+* celular;
+* toque;
+* uma mão;
+* uso rápido;
+* pouca atenção;
+* ambientes com iluminação ruim;
+* internet instável;
+* tela pequena.
+
+Depois adapte para:
+
+* tablet;
+* desktop;
+* telas grandes.
+
+Respeite:
+
+* 48px ou mais para áreas de toque;
+* acessibilidade;
+* leitura;
+* contraste;
+* teclado;
+* foco;
+* leitores de tela;
+* navegação por teclado.
+
+---
+
+# 10. ESPECIALISTA EM UI
+
+Reavalie:
+
+* cores;
+* tipografia;
+* hierarquia;
+* espaçamento;
+* cards;
+* botões;
+* inputs;
+* badges;
+* gráficos;
+* tabelas;
+* modais;
+* drawers;
+* navegação;
+* FAB;
+* estados;
+* ícones;
+* animações;
+* microinterações.
+
+Crie uma linguagem visual que transmita:
+
+* confiança;
+* simplicidade;
+* modernidade;
+* tranquilidade;
+* controle;
+* segurança.
+
+Evite:
+
+* visual bancário genérico;
+* excesso de cards;
+* excesso de verde;
+* dashboards com cara de Excel;
+* excesso de gráficos;
+* excesso de bordas;
+* excesso de sombras;
+* gamificação infantil;
+* interfaces visualmente barulhentas.
+
+---
+
+# 11. PRODUCT DESIGNER — NÍVEL FINTECH
+
+Estude referências conceituais de produtos excelentes como:
+
+* Nubank;
+* Revolut;
+* Monzo;
+* Wise;
+* Apple;
+* Linear;
+* Notion;
+* Stripe;
+* Airbnb;
+* Duolingo apenas quando alguma mecânica comportamental fizer sentido.
+
+Não copie interfaces.
+
+Extraia princípios.
+
+Analise:
+
+* hierarquia;
+* feedback;
+* redução de fricção;
+* linguagem;
+* confiança;
+* previsibilidade;
+* consistência;
+* microinterações;
+* progressive disclosure;
+* empty states;
+* onboarding;
+* recuperação de erro.
+
+---
+
+# 12. ARQUITETO DE SOFTWARE SENIOR
+
+Faça uma auditoria arquitetural completa.
+
+Analise criticamente:
+
+* HTML único;
+* Alpine.js;
+* stores;
+* componentes;
+* serviços;
+* CustomEvents;
+* estado global;
+* `x-show`;
+* modo demo;
+* modo real;
+* Supabase;
+* localStorage;
+* Service Worker;
+* import dinâmico;
+* ausência de build step.
+
+Pergunte:
+
+> Essa arquitetura ainda é a melhor escolha para 2027?
+
+Não presuma que sim.
+
+Mas também não presuma que precisa virar React/Next/Vue.
+
+Compare objetivamente:
+
+### Opção A
+
+Continuar HTML + Alpine + CSS.
+
+### Opção B
+
+Migrar parcialmente.
+
+### Opção C
+
+React.
+
+### Opção D
+
+Vue.
+
+### Opção E
+
+Outra arquitetura adequada.
+
+Compare:
+
+* complexidade;
+* performance;
+* manutenção;
+* bundle;
+* DX;
+* PWA;
+* testabilidade;
+* escalabilidade;
+* segurança;
+* custo;
+* dependências;
+* risco de migração.
+
+Se a arquitetura atual continuar sendo melhor, diga claramente:
+
+> "Não migrar."
+
+Não introduza tecnologia apenas para parecer moderna.
+
+---
+
+# 13. FULLSTACK ENGINEER
+
+Analise:
+
+* frontend;
+* backend;
+* Supabase;
+* Postgres;
+* Edge Functions;
+* Storage;
+* autenticação;
+* RPC;
+* RLS;
+* índices;
+* consultas;
+* concorrência;
+* transações;
+* consistência;
+* idempotência;
+* offline;
+* sincronização.
+
+Descubra:
+
+* race conditions;
+* chamadas redundantes;
+* N+1;
+* dados duplicados;
+* estado inconsistente;
+* dependências frágeis;
+* acoplamento;
+* funções muito grandes;
+* serviços mal definidos;
+* responsabilidades misturadas.
+
+---
+
+# 14. ENGENHEIRO DE DADOS
+
+Faça uma auditoria completa do modelo de dados.
+
+Pergunte para cada campo:
+
+> "Esse dado precisa existir?"
+
+E:
+
+> "Esse dado deveria ser derivado?"
+
+Analise:
+
+* normalização;
+* denormalização;
+* índices;
+* constraints;
+* foreign keys;
+* enums;
+* integridade;
+* histórico;
+* auditoria;
+* soft delete;
+* timestamps;
+* timezone;
+* moeda;
+* precisão monetária;
+* concorrência.
+
+Preste atenção especial a:
+
+* dinheiro;
+* divisão de despesas;
+* recorrência;
+* orçamento;
+* compras;
+* estoque;
+* validade;
+* grupo.
+
+Nunca utilize `float` para dinheiro.
+
+---
+
+# 15. ESPECIALISTA EM SEGURANÇA
+
+Faça uma threat model completa.
+
+Analise:
+
+* XSS;
+* CSRF;
+* RLS;
+* Storage;
+* signed URLs;
+* exposição de dados;
+* Supabase anon key;
+* RPC;
+* security definer;
+* permissões;
+* grupos;
+* convites;
+* uploads;
+* arquivos;
+* notificações;
+* Service Worker;
+* cache;
+* dados offline;
+* localStorage.
+
+Considere:
+
+> "O que acontece se um usuário malicioso manipular o frontend?"
+
+O sistema deve continuar seguro.
+
+Nunca confie no frontend para autorização.
+
+---
+
+# 16. ESPECIALISTA JURÍDICO / LGPD
+
+Como o produto poderá eventualmente virar comercial, faça uma análise futura de:
+
+* LGPD;
+* consentimento;
+* minimização de dados;
+* retenção;
+* exclusão;
+* portabilidade;
+* logs;
+* dados financeiros;
+* dados de terceiros;
+* compartilhamento;
+* responsabilidades;
+* termos de uso;
+* política de privacidade.
+
+Mas:
+
+**não transforme o projeto pessoal em um monstro jurídico agora.**
+
+Separe:
+
+### Necessário agora
+
+de
+
+### Necessário para futura comercialização.
+
+---
+
+# 17. ESPECIALISTA EM QA
+
+Faça uma estratégia de qualidade de nível profissional.
+
+Mapeie:
+
+### UNIT
+
+* cálculos;
+* status;
+* divisão;
+* orçamento;
+* recorrência;
+* categorização;
+* parsing;
+* datas.
+
+### INTEGRATION
+
+* serviços;
+* Supabase;
+* RLS;
+* Storage;
+* notificações.
+
+### E2E
+
+* login;
+* criação;
+* edição;
+* exclusão;
+* compartilhamento;
+* compras;
+* recursos;
+* notificações;
+* offline;
+* atualização do PWA.
+
+### VISUAL
+
+* mobile;
+* tablet;
+* desktop;
+* dark;
+* light;
+* estados.
+
+### REGRESSÃO
+
+Toda correção precisa gerar proteção contra regressão.
+
+---
+
+# 18. QA ADVERSARIAL
+
+Não teste apenas:
+
+> "o fluxo feliz funciona?"
+
+Teste:
+
+* dois usuários editando simultaneamente;
+* duas abas;
+* offline durante save;
+* reconexão;
+* refresh durante operação;
+* Service Worker antigo;
+* banco parcialmente migrado;
+* dados antigos;
+* categorias excluídas;
+* grupo excluído;
+* usuário removido;
+* foto inválida;
+* OCR incorreto;
+* código inválido;
+* valor zero;
+* valor extremamente alto;
+* centavos;
+* datas futuras;
+* datas antigas;
+* mudança de timezone;
+* duplicidade;
+* corrida;
+* falha de notificação;
+* falha de upload;
+* falha de API externa.
+
+---
+
+# 19. ESPECIALISTA EM PWA
+
+Faça uma auditoria completa de:
+
+* manifest;
+* Service Worker;
+* cache;
+* update;
+* offline;
+* instalação;
+* splash;
+* ícones;
+* push;
+* background;
+* armazenamento;
+* sincronização;
+* permissões.
+
+A experiência precisa ser:
+
+> "Parece um aplicativo nativo."
+
+Sem transformar isso em uma aplicação pesada.
+
+---
+
+# 20. PERFORMANCE ENGINEER
+
+Analise:
+
+* First Contentful Paint;
+* Largest Contentful Paint;
+* Total Blocking Time;
+* JavaScript;
+* CSS;
+* imagens;
+* fontes;
+* CDN;
+* imports;
+* Supabase;
+* queries;
+* renders;
+* listeners;
+* memória;
+* Service Worker.
+
+Procure tudo que pode ser:
+
+* lazy;
+* cached;
+* memoized;
+* derivado;
+* removido;
+* agrupado;
+* simplificado.
+
+---
+
+# 21. ESPECIALISTA EM BIBLIOTECAS
+
+Não adicione bibliotecas por moda.
+
+Para cada biblioteca proposta, avalie:
+
+* licença;
+* custo;
+* tamanho;
+* manutenção;
+* segurança;
+* dependências;
+* compatibilidade;
+* PWA;
+* offline;
+* mobile;
+* maturidade.
+
+Priorize:
+
+* open source;
+* gratuito;
+* permissivo;
+* estável;
+* pequeno;
+* mantido;
+* sem necessidade de API paga.
+
+A regra é:
+
+> "Se uma solução nativa ou simples resolve melhor, não adicione biblioteca."
+
+---
+
+# 22. REGRA: ZERO IA PAGA
+
+O produto NÃO deverá depender de:
+
+* OpenAI;
+* Anthropic;
+* Gemini pago;
+* APIs de LLM;
+* APIs de classificação pagas;
+* serviços de IA pagos.
+
+Pode utilizar:
+
+* algoritmos;
+* heurísticas;
+* regras;
+* estatística;
+* fuzzy matching;
+* NLP local simples;
+* OCR local;
+* parsing;
+* histórico;
+* preferências;
+* aprendizado determinístico;
+* dados do próprio usuário.
+
+O objetivo é criar a sensação:
+
+> "Esse aplicativo parece inteligente."
+
+Sem utilizar IA.
+
+---
+
+# 23. "INTELIGÊNCIA SEM IA"
+
+Explore profundamente esse conceito.
+
+Exemplos:
+
+### 23.1 Autocomplete contextual
+
+Se o usuário sempre registra:
+
+"Netflix"
+
+→ categoria Assinaturas
+→ empresa Netflix
+→ valor aproximado
+→ frequência mensal.
+
+O sistema pode sugerir automaticamente.
+
+---
+
+### 23.2 Memória de comportamento
+
+Se o usuário frequentemente faz:
+
+"Mercado"
+
+→ categoria Mercado.
+
+Se frequentemente usa:
+
+"Carrefour"
+
+→ empresa Carrefour.
+
+Se compra determinado item:
+
+→ unidade provável.
+
+---
+
+### 23.3 Defaults inteligentes
+
+O app deve aprender regras simples do comportamento do usuário sem modelo de IA.
+
+Exemplo:
+
+> "Você costuma pagar essa conta no dia 10."
+
+Sugestão:
+
+> vencimento 10.
+
+---
+
+### 23.4 Detecção de anomalias simples
+
+Exemplo:
+
+Normal:
+
+R$ 400–600 mercado.
+
+Novo:
+
+R$ 1.300.
+
+O sistema pode informar:
+
+> "Essa compra está bem acima do seu padrão recente."
+
+Sem IA.
+
+---
+
+### 23.5 Previsão determinística
+
+Com base em:
+
+* recorrências;
+* histórico;
+* médias;
+* calendário;
+* vencimentos.
+
+Mostrar:
+
+> "Se nada mudar, sua projeção para o fim do mês é..."
+
+---
+
+# 24. FINANCIAL INSIGHT ENGINE
+
+Projete um mecanismo determinístico de insights.
+
+Ele pode analisar:
+
+* entradas;
+* despesas;
+* categorias;
+* recorrências;
+* orçamento;
+* vencimentos;
+* histórico;
+* compras;
+* estoque.
+
+E produzir mensagens úteis.
+
+Exemplos:
+
+> "Você já comprometeu 72% da sua renda prevista."
+
+> "Seu gasto com Mercado está 18% acima da média dos últimos 3 meses."
+
+> "Existem 4 contas vencendo nos próximos 7 dias."
+
+> "Você provavelmente não precisa comprar este item agora porque ainda possui 2 unidades."
+
+> "Esta despesa pode ultrapassar seu orçamento de Casa."
+
+Esses insights devem ser:
+
+* explicáveis;
+* determinísticos;
+* transparentes;
+* acionáveis;
+* nunca alarmistas.
+
+---
+
+# 25. PRINCÍPIO FUNDAMENTAL: NÃO CRIAR DASHBOARD DE EXIBIÇÃO
+
+O Bõnotto não deve virar um painel cheio de números.
+
+O dashboard deve responder rapidamente:
+
+## 1. Como estou?
+
+## 2. O que precisa da minha atenção?
+
+## 3. O que devo fazer agora?
+
+## 4. Estou indo melhor ou pior?
+
+## 5. Existe algum risco?
+
+Se uma informação não ajuda nessas perguntas, questione sua existência.
+
+---
+
+# 26. NOVA ARQUITETURA DE INFORMAÇÃO
+
+Reavalie a navegação atual.
+
+Não assuma que:
+
+* Início;
+* Transações;
+* Compras;
+* Recursos;
+* Grupo;
+* Perfil
+
+é necessariamente a melhor arquitetura.
+
+Proponha alternativas.
+
+Por exemplo:
+
+* Hoje;
+* Dinheiro;
+* Casa;
+* Planejamento;
+* Configurações.
+
+Mas não implemente simplesmente essa ideia.
+
+Analise primeiro.
+
+O objetivo é encontrar a melhor estrutura.
+
+---
+
+# 27. REVISÃO DOS MÓDULOS
+
+Para cada módulo atual, responda:
+
+### DASHBOARD
+
+* o que permanece?
+* o que sai?
+* o que muda?
+* o que aparece automaticamente?
+* o que vira insight?
+
+### TRANSAÇÕES
+
+* o formulário está grande demais?
+* existe maneira de registrar em 5 segundos?
+* quais campos deveriam desaparecer?
+* o que pode ser inferido?
+
+### COMPRAS
+
+* como reduzir esforço?
+* como transformar lista em planejamento?
+* como integrar estoque?
+* como evitar desperdício?
+
+### RECURSOS
+
+* como tornar o inventário realmente útil?
+* como evitar que cadastrar estoque vire uma tarefa?
+
+### GRUPO
+
+* como melhorar casal/família?
+* como evitar conflitos?
+
+### NOTIFICAÇÕES
+
+* quando notificar?
+* quando NÃO notificar?
+* como evitar notification fatigue?
+
+### PERFIL
+
+* o que realmente precisa estar aqui?
+
+---
+
+# 28. NOVO FLUXO IDEAL
+
+Crie uma proposta completa de:
+
+## "BÕNOTTO DAY"
+
+O usuário abre o aplicativo.
+
+Em poucos segundos ele deve saber:
+
+* situação financeira;
+* contas importantes;
+* orçamento;
+* compras;
+* problemas;
+* oportunidades.
+
+Depois:
+
+> "O que eu preciso fazer?"
+
+O sistema deve apresentar no máximo algumas ações realmente relevantes.
+
+Projete esse fluxo.
+
+---
+
+# 29. QUICK ACTION ENGINE
+
+Crie uma camada de ações rápidas.
+
+Exemplos:
+
+* * Despesa
+* * Entrada
+* Pagar conta
+* Comprar
+* Adicionar recurso
+* Registrar compra
+* Dividir despesa
+* Importar boleto
+* Escanear
+* Fotografar.
+
+Mas descubra quais realmente precisam existir.
+
+---
+
+# 30. ZERO-FRICTION ENTRY
+
+O registro de despesa deve ser extremamente rápido.
+
+Imagine:
+
+Usuário toca:
+
+> * Despesa
+
+Digita:
+
+> Mercado 184,90
+
+O sistema pode sugerir:
+
+* categoria Mercado;
+* data hoje;
+* pago;
+* empresa conhecida;
+* recorrência provável.
+
+O usuário apenas confirma.
+
+Não force formulários.
+
+---
+
+# 31. REVISÃO DO SISTEMA DE CATEGORIAS
+
+Analise se categorias são:
+
+* simples;
+* coerentes;
+* úteis;
+* excessivas;
+* insuficientes.
+
+Considere:
+
+* categorias;
+* subcategorias;
+* tags;
+* tipos;
+* objetivos.
+
+Mas não adicione complexidade sem benefício.
+
+---
+
+# 32. REVISÃO DO SISTEMA DE ORÇAMENTO
+
+Avalie:
+
+* orçamento mensal;
+* orçamento anual;
+* categoria;
+* grupo;
+* pessoa;
+* meta;
+* previsão;
+* comprometimento.
+
+Crie uma experiência que responda:
+
+> "Quanto ainda posso gastar?"
+
+Essa pergunta provavelmente é mais importante que:
+
+> "Quanto já gastei?"
+
+---
+
+# 33. SISTEMA DE ALERTAS
+
+Projete níveis:
+
+### INFO
+
+Algo que pode ser interessante.
+
+### ATTENTION
+
+Algo que merece atenção.
+
+### WARNING
+
+Algo que exige ação.
+
+### CRITICAL
+
+Algo que pode causar problema financeiro.
+
+Não use vermelho para tudo.
+
+---
+
+# 34. QUALIDADE DE VIDA
+
+Procure automações que cruzem:
+
+FINANÇAS + COMPRAS + RECURSOS.
+
+Exemplo:
+
+Recurso:
+
+> Arroz — 0 unidades
+
+→ sugestão:
+
+> Adicionar arroz à próxima lista.
+
+Compra:
+
+> Arroz — 5 kg
+
+→ recurso atualizado automaticamente após finalização.
+
+Compra finalizada:
+
+> R$ 187,30
+
+→ despesa financeira criada.
+
+Despesa:
+
+> Mercado.
+
+→ orçamento atualizado.
+
+Dashboard:
+
+> orçamento recalculado.
+
+Isso deve parecer uma única experiência, não quatro módulos diferentes.
+
+---
+
+# 35. CASA COMO SISTEMA
+
+Analise se o Bõnotto deveria pensar na casa como:
+
+> um sistema operacional doméstico.
+
+Dinheiro.
+
+Compras.
+
+Estoque.
+
+Contas.
+
+Rotinas.
+
+Planejamento.
+
+O objetivo é que os módulos conversem naturalmente.
+
+---
+
+# 36. EVENT BUS / ESTADO
+
+Analise criticamente o atual sistema `cg:*`.
+
+Pergunte:
+
+* ainda é suficiente?
+* deve existir um store central?
+* eventos devem ser tipados?
+* deve haver uma camada de domínio?
+* deve haver event sourcing parcial?
+* existe risco de listeners duplicados?
+* existe memory leak?
+* existe ordem de eventos problemática?
+
+Não substitua por complexidade desnecessária.
+
+---
+
+# 37. OFFLINE-FIRST
+
+O produto deve funcionar bem quando:
+
+* sem internet;
+* internet lenta;
+* Supabase indisponível;
+* CDN indisponível;
+* API externa indisponível.
+
+Defina claramente:
+
+### O que funciona offline?
+
+### O que fica pendente?
+
+### O que sincroniza depois?
+
+### Como conflitos são resolvidos?
+
+### Como o usuário sabe?
+
+Não permita perda silenciosa de dados.
+
+---
+
+# 38. MODELO DEMO × REAL
+
+Analise profundamente a arquitetura atual.
+
+Ela deve continuar?
+
+É necessário separar:
+
+* repositories;
+* adapters;
+* storage providers;
+* data sources?
+
+A regra é:
+
+> UI nunca deve saber de onde o dado veio.
+
+Preserve essa boa separação se ela continuar correta.
+
+---
+
+# 39. DATABASE MIGRATION STRATEGY
+
+A atual estratégia de fallback para colunas ausentes deve ser criticada.
+
+Pergunte:
+
+> Isso é robustez ou está mascarando migrations incompletas?
+
+Proponha uma estratégia melhor para:
+
+* migrations;
+* versionamento;
+* schema;
+* compatibilidade;
+* rollback;
+* seed;
+* demo.
+
+---
+
+# 40. MONEY ENGINE
+
+Crie uma especificação formal para valores financeiros.
+
+Defina:
+
+* moeda;
+* precisão;
+* arredondamento;
+* centavos;
+* divisão;
+* soma;
+* porcentagem;
+* conversão;
+* comparação;
+* negativos;
+* zero.
+
+Todos os cálculos precisam ser deterministicamente corretos.
+
+---
+
+# 41. DATE ENGINE
+
+Audite completamente:
+
+* timezone;
+* hoje;
+* vencimento;
+* recorrência;
+* mês;
+* ano;
+* horário;
+* DST;
+* datas futuras;
+* datas antigas.
+
+Evite bugs de:
+
+> "ontem virou hoje."
+
+---
+
+# 42. RESPONSIVIDADE EXTREMA
+
+Teste mentalmente e, se tiver acesso ao ambiente, efetivamente teste:
+
+* 320px;
+* 360px;
+* 375px;
+* 390px;
+* 412px;
+* 430px;
+* tablet;
+* 768px;
+* 820px;
+* 1024px;
+* 1280px;
+* 1440px;
+* 1920px.
+
+Também:
+
+* zoom 200%;
+* fonte aumentada;
+* dark mode;
+* light mode;
+* reduced motion;
+* high contrast.
+
+---
+
+# 43. DESIGN SYSTEM 2027
+
+Não simplesmente troque as cores.
+
+Crie:
+
+* tokens;
+* semântica;
+* spacing;
+* typography;
+* elevation;
+* motion;
+* states;
+* components;
+* patterns;
+* layouts.
+
+Documente:
+
+> quando usar cada componente.
+
+Evite inconsistências.
+
+---
+
+# 44. MICROINTERAÇÕES
+
+Use animações apenas quando comunicarem:
+
+* causa;
+* consequência;
+* estado;
+* continuidade.
+
+Exemplos:
+
+* item salvo;
+* orçamento atualizado;
+* pagamento realizado;
+* estoque alterado;
+* lista finalizada.
+
+Evite animações decorativas excessivas.
+
+---
+
+# 45. ACESSIBILIDADE
+
+Alvo:
+
+**WCAG 2.2 AA**, quando tecnicamente aplicável.
+
+Audite:
+
+* teclado;
+* foco;
+* contraste;
+* screen reader;
+* labels;
+* aria;
+* live regions;
+* modal;
+* drawer;
+* toast;
+* tabelas;
+* gráficos;
+* formulários.
+
+Gráficos nunca devem ser a única forma de transmitir informação.
+
+---
+
+# 46. SEGURANÇA FINANCEIRA
+
+Pergunte:
+
+> "O que aconteceria se o usuário registrasse errado uma despesa?"
+
+Crie:
+
+* undo quando possível;
+* confirmação apenas para ações perigosas;
+* histórico;
+* edição segura;
+* prevenção de duplicidade.
+
+Evite confirmações inúteis.
+
+---
+
+# 47. SISTEMA DE CONFIANÇA
+
+Um produto financeiro precisa transmitir:
+
+> "Eu posso confiar nesses números."
+
+Crie mecanismos para isso:
+
+* origem do valor;
+* data de atualização;
+* estado de sincronização;
+* conflitos;
+* dados pendentes;
+* transparência;
+* histórico.
+
+Nunca mostre um número financeiro aparentemente preciso se ele estiver incompleto.
+
+---
+
+# 48. OBSERVABILIDADE
+
+Mesmo sendo um projeto pessoal, proponha:
+
+* logs estruturados;
+* error boundaries;
+* tratamento de erros;
+* diagnóstico;
+* identificação de falhas;
+* métricas locais;
+* modo debug.
+
+Mas não introduza infraestrutura paga sem necessidade.
+
+---
+
+# 49. PRIVACIDADE BY DESIGN
+
+Dados financeiros são extremamente sensíveis.
+
+Priorize:
+
+* minimização;
+* criptografia quando aplicável;
+* RLS;
+* Storage privado;
+* signed URLs;
+* ausência de logs sensíveis;
+* não exposição de documentos;
+* não exposição de dados financeiros em analytics.
+
+---
+
+# 50. MONETIZAÇÃO FUTURA — SOMENTE ARQUITETURAL
+
+Não transforme o produto atual em SaaS.
+
+Mas analise o que futuramente precisaria existir para:
+
+* multi-tenant;
+* billing;
+* planos;
+* limites;
+* white-label;
+* branding;
+* customização;
+* isolamento de dados;
+* organizações;
+* administração.
+
+Crie apenas uma:
+
+> "Future Scalability Boundary"
+
+Ou seja:
+
+uma fronteira arquitetural que permita evoluir depois sem destruir o produto.
+
+---
+
+# 51. WHITE-LABEL FUTURO
+
+Imagine que em 2028 alguém queira:
+
+> "Quero o Bõnotto com minha marca."
+
+Analise:
+
+* tokens;
+* logos;
+* nome;
+* domínio;
+* tema;
+* recursos;
+* configuração;
+* tenant;
+* isolamento.
+
+Mas não implemente tudo agora.
+
+Apenas não tome decisões que tornem isso impossível.
+
+---
+
+# 52. ANÁLISE DE GAPS
+
+Crie uma matriz:
+
+| Área | Estado atual | Problema | Impacto | Risco | Oportunidade | Prioridade |
+| ---- | ------------ | -------- | ------- | ----- | ------------ | ---------- |
+
+Classifique cada gap como:
+
+* P0 — crítico;
+* P1 — muito importante;
+* P2 — importante;
+* P3 — melhoria;
+* P4 — futuro.
+
+---
+
+# 53. MATRIZ DE FUNCIONALIDADES
+
+Para cada funcionalidade existente:
+
+| Funcionalidade | Valor | Complexidade | Frequência | Risco | Decisão |
+| -------------- | ----: | -----------: | ---------: | ----: | ------- |
+
+Decisões possíveis:
+
+* manter;
+* simplificar;
+* melhorar;
+* mover;
+* esconder;
+* consolidar;
+* remover;
+* substituir;
+* transformar em automação.
+
+---
+
+# 54. REGRA CONTRA FEATURE BLOAT
+
+Você NÃO ganha pontos adicionando funcionalidades.
+
+Você ganha pontos:
+
+> removendo complexidade.
+
+Se duas funcionalidades podem virar uma experiência única:
+
+**una.**
+
+Se uma tela pode ser eliminada:
+
+**elimine.**
+
+Se um campo pode ser inferido:
+
+**não pergunte.**
+
+Se uma configuração pode virar comportamento automático:
+
+**automatize.**
+
+---
+
+# 55. DISCUSSÃO ENTRE ESPECIALISTAS
+
+Agora faça algo obrigatório.
+
+Depois que todos os especialistas produzirem suas análises, faça uma segunda rodada.
+
+Os especialistas deverão discutir entre si.
+
+Exemplos:
+
+### UX vs Engenharia
+
+UX:
+
+> "Quero eliminar esse formulário."
+
+Engenharia:
+
+> "Isso aumenta risco de ambiguidade."
+
+Discutam.
+
+---
+
+### Financeiro vs UX
+
+Financeiro:
+
+> "Essa informação é importante."
+
+UX:
+
+> "Mas isso aumenta carga cognitiva."
+
+Discutam.
+
+---
+
+### Segurança vs Conveniência
+
+Segurança:
+
+> "Precisamos dessa confirmação."
+
+UX:
+
+> "Ela destrói o fluxo."
+
+Discutam.
+
+---
+
+### Performance vs Bibliotecas
+
+Performance:
+
+> "Não precisamos dessa biblioteca."
+
+UI:
+
+> "Ela melhora muito o componente."
+
+Discutam.
+
+---
+
+### Produto vs Engenharia
+
+Produto:
+
+> "Isso aumenta valor."
+
+Engenharia:
+
+> "Isso aumenta complexidade em 5 módulos."
+
+Discutam.
+
+---
+
+# 56. REGRA DA DISCUSSÃO
+
+Não faça uma discussão artificial em que todos concordam.
+
+Procure conflitos reais.
+
+Para cada conflito:
+
+1. problema;
+2. posição A;
+3. posição B;
+4. argumentos;
+5. riscos;
+6. decisão;
+7. motivo.
+
+A decisão final deve privilegiar:
+
+1. usuário;
+2. confiabilidade;
+3. simplicidade;
+4. segurança;
+5. manutenção;
+6. performance;
+7. escalabilidade.
+
+---
+
+# 57. SEGUNDA REVISÃO — REFINAMENTO TÉCNICO
+
+Depois da primeira discussão:
+
+**COMECE NOVAMENTE.**
+
+Reavalie toda a solução proposta.
+
+Pergunte:
+
+* criamos complexidade demais?
+* alguma tecnologia é desnecessária?
+* alguma funcionalidade contradiz outra?
+* algum cálculo está errado?
+* alguma decisão financeira é perigosa?
+* alguma solução cria dívida técnica?
+* alguma mudança quebra compatibilidade?
+* alguma proposta é impossível no stack atual?
+* alguma proposta depende de API paga?
+* alguma proposta depende de IA?
+* alguma proposta viola offline-first?
+* alguma proposta viola segurança?
+
+Corrija.
+
+---
+
+# 58. TERCEIRA REVISÃO — REFINAMENTO DE PRODUTO
+
+Agora ignore o código por um momento.
+
+Imagine que você é um usuário comum.
+
+Abra o produto mentalmente.
+
+Pergunte:
+
+> "Isso é fácil?"
+
+> "Isso é rápido?"
+
+> "Eu entendi?"
+
+> "Eu sei o que fazer?"
+
+> "Preciso pensar demais?"
+
+> "Tenho medo de errar?"
+
+> "Confio nos números?"
+
+> "O aplicativo me ajuda?"
+
+> "Ele me poupa trabalho?"
+
+> "Eu voltaria amanhã?"
+
+Se qualquer resposta for ruim:
+
+corrija a proposta.
+
+---
+
+# 59. VISÃO 2027
+
+Agora projete o que seria:
+
+# BÕNOTTO 2027
+
+Não imagine um aplicativo futurista cheio de efeitos.
+
+Imagine um produto:
+
+* maduro;
+* simples;
+* confiável;
+* extremamente rápido;
+* bonito;
+* inteligente sem IA;
+* offline;
+* mobile-first;
+* acessível;
+* seguro;
+* automatizado;
+* previsível;
+* agradável.
+
+O usuário deve sentir:
+
+> "Eu não preciso administrar minhas finanças. O Bõnotto me ajuda a administrá-las."
+
+---
+
+# 60. PRINCÍPIO "ANTECIPAR SEM INVADIR"
+
+O Bõnotto deve antecipar necessidades, mas nunca assumir controle demais.
+
+Exemplo:
+
+Bom:
+
+> "Sua conta de energia vence em 3 dias."
+
+Melhor:
+
+> "Sua conta de energia vence em 3 dias. Quer marcar como paga quando pagar?"
+
+Ruim:
+
+> "Você precisa pagar sua conta."
+
+Nunca seja paternalista.
+
+---
+
+# 61. SISTEMA DE PRIORIDADE
+
+Crie um mecanismo interno de prioridade.
+
+O usuário pode ter:
+
+* 10 contas;
+* 20 compras;
+* 15 notificações;
+* 5 problemas.
+
+Mas a interface deve mostrar:
+
+> "O que importa agora."
+
+Não simplesmente:
+
+> "Tudo."
+
+---
+
+# 62. HOME IDEAL
+
+Proponha diferentes versões de Home.
+
+No mínimo:
+
+### V1 — Minimalista
+
+### V2 — Fintech
+
+### V3 — Assistiva
+
+### V4 — Casa + Dinheiro
+
+Compare.
+
+Escolha uma.
+
+Explique por quê.
+
+---
+
+# 63. NAVEGAÇÃO IDEAL
+
+Proponha pelo menos 3 arquiteturas de navegação.
+
+Compare:
+
+* quantidade de destinos;
+* frequência;
+* facilidade;
+* escalabilidade;
+* mobile;
+* desktop.
+
+Escolha uma.
+
+---
+
+# 64. FLUXO DE REGISTRO DE DESPESA
+
+Proponha:
+
+### Fluxo atual
+
+vs.
+
+### Fluxo ideal 2027
+
+Mostre cada etapa.
+
+---
+
+# 65. FLUXO DE COMPRA
+
+Faça o mesmo para:
+
+* planejar;
+* comprar;
+* atualizar preços;
+* finalizar;
+* registrar despesa;
+* atualizar estoque.
+
+---
+
+# 66. FLUXO DE INVENTÁRIO
+
+Faça o mesmo.
+
+O objetivo é:
+
+> estoque não pode virar trabalho administrativo.
+
+---
+
+# 67. FLUXO DE CASAL
+
+Esse é extremamente importante.
+
+Analise:
+
+* quem pagou;
+* quanto cada um deve;
+* despesas pessoais;
+* despesas compartilhadas;
+* visão individual;
+* visão do grupo;
+* conflitos;
+* transparência.
+
+O sistema deve evitar transformar dinheiro em fonte de atrito.
+
+---
+
+# 68. MODELO DE "VERDADE ÚNICA"
+
+Para cada dado importante, defina:
+
+> qual é a fonte de verdade?
+
+Exemplo:
+
+Saldo:
+
+→ transações.
+
+Status:
+
+→ derivado.
+
+Total da compra:
+
+→ itens.
+
+Orçamento:
+
+→ limite + transações.
+
+Estoque:
+
+→ itens.
+
+Nunca mantenha duas fontes de verdade sem necessidade.
+
+---
+
+# 69. EVENTUAL EVENT-SOURCING
+
+Avalie.
+
+Provavelmente NÃO será necessário.
+
+Mas explique:
+
+* quando seria útil;
+* quando seria exagero;
+* por que usar ou não usar.
+
+Não implemente tecnologia porque ela é interessante.
+
+---
+
+# 70. ANÁLISE DE CUSTO
+
+O produto deve funcionar com custo operacional próximo de zero enquanto for pessoal.
+
+Priorize:
+
+* Supabase free tier;
+* CDN gratuito;
+* bibliotecas open source;
+* APIs públicas;
+* processamento local;
+* PWA;
+* Web APIs.
+
+Liste potenciais custos futuros.
+
+---
+
+# 71. DEPENDENCY AUDIT
+
+Para cada dependência atual:
+
+* finalidade;
+* tamanho;
+* risco;
+* alternativa;
+* necessidade.
+
+Para cada dependência nova:
+
+* justificativa obrigatória.
+
+---
+
+# 72. PLANO DE MIGRAÇÃO
+
+Não destrua o sistema funcional.
+
+Crie:
+
+### Fase 0
+
+baseline.
+
+### Fase 1
+
+fundação.
+
+### Fase 2
+
+UX.
+
+### Fase 3
+
+automação.
+
+### Fase 4
+
+arquitetura.
+
+### Fase 5
+
+qualidade.
+
+### Fase 6
+
+PWA.
+
+### Fase 7
+
+refinamento.
+
+Cada fase precisa ter:
+
+* objetivo;
+* arquivos;
+* dependências;
+* risco;
+* testes;
+* critério de conclusão.
+
+---
+
+# 73. NÃO REESCREVER POR MODA
+
+Uma regra muito importante:
+
+> Não faça rewrite total apenas porque a arquitetura atual não é "moderna".
+
+O projeto possui aproximadamente 40 arquivos e já possui funcionalidades reais, regras de negócio e correções de bugs acumuladas.
+
+Uma reescrita pode destruir conhecimento.
+
+Antes de propor rewrite:
+
+calcule:
+
+* custo;
+* risco;
+* benefício;
+* ganho real;
+* risco de regressão.
+
+---
+
+# 74. ESTRATÉGIA DE IMPLEMENTAÇÃO
+
+Quando chegar à implementação:
+
+1. faça backup lógico;
+2. crie baseline;
+3. implemente pequenos incrementos;
+4. teste;
+5. compare;
+6. corrija;
+7. continue.
+
+Nunca altere 40 arquivos simultaneamente sem checkpoints.
+
+---
+
+# 75. TESTES DE ACEITAÇÃO
+
+Para cada mudança:
+
+defina:
+
+### GIVEN
+
+estado inicial.
+
+### WHEN
+
+ação.
+
+### THEN
+
+resultado esperado.
+
+Crie cenários para:
+
+* desktop;
+* mobile;
+* offline;
+* usuário individual;
+* grupo;
+* demo;
+* real.
+
+---
+
+# 76. DEFINITION OF DONE
+
+Uma funcionalidade só estará pronta se:
+
+* funcionar;
+* for responsiva;
+* for acessível;
+* não quebrar desktop;
+* não quebrar mobile;
+* não quebrar dark mode;
+* não quebrar offline quando aplicável;
+* não gerar erros no console;
+* não quebrar RLS;
+* não criar inconsistência;
+* possuir loading;
+* possuir erro;
+* possuir empty state;
+* possuir feedback;
+* possuir teste.
+
+---
+
+# 77. REGRA CONTRA "FUNCIONA NA MINHA MÁQUINA"
+
+Nunca aceite:
+
+> "deve funcionar."
+
+Exija evidência.
+
+Sempre que possível:
+
+* executar;
+* testar;
+* verificar;
+* comparar;
+* validar.
+
+---
+
+# 78. DOCUMENTAÇÃO FINAL
+
+Depois de toda análise, produza uma documentação completa.
+
+Não economize espaço.
+
+A documentação deve ser grande se necessário.
+
+Inclua:
+
+# 1. Executive Summary
+
+# 2. Diagnóstico atual
+
+# 3. Estado real do sistema
+
+# 4. Pontos fortes
+
+# 5. Problemas
+
+# 6. Riscos
+
+# 7. Dívida técnica
+
+# 8. Gaps
+
+# 9. Oportunidades
+
+# 10. Visão Bõnotto 2027
+
+# 11. Nova proposta de produto
+
+# 12. Nova arquitetura de informação
+
+# 13. Nova navegação
+
+# 14. Nova Home
+
+# 15. Novo fluxo financeiro
+
+# 16. Novo fluxo de compras
+
+# 17. Novo fluxo de recursos
+
+# 18. Novo fluxo de casal
+
+# 19. Inteligência sem IA
+
+# 20. Financial Insight Engine
+
+# 21. Quality-of-Life Engine
+
+# 22. Quick Action Engine
+
+# 23. Sistema de notificações
+
+# 24. Modelo financeiro
+
+# 25. Modelo de dados
+
+# 26. Arquitetura frontend
+
+# 27. Arquitetura backend
+
+# 28. Segurança
+
+# 29. RLS
+
+# 30. LGPD
+
+# 31. PWA
+
+# 32. Offline
+
+# 33. Performance
+
+# 34. Acessibilidade
+
+# 35. Design System
+
+# 36. Componentes
+
+# 37. Microinterações
+
+# 38. Responsividade
+
+# 39. Testes
+
+# 40. QA
+
+# 41. Observabilidade
+
+# 42. Dependências
+
+# 43. Custos
+
+# 44. Escalabilidade futura
+
+# 45. White-label futuro
+
+# 46. O que NÃO fazer
+
+# 47. Features removidas
+
+# 48. Features novas
+
+# 49. Features simplificadas
+
+# 50. Matriz de prioridade
+
+# 51. Roadmap
+
+# 52. Plano de migração
+
+# 53. Plano de testes
+
+# 54. Definition of Done
+
+# 55. Checklist final
+
+---
+
+# 79. ARTEFATOS OBRIGATÓRIOS
+
+Além do documento principal, produza:
+
+## A. MAPA COMPLETO DO PRODUTO
+
+```text
+Bõnotto
+├── Dinheiro
+│   ├── ...
+│
+├── Casa
+│   ├── ...
+│
+└── Configurações
+    ├── ...
+```
+
+---
+
+## B. MAPA DE DADOS
+
+Mostre:
+
+```text
+User
+ ↓
+Group
+ ↓
+Transactions
+ ↓
+Budgets
+ ↓
+Shopping
+ ↓
+Resources
+ ↓
+Notifications
+```
+
+com todas as relações reais.
+
+---
+
+## C. MAPA DE FLUXOS
+
+Mostre os principais fluxos.
+
+---
+
+## D. MATRIZ DE DECISÃO
+
+Para cada grande mudança:
+
+| Decisão | Alternativas | Escolha | Motivo | Risco |
+| ------- | ------------ | ------- | ------ | ----- |
+
+---
+
+## E. MATRIZ DE PRIORIDADE
+
+| Item | Impacto | Esforço | Risco | Prioridade |
+| ---- | ------: | ------: | ----: | ---------- |
+
+---
+
+## F. MATRIZ DE REGRESSÃO
+
+Mapeie tudo que pode quebrar com cada grande mudança.
+
+---
+
+# 80. RESULTADO FINAL ESPERADO
+
+Não quero um relatório genérico.
+
+Quero algo que possa ser entregue diretamente a uma equipe de engenharia e design.
+
+O documento precisa responder:
+
+> **O que construir?**
+
+> **Por que construir?**
+
+> **Como construir?**
+
+> **O que não construir?**
+
+> **O que remover?**
+
+> **O que simplificar?**
+
+> **Como testar?**
+
+> **Como garantir segurança?**
+
+> **Como garantir qualidade?**
+
+> **Como manter custo praticamente zero?**
+
+> **Como garantir excelente experiência mobile?**
+
+> **Como fazer o produto parecer inteligente sem IA?**
+
+> **Como preservar o que já funciona?**
+
+> **Como preparar o sistema para escalar futuramente?**
+
+---
+
+# 81. REGRA FINAL — PENSE COMO SE FOSSE UM PRODUTO DE VERDADE
+
+Não trate o Bõnotto como:
+
+> "um projeto pessoal de HTML/JS."
+
+Trate como:
+
+> "um produto digital que ainda está em estágio inicial, mas pode se tornar uma plataforma."
+
+Porém, mantenha a disciplina:
+
+**Produto pessoal primeiro.**
+
+**Excelente UX primeiro.**
+
+**Confiabilidade primeiro.**
+
+**Simplicidade primeiro.**
+
+**Escalabilidade depois.**
+
+---
+
+# 82. PRINCÍPIO DE OURO
+
+Sempre que estiver em dúvida entre:
+
+### mais funcionalidades
+
+e
+
+### menos esforço para o usuário
+
+escolha:
+
+**menos esforço.**
+
+Sempre que estiver em dúvida entre:
+
+### arquitetura sofisticada
+
+e
+
+### arquitetura simples que resolve
+
+escolha:
+
+**a simples.**
+
+Sempre que estiver em dúvida entre:
+
+### informação
+
+e
+
+### ação
+
+priorize:
+
+**ação.**
+
+Sempre que estiver em dúvida entre:
+
+### automação mágica
+
+e
+
+### comportamento previsível
+
+priorize:
+
+**previsibilidade.**
+
+Sempre que estiver em dúvida entre:
+
+### IA
+
+e
+
+### algoritmo determinístico simples
+
+priorize:
+
+**algoritmo determinístico simples**, desde que produza resultado suficientemente bom.
+
+---
+
+# 83. SUA MISSÃO
+
+Sua missão não é simplesmente melhorar o Bõnotto.
+
+Sua missão é descobrir:
+
+> **qual é a versão mais simples, elegante, inteligente, confiável, útil, agradável e tecnicamente sustentável do Bõnotto que pode existir em 2027.**
+
+Faça isso como uma equipe multidisciplinar de especialistas extremamente experientes.
+
+Faça os especialistas discordarem.
+
+Faça-os defenderem suas posições.
+
+Faça-os encontrarem falhas uns nos outros.
+
+Faça uma segunda revisão técnica.
+
+Faça uma terceira revisão de produto.
+
+Somente depois disso produza a arquitetura final.
+
+E somente depois da arquitetura final, se solicitado, comece a implementação.
+
+**Não pule etapas.**
+
+**Não faça suposições silenciosas.**
+
+**Não invente funcionalidades existentes.**
+
+**Não destrua funcionalidades sem análise.**
+
+**Não adicione complexidade sem retorno claro.**
+
+**Não introduza IA paga.**
+
+**Não introduza dependências desnecessárias.**
+
+**Não sacrifique UX em nome da arquitetura.**
+
+**Não sacrifique segurança em nome da conveniência.**
+
+**Não sacrifique simplicidade em nome da escalabilidade futura.**
+
+---
+
+# 84. PRIMEIRA RESPOSTA QUE VOCÊ DEVE PRODUZIR
+
+Antes de propor qualquer alteração, entregue:
+
+## "RAIO-X 2.0 — DIAGNÓSTICO MULTIDISCIPLINAR DO BÕNOTTO"
+
+Incluindo:
+
+1. entendimento atual;
+2. arquitetura encontrada;
+3. funcionalidades encontradas;
+4. pontos fortes;
+5. problemas;
+6. riscos;
+7. inconsistências;
+8. dívida técnica;
+9. gaps;
+10. oportunidades;
+11. possíveis mudanças;
+12. perguntas que precisam de decisão;
+13. pontos que não devem ser alterados;
+14. primeira visão do Bõnotto 2027.
+
+Depois execute a rodada de discussão dos especialistas.
+
+Depois execute o refinamento técnico.
+
+Depois execute o refinamento de produto.
+
+Depois entregue:
+
+# "BÕNOTTO 2027 — MASTER PRODUCT & TECHNICAL BLUEPRINT"
+
+Esse será o documento definitivo.
+
+---
+
+# 85. IMPORTANTE SOBRE O CÓDIGO
+
+Se você tiver acesso ao repositório, **não modifique nada durante a fase de diagnóstico**.
+
+Primeiro produza o blueprint.
+
+Depois, somente após autorização explícita, parta para implementação.
+
+Se já houver autorização explícita para implementar, ainda assim:
+
+1. crie baseline;
+2. apresente plano;
+3. implemente incrementalmente;
+4. execute testes;
+5. valide regressões;
+6. documente mudanças.
+
+---
+
+# 86. CRITÉRIO ABSOLUTO DE SUCESSO
+
+Ao terminar, alguém deve conseguir olhar para o Bõnotto e pensar:
+
+> "Eu não preciso aprender a usar isso."
+
+E, principalmente:
+
+> "Isso parece simples porque alguém fez todo o trabalho difícil por mim."
+
+Esse é o objetivo.
+
+**Não construir um software que tenha muitas funções.**
+
+Construir um software em que:
+
+> **as funções certas aparecem no momento certo, com o mínimo possível de esforço.**
+
+# FIM DO PROMPT

@@ -7,6 +7,8 @@ import { todayIso } from '../utils/format.js';
 
 const FILTRO_VAZIO = { tipo: '', categoriaId: '', responsavelId: '', status: '', tipoDespesa: '', busca: '', dataInicio: '', dataFim: '' };
 
+const MESES_ABREV = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+
 // Tela "Transações": tabela com filtros, edição inline (categoria/responsável/pago)
 // e exportação/importação de CSV.
 export function transactionsView() {
@@ -31,6 +33,107 @@ export function transactionsView() {
     setViewMode(mode) {
       this.viewMode = mode;
       localStorage.setItem('bonotto_view_transacoes', mode);
+    },
+
+    // ---------- Agrupado: accordion por período/responsável/movimentação/categoria ----------
+    // 'periodo' agrupa em 2 níveis (ano -> mês); os outros são de 1 nível só.
+    agrupamento: localStorage.getItem('bonotto_agrupamento_transacoes') || 'periodo',
+    setAgrupamento(modo) {
+      this.agrupamento = modo;
+      localStorage.setItem('bonotto_agrupamento_transacoes', modo);
+      this.overridesAbertura = {};
+    },
+    // Chave (ano, "aaaa-mm", responsavel_id, tipo, categoria_id...) -> true/false
+    // quando a pessoa já clicou pra abrir/fechar aquele grupo manualmente,
+    // sobrepondo o "aberto por padrão" (ver estaAberto). Objeto plano (não
+    // Map) de propósito — mesmo padrão de payersByTx/_debounceQty já usado
+    // no resto do app, garante que o Alpine reage a cada tecla nova.
+    overridesAbertura: {},
+    estaAberto(chave, abertoPorPadrao) {
+      return chave in this.overridesAbertura ? this.overridesAbertura[chave] : abertoPorPadrao;
+    },
+    toggleGrupo(chave, abertoPorPadrao) {
+      this.overridesAbertura[chave] = !this.estaAberto(chave, abertoPorPadrao);
+    },
+
+    labelMes(anoMes) {
+      if (anoMes === 'sem-data') return 'Sem data';
+      const [ano, mes] = anoMes.split('-');
+      return `${MESES_ABREV[Number(mes) - 1]}/${ano.slice(2)}`;
+    },
+
+    // Contagem por status + soma de entrada/saída de um conjunto de linhas —
+    // usado tanto pelo resumo de cada grupo do accordion quanto (com todas
+    // as linhas de uma vez) poderia servir de totalizador geral, se um dia
+    // fizer sentido mostrar isso fora do agrupamento também.
+    resumoGrupo(linhas) {
+      const r = { entradas: 0, saidas: 0, pago: 0, vencido: 0, a_vencer: 0, pendente: 0 };
+      for (const t of linhas) {
+        if (t.tipo === 'entrada') r.entradas += Number(t.valor) || 0;
+        else r.saidas += Number(t.valor) || 0;
+        r[t._status] = (r[t._status] || 0) + 1;
+      }
+      return r;
+    },
+
+    // ano -> mês ("aaaa-mm") -> linhas. Usa vencimento (ou cadastro, se não
+    // tiver vencimento) como a data que define em qual "período" a despesa
+    // cai — é a mesma data que a pessoa já olha pra saber "isso é de quando".
+    // Sem nenhuma das duas datas (bem raro) cai num grupo "Sem data" à parte
+    // em vez de sumir da lista.
+    get gruposPorPeriodo() {
+      const hojeAnoMes = todayIso().slice(0, 7);
+      const porAno = new Map();
+      for (const t of this.sortedRows) {
+        const base = t.data_vencimento || t.data_cadastro || null;
+        const ano = base ? base.slice(0, 4) : 'Sem data';
+        const anoMes = base ? base.slice(0, 7) : 'sem-data';
+        if (!porAno.has(ano)) porAno.set(ano, new Map());
+        const porMes = porAno.get(ano);
+        if (!porMes.has(anoMes)) porMes.set(anoMes, []);
+        porMes.get(anoMes).push(t);
+      }
+      const anoAtual = hojeAnoMes.slice(0, 4);
+      return [...porAno.entries()]
+        .sort((a, b) => (a[0] === 'Sem data' ? 1 : b[0] === 'Sem data' ? -1 : b[0].localeCompare(a[0])))
+        .map(([ano, porMes]) => ({
+          chave: ano,
+          label: ano,
+          abertoPorPadrao: ano === anoAtual,
+          meses: [...porMes.entries()]
+            .sort(([a], [b]) => (a === 'sem-data' ? 1 : b === 'sem-data' ? -1 : b.localeCompare(a)))
+            .map(([anoMes, linhas]) => ({
+              chave: anoMes,
+              label: this.labelMes(anoMes),
+              isAtual: anoMes === hojeAnoMes,
+              linhas,
+              resumo: this.resumoGrupo(linhas),
+            })),
+        }));
+    },
+
+    get gruposSimples() {
+      const dim = this.agrupamento;
+      const grupos = new Map();
+      for (const t of this.sortedRows) {
+        let chave;
+        let label;
+        if (dim === 'responsavel') {
+          chave = t.responsavel_id || 'sem-responsavel';
+          label = this.responsavelFor(t.responsavel_id)?.nome || 'Sem responsável';
+        } else if (dim === 'movimentacao') {
+          chave = t.tipo;
+          label = t.tipo === 'entrada' ? 'Entradas' : 'Saídas';
+        } else {
+          chave = t.categoria_id || 'sem-categoria';
+          label = this.categoryFor(t.categoria_id)?.nome || 'Sem categoria';
+        }
+        if (!grupos.has(chave)) grupos.set(chave, { chave, label, linhas: [] });
+        grupos.get(chave).linhas.push(t);
+      }
+      return [...grupos.values()]
+        .map((g) => ({ ...g, resumo: this.resumoGrupo(g.linhas) }))
+        .sort((a, b) => b.linhas.length - a.linhas.length);
     },
 
     init() {

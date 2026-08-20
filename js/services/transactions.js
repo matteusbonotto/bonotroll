@@ -287,6 +287,29 @@ export function groupByCompany(transactions) {
     .map((item, i) => ({ ...item, cor: CORES_AUXILIARES[i % CORES_AUXILIARES.length] }));
 }
 
+// Quanto cada membro do grupo gastou (saídas) — cor de cada fatia é a cor
+// do próprio membro (m.cor, já existe em profiles), não uma paleta
+// auxiliar, pra bater com o avatar/chip usado em todo o resto do app pra
+// identificar aquela pessoa. Usa shareForMember (não responsavel_id direto)
+// pra já contar a fatia certa de despesas divididas entre 2+ pagadores.
+export function groupByMember(transactions, members, payersByTx) {
+  const porMembro = new Map();
+  for (const m of members) porMembro.set(m.id, { nome: m.nome, cor: m.cor || '#64748B', total: 0 });
+
+  for (const t of transactions) {
+    if (t.tipo !== 'saida') continue;
+    const payers = payersByTx[t.id] || [];
+    for (const m of members) {
+      const fatia = shareForMember(t, payers, m.id);
+      if (fatia <= 0) continue;
+      const atual = porMembro.get(m.id);
+      atual.total += fatia;
+    }
+  }
+
+  return [...porMembro.values()].filter((m) => m.total > 0).sort((a, b) => b.total - a.total);
+}
+
 // Entrada x Saída do período — a quebra mais simples, útil como "visão geral"
 // antes de entrar em categoria/empresa/tempo.
 export function groupByFlow(transactions) {
