@@ -53,14 +53,15 @@ html {
 }
 
 /* 96px = espaço do botão flutuante (FAB) da Lista de compras, pra ele nunca
-   cobrir o último item da lista no mobile — só a tela de Compras tem FAB
-   agora (ver .cg-fab em components.css), então só ela reserva esse espaço
-   em vez de toda tela ganhar uma faixa vazia embaixo à toa. */
+   cobrir o último item da lista — só a tela de Compras tem FAB agora (ver
+   .cg-fab em components.css), então só ela reserva esse espaço em vez de
+   toda tela ganhar uma faixa vazia embaixo à toa. Precisa valer em
+   qualquer largura: o FAB é position:fixed relativo à viewport, não ao
+   conteúdo, então mesmo no desktop (tela ampla, mas lista curta) ele
+   ficava sobrepondo os botões da última linha quando a lista não enchia
+   a tela — não era só um problema de mobile. */
 .cg-view-compras {
   padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
-}
-@media (min-width: 992px) {
-  .cg-view-compras { padding-bottom: 0; }
 }
 
 [x-cloak] { display: none !important; }
