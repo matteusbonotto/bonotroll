@@ -2003,6 +2003,16 @@
                   </div>
                 </div>
 
+                <div class="cg-list-row cg-list-row--hoverable px-3" role="button" @click="exportarDados()">
+                  <div class="cg-icon-badge"><i class="bi bi-download"></i></div>
+                  <div class="flex-fill">
+                    <h2 class="h6 fw-bold mb-1">Exportar meus dados</h2>
+                    <p class="cg-muted small mb-0">Baixa um arquivo com tudo que você vê hoje no app (lançamentos, categorias, caixinhas, compras, recursos).</p>
+                  </div>
+                  <span x-show="exportando" class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+                  <i class="bi bi-chevron-right cg-muted" x-show="!exportando"></i>
+                </div>
+
                 <div class="cg-list-row cg-list-row--hoverable px-3" role="button" @click="confirm('Limpar todo o cache e recarregar o app? Útil se algo parecer desatualizado ou travado.') && $store.app.limparCache()">
                   <div class="cg-icon-badge"><i class="bi bi-trash3"></i></div>
                   <div class="flex-fill">

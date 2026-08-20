@@ -10,6 +10,8 @@ test('linha "Categorias" em Perfil continua abrindo o gerenciador de categorias'
   await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Perfil' }).first().click();
   await page.waitForTimeout(400);
 
-  await page.locator('.cg-list-row', { hasText: 'Categorias' }).click();
+  // filtra pelo <h2> (título da linha), não pelo texto da linha inteira —
+  // a descrição de "Exportar meus dados" também menciona "categorias".
+  await page.locator('.cg-list-row').filter({ has: page.locator('h2', { hasText: 'Categorias' }) }).click();
   await expect(page.locator('.cg-modal-backdrop[x-show="$store.categoryModal.open"]')).toBeVisible({ timeout: 5000 });
 });

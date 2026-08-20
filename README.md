@@ -1,6 +1,8 @@
-# Bõnotto — Controle Financeiro + Lista de Compras
+# Bõnotto — Controle Financeiro + Compras + Inventário Doméstico
 
-PWA mobile-first (com visão mais ampla no desktop) para controle financeiro pessoal e de grupo, com lista de compras integrada. HTML/CSS/JS puro, sem build step — tudo via CDN (Bootstrap, Bootstrap Icons, Alpine.js, Chart.js, PapaParse, html5-qrcode) + Supabase como backend opcional.
+PWA mobile-first (com visão mais ampla no desktop) que unifica controle financeiro pessoal e de grupo (com divisão de despesa entre pagadores), lista de compras, inventário doméstico ("Recursos") e reserva financeira ("Caixinhas", com moeda própria e conversão ao vivo). HTML/CSS/JS puro, sem build step — tudo via CDN (Bootstrap, Bootstrap Icons, Alpine.js, Chart.js, PapaParse, html5-qrcode, pdf.js, Tesseract.js) + Supabase como backend opcional.
+
+Documentação técnica completa em [`docs/RAIO-X-2.0.md`](./docs/RAIO-X-2.0.md) e no diagnóstico original [`docs/RAIO-X-DO-PROJETO.md`](./docs/RAIO-X-DO-PROJETO.md).
 
 Construído a partir do prompt em [`prompt-app-controle-financeiro.md`](./prompt-app-controle-financeiro.md).
 
@@ -21,6 +23,8 @@ npx serve .
 Depois acesse `http://localhost:5500`. Na tela de entrada, clique em "Entrar como Matheus" ou "Entrar como Beatriz" para ver o app com dados diferentes (e ver a agregação do grupo funcionando).
 
 Para restaurar os dados de demonstração ao estado original, use o botão em **Perfil → Restaurar dados de exemplo**.
+
+Mesmo depois de conectar o Supabase real (próxima seção), dá pra ver o modo demonstração a qualquer momento acessando com `?demo=1` na URL (ex.: `http://localhost:5500/?demo=1`) — nunca precisa editar `js/data/config.js` pra isso. É o mesmo mecanismo do link "Ver demonstração" que aparece na tela de entrada quando o Supabase já está configurado.
 
 ## Conectando o Supabase de verdade
 
@@ -46,32 +50,39 @@ A central de notificações (sino no topo) já funciona sozinha, em qualquer mod
 ## Estrutura
 
 ```
-index.html                 shell único da aplicação (todas as telas)
+index.html                 shell único da aplicação (todas as telas + modais)
 manifest.webmanifest        PWA
 sw.js                        service worker (cache do app shell + CDNs + push)
-css/                         tokens.css (cores/spacing) · components.css · app.css
+css/                         tokens.css (cores/spacing/tipografia) · components.css · app.css
 js/
   app.js                     registra os stores/componentes do Alpine + fluxo de atualização do PWA
+                              + comportamento global de overlay (scroll-lock, Esc, devolução de foco)
   data/
-    config.js                credenciais do Supabase (placeholder = modo demo)
+    config.js                credenciais do Supabase (placeholder OU ?demo=1 = modo demo)
     vapid.js                 chave pública VAPID (push) — a privada nunca fica no repo
     mockDb.js                "banco" localStorage + seed dos dados de exemplo
     supabaseClient.js         cliente Supabase carregado sob demanda
   utils/
-    format.js                moeda, datas
+    format.js                moeda (BRL + Caixinhas multi-moeda), datas
     status.js                regra de pago/pendente/a vencer/vencido + validade/estoque de Recursos
+    money.js                 Money Engine — soma/divide dinheiro em centavos inteiros, nunca float
+    image.js                 redimensiona imagem (Canvas) antes de upload de avatar/ícone/logo
+    dbFallback.js             tolera coluna ainda não migrada no banco da pessoa
   services/                  cada função aqui decide sozinha se fala com o
                               mockDb (demo) ou com o Supabase (real) — as
                               telas nunca sabem qual dos dois está ativo
     auth.js · categories.js · companies.js · groups.js · transactions.js
-    resources.js · notifications.js · push.js
-    shoppingList.js · csvImport.js · barcode.js
+    resources.js · notifications.js · push.js · budgets.js · recurring.js
+    caixinhas.js · fx.js (cotação ao vivo) · shoppingList.js · csvImport.js
+    barcode.js · ocr.js · pdf.js
   components/                 um Alpine.data/Alpine.store por tela/modal
     store.js · auth.js · dashboard.js · transactionForm.js
-    transactionTable.js · shoppingList.js · resourcesView.js · csvImportModal.js
-    groupView.js · profileView.js · categoryManager.js · charts.js
+    transactionTable.js · shoppingList.js · resourcesView.js · caixinhasView.js
+    csvImportModal.js · groupView.js · profileView.js · categoryManager.js
+    budgetManager.js · charts.js
 supabase/
   schema.sql                  schema + RLS — só roda se VOCÊ rodar manualmente
+  seed.sql                    popula um projeto real com o mesmo dataset do modo demo
   notifications_push.sql      trigger + agendamentos (pg_cron) das notificações — opcional
   functions/                  Edge Functions: keepalive · notify-scan · notify-payment
   NOTIFICACOES.md              passo a passo do push real + keepalive
@@ -96,11 +107,12 @@ Ver `docs/BONOTTO-2027-BLUEPRINT.md` (Fase 1) e `docs/RAIO-X-2.0.md` (§5) para 
 
 ## O que ainda não está implementado
 
-- OCR de nota fiscal (leitura automática do valor a partir da foto).
-- Geração automática de lançamentos futuros para despesas recorrentes (o campo "recorrente" hoje é só um marcador/filtro).
-- Múltiplas moedas e internacionalização.
-- CRUD de cômodo/subcategoria em Recursos (a lista de cômodos é fixa por design — ver `DEFAULT_ROOMS` em `js/services/resources.js`; dá pra editar direto no banco se quiser mudar).
-- Notificações push e keepalive **funcionam**, mas exigem alguns passos manuais únicos (deploy de Edge Functions, chaves VAPID, agendamento) — ver [`supabase/NOTIFICACOES.md`](./supabase/NOTIFICACOES.md).
+- Ponte automática entre Compras e Recursos (comprar "Arroz" não decrementa o estoque de Recursos sozinho — decisão deliberada, ver `docs/BONOTTO-2027-BLUEPRINT.md` §8: o risco de casar nome errado (falso-positivo) supera o ganho por enquanto).
+- Múltiplas moedas fora de Caixinhas (Transações/Compras continuam só em BRL; Caixinhas já suporta BRL/USD/EUR/GBP/USDT/BTC/ETH com conversão ao vivo).
+- Severidade/priorização de notificação (info/atenção/alerta/crítico) — hoje todo evento chega com o mesmo peso visual.
+- Notificações push e keepalive **funcionam de ponta a ponta em produção**, mas exigem alguns passos manuais únicos (deploy de Edge Functions, chaves VAPID, agendamento) — ver [`supabase/NOTIFICACOES.md`](./supabase/NOTIFICACOES.md).
+
+Já implementado (histórico: este README ficou desatualizado por um tempo dizendo o contrário) — OCR de nota fiscal, geração automática de lançamentos recorrentes, CRUD completo de cômodo/subcategoria em Recursos, divisão de despesa entre múltiplos pagadores, leitura offline de boleto/Pix, importação de CSV/PDF, e o módulo Caixinhas inteiro.
 
 ## Checklist antes de considerar "pronto para uso real"
 

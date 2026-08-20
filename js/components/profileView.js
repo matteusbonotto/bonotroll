@@ -2,6 +2,7 @@ import { updateProfile, uploadAvatar } from '../services/auth.js';
 import { mockDb } from '../data/mockDb.js';
 import { isPushSupported, getExistingSubscription, subscribeToPush, unsubscribeFromPush } from '../services/push.js';
 import { resizeImage } from '../utils/image.js';
+import { exportarMeusDados, baixarComoJson } from '../services/dataExport.js';
 
 export function profileView() {
   return {
@@ -12,6 +13,7 @@ export function profileView() {
     pushSuportado: isPushSupported(),
     pushAtivo: false,
     pushCarregando: false,
+    exportando: false,
 
     async init() {
       this.nome = this.$store.app.profile?.nome || '';
@@ -82,6 +84,27 @@ export function profileView() {
       } finally {
         this.uploadingAvatar = false;
         event.target.value = '';
+      }
+    },
+
+    // Fase 6 (docs/BONOTTO-2027-BLUEPRINT.md §12) — exporta tudo que a
+    // pessoa vê hoje num JSON baixável, sem depender de servidor nenhum.
+    async exportarDados() {
+      const store = this.$store.app;
+      this.exportando = true;
+      try {
+        const dados = await exportarMeusDados({
+          profile: store.profile,
+          categories: store.categories,
+          groupId: store.group?.group?.id,
+        });
+        const dataIso = new Date().toISOString().slice(0, 10);
+        baixarComoJson(dados, `bonotto-meus-dados-${dataIso}.json`);
+        store.notify('Dados exportados.');
+      } catch (e) {
+        store.notify(e.message || 'Não foi possível exportar os dados.', 'danger');
+      } finally {
+        this.exportando = false;
       }
     },
 
