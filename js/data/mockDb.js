@@ -16,6 +16,18 @@ function isoDaysFromNow(n) {
   return d.toISOString().slice(0, 10);
 }
 
+// Logo de banco/empresa pro seed demo: SVG embutido (data URI), nunca
+// hotlinkado de fora (mesma regra já seguida pelo resto do app — ver nota
+// em "importação de CSV" no checklist). Não tenta reproduzir a marca real
+// de nenhuma empresa (evita qualquer questão de marca registrada) — é só um
+// quadrado arredondado colorido com 1-2 letras, propositalmente DIFERENTE
+// do círculo+iniciais que já é o fallback quando não há logo nenhum, pra
+// ficar claro visualmente qual card "tem logo" de verdade.
+function logoDataUri(letras, bg, fg = '#fff') {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="16" fill="${bg}"/><text x="32" y="41" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="${letras.length > 1 ? 22 : 28}" font-weight="700" fill="${fg}" text-anchor="middle">${letras}</text></svg>`;
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+}
+
 function seedDatabase() {
   const matheusId = 'demo-matheus';
   const beatrizId = 'demo-beatriz';
@@ -60,29 +72,80 @@ function seedDatabase() {
   }
 
   const transactions = [
-    tx({ tipo: 'saida', titulo: 'Amazon Prime', categoria_id: 'cat-assinaturas', tipo_despesa: 'fixa', valor: 19.90, data_vencimento: isoDaysFromNow(3) }),
-    tx({ tipo: 'saida', titulo: 'Claro Móvel', categoria_id: 'cat-assinaturas', tipo_despesa: 'fixa', valor: 51.91, data_vencimento: isoDaysFromNow(-2) }),
-    tx({ tipo: 'saida', titulo: 'Nubank+', categoria_id: 'cat-assinaturas', tipo_despesa: 'fixa', valor: 29.00, data_vencimento: isoDaysFromNow(-10), data_pagamento: isoDaysFromNow(-10) }),
-    tx({ tipo: 'saida', titulo: 'Vivo Internet', categoria_id: 'cat-assinaturas', tipo_despesa: 'fixa', valor: 92.34, data_vencimento: isoDaysFromNow(5) }),
-    tx({ tipo: 'saida', titulo: 'Open English', categoria_id: 'cat-curso', tipo_despesa: 'fixa', valor: 172.79, data_vencimento: isoDaysFromNow(-15), data_pagamento: isoDaysFromNow(-15) }),
-    tx({ tipo: 'saida', titulo: 'Tokio Marine — Seguro casa', categoria_id: 'cat-casa', tipo_despesa: 'fixa', valor: 34.40, data_vencimento: isoDaysFromNow(-20), data_pagamento: isoDaysFromNow(-20) }),
-    tx({ tipo: 'saida', titulo: 'CPFL Paulista (energia)', categoria_id: 'cat-casa', tipo_despesa: 'variavel', valor: 196.50, data_vencimento: isoDaysFromNow(-1) }),
-    tx({ tipo: 'saida', titulo: 'Sanasa (água)', categoria_id: 'cat-casa', tipo_despesa: 'variavel', valor: 119.64, data_vencimento: isoDaysFromNow(4) }),
+    tx({ tipo: 'saida', titulo: 'Amazon Prime', categoria_id: 'cat-assinaturas', tipo_despesa: 'fixa', valor: 19.90, empresa_servico: 'Amazon', data_vencimento: isoDaysFromNow(3) }),
+    tx({ tipo: 'saida', titulo: 'Claro Móvel', categoria_id: 'cat-assinaturas', tipo_despesa: 'fixa', valor: 51.91, empresa_servico: 'Claro', data_vencimento: isoDaysFromNow(-2) }),
+    tx({ tipo: 'saida', titulo: 'Nubank+', categoria_id: 'cat-assinaturas', tipo_despesa: 'fixa', valor: 29.00, empresa_servico: 'Nubank', data_vencimento: isoDaysFromNow(-10), data_pagamento: isoDaysFromNow(-10) }),
+    tx({ tipo: 'saida', titulo: 'Vivo Internet', categoria_id: 'cat-assinaturas', tipo_despesa: 'fixa', valor: 92.34, empresa_servico: 'Vivo', data_vencimento: isoDaysFromNow(5) }),
+    tx({ tipo: 'saida', titulo: 'Open English', categoria_id: 'cat-curso', tipo_despesa: 'fixa', valor: 172.79, empresa_servico: 'Open English', data_vencimento: isoDaysFromNow(-15), data_pagamento: isoDaysFromNow(-15) }),
+    tx({ tipo: 'saida', titulo: 'Tokio Marine — Seguro casa', categoria_id: 'cat-casa', tipo_despesa: 'fixa', valor: 34.40, empresa_servico: 'Tokio Marine', data_vencimento: isoDaysFromNow(-20), data_pagamento: isoDaysFromNow(-20) }),
+    tx({ tipo: 'saida', titulo: 'CPFL Paulista (energia)', categoria_id: 'cat-casa', tipo_despesa: 'variavel', valor: 196.50, empresa_servico: 'CPFL', data_vencimento: isoDaysFromNow(-1) }),
+    tx({ tipo: 'saida', titulo: 'Sanasa (água)', categoria_id: 'cat-casa', tipo_despesa: 'variavel', valor: 119.64, empresa_servico: 'Sanasa', data_vencimento: isoDaysFromNow(4) }),
     tx({ tipo: 'saida', titulo: 'Condomínio', categoria_id: 'cat-casa', tipo_despesa: 'fixa', valor: 415.90, data_vencimento: null }),
-    tx({ tipo: 'saida', titulo: 'Seguro Carro', categoria_id: 'cat-carro', tipo_despesa: 'fixa', valor: 212.58, data_vencimento: isoDaysFromNow(-30), data_pagamento: isoDaysFromNow(-30) }),
-    tx({ tipo: 'saida', titulo: 'Financiamento Carro', categoria_id: 'cat-carro', tipo_despesa: 'fixa', valor: 765.87, data_vencimento: isoDaysFromNow(6) }),
-    tx({ tipo: 'saida', titulo: 'Gasolina', categoria_id: 'cat-carro', tipo_despesa: 'variavel', valor: 200.00, data_vencimento: isoDaysFromNow(-5), data_pagamento: isoDaysFromNow(-5) }),
-    tx({ tipo: 'saida', titulo: 'Petlove', categoria_id: 'cat-pet', tipo_despesa: 'variavel', valor: 44.90, data_vencimento: isoDaysFromNow(-8), data_pagamento: isoDaysFromNow(-8) }),
-    tx({ tipo: 'saida', titulo: 'iFood / 99', categoria_id: 'cat-delivery', tipo_despesa: 'variavel', valor: 500.00, data_vencimento: null }),
-    tx({ tipo: 'saida', titulo: 'Financiamento Casa', categoria_id: 'cat-casa', tipo_despesa: 'fixa', valor: 1000.00, data_vencimento: isoDaysFromNow(-3) }),
+    tx({ tipo: 'saida', titulo: 'Seguro Carro', categoria_id: 'cat-carro', tipo_despesa: 'fixa', valor: 212.58, empresa_servico: 'Porto Seguro', data_vencimento: isoDaysFromNow(-30), data_pagamento: isoDaysFromNow(-30) }),
+    tx({ tipo: 'saida', titulo: 'Financiamento Carro', categoria_id: 'cat-carro', tipo_despesa: 'fixa', valor: 765.87, empresa_servico: 'Santander', data_vencimento: isoDaysFromNow(6) }),
+    tx({ tipo: 'saida', titulo: 'Gasolina', categoria_id: 'cat-carro', tipo_despesa: 'variavel', valor: 200.00, empresa_servico: 'Shell', data_vencimento: isoDaysFromNow(-5), data_pagamento: isoDaysFromNow(-5) }),
+    tx({ tipo: 'saida', titulo: 'Petlove', categoria_id: 'cat-pet', tipo_despesa: 'variavel', valor: 44.90, empresa_servico: 'Petlove', data_vencimento: isoDaysFromNow(-8), data_pagamento: isoDaysFromNow(-8) }),
+    tx({ tipo: 'saida', titulo: 'iFood / 99', categoria_id: 'cat-delivery', tipo_despesa: 'variavel', valor: 500.00, empresa_servico: 'iFood', data_vencimento: null }),
+    // Dividida entre os dois membros do grupo (60/40) — exemplo do multi-
+    // pagador (transaction_payers) já no primeiro login, senão ninguém vê o
+    // avatar-stack/"Dividido" ou o saldo "Entre vocês" sem criar uma despesa
+    // dividida manualmente primeiro.
+    tx({ tipo: 'saida', titulo: 'Financiamento Casa', categoria_id: 'cat-casa', tipo_despesa: 'fixa', valor: 1000.00, empresa_servico: 'Caixa Econômica', data_vencimento: isoDaysFromNow(-3) }),
     tx({ tipo: 'saida', titulo: 'Dízimo', categoria_id: 'cat-outro', tipo_despesa: 'variavel', valor: 200.00, data_vencimento: isoDaysFromNow(-7), data_pagamento: isoDaysFromNow(-7) }),
-    tx({ tipo: 'entrada', titulo: 'Salário MB Labs', categoria_id: 'cat-salario', tipo_despesa: 'fixa', valor: 6000.00, responsavel_id: matheusId, owner_id: matheusId, data_vencimento: isoDaysFromNow(-11), data_pagamento: isoDaysFromNow(-11), recorrente: true }),
-    tx({ tipo: 'entrada', titulo: 'Salário Dinamo', categoria_id: 'cat-salario', tipo_despesa: 'fixa', valor: 5200.00, responsavel_id: beatrizId, owner_id: beatrizId, data_vencimento: isoDaysFromNow(-11), data_pagamento: isoDaysFromNow(-11), recorrente: true }),
+    // Parcelada — exemplo de parcela_atual/parcela_total (nenhum outro
+    // lançamento do seed usava esse campo).
+    tx({ tipo: 'saida', titulo: 'Geladeira nova', categoria_id: 'cat-casa', tipo_despesa: 'variavel', valor: 250.00, empresa_servico: 'Magazine Luiza', parcela_atual: 3, parcela_total: 10, data_vencimento: isoDaysFromNow(9) }),
+    tx({ tipo: 'entrada', titulo: 'Salário MB Labs', categoria_id: 'cat-salario', tipo_despesa: 'fixa', valor: 6000.00, empresa_servico: 'MB Labs', responsavel_id: matheusId, owner_id: matheusId, data_vencimento: isoDaysFromNow(-11), data_pagamento: isoDaysFromNow(-11), recorrente: true }),
+    tx({ tipo: 'entrada', titulo: 'Salário Dinamo', categoria_id: 'cat-salario', tipo_despesa: 'fixa', valor: 5200.00, empresa_servico: 'Dinamo', responsavel_id: beatrizId, owner_id: beatrizId, data_vencimento: isoDaysFromNow(-11), data_pagamento: isoDaysFromNow(-11), recorrente: true }),
     // Propositalmente cadastrada há ~2 meses (não no mês atual) pra
     // demonstrar a geração automática de recorrência (js/services/recurring.js)
     // já no primeiro login demo — vira 2 lançamentos novos sozinha.
-    tx({ tipo: 'saida', titulo: 'Spotify Família', categoria_id: 'cat-assinaturas', tipo_despesa: 'fixa', valor: 34.90, data_cadastro: isoDaysFromNow(-70), data_vencimento: isoDaysFromNow(-70), data_pagamento: isoDaysFromNow(-70), recorrente: true }),
+    tx({ tipo: 'saida', titulo: 'Spotify Família', categoria_id: 'cat-assinaturas', tipo_despesa: 'fixa', valor: 34.90, empresa_servico: 'Spotify', data_cadastro: isoDaysFromNow(-70), data_vencimento: isoDaysFromNow(-70), data_pagamento: isoDaysFromNow(-70), recorrente: true }),
   ];
+
+  // Divide "Financiamento Casa" 60/40 entre Matheus/Beatriz — mesma regra
+  // de shareForMember (services/transactions.js): existir uma linha aqui é
+  // o que faz a despesa contar como "dividida" (avatar-stack, saldo "Entre
+  // vocês").
+  const txFinanciamentoCasa = transactions.find((t) => t.titulo === 'Financiamento Casa');
+  const transactionPayers = [
+    { id: uid('txpayer'), transaction_id: txFinanciamentoCasa.id, profile_id: matheusId, percentual: 60, valor: 600, criado_em: new Date().toISOString() },
+    { id: uid('txpayer'), transaction_id: txFinanciamentoCasa.id, profile_id: beatrizId, percentual: 40, valor: 400, criado_em: new Date().toISOString() },
+  ];
+
+  // Empresas/serviços com logo — sem isso, "empresa_servico" nas transações
+  // acima só mostraria o nome (fallback de iniciais), nunca um logo de
+  // verdade. Cor de cada uma é só pra variedade visual, não tenta reproduzir
+  // a marca real de ninguém (ver comentário de logoDataUri).
+  const companies = [
+    { id: 'company-amazon', nome: 'Amazon', logo_url: logoDataUri('A', '#FF9900', '#131921') },
+    { id: 'company-claro', nome: 'Claro', logo_url: logoDataUri('C', '#DA291C') },
+    { id: 'company-nubank', nome: 'Nubank', logo_url: logoDataUri('N', '#820AD1') },
+    { id: 'company-vivo', nome: 'Vivo', logo_url: logoDataUri('V', '#00A19A') },
+    { id: 'company-open-english', nome: 'Open English', logo_url: logoDataUri('OE', '#0B3D91') },
+    { id: 'company-tokio-marine', nome: 'Tokio Marine', logo_url: logoDataUri('TM', '#00573F') },
+    { id: 'company-cpfl', nome: 'CPFL', logo_url: logoDataUri('C', '#F5A800', '#1A1A1A') },
+    { id: 'company-sanasa', nome: 'Sanasa', logo_url: logoDataUri('S', '#0072BC') },
+    { id: 'company-porto-seguro', nome: 'Porto Seguro', logo_url: logoDataUri('PS', '#003DA5') },
+    { id: 'company-santander', nome: 'Santander', logo_url: logoDataUri('S', '#EC0000') },
+    { id: 'company-shell', nome: 'Shell', logo_url: logoDataUri('S', '#FFD500', '#DD1D21') },
+    { id: 'company-petlove', nome: 'Petlove', logo_url: logoDataUri('P', '#6CC24A') },
+    { id: 'company-ifood', nome: 'iFood', logo_url: logoDataUri('i', '#EA1D2C') },
+    { id: 'company-caixa', nome: 'Caixa Econômica', logo_url: logoDataUri('CX', '#005CA9') },
+    { id: 'company-magalu', nome: 'Magazine Luiza', logo_url: logoDataUri('ML', '#0086FF') },
+    { id: 'company-mb-labs', nome: 'MB Labs', logo_url: logoDataUri('MB', '#0E9F6E') },
+    { id: 'company-dinamo', nome: 'Dinamo', logo_url: logoDataUri('D', '#FF6B4A') },
+    { id: 'company-spotify', nome: 'Spotify', logo_url: logoDataUri('S', '#1DB954', '#0A0A0A') },
+  ].map((c) => ({ ...c, owner_id: matheusId, group_id: groupId, criado_em: new Date().toISOString() }));
+
+  // Bancos das Caixinhas — mesma ideia (sem isso, "Nubank"/"Inter"/"C6 Bank"
+  // nas caixinhas abaixo mostrariam só o ícone genérico de cofrinho).
+  const banks = [
+    { id: 'bank-nubank', nome: 'Nubank', logo_url: logoDataUri('N', '#820AD1') },
+    { id: 'bank-inter', nome: 'Inter', logo_url: logoDataUri('I', '#FF7A00') },
+    { id: 'bank-c6', nome: 'C6 Bank', logo_url: logoDataUri('C6', '#1A1A1A', '#FFD700') },
+    { id: 'bank-wise', nome: 'Wise', logo_url: logoDataUri('W', '#9FE870', '#163300') },
+  ].map((b) => ({ ...b, owner_id: matheusId, group_id: groupId, criado_em: new Date().toISOString() }));
 
   const shoppingLists = [
     { id: 'demo-lista-1', owner_id: matheusId, group_id: groupId, nome: 'Compras da Semana', status: 'planejando', criado_em: new Date().toISOString(), iniciado_em: null, finalizado_em: null, transacao_id: null },
@@ -139,6 +202,9 @@ function seedDatabase() {
     { id: 'caixa-nubank', owner_id: matheusId, group_id: groupId, banco_nome: 'Nubank', moeda: 'BRL', meta: 5000, icone: 'bi-piggy-bank' },
     { id: 'caixa-inter', owner_id: matheusId, group_id: groupId, banco_nome: 'Inter', moeda: 'BRL', meta: 2000, icone: 'bi-piggy-bank' },
     { id: 'caixa-beatriz-c6', owner_id: beatrizId, group_id: groupId, banco_nome: 'C6 Bank', moeda: 'BRL', meta: null, icone: 'bi-piggy-bank' },
+    // Moeda estrangeira — exemplo de conversão pra BRL (conversaoBRLFor em
+    // js/components/dashboard.js), nenhuma outra caixinha do seed usava.
+    { id: 'caixa-wise', owner_id: matheusId, group_id: groupId, banco_nome: 'Wise', moeda: 'USD', meta: 1000, icone: 'bi-piggy-bank' },
   ].map((c) => ({ ...c, criado_em: new Date().toISOString() }));
 
   const caixinhaMovimentacoes = [
@@ -147,6 +213,7 @@ function seedDatabase() {
     { id: uid('caixamov'), caixinha_id: 'caixa-nubank', tipo: 'retirado', valor: 200, data: isoDaysFromNow(-3), observacoes: null },
     { id: uid('caixamov'), caixinha_id: 'caixa-inter', tipo: 'guardado', valor: 800, data: isoDaysFromNow(-20), observacoes: null },
     { id: uid('caixamov'), caixinha_id: 'caixa-beatriz-c6', tipo: 'guardado', valor: 1200, data: isoDaysFromNow(-15), observacoes: null },
+    { id: uid('caixamov'), caixinha_id: 'caixa-wise', tipo: 'guardado', valor: 300, data: isoDaysFromNow(-25), observacoes: null },
   ].map((m) => ({ ...m, criado_em: new Date().toISOString() }));
 
   return {
@@ -161,9 +228,9 @@ function seedDatabase() {
     ],
     categories,
     transactions,
-    transaction_payers: [],
-    companies: [],
-    banks: [],
+    transaction_payers: transactionPayers,
+    companies,
+    banks,
     shopping_lists: shoppingLists,
     shopping_list_items: shoppingListItems,
     resource_rooms: rooms,
