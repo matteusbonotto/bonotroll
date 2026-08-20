@@ -1528,9 +1528,9 @@
             <div class="cg-card mb-3" x-show="caixinhas.length">
               <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
                 <div>
-                  <div class="cg-muted small text-uppercase">Total guardado em BRL</div>
+                  <div class="cg-muted small text-uppercase">Total guardado (convertido pra BRL)</div>
                   <div class="h4 fw-bold mb-0" x-text="cgFormat.formatCurrency(somaGeral)"></div>
-                  <div class="cg-muted small" x-show="caixinhas.some(c => c.moeda && c.moeda !== 'BRL')">Caixinhas em outra moeda entram convertidas, no card de cada uma</div>
+                  <div class="cg-muted small" x-show="caixinhas.some(c => c.moeda && c.moeda !== 'BRL' && !taxasPorMoeda[c.moeda])">Buscando cotação de moeda estrangeira… o total atualiza assim que chegar</div>
                 </div>
                 <div class="d-flex flex-wrap gap-3">
                   <template x-for="r in porResponsavel" :key="r.membro.id">

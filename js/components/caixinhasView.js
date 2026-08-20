@@ -1,6 +1,6 @@
 import * as cx from '../services/caixinhas.js';
 import { taxaParaBRL } from '../services/fx.js';
-import { MOEDAS_SUPORTADAS, formatMoeda } from '../utils/format.js';
+import { MOEDAS_SUPORTADAS, formatMoeda, moedaInfo } from '../utils/format.js';
 
 const CAIXINHA_FORM_VAZIA = () => ({ id: null, banco_nome: '', moeda: 'BRL', meta: '', icone: 'bi-piggy-bank', responsavel_id: '' });
 const ICONE_CAIXINHA_VAZIO = () => ({ modo: 'preset', url: '', urlInput: '', uploading: false, editingHadUrl: false });
@@ -94,7 +94,8 @@ export function caixinhasView() {
     cotacaoLabel(moeda) {
       const taxa = this.taxasPorMoeda[moeda];
       if (!taxa) return '';
-      return `1 ${moeda} ≈ R$ ${taxa.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      const simbolo = moedaInfo(moeda).simbolo;
+      return `${simbolo} 1 ≈ R$ ${taxa.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     },
 
     get caixinhaAtiva() {
@@ -123,22 +124,26 @@ export function caixinhasView() {
     },
 
     // ---------- Totalizadores: soma dos bancos + soma por responsável ----------
+    // Ambos somam TUDO em BRL — caixinha em BRL entra direto, caixinha
+    // estrangeira entra já convertida (taxasPorMoeda) assim que a cotação
+    // carrega; enquanto não carrega, fica de fora só daquele total
+    // temporariamente (nunca soma um valor sem cotação de verdade por trás
+    // — ver comentário em cx.somaSaldos). "Quanto eu tenho no total" precisa
+    // somar tudo, não ignorar o que está guardado em outra moeda.
     get somaGeral() {
-      return cx.somaSaldos(this.caixinhas, this.movByCaixinha);
+      return cx.somaSaldos(this.caixinhas, this.movByCaixinha, this.taxasPorMoeda);
     },
-    // Cada linha: o membro + o quanto ele tem guardado (soma de todas as
-    // caixinhas cujo dono é ele) — cobre "quanto o responsável tem
-    // individual e somado com os membros do grupo" (a soma do grupo inteiro
-    // é somaGeral acima, que já soma TODAS as caixinhas visíveis). Só soma
-    // caixinhas em BRL — misturar moeda estrangeira sem conversão daria um
-    // número sem sentido; ver conversaoBRLFor pro valor convertido por
-    // caixinha individual.
+    // Cada linha: o membro + o quanto ele tem guardado, em BRL, somando
+    // todas as caixinhas dele (BRL direto + estrangeira convertida) — cobre
+    // "quanto o responsável tem individual e somado com os membros do
+    // grupo" (a soma do grupo inteiro é somaGeral acima).
     get porResponsavel() {
       return this.responsaveisComCaixinha.map((m) => ({
         membro: m,
         saldo: cx.somaSaldos(
-          this.caixinhas.filter((c) => c.owner_id === m.id && (!c.moeda || c.moeda === 'BRL')),
-          this.movByCaixinha
+          this.caixinhas.filter((c) => c.owner_id === m.id),
+          this.movByCaixinha,
+          this.taxasPorMoeda
         ),
       }));
     },

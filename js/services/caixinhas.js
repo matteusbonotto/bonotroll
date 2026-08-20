@@ -155,20 +155,25 @@ export function computeProgresso(saldo, meta) {
   return Math.max(0, Math.min(100, Math.round((saldo / meta) * 100)));
 }
 
-// Soma o saldo de um grupo de caixinhas (todas juntas, ou já filtradas por
-// banco/responsável antes de chamar) — usado pros totalizadores "soma dos
-// bancos" e "por responsável" da tela.
+// Soma o saldo de um grupo de caixinhas, tudo em BRL — usado pros
+// totalizadores "soma dos bancos" e "por responsável" da tela.
 //
-// Bug real corrigido (2026-08-20): essa função somava o saldo BRUTO de
-// QUALQUER caixinha passada, sem olhar pra moeda — uma caixinha de US$ 903
-// entrava na conta como se fosse R$ 903, inflando o "total em BRL" errado.
-// O filtro fica AQUI DENTRO (não em quem chama) de propósito: depender de
-// cada chamador lembrar de filtrar por moeda antes foi exatamente o que deu
-// errado da primeira vez — `porResponsavel` filtrava, `somaGeral` não.
-// Moeda estrangeira não entra na soma (sem conversão embutida aqui; quem
-// quiser o valor convertido usa taxaParaBRL/conversaoBRLFor por caixinha).
-export function somaSaldos(caixinhas, movByCaixinha) {
-  return caixinhas
-    .filter((c) => !c.moeda || c.moeda === 'BRL')
-    .reduce((acc, c) => acc + computeTotais(movByCaixinha[c.id] || []).saldo, 0);
+// Duas versões do bug já passaram por aqui (2026-08-20): primeiro somava o
+// valor BRUTO de qualquer caixinha sem olhar a moeda (US$ 903 virava R$ 903
+// na conta). Corrigido filtrando só BRL — mas aí uma caixinha estrangeira
+// simplesmente SUMIA do total em vez de entrar convertida, o que o usuário
+// apontou não fazer sentido: "quanto eu tenho no total" precisa somar tudo,
+// não ignorar o que está em outra moeda. Agora: BRL entra direto, moeda
+// estrangeira entra pelo valor JÁ CONVERTIDO (`taxasPorMoeda[moeda] * saldo`)
+// quando a cotação já foi carregada — e só fica de fora enquanto ela ainda
+// não chegou (nunca inventa um valor sem cotação de verdade por trás).
+// `taxasPorMoeda` é opcional (default {}) pra não quebrar quem ainda chama
+// sem passar — nesse caso o comportamento cai pra "só soma BRL".
+export function somaSaldos(caixinhas, movByCaixinha, taxasPorMoeda = {}) {
+  return caixinhas.reduce((acc, c) => {
+    const saldo = computeTotais(movByCaixinha[c.id] || []).saldo;
+    if (!c.moeda || c.moeda === 'BRL') return acc + saldo;
+    const taxa = taxasPorMoeda[c.moeda];
+    return taxa ? acc + saldo * taxa : acc;
+  }, 0);
 }
