@@ -70,14 +70,6 @@ a { color: var(--color-primary); }
 .cg-app-shell {
   display: flex;
   min-height: 100vh;
-  /* .cg-topbar usa margem negativa pra "sangrar" até a borda do container
-     (efeito visual deliberado, ver components.css) — sem conter isso aqui,
-     a margem negativa vazava alguns pixels pra fora da viewport de verdade
-     e criava barra de rolagem horizontal na PÁGINA inteira (bug real
-     reportado: "a tabela tá cortando as laterais"). A rolagem horizontal
-     própria da tabela (.cg-scroll-x) continua funcionando normal — é um
-     scroll interno, não afetado por isto. */
-  overflow-x: hidden;
 }
 
 .cg-main {
@@ -87,6 +79,18 @@ a { color: var(--color-primary); }
   max-width: 1180px;
   margin-inline: auto;
   width: 100%;
+  /* .cg-topbar usa margem negativa pra "sangrar" até a borda do container
+     (efeito visual deliberado, ver components.css) — sem conter isso, a
+     margem negativa vazava pra fora da viewport de verdade e criava barra
+     de rolagem horizontal na PÁGINA inteira (bug real: "tabela cortando as
+     laterais"). Contido AQUI (.cg-main), não em .cg-app-shell — .cg-main é
+     IRMÃ da sidebar sticky, nunca ancestral dela, então isto nunca cria um
+     novo contexto de scroll que quebraria o position:sticky da sidebar
+     (bug real que essa mesma correção causou numa tentativa anterior, ver
+     git log — overflow-x:hidden no .cg-app-shell faz o overflow-y computar
+     pra "auto" automaticamente nele, virando a "âncora de scroll" errada
+     pro sticky). */
+  overflow-x: hidden;
 }
 @media (min-width: 992px) {
   .cg-main { padding: var(--space-5) var(--space-6); }
