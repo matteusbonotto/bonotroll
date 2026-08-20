@@ -1,4 +1,5 @@
 import { createCategory, updateCategory, deleteCategory, uploadCategoryIcon } from '../services/categories.js';
+import { resizeImage } from '../utils/image.js';
 
 export const CATEGORY_ICON_PRESETS = [
   'bi-tag', 'bi-house-door', 'bi-car-front', 'bi-basket', 'bi-cart3',
@@ -75,7 +76,7 @@ export function categoryModalStore() {
       const store = Alpine.store('app');
       this.uploadingIcone = true;
       try {
-        this.iconeUrl = await uploadCategoryIcon(store.profile.id, file);
+        this.iconeUrl = await uploadCategoryIcon(store.profile.id, await resizeImage(file));
       } catch (e) {
         store.notify(e.message || 'Erro ao enviar ícone.', 'danger');
       } finally {

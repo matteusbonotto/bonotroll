@@ -1,6 +1,7 @@
 import { updateProfile, uploadAvatar } from '../services/auth.js';
 import { mockDb } from '../data/mockDb.js';
 import { isPushSupported, getExistingSubscription, subscribeToPush, unsubscribeFromPush } from '../services/push.js';
+import { resizeImage } from '../utils/image.js';
 
 export function profileView() {
   return {
@@ -74,7 +75,7 @@ export function profileView() {
       const store = this.$store.app;
       this.uploadingAvatar = true;
       try {
-        store.profile = await uploadAvatar(store.profile.id, file);
+        store.profile = await uploadAvatar(store.profile.id, await resizeImage(file));
         store.notify('Foto atualizada.');
       } catch (e) {
         store.notify(e.message || 'Erro ao enviar foto.', 'danger');

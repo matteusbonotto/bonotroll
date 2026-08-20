@@ -5,6 +5,7 @@ import { recognizeText, parseReceiptText } from '../services/ocr.js';
 import { startBarcodeScanner, stopBarcodeScanner, interpretScannedCode } from '../services/barcode.js';
 import { extractTextFromPdf } from '../services/pdf.js';
 import { todayIso, parseCurrencyInput } from '../utils/format.js';
+import { resizeImage } from '../utils/image.js';
 
 function pad2(n) {
   return String(n).padStart(2, '0');
@@ -344,7 +345,7 @@ export function txModalStore() {
       const store = Alpine.store('app');
       this.uploadingEmpresaLogo = true;
       try {
-        this.empresaLogoUrl = await uploadCompanyLogo(store.profile.id, file);
+        this.empresaLogoUrl = await uploadCompanyLogo(store.profile.id, await resizeImage(file));
       } catch (e) {
         store.notify(e.message || 'Erro ao enviar logo.', 'danger');
       } finally {

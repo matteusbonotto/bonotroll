@@ -1,6 +1,7 @@
 import * as cx from '../services/caixinhas.js';
 import { taxaParaBRL } from '../services/fx.js';
 import { MOEDAS_SUPORTADAS, formatMoeda, moedaInfo } from '../utils/format.js';
+import { resizeImage } from '../utils/image.js';
 
 const CAIXINHA_FORM_VAZIA = () => ({ id: null, banco_nome: '', moeda: 'BRL', meta: '', icone: 'bi-piggy-bank', responsavel_id: '' });
 const ICONE_CAIXINHA_VAZIO = () => ({ modo: 'preset', url: '', urlInput: '', uploading: false, editingHadUrl: false });
@@ -186,7 +187,7 @@ export function caixinhasView() {
       const store = this.$store.app;
       this.iconeCaixinha.uploading = true;
       try {
-        this.iconeCaixinha.url = await cx.uploadCaixinhaIcone(store.profile.id, file);
+        this.iconeCaixinha.url = await cx.uploadCaixinhaIcone(store.profile.id, await resizeImage(file));
       } catch (e) {
         store.notify(e.message || 'Erro ao enviar imagem.', 'danger');
       } finally {
