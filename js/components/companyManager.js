@@ -1,9 +1,14 @@
 import { createCompany, deleteCompany, updateCompany, uploadCompanyLogo } from '../services/companies.js';
 import { resizeImage } from '../utils/image.js';
 
+// Alpine.store('companyModal') — dois modais separados: `open` é a LISTA
+// ("Perfil → Empresas e serviços"), `formOpen` é o formulário de criar/
+// editar, empilhado por cima (.cg-modal-backdrop--stacked) quando `open`
+// também está true. Mesmo padrão de bankManager.js/categoryManager.js.
 export function companyModalStore() {
   return {
     open: false,
+    formOpen: false,
     editingId: null,
     nome: '',
     logoUrl: '',
@@ -11,11 +16,17 @@ export function companyModalStore() {
     uploading: false,
 
     openManage() {
-      this.resetForm();
       this.open = true;
     },
-    close() {
+    closeManage() {
       this.open = false;
+    },
+    openCreate() {
+      this.resetForm();
+      this.formOpen = true;
+    },
+    closeForm() {
+      this.formOpen = false;
       this.resetForm();
     },
     resetForm() {
@@ -27,6 +38,7 @@ export function companyModalStore() {
       this.editingId = company.id;
       this.nome = company.nome;
       this.logoUrl = company.logo_url || '';
+      this.formOpen = true;
     },
     async onLogoFile(event) {
       const file = event.target.files?.[0];
@@ -47,23 +59,39 @@ export function companyModalStore() {
       const store = Alpine.store('app');
       this.saving = true;
       try {
+        const nome = this.nome.trim();
         let company;
         if (this.editingId) {
-          company = await updateCompany(this.editingId, { nome: this.nome.trim(), logo_url: this.logoUrl || null });
+          company = await updateCompany(this.editingId, { nome, logo_url: this.logoUrl || null });
           const index = store.companies.findIndex((item) => item.id === company.id);
           if (index >= 0) store.companies[index] = company;
           store.notify('Empresa atualizada.');
         } else {
-          company = await createCompany({
-            nome: this.nome.trim(),
-            logoUrl: this.logoUrl,
-            ownerId: store.profile.id,
-            groupId: store.group?.group?.id,
-          });
-          store.companies.push(company);
-          store.notify('Empresa criada.');
+          // "Não pode haver duplicidade, melhor reaproveitamento de
+          // logotipos e títulos" (pedido explícito) — mesmo nome
+          // (case-insensitive) já existente reaproveita em vez de duplicar.
+          const alvo = nome.toLowerCase();
+          const existente = store.companies.find((c) => c.nome.trim().toLowerCase() === alvo);
+          if (existente) {
+            company = existente;
+            if (this.logoUrl && !existente.logo_url) {
+              company = await updateCompany(existente.id, { logo_url: this.logoUrl });
+              const index = store.companies.findIndex((item) => item.id === existente.id);
+              if (index >= 0) store.companies[index] = company;
+            }
+            store.notify('Já existia uma empresa "' + nome + '" — reaproveitada em vez de duplicar.');
+          } else {
+            company = await createCompany({
+              nome,
+              logoUrl: this.logoUrl,
+              ownerId: store.profile.id,
+              groupId: store.group?.group?.id,
+            });
+            store.companies.push(company);
+            store.notify('Empresa criada.');
+          }
         }
-        this.resetForm();
+        this.closeForm();
       } catch (error) {
         store.notify(error.message || 'Erro ao salvar empresa.', 'danger');
       } finally {
@@ -76,7 +104,7 @@ export function companyModalStore() {
       try {
         await deleteCompany(company.id);
         store.companies = store.companies.filter((item) => item.id !== company.id);
-        if (this.editingId === company.id) this.resetForm();
+        if (this.editingId === company.id) this.closeForm();
         store.notify('Empresa removida.');
       } catch (error) {
         store.notify(error.message || 'Erro ao remover empresa.', 'danger');

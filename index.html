@@ -501,18 +501,17 @@
                         <span class="text-truncate" x-text="r.titulo"></span>
                         <span class="cg-parcela-tag flex-shrink-0" x-show="r.parcela_total" x-text="r.parcela_atual + '/' + r.parcela_total"></span>
                       </div>
-                      <div class="cg-muted small text-truncate" x-show="r.empresa_servico" x-text="r.empresa_servico"></div>
-                      <div class="d-flex align-items-center gap-1 mt-1">
-                        <span class="cg-chip" :style="{ background: categoryFor(r.categoria_id)?.cor || '#94A3B8' }">
-                          <span x-text="categoryFor(r.categoria_id)?.nome || 'Sem categoria'"></span>
-                        </span>
-                        <span class="cg-muted small" x-text="responsavelFor(r.responsavel_id)?.nome || ''"></span>
-                      </div>
+                      <div class="cg-muted small text-truncate" x-text="(r.empresa_servico ? r.empresa_servico + ' · ' : '') + (responsavelFor(r.responsavel_id)?.nome || '')"></div>
                     </div>
                   </div>
                   <div class="text-end ms-2">
-                    <div class="text-end" :class="r.tipo === 'entrada' ? 'text-success fw-semibold' : 'text-danger fw-semibold'" :title="cgFormat.formatCurrency(r.valor)" x-text="(r.tipo === 'entrada' ? '+ ' : '- ') + cgFormat.formatCurrencyCompact(r.valor)"></div>
-                    <span class="cg-badge" :class="'cg-badge--' + cgStatus.statusMeta(r._status).badge" x-text="cgStatus.statusMeta(r._status).label"></span>
+                    <div class="text-end mb-1" :class="r.tipo === 'entrada' ? 'text-success fw-semibold' : 'text-danger fw-semibold'" :title="cgFormat.formatCurrency(r.valor)" x-text="(r.tipo === 'entrada' ? '+ ' : '- ') + cgFormat.formatCurrencyCompact(r.valor)"></div>
+                    <div class="d-flex align-items-center justify-content-end gap-1">
+                      <span class="cg-chip" :style="{ background: categoryFor(r.categoria_id)?.cor || '#94A3B8' }">
+                        <span x-text="categoryFor(r.categoria_id)?.nome || 'Sem categoria'"></span>
+                      </span>
+                      <span class="cg-badge" :class="'cg-badge--' + cgStatus.statusMeta(r._status).badge" x-text="cgStatus.statusMeta(r._status).label"></span>
+                    </div>
                   </div>
                 </div>
               </template>
