@@ -832,7 +832,7 @@
           <template x-if="layout === 'lista' && secao.linhas.length">
           <div class="d-flex flex-column gap-2 d-md-none">
             <template x-for="row in secao.linhas" :key="row.id">
-              <div class="cg-card cg-card--compact">
+              <div class="cg-card cg-card--compact" :class="{ 'cg-card--dense': densidade === 'compacta' }">
                 <div class="d-flex justify-content-between align-items-center gap-2 mb-2 min-w-0">
                   <div class="d-flex align-items-center gap-2 min-w-0">
                     <button type="button" class="btn p-0 border-0 bg-transparent flex-shrink-0" x-show="payersFor(row).length >= 2" @click="editar(row)" title="Despesa dividida — toque pra ver/editar a divisão">

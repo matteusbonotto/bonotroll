@@ -270,6 +270,33 @@ a { color: var(--color-primary); }
     width: auto;
   }
 }
+/* Escala de botão pensada pra tela cheia, não pra celular — reportado com
+   print: "filtros totalmente gigantes ocupando a tela toda" (Transações e
+   Compras, mesmo problema nas duas). .cg-btn tem min-height/padding fixos
+   que ignoram ".btn-sm" (histórico do projeto: outra regra ".cg-btn" mais
+   abaixo neste mesmo arquivo, mais específica, sempre vence) — então
+   qualquer botão com classe .cg-btn.btn-sm ficava do MESMO tamanho grande
+   de um botão normal. Reduz só nesse caso, só no mobile — não mexe no
+   tamanho de CTA principal nenhum (ex.: "Iniciar Compra" não é .btn-sm). */
+@media (max-width: 767px) {
+  .cg-btn.btn-sm {
+    min-height: 38px;
+    padding-inline: 12px;
+    font-size: 0.8rem;
+  }
+  .cg-view-toggle button {
+    min-height: 38px;
+    padding: 5px 9px;
+  }
+  /* Continua sendo a ação principal da tela (Iniciar/Encerrar Compra) —
+     não fica do tamanho de botão secundário, só um pouco menos dominante
+     numa tela de ~390px de largura. */
+  .cg-shopping-toggle {
+    min-height: 48px;
+    font-size: 0.95rem;
+    padding-inline: var(--space-4);
+  }
+}
 
 .cg-grid-dashboard {
   display: grid;

@@ -114,7 +114,16 @@
   min-width: 0;
 }
 
-.cg-card--compact {
+/* .cg-card.cg-card--compact (composto, não só .cg-card--compact): este
+   arquivo tem MAIS de uma declaração solta de ".cg-card" (dead code
+   acumulado, mesmo problema já visto em .cg-btn/.cg-main nesta base —
+   ver git log) — com um seletor de uma classe só, qualquer uma dessas
+   declarações posterior no arquivo/cascata vencia o padding daqui e
+   fazia a variante "compacta" nunca ter efeito visível de verdade
+   (reportado: "modo compacto não funciona no mobile"). Duas classes no
+   seletor sobem a especificidade o bastante pra vencer qualquer
+   ".cg-card" sozinho, não importa a ordem. */
+.cg-card.cg-card--compact {
   padding: var(--space-3);
   border-radius: var(--radius-md);
   /* Mesma causa raiz de .cg-due-row/.cg-list-row: este card é filha de um
@@ -129,6 +138,18 @@
   padding: 2px 6px;
   font-size: 0.8rem;
 }
+/* Densidade "compacta" no MOBILE — soma por cima de .cg-card--compact
+   (o padrão fixo do card mobile) só quando densidade==='compacta' de
+   verdade, apertando ainda mais; mesmo espírito de .cg-table--compact no
+   desktop, adaptado pro card. Três classes no seletor: precisa vencer
+   TANTO as declarações soltas de .cg-card quanto .cg-card--compact
+   (que agora também é composta, ver comentário acima). */
+.cg-card.cg-card--compact.cg-card--dense {
+  padding: 8px 10px;
+  font-size: 0.8rem;
+}
+.cg-card--dense .cg-avatar--sm { width: 28px; height: 28px; font-size: 0.7rem; }
+.cg-card--dense .fw-semibold { font-size: 0.85rem; }
 
 .cg-card--stat .cg-card__label {
   font-size: 0.85rem;
