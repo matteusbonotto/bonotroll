@@ -77,7 +77,15 @@ a { color: var(--color-primary); }
   flex: 1;
   min-width: 0;
   padding: var(--space-4);
-  max-width: 1180px;
+  /* Antes fixo em 1180px (e outra regra em components.css, morta pela
+     cascata, dizia 1320px — nenhum dos dois relativo à tela) — sobrava
+     bastante espaço não aproveitado dos dois lados em qualquer monitor
+     desktop, e ENQUANTO ISSO a tabela de Transações ficava com scroll
+     horizontal cortando/escondendo coluna, mesmo com espaço de sobra ao
+     redor (reportado, com print). 96vw acompanha a largura real da tela
+     em vez de um número fixo; 1600px é só um teto pra não esticar demais
+     em monitor ultrawide. */
+  max-width: min(96vw, 1600px);
   margin-inline: auto;
   width: 100%;
   /* .cg-topbar usa margem negativa pra "sangrar" até a borda do container

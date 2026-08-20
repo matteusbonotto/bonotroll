@@ -1100,9 +1100,6 @@ body { font-size: var(--font-size-body); }
   box-shadow: inset 3px 0 0 var(--color-primary);
 }
 
-.cg-main { max-width: 1320px; padding: 18px; }
-@media (min-width: 992px) { .cg-main { padding: 24px 42px 48px; } }
-
 .cg-topbar {
   min-height: 58px;
   border-bottom: 1px solid var(--color-border);
