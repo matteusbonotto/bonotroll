@@ -507,7 +507,7 @@
             <!-- 2 grupos independentes (2026-08-20) — layout (lista/grade)
                  e densidade (normal/compacta) SEMPRE combináveis, no lugar
                  de 4 botões soltos sem relação clara entre si. -->
-            <div class="d-flex gap-2">
+            <div class="d-flex flex-wrap gap-2">
               <div class="cg-view-toggle">
                 <button type="button" :class="{ 'is-active': layout === 'lista' }" @click="setLayout('lista')" title="Lista"><i class="bi bi-list-ul"></i></button>
                 <button type="button" :class="{ 'is-active': layout === 'grade' }" @click="setLayout('grade')" title="Grade"><i class="bi bi-grid-3x3-gap"></i></button>
@@ -516,7 +516,21 @@
                 <button type="button" :class="{ 'is-active': densidade === 'normal' }" @click="setDensidade('normal')" title="Normal"><i class="bi bi-arrows-vertical"></i></button>
                 <button type="button" :class="{ 'is-active': densidade === 'compacta' }" @click="setDensidade('compacta')" title="Compacta"><i class="bi bi-list"></i></button>
               </div>
+              <!-- Agrupar (2026-08-20, reposicionado): antes ficava numa
+                   fileira própria bem mais abaixo, longe de qualquer outro
+                   controle de "como ver isto" — reportado como "lugar
+                   desconfortável e fora do padrão". Junto com layout/
+                   densidade no mesmo grupo de controles agora. -->
+              <button type="button" class="cg-btn btn btn-sm" :class="agrupando ? 'btn-secondary' : 'btn-outline-secondary'" @click="setAgrupando(!agrupando)">
+                <i class="bi bi-layers"></i> Agrupar
+              </button>
             </div>
+          </div>
+          <div class="btn-group btn-group-sm flex-wrap mb-3" role="group" x-show="agrupando" x-cloak>
+            <button type="button" class="btn" :class="agrupamento === 'periodo' ? 'btn-secondary' : 'btn-outline-secondary'" @click="setAgrupamento('periodo')">Período</button>
+            <button type="button" class="btn" :class="agrupamento === 'responsavel' ? 'btn-secondary' : 'btn-outline-secondary'" @click="setAgrupamento('responsavel')">Responsável</button>
+            <button type="button" class="btn" :class="agrupamento === 'movimentacao' ? 'btn-secondary' : 'btn-outline-secondary'" @click="setAgrupamento('movimentacao')">Movimentação</button>
+            <button type="button" class="btn" :class="agrupamento === 'categoria' ? 'btn-secondary' : 'btn-outline-secondary'" @click="setAgrupamento('categoria')">Categoria</button>
           </div>
 
           <div class="cg-quick-actions mb-3">
@@ -627,18 +641,6 @@
                js/components/transactionTable.js. -->
           <template x-if="sortedRows.length">
           <div>
-            <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
-              <button type="button" class="cg-btn btn btn-sm" :class="agrupando ? 'btn-secondary' : 'btn-outline-secondary'" @click="setAgrupando(!agrupando)">
-                <i class="bi bi-layers"></i> Agrupar
-              </button>
-              <div class="btn-group btn-group-sm" role="group" x-show="agrupando" x-cloak>
-                <button type="button" class="btn" :class="agrupamento === 'periodo' ? 'btn-secondary' : 'btn-outline-secondary'" @click="setAgrupamento('periodo')">Período</button>
-                <button type="button" class="btn" :class="agrupamento === 'responsavel' ? 'btn-secondary' : 'btn-outline-secondary'" @click="setAgrupamento('responsavel')">Responsável</button>
-                <button type="button" class="btn" :class="agrupamento === 'movimentacao' ? 'btn-secondary' : 'btn-outline-secondary'" @click="setAgrupamento('movimentacao')">Movimentação</button>
-                <button type="button" class="btn" :class="agrupamento === 'categoria' ? 'btn-secondary' : 'btn-outline-secondary'" @click="setAgrupamento('categoria')">Categoria</button>
-              </div>
-            </div>
-
             <template x-for="secao in secoesExibidas" :key="secao.chave">
             <div class="mb-3">
               <!-- Cabeçalho do grupo — x-if (não x-show) de propósito: some

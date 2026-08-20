@@ -21,7 +21,7 @@
 ## Pedidos de redesign (prioridade 2 — visual agressivo, item por item)
 
 - [ ] Aparência geral ainda parecida demais com a versão anterior — quer algo visualmente mais distinto/moderno em TODO o projeto, não só nos pontos já tocados.
-- [ ] Modal de "Nova despesa" muito poluído — precisa de hierarquia/organização, não só empilhar tudo.
+- [x] Modal de "Nova despesa" muito poluído — seções com rótulo (Detalhes/Quem paga/Quando/Comprovante). Commit `16eecbe`.
 - [ ] Filtros de Transações mal posicionados/feios (o grupo Agrupar + Período/Responsável/Movimentação/Categoria) — reposicionar e redesenhar.
 - [x] Modos de visualização de Transações — reestruturado em 2 eixos independentes: `layout` (lista|grade) × `densidade` (normal|compacta), livremente combináveis (lista compacta agora existe). Agrupar continua terceiro filtro independente. Commit `35e40c9`.
 - [ ] Lista de Compras — refazer a visualização inteira.
