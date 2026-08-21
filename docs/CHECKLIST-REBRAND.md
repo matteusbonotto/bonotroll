@@ -90,6 +90,12 @@ O checklist acima (8 itens) foi todo concluído. Depois disso vieram mais pedido
 - [x] Home: botões de ação rápida (Nova despesa/Despesa fixa/Nova entrada/Lista de compras) não cabiam numa linha só no mobile — escopado só à Início (`section[x-data^="dashboardView"] .cg-quick-actions`, não a regra `.cg-quick-actions` genérica, que também é usada em Transações/Caixinhas com outra quantidade de botões) — 4 colunas numa linha, ícone empilhado sobre o rótulo. Verificado com screenshot: os 4 cabem numa linha em 390px.
 - [ ] "Ver mais" (Dashboard completo) considerado abaixo do esperado ("PowerBI profissional") — precisa de direção mais concreta do usuário sobre o que falta (mais gráficos? drill-down? exportar? comparação lado a lado?) antes de eu adivinhar de novo.
 
+## Rodada 5 — auditoria de documentação + botão voltar físico (2026-08-21, mesma sessão)
+
+- [x] Auditei `.claude/docs/roadmap.md` (que eu mesmo escrevi) contra o código de verdade — 5 itens marcados como pendentes já estavam implementados (Money Engine em centavos, alternativa textual em gráfico, severidade de notificação, `prefers-reduced-motion`, "quanto ainda posso gastar" na Home). Corrigido antes de gastar esforço (meu ou de agente) resolvendo problema que não existe mais.
+- [x] Botão físico "voltar" (Android)/gesto do navegador fechava o app direto em vez de andar pelas telas — `setView` usava `history.replaceState` (só mantinha a URL sincronizada, nunca empilhava histórico). Trocado por `pushState` + sync via `popstate`. Verificado com `goBack()`/`goForward()` reais via Playwright, não só clique de botão. Novo teste: `tests/e2e/navegacao-historico.spec.js`.
+- [x] `.claude/language.md` (preferência de idioma solta, não executável por si — não é formato de agente/comando) formalizada em `CLAUDE.md`: responder sempre em PT-BR.
+
 ## Rodada 4 — notificação push, Compras/Transações, feature de Cartão de Crédito (2026-08-20, mesma sessão)
 
 - [x] Notificação push mostrando um retângulo branco em vez do logo — o campo `badge` (selo mono cromático que o SO extrai só pelo canal alfa) usava o mesmo PNG opaco do `icon`, sem transparência real. Gerado `assets/icons/badge-mono.png` (mesma marca, sem fundo, alfa de verdade — confirmado via PIL: canto 100% transparente, ~24% dos pixels cobrindo só o desenho).

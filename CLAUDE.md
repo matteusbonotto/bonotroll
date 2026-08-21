@@ -2,6 +2,10 @@
 
 Contexto principal do repositório para o Claude Code. Leia isto primeiro; os documentos vivos em `.claude/docs/` e `docs/` aprofundam cada assunto.
 
+## Idioma
+
+Responder **sempre em português do Brasil** (PT-BR), em qualquer conversa sobre este repositório — não só quando o usuário escrever em português primeiro. Comentário de código, mensagem de commit e resposta ao usuário seguem essa regra; nome de variável/função/classe continua em português também, já é o padrão estabelecido no código (ver o resto deste documento). (Formalizado a partir de `.claude/language.md`.)
+
 ## Project Overview
 
 **Bõnotto** é um PWA doméstico para duas pessoas (Matheus e Beatriz) que unifica três domínios que normalmente vivem em apps separados:
