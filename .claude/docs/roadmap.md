@@ -17,31 +17,30 @@ Estado real, não aspiracional. Fonte primária de detalhe: `docs/CHECKLIST-REBR
 - `.cg-back`, Esc-pra-fechar + devolução de foco em todo modal, lista de Preferências (Perfil) sem card empilhado.
 - Correções de causa raiz: `x-show`+utility Bootstrap (≥5 ocorrências), CSS duplicado (`.cg-card`, `.cg-main`, `.cg-modal`), barra de progresso não fixa no fundo do card (Caixinhas).
 - Sistema `.claude/` (este) — agentes, comandos, docs vivos.
+- **Money Engine** (`js/utils/money.js`, centavos inteiros — `somar`/`subtrair`/`dividirIgualmente`/`iguais`/`maiorQue`/`percentual`) — já em uso nos 4 arquivos que fazem conta com dinheiro (`transactions.js`, `caixinhas.js`, `shoppingList.js`, `budgets.js`, confirmado por grep de import). Isto estava listado como "Planned"/"Technical Debt" numa versão anterior deste documento — **estava errado**, já tinha sido feito antes deste doc existir; corrigido em 2026-08-21 depois de verificar o código de verdade em vez de confiar só no diagnóstico antigo (`docs/RAIO-X-2.0.md`, que é de antes desta correção existir).
+- Alternativa textual em todo gráfico (regra do prompt original §45) — confirmado nos 3 lugares que têm gráfico (3 painéis da Início, Dashboard completo, "Ver gráfico" de Compras): todos têm uma `<table class="visually-hidden">` com os mesmos dados, pra leitor de tela. Mesma correção de doc acima.
+- Níveis de severidade em notificação (INFO/ATTENTION/WARNING/CRITICAL) — `severidadeDe` (`js/utils/status.js`), testado (`tests/unit`) e coberto por `tests/e2e/severidade-notificacao.spec.js`. Mesma correção de doc acima.
+- `prefers-reduced-motion` — já tratado globalmente em `css/app.css` (não "ausente por completo" como uma versão anterior deste doc dizia). Mesma correção.
+- "Quanto ainda posso gastar" com manchete própria na Home — já existe (`orcamentoAlerta`, `dashboard.js`, linha do hero balance "Restam RX do orçamento de Y"). Mesma correção.
+- README — já corrigido antes desta sessão (o próprio README documenta isso: "este README ficou desatualizado por um tempo dizendo o contrário").
 
 ## In Progress / Bloqueado por falta de sinal concreto
 
-- "Aparência geral mais distinta/moderna" (pedido original, prioridade 2) — subjetivo demais pra ter critério de aceite sem exemplo/referência do usuário. Não é preguiça, é ausência de critério verificável (ver `.claude/agents/product-manager.md`).
-- Migração da tipografia solta (~66 `font-size` fora da escala de tokens) para `--font-size-*` — ver Technical Debt abaixo, motivo de não ter sido feita ainda.
-
-## Planned (próximos passos sugeridos, não confirmados com o usuário)
-
-- Migração tela-por-tela da tipografia solta pra escala de tokens, **com revisão visual do usuário antes de espalhar** (não é seguro automatizar cegamente — muda tamanho visível em vários lugares de uma vez).
-- Money Engine dedicado: consolidar soma monetária do cliente pra centavos inteiros num módulo único testado (`caixinhas.js`, `transactions.js`, `shoppingList.js`, `budgets.js` hoje usam `Number` de ponto flutuante).
-- Alternativa textual em todo gráfico configurável (regra do prompt original §45 — hoje só o Dashboard completo/novo tem tabela oculta pra leitor de tela, os outros gráficos não).
-- Níveis de severidade em notificação (INFO/ATTENTION/WARNING/CRITICAL).
+- "Aparência geral mais distinta/moderna" (pedido original, prioridade 2) + redesenho visual agressivo de Compras/Recursos/Caixinhas/Perfil — subjetivo demais pra ter critério de aceite sem exemplo/referência do usuário. Não é preguiça, é ausência de critério verificável (ver `.claude/agents/product-manager.md`).
+- "Ver mais" (Dashboard completo) considerado abaixo do esperado ("PowerBI profissional") — mesmo motivo, aguardando direção mais concreta.
+- Migração da tipografia solta (~66 `font-size` fora da escala de tokens) para `--font-size-*` — ver Technical Debt abaixo, motivo de não ter sido feita ainda (é a única pendência real desta lista que não é 100% subjetiva, mas ainda precisa de revisão visual do usuário antes de espalhar).
 
 ## Technical Debt
 
-- **Zero teste automatizado antes desta sessão** — mitigado (47 unit + 23 e2e), mas cobertura ainda não é exaustiva; toda lógica nova sensível a dinheiro/data deveria ganhar teste no mesmo PR/rodada, não depois.
-- **Aritmética monetária em `Number` (ponto flutuante) no cliente** — o banco (`numeric(12,2)`) está correto; risco crescente conforme mais transações/parcelas se acumulam. Não é hipótese: o histórico do projeto já teve 3 bugs de soma de moeda em Caixinhas em 2 dias antes de ser corrigido.
-- **`index.html` como god-file** — cresce a cada tela nova, sem separação física (tensão real do "sem build step", não erro óbvio).
+- **~66 `font-size` soltos fora da escala de tokens** (`css/components.css`/`css/app.css`) — tokens já existem (`css/tokens.css`), migração não feita porque é uma mudança visível em várias telas simultaneamente de uma vez, precisa de revisão do usuário antes de espalhar (não é seguro automatizar cego).
+- **`index.html` como god-file** — cresce a cada tela nova, sem separação física (tensão real do "sem build step", não erro óbvio a corrigir).
 - **Padrão `x-show` + utility Bootstrap `!important`** — mitigado pontualmente (`x-show.important`) cada vez que reaparece, mas não existe lint/convenção automatizada que previna a próxima ocorrência antes dela acontecer.
-- **~66 `font-size` soltos fora da escala de tokens** — tokens já existem (`css/tokens.css`), migração não feita porque é uma mudança visível em várias telas simultaneamente, precisa de revisão do usuário antes de espalhar.
-- **README genuinamente desatualizado** em alguns pontos (ver `docs/RAIO-X-2.0.md` §7 pra lista exata das divergências encontradas).
+- **Cobertura de teste não é exaustiva** — 47 unit + 23 e2e é uma base real, mas toda lógica nova sensível a dinheiro/data deveria ganhar teste no mesmo PR/rodada, não depois (política, não métrica de cobertura formal).
+- **Cartão de crédito com 2+ faturas no mesmo mês** (2 cartões diferentes) — despesas marcadas se agrupam todas na PRIMEIRA fatura encontrada daquele mês, não necessariamente na certa (não duplica valor, só atribuição visual). Só vale corrigir se for caso real do usuário.
 
 ## Potential Improvements (sugestões, não compromissos)
 
-- "Quanto ainda posso gastar" com manchete própria na Home (hoje o orçamento existe em Perfil, mas sem destaque no Dashboard).
-- Projeção de fim de mês / detecção de anomalia de gasto — dado histórico já existe, falta só o cálculo.
-- `history.pushState` real pra navegação entre telas (hoje é só troca de `$store.app.view` — botão físico "voltar" do Android/gesto do navegador não funciona como "voltar" dentro do app).
-- WCAG 2.2 AA sistemático (hoje é cobertura pontual — `prefers-reduced-motion` está ausente por completo dos 3 arquivos CSS).
+- Projeção de fim de mês / detecção de anomalia de gasto — dado histórico já existe (por categoria/pessoa), falta só o cálculo. Genuinamente não iniciado.
+- `history.pushState` real pra navegação entre telas — hoje é só troca de `$store.app.view` (confirmado: nenhum `pushState`/`popstate` no código), então o botão físico "voltar" do Android/gesto do navegador fecha o app em vez de voltar uma tela dentro dele. Genuinamente não iniciado.
+- WCAG 2.2 AA sistemático além do que já existe (`prefers-reduced-motion`, `.cg-back` com `aria-label`, switches com `<label>`) — não tem uma varredura completa recente pra saber o que falta especificamente; precisaria de uma auditoria própria antes de virar lista de tarefas.
+- Multi-moeda fora de Caixinhas (Transações/Compras continuam só BRL) — documentado no README como escopo atual, não bug; só vira tarefa se o usuário pedir.
