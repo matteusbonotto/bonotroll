@@ -79,6 +79,12 @@ const emptyForm = () => ({
   observacoes: '',
   codigo_barras: '',
   qrcode_dados: '',
+  // "Essa despesa já está dentro da fatura do cartão" — não muda o valor
+  // dela, muda quem soma ela: marcada, o valor deixa de contar sozinho nas
+  // métricas (já está embutido no valor da fatura do mês) e a despesa passa
+  // a aparecer dentro do accordion daquela fatura em Transações. Ver
+  // groupCartaoCredito em services/transactions.js.
+  cartao_credito: false,
 });
 
 // Modal global de "nova/editar transação" (Alpine.store('txModal')) — aberto
@@ -233,6 +239,7 @@ export function txModalStore() {
         observacoes: tx.observacoes || '',
         codigo_barras: tx.codigo_barras || '',
         qrcode_dados: tx.qrcode_dados || '',
+        cartao_credito: !!tx.cartao_credito,
       };
       this.showMore = true;
       this.comprovantePreviewUrl = null;
@@ -534,6 +541,10 @@ export function txModalStore() {
           observacoes: this.form.observacoes.trim() || null,
           codigo_barras: this.form.codigo_barras || null,
           qrcode_dados: this.form.qrcode_dados || null,
+          // Entrada nunca é compra no cartão (o switch nem aparece pra
+          // entrada) — normaliza aqui pra uma marcação deixada pra trás ao
+          // trocar saída->entrada no meio do formulário não persistir.
+          cartao_credito: this.form.tipo === 'saida' && !!this.form.cartao_credito,
           owner_id: store.profile.id,
           group_id: store.group?.group?.id ?? null,
         };

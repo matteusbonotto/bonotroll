@@ -190,6 +190,56 @@ export function computeSummary(transactions) {
   };
 }
 
+// ---------- Cartão de crédito: compra avulsa x fatura ----------
+// Uma transação é a "fatura" (pai do accordion) quando é uma saída
+// categorizada como "Cartão de crédito" — nome da categoria, não um campo
+// próprio, mesmo padrão de match por nome já usado no app (ver
+// findCompanyByName/findBankByName).
+export function isCartaoCreditoBill(t, categorias) {
+  if (t.tipo !== 'saida') return false;
+  const cat = categorias.find((c) => c.id === t.categoria_id);
+  return !!cat && cat.nome.trim().toLowerCase() === 'cartão de crédito';
+}
+
+// Agrupa despesas marcadas cartao_credito=true dentro da fatura do MESMO
+// mês (por data_vencimento, caindo para data_cadastro se não tiver
+// vencimento) — sem isso, uma compra feita no cartão apareceria solta E
+// dentro da fatura ao mesmo tempo, duplicando o total nas métricas (ver
+// comentário do chamador). Uma despesa marcada cartao_credito=true que não
+// cai no mesmo mês de NENHUMA fatura existente fica visível solta como
+// sempre (nunca desaparece silenciosamente por falta de fatura).
+//
+// Retorna { visiveis } — visiveis é a lista "de topo" pra passar pra
+// computeSummary/groupByCategoria/etc: cada transação-fatura ganha um
+// array .filhosCartao (pode ser vazio) com as despesas agrupadas dentro
+// dela; despesas agrupadas NÃO aparecem soltas em visiveis (é assim que a
+// duplicação é evitada — quem soma visiveis nunca conta os filhos duas
+// vezes, já que o valor deles já está embutido no valor da própria fatura).
+export function groupCartaoCredito(transactions, categorias) {
+  const faturasPorMes = new Map(); // 'aaaa-mm' -> primeira fatura daquele mês encontrada
+  for (const t of transactions) {
+    if (!isCartaoCreditoBill(t, categorias)) continue;
+    const mes = (t.data_vencimento || t.data_cadastro || '').slice(0, 7);
+    if (mes && !faturasPorMes.has(mes)) faturasPorMes.set(mes, t.id);
+  }
+  const filhosPorFaturaId = new Map();
+  const idsAgrupados = new Set();
+  for (const t of transactions) {
+    if (isCartaoCreditoBill(t, categorias)) continue; // fatura nunca é filha de si mesma
+    if (t.tipo !== 'saida' || !t.cartao_credito) continue;
+    const mes = (t.data_vencimento || t.data_cadastro || '').slice(0, 7);
+    const faturaId = mes && faturasPorMes.get(mes);
+    if (!faturaId) continue; // sem fatura no mês -> continua solta
+    if (!filhosPorFaturaId.has(faturaId)) filhosPorFaturaId.set(faturaId, []);
+    filhosPorFaturaId.get(faturaId).push(t);
+    idsAgrupados.add(t.id);
+  }
+  const visiveis = transactions
+    .filter((t) => !idsAgrupados.has(t.id))
+    .map((t) => (isCartaoCreditoBill(t, categorias) ? { ...t, filhosCartao: filhosPorFaturaId.get(t.id) || [] } : t));
+  return { visiveis };
+}
+
 // ---------- Múltiplos pagadores (divisão de despesa) ----------
 // Uma transação sem nenhuma linha em transaction_payers continua 100% do
 // responsavel_id (retrocompatível — despesas antigas não precisam de

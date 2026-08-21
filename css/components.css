@@ -277,6 +277,41 @@
   color: var(--color-text-muted);
   white-space: nowrap;
 }
+/* Fatura do cartão de crédito: chevron + quantas compras já estão embutidas
+   nela. Mesma família visual da .cg-parcela-tag acima (pílula pequena e
+   discreta ao lado do título), não um .btn — é um affordance de expandir,
+   nunca uma ação de peso igual a "editar"/"pagar". */
+.cg-cartao-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+  padding: 1px 7px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-alt);
+  color: var(--color-text-muted);
+  font-size: 0.68rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.cg-cartao-toggle:hover {
+  border-color: color-mix(in srgb, var(--color-primary) 48%, var(--color-border));
+  color: var(--color-text);
+}
+/* Linha/card de uma compra que já está DENTRO da fatura acima: recuada e
+   esmaecida pra ler como "conteúdo da fatura", nunca como um gasto avulso
+   somando por fora (que é exatamente o que ela deixou de ser nos totais).
+   Seletor composto (.cg-card.cg-tx-filho) de propósito — variante nova de
+   .cg-card confiando só em ordem de arquivo já se perdeu pra uma declaração
+   mais abaixo neste projeto mais de uma vez (ver CLAUDE.md). */
+.cg-table tbody tr.cg-tx-filho > td:first-child { padding-left: 30px; }
+.cg-table tbody tr.cg-tx-filho { background: color-mix(in srgb, var(--color-surface-alt) 55%, transparent); }
+.cg-card.cg-tx-filho {
+  margin-left: var(--space-3);
+  border-left: 3px solid color-mix(in srgb, var(--color-primary) 45%, var(--color-border));
+}
+
 .cg-badge--success { background: #DCFCE7; color: #14532D; }
 .cg-badge--danger  { background: #FEE2E2; color: #7F1D1D; }
 .cg-badge--warning { background: #FEF3C7; color: #78350F; }

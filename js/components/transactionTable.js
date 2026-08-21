@@ -1,4 +1,4 @@
-import { listTransactions, updateTransaction, markAsPaid, markAsUnpaid, listPayersFor } from '../services/transactions.js';
+import { listTransactions, updateTransaction, markAsPaid, markAsUnpaid, listPayersFor, groupCartaoCredito } from '../services/transactions.js';
 import { notifyPayment } from '../services/notifications.js';
 import { STATUS_META, statusMeta, computeStatus } from '../utils/status.js';
 import { exportToCsv } from '../services/csvImport.js';
@@ -233,15 +233,59 @@ export function transactionsView() {
       return this.payersByTx[row.id] || [];
     },
 
-    get sortedRows() {
+    _ordenar(linhas) {
       const dir = this.ordemDesc ? -1 : 1;
-      return [...this.rows].sort((a, b) => {
+      return [...linhas].sort((a, b) => {
         const av = a[this.ordenarPor] ?? '';
         const bv = b[this.ordenarPor] ?? '';
         if (av < bv) return -1 * dir;
         if (av > bv) return 1 * dir;
         return 0;
       });
+    },
+
+    // Linhas "de topo": a compra marcada como paga no cartão sai da lista
+    // solta e passa a viver dentro da fatura do mês (row.filhosCartao), que
+    // vira o pai do accordion — ver groupCartaoCredito em
+    // services/transactions.js. Aplicado AQUI (e não dentro de
+    // gruposPorPeriodo/gruposSimples/resumoGrupo) porque tudo nesta tela
+    // deriva de sortedRows: com um único ponto, os totais de cada grupo do
+    // "Agrupar" também param de contar o mesmo dinheiro duas vezes, e os 3
+    // layouts recebem o mesmo .filhosCartao de graça.
+    get sortedRows() {
+      return groupCartaoCredito(this._ordenar(this.rows), this.$store.app.categories).visiveis;
+    },
+
+    // ---------- Accordion da fatura do cartão ----------
+    // Reaproveita o mesmo mecanismo do "Agrupar" (overridesAbertura +
+    // estaAberto/toggleGrupo) em vez de um segundo estado paralelo — só com
+    // um prefixo de chave próprio, pra uma fatura e um grupo nunca colidirem
+    // no mesmo dicionário. Fechado por padrão: a fatura sozinha já mostra o
+    // valor real do mês; o detalhe do que tem dentro é sob demanda.
+    temFilhosCartao(row) {
+      return !!(row.filhosCartao && row.filhosCartao.length);
+    },
+    cartaoAberto(row) {
+      return this.estaAberto(`cartao:${row.id}`, false);
+    },
+    toggleCartao(row) {
+      this.toggleGrupo(`cartao:${row.id}`, false);
+    },
+
+    // O que os 3 layouts (tabela, cards mobile, grade) iteram de verdade:
+    // a mesma lista de linhas, com as filhas da fatura ABERTA intercaladas
+    // logo depois dela, marcadas com _filhoCartao (só pra indentar/esmaecer).
+    // Intercalar numa lista só, em vez de um x-for aninhado, é o que permite
+    // reusar exatamente o mesmo template de linha pros dois casos — sem
+    // segunda marcação paralela pra manter em dia.
+    linhasComFilhos(linhas) {
+      const saida = [];
+      for (const t of linhas) {
+        saida.push(t);
+        if (!this.temFilhosCartao(t) || !this.cartaoAberto(t)) continue;
+        for (const filho of t.filhosCartao) saida.push({ ...filho, _filhoCartao: true });
+      }
+      return saida;
     },
 
     sortBy(field) {
@@ -431,8 +475,12 @@ export function transactionsView() {
       this.$store.csvModal.openFor('transacoes');
     },
 
+    // Exporta a lista CRUA ordenada (_ordenar(this.rows)), não sortedRows:
+    // no CSV cada lançamento é uma linha própria e nada é somado, então
+    // esconder as compras que estão dentro da fatura só perderia dado — a
+    // dedução de duplicidade existe pra métrica, não pra backup.
     exportar() {
-      const dados = this.sortedRows.map((r) => ({
+      const dados = this._ordenar(this.rows).map((r) => ({
         movimentacao: r.tipo === 'entrada' ? 'Entrada' : 'Saída',
         titulo: r.titulo,
         empresa_servico: r.empresa_servico || '',

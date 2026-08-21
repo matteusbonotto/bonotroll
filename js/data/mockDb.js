@@ -52,6 +52,9 @@ function seedDatabase() {
     { id: 'cat-acougue', nome: 'Açougue', cor: '#DC2626', icone: 'bi-shop' },
     { id: 'cat-saude', nome: 'Saúde', cor: '#F43F5E', icone: 'bi-heart-pulse' },
     { id: 'cat-beleza', nome: 'Beleza', cor: '#D946EF', icone: 'bi-magic' },
+    // É o NOME desta categoria que faz uma saída virar "fatura" (pai do
+    // accordion) — ver isCartaoCreditoBill em js/services/transactions.js.
+    { id: 'cat-cartao', nome: 'Cartão de crédito', cor: '#7C3AED', icone: 'bi-credit-card' },
   ].map((c) => ({ ...c, owner_id: matheusId, group_id: groupId, criado_em: new Date().toISOString() }));
 
   function tx(data) {
@@ -64,6 +67,7 @@ function seedDatabase() {
       observacoes: null,
       comprovante_url: null,
       recorrente: false,
+      cartao_credito: false,
       data_cadastro: isoDaysFromNow(-15),
       data_pagamento: null,
       criado_em: new Date().toISOString(),
@@ -72,14 +76,25 @@ function seedDatabase() {
   }
 
   const transactions = [
-    tx({ tipo: 'saida', titulo: 'Amazon Prime', categoria_id: 'cat-assinaturas', tipo_despesa: 'fixa', valor: 19.90, empresa_servico: 'Amazon', data_vencimento: isoDaysFromNow(3) }),
+    // Fatura do cartão + 2 compras marcadas cartao_credito: true no MESMO mês
+    // (Amazon Prime e Sanasa, logo abaixo) — sem isso ninguém veria o
+    // accordion de cartão funcionando sem cadastrar tudo à mão primeiro.
+    // O valor da fatura (450) é o gasto real do mês e já CONTÉM os 19,90 +
+    // 119,64 das duas compras: por isso elas somem das métricas (aparecem só
+    // dentro da fatura), senão o total do mês contaria 589,54 em vez de 450
+    // — ver groupCartaoCredito em js/services/transactions.js.
+    // Mesmo isoDaysFromNow(3) do Amazon Prime de propósito: fatura e filho
+    // precisam cair no mesmo mês pra agrupar, e ofsets iguais garantem isso
+    // em qualquer dia do ano em que a demo for aberta.
+    tx({ tipo: 'saida', titulo: 'Fatura Cartão de Crédito', categoria_id: 'cat-cartao', tipo_despesa: 'variavel', valor: 450.00, empresa_servico: 'Nubank', data_vencimento: isoDaysFromNow(3) }),
+    tx({ tipo: 'saida', titulo: 'Amazon Prime', categoria_id: 'cat-assinaturas', tipo_despesa: 'fixa', valor: 19.90, empresa_servico: 'Amazon', data_vencimento: isoDaysFromNow(3), cartao_credito: true }),
     tx({ tipo: 'saida', titulo: 'Claro Móvel', categoria_id: 'cat-assinaturas', tipo_despesa: 'fixa', valor: 51.91, empresa_servico: 'Claro', data_vencimento: isoDaysFromNow(-2) }),
     tx({ tipo: 'saida', titulo: 'Nubank+', categoria_id: 'cat-assinaturas', tipo_despesa: 'fixa', valor: 29.00, empresa_servico: 'Nubank', data_vencimento: isoDaysFromNow(-10), data_pagamento: isoDaysFromNow(-10) }),
     tx({ tipo: 'saida', titulo: 'Vivo Internet', categoria_id: 'cat-assinaturas', tipo_despesa: 'fixa', valor: 92.34, empresa_servico: 'Vivo', data_vencimento: isoDaysFromNow(5) }),
     tx({ tipo: 'saida', titulo: 'Open English', categoria_id: 'cat-curso', tipo_despesa: 'fixa', valor: 172.79, empresa_servico: 'Open English', data_vencimento: isoDaysFromNow(-15), data_pagamento: isoDaysFromNow(-15) }),
     tx({ tipo: 'saida', titulo: 'Tokio Marine — Seguro casa', categoria_id: 'cat-casa', tipo_despesa: 'fixa', valor: 34.40, empresa_servico: 'Tokio Marine', data_vencimento: isoDaysFromNow(-20), data_pagamento: isoDaysFromNow(-20) }),
     tx({ tipo: 'saida', titulo: 'CPFL Paulista (energia)', categoria_id: 'cat-casa', tipo_despesa: 'variavel', valor: 196.50, empresa_servico: 'CPFL', data_vencimento: isoDaysFromNow(-1) }),
-    tx({ tipo: 'saida', titulo: 'Sanasa (água)', categoria_id: 'cat-casa', tipo_despesa: 'variavel', valor: 119.64, empresa_servico: 'Sanasa', data_vencimento: isoDaysFromNow(4) }),
+    tx({ tipo: 'saida', titulo: 'Sanasa (água)', categoria_id: 'cat-casa', tipo_despesa: 'variavel', valor: 119.64, empresa_servico: 'Sanasa', data_vencimento: isoDaysFromNow(4), cartao_credito: true }),
     tx({ tipo: 'saida', titulo: 'Condomínio', categoria_id: 'cat-casa', tipo_despesa: 'fixa', valor: 415.90, data_vencimento: null }),
     tx({ tipo: 'saida', titulo: 'Seguro Carro', categoria_id: 'cat-carro', tipo_despesa: 'fixa', valor: 212.58, empresa_servico: 'Porto Seguro', data_vencimento: isoDaysFromNow(-30), data_pagamento: isoDaysFromNow(-30) }),
     tx({ tipo: 'saida', titulo: 'Financiamento Carro', categoria_id: 'cat-carro', tipo_despesa: 'fixa', valor: 765.87, empresa_servico: 'Santander', data_vencimento: isoDaysFromNow(6) }),

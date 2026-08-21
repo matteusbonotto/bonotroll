@@ -12,7 +12,8 @@ Estado real, não aspiracional. Fonte primária de detalhe: `docs/CHECKLIST-REBR
 - Home: distinção pago vs. previsto (entradas/saídas), widget de lançamentos recentes com avatar+selo de empresa+badge de categoria.
 - Dashboard completo ("Ver mais"): reaproveita os mesmos filtros dinâmicos (quem vê / período) e mostra todos os recortes (categoria/empresa/membro/fluxo/dia/mês/ano) de uma vez, Chart.js.
 - Modo demo com dado 100% mockado e representativo: bancos/empresas com logo próprio, despesa dividida, item parcelado, caixinha em moeda estrangeira.
-- Suite de teste real (39 unit + 21 e2e), CI leve rodando em push/PR (`.github/workflows/tests.yml`).
+- Despesa "no cartão de crédito": accordion da fatura em Transações (tabela/tabela-mobile/grade) e exclusão do valor da compra dos totais/gráficos, já que ele está embutido no valor da própria fatura (ver `groupCartaoCredito`).
+- Suite de teste real (47 unit + 23 e2e), CI leve rodando em push/PR (`.github/workflows/tests.yml`).
 - `.cg-back`, Esc-pra-fechar + devolução de foco em todo modal, lista de Preferências (Perfil) sem card empilhado.
 - Correções de causa raiz: `x-show`+utility Bootstrap (≥5 ocorrências), CSS duplicado (`.cg-card`, `.cg-main`, `.cg-modal`), barra de progresso não fixa no fundo do card (Caixinhas).
 - Sistema `.claude/` (este) — agentes, comandos, docs vivos.
@@ -31,7 +32,7 @@ Estado real, não aspiracional. Fonte primária de detalhe: `docs/CHECKLIST-REBR
 
 ## Technical Debt
 
-- **Zero teste automatizado antes desta sessão** — mitigado (39 unit + 21 e2e), mas cobertura ainda não é exaustiva; toda lógica nova sensível a dinheiro/data deveria ganhar teste no mesmo PR/rodada, não depois.
+- **Zero teste automatizado antes desta sessão** — mitigado (47 unit + 23 e2e), mas cobertura ainda não é exaustiva; toda lógica nova sensível a dinheiro/data deveria ganhar teste no mesmo PR/rodada, não depois.
 - **Aritmética monetária em `Number` (ponto flutuante) no cliente** — o banco (`numeric(12,2)`) está correto; risco crescente conforme mais transações/parcelas se acumulam. Não é hipótese: o histórico do projeto já teve 3 bugs de soma de moeda em Caixinhas em 2 dias antes de ser corrigido.
 - **`index.html` como god-file** — cresce a cada tela nova, sem separação física (tensão real do "sem build step", não erro óbvio).
 - **Padrão `x-show` + utility Bootstrap `!important`** — mitigado pontualmente (`x-show.important`) cada vez que reaparece, mas não existe lint/convenção automatizada que previna a próxima ocorrência antes dela acontecer.

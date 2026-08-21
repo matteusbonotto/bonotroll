@@ -6,6 +6,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   computeSummary, splitEqually, groupByCategory, groupByCompany, groupByPeriod, computeSaldosEntreMembros,
+  isCartaoCreditoBill, groupCartaoCredito,
 } from '../../js/services/transactions.js';
 
 test('computeSummary soma entradas/saídas PAGAS e acha o maior gasto — pendente não conta, só em "prevista"', () => {
@@ -101,6 +102,89 @@ test('computeSaldosEntreMembros: dívidas nos dois sentidos se compensam (saldo 
   // beatriz devia 50 a matheus (t1); matheus devia 30 a beatriz (t2) -> líquido: beatriz deve 20 a matheus
   const r = computeSaldosEntreMembros(txs, payersByTx);
   assert.deepEqual(r, [{ devedorId: 'beatriz', credorId: 'matheus', valor: 20 }]);
+});
+
+// ---------- Cartão de crédito: compra avulsa dentro da fatura ----------
+// O bug que motivou tudo isto: "Amazon Prime R$19,90" solta + uma "Fatura
+// Cartão de Crédito" de R$2.000 que JÁ contém esses 19,90 dentro dela
+// somavam R$2.019,90 nas métricas. O valor certo é R$2.000 — só a fatura.
+const CATEGORIAS_CARTAO = [
+  { id: 'cat-cartao', nome: 'Cartão de crédito', cor: '#7C3AED' },
+  { id: 'cat-assinaturas', nome: 'Assinaturas', cor: '#0EA5E9' },
+];
+
+test('groupCartaoCredito tira a despesa marcada de "visiveis" e pendura ela na fatura do mesmo mês', () => {
+  const fatura = { id: 'f1', tipo: 'saida', titulo: 'Fatura Cartão de Crédito', categoria_id: 'cat-cartao', valor: 2000, data_vencimento: '2026-08-10' };
+  const compra = { id: 't1', tipo: 'saida', titulo: 'Amazon Prime', categoria_id: 'cat-assinaturas', valor: 19.9, data_vencimento: '2026-08-03', cartao_credito: true };
+  const { visiveis } = groupCartaoCredito([fatura, compra], CATEGORIAS_CARTAO);
+
+  assert.equal(visiveis.length, 1);
+  assert.equal(visiveis[0].id, 'f1');
+  assert.deepEqual(visiveis[0].filhosCartao.map((f) => f.id), ['t1']);
+  assert.equal(visiveis.some((t) => t.id === 't1'), false);
+});
+
+test('groupCartaoCredito: despesa marcada SEM fatura no mês dela continua solta em "visiveis" (nunca some)', () => {
+  const fatura = { id: 'f1', tipo: 'saida', categoria_id: 'cat-cartao', valor: 2000, data_vencimento: '2026-08-10' };
+  const compraOutroMes = { id: 't1', tipo: 'saida', categoria_id: 'cat-assinaturas', valor: 19.9, data_vencimento: '2026-09-03', cartao_credito: true };
+  const { visiveis } = groupCartaoCredito([fatura, compraOutroMes], CATEGORIAS_CARTAO);
+
+  assert.equal(visiveis.length, 2);
+  assert.equal(visiveis.find((t) => t.id === 't1').cartao_credito, true);
+  assert.deepEqual(visiveis.find((t) => t.id === 'f1').filhosCartao, []);
+});
+
+test('groupCartaoCredito: somar "visiveis" não duplica — fatura de 2000 com filho de 19,90 dá 2000, não 2019,90', () => {
+  const fatura = { id: 'f1', tipo: 'saida', categoria_id: 'cat-cartao', valor: 2000, data_vencimento: '2026-08-10', data_pagamento: '2026-08-10' };
+  const compra = { id: 't1', tipo: 'saida', categoria_id: 'cat-assinaturas', valor: 19.9, data_vencimento: '2026-08-03', data_pagamento: '2026-08-03', cartao_credito: true };
+  const cru = [fatura, compra];
+  const { visiveis } = groupCartaoCredito(cru, CATEGORIAS_CARTAO);
+
+  assert.equal(computeSummary(cru).saidas, 2019.9); // o bug: sem agrupar, conta as duas
+  assert.equal(computeSummary(visiveis).saidas, 2000); // corrigido: só a fatura
+  assert.equal(visiveis.reduce((acc, t) => acc + Number(t.valor), 0), 2000);
+});
+
+test('groupCartaoCredito ignora entradas nos dois papéis (fatura e filha) — cartão é sempre saída', () => {
+  const entradaNaCategoriaCartao = { id: 'e1', tipo: 'entrada', categoria_id: 'cat-cartao', valor: 500, data_vencimento: '2026-08-10' };
+  const entradaMarcada = { id: 'e2', tipo: 'entrada', categoria_id: 'cat-assinaturas', valor: 300, data_vencimento: '2026-08-05', cartao_credito: true };
+  const { visiveis } = groupCartaoCredito([entradaNaCategoriaCartao, entradaMarcada], CATEGORIAS_CARTAO);
+
+  assert.equal(isCartaoCreditoBill(entradaNaCategoriaCartao, CATEGORIAS_CARTAO), false);
+  assert.equal(visiveis.length, 2); // nenhuma das duas foi agrupada
+  assert.equal(visiveis.every((t) => !('filhosCartao' in t)), true);
+});
+
+test('isCartaoCreditoBill casa pelo NOME da categoria (case/espaço insensível), não por id fixo', () => {
+  const categorias = [{ id: 'qualquer-id', nome: '  CARTÃO DE CRÉDITO ' }];
+  assert.equal(isCartaoCreditoBill({ tipo: 'saida', categoria_id: 'qualquer-id' }, categorias), true);
+  assert.equal(isCartaoCreditoBill({ tipo: 'saida', categoria_id: 'outra' }, categorias), false);
+  assert.equal(isCartaoCreditoBill({ tipo: 'saida', categoria_id: null }, categorias), false);
+});
+
+test('groupCartaoCredito: 2 filhas na mesma fatura, e a fatura nunca vira filha de si mesma', () => {
+  const fatura = { id: 'f1', tipo: 'saida', categoria_id: 'cat-cartao', valor: 450, data_vencimento: '2026-08-10', cartao_credito: true };
+  const a = { id: 't1', tipo: 'saida', categoria_id: 'cat-assinaturas', valor: 19.9, data_vencimento: '2026-08-03', cartao_credito: true };
+  const b = { id: 't2', tipo: 'saida', categoria_id: 'cat-assinaturas', valor: 119.64, data_vencimento: '2026-08-04', cartao_credito: true };
+  const { visiveis } = groupCartaoCredito([fatura, a, b], CATEGORIAS_CARTAO);
+
+  assert.equal(visiveis.length, 1);
+  assert.deepEqual(visiveis[0].filhosCartao.map((f) => f.id), ['t1', 't2']);
+  assert.equal(computeSummary(visiveis).saidasPrevistas, 450);
+});
+
+test('groupCartaoCredito cai pra data_cadastro quando a despesa não tem vencimento', () => {
+  const fatura = { id: 'f1', tipo: 'saida', categoria_id: 'cat-cartao', valor: 450, data_cadastro: '2026-08-01' };
+  const semVencimento = { id: 't1', tipo: 'saida', categoria_id: 'cat-assinaturas', valor: 30, data_cadastro: '2026-08-20', cartao_credito: true };
+  const { visiveis } = groupCartaoCredito([fatura, semVencimento], CATEGORIAS_CARTAO);
+  assert.deepEqual(visiveis[0].filhosCartao.map((f) => f.id), ['t1']);
+});
+
+test('groupCartaoCredito não mexe em quem não tem nada a ver com cartão (mesma referência de objeto)', () => {
+  const comum = { id: 't9', tipo: 'saida', categoria_id: 'cat-assinaturas', valor: 50, data_vencimento: '2026-08-02' };
+  const { visiveis } = groupCartaoCredito([comum], CATEGORIAS_CARTAO);
+  assert.equal(visiveis.length, 1);
+  assert.equal(visiveis[0], comum); // não clona nem adiciona campo em transação comum
 });
 
 test('groupByPeriod agrupa por mês e soma cada balde', () => {

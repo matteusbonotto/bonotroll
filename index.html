@@ -850,8 +850,13 @@
                 </tr>
               </thead>
               <tbody>
-                <template x-for="row in secao.linhas" :key="row.id">
-                  <tr>
+                <!-- linhasComFilhos (não secao.linhas direto): intercala as
+                     compras que já estão DENTRO da fatura do cartão logo
+                     depois dela, quando o accordion daquela fatura está
+                     aberto — mesma linha/mesmo template, só indentada e
+                     esmaecida (.cg-tx-filho). Ver transactionTable.js. -->
+                <template x-for="row in linhasComFilhos(secao.linhas)" :key="row.id">
+                  <tr :class="{ 'cg-tx-filho': row._filhoCartao }">
                     <td>
                       <button type="button" class="btn btn-sm p-0 border-0 bg-transparent" @click="toggleTipoDespesa(row)" :aria-label="row.tipo_despesa === 'fixa' ? 'Fixa — clique para marcar como variável' : 'Variável — clique para marcar como fixa'">
                         <i class="bi fs-5" :class="row.tipo_despesa === 'fixa' ? 'bi-pin-angle-fill text-warning' : 'bi-pin-angle cg-muted'"></i>
@@ -908,6 +913,19 @@
                     </td>
                     <td>
                       <div class="fw-semibold d-flex align-items-center gap-2 min-w-0">
+                        <!-- Fatura do cartão: pai do accordion. O valor da
+                             linha continua sendo o valor real da fatura — o
+                             que abre/fecha é só o detalhe do que já está
+                             embutido nele. -->
+                        <template x-if="temFilhosCartao(row)">
+                          <button type="button" class="cg-cartao-toggle" @click="toggleCartao(row)" :aria-expanded="cartaoAberto(row) ? 'true' : 'false'" :title="cartaoAberto(row) ? 'Esconder as compras que já estão nesta fatura' : 'Ver as compras que já estão nesta fatura'">
+                            <i class="bi" :class="cartaoAberto(row) ? 'bi-chevron-down' : 'bi-chevron-right'"></i>
+                            <span x-text="row.filhosCartao.length"></span>
+                          </button>
+                        </template>
+                        <template x-if="row._filhoCartao">
+                          <i class="bi bi-credit-card cg-muted" title="Já está dentro da fatura acima — não soma de novo nos totais"></i>
+                        </template>
                         <span x-text="row.titulo"></span>
                         <span class="cg-parcela-tag" x-show="row.parcela_total" x-text="row.parcela_atual + '/' + row.parcela_total"></span>
                       </div>
@@ -969,8 +987,8 @@
 
           <template x-if="layout === 'lista' && secao.linhas.length">
           <div class="d-flex flex-column gap-2 d-md-none">
-            <template x-for="row in secao.linhas" :key="row.id">
-              <div class="cg-card cg-card--compact" :class="{ 'cg-card--dense': densidade === 'compacta' }">
+            <template x-for="row in linhasComFilhos(secao.linhas)" :key="row.id">
+              <div class="cg-card cg-card--compact" :class="{ 'cg-card--dense': densidade === 'compacta', 'cg-tx-filho': row._filhoCartao }">
                 <div class="d-flex justify-content-between align-items-center gap-2 mb-2 min-w-0">
                   <div class="d-flex align-items-center gap-2 min-w-0">
                     <button type="button" class="btn p-0 border-0 bg-transparent flex-shrink-0" x-show="payersFor(row).length >= 2" @click="editar(row)" title="Despesa dividida — toque pra ver/editar a divisão">
@@ -1012,6 +1030,15 @@
                     </div>
                     <div class="min-w-0">
                       <div class="fw-semibold text-truncate d-flex align-items-center gap-2">
+                        <template x-if="temFilhosCartao(row)">
+                          <button type="button" class="cg-cartao-toggle" @click="toggleCartao(row)" :aria-expanded="cartaoAberto(row) ? 'true' : 'false'" :title="cartaoAberto(row) ? 'Esconder as compras que já estão nesta fatura' : 'Ver as compras que já estão nesta fatura'">
+                            <i class="bi" :class="cartaoAberto(row) ? 'bi-chevron-down' : 'bi-chevron-right'"></i>
+                            <span x-text="row.filhosCartao.length"></span>
+                          </button>
+                        </template>
+                        <template x-if="row._filhoCartao">
+                          <i class="bi bi-credit-card cg-muted" title="Já está dentro da fatura acima — não soma de novo nos totais"></i>
+                        </template>
                         <span class="text-truncate" x-text="row.titulo"></span>
                         <span class="cg-parcela-tag flex-shrink-0" x-show="row.parcela_total" x-text="row.parcela_atual + '/' + row.parcela_total"></span>
                       </div>
@@ -1084,8 +1111,8 @@
           <!-- Grade / grade compacta: navegação visual, toque abre o formulário
                completo (sem edição inline campo a campo como na lista). -->
           <div class="cg-grid-view" :class="{ 'cg-grid-view--compact': densidade === 'compacta' }" x-show="layout === 'grade' && secao.linhas.length">
-            <template x-for="row in secao.linhas" :key="row.id">
-              <div class="cg-card cg-grid-view__card" @click="editar(row)">
+            <template x-for="row in linhasComFilhos(secao.linhas)" :key="row.id">
+              <div class="cg-card cg-grid-view__card" :class="{ 'cg-tx-filho': row._filhoCartao }" @click="editar(row)">
                 <span class="cg-grid-view__avatar" :title="payersFor(row).length >= 2 ? 'Dividido' : (responsavelFor(row.responsavel_id)?.nome || '')">
                   <template x-if="payersFor(row).length < 2">
                     <span class="cg-avatar cg-avatar--sm" :style="{ borderColor: responsavelFor(row.responsavel_id)?.cor || 'var(--color-primary-soft)', background: responsavelFor(row.responsavel_id)?.cor || 'var(--color-primary)' }">
@@ -1112,6 +1139,18 @@
                   </span>
                 </template>
                 <div class="fw-semibold text-truncate w-100 d-flex align-items-center gap-2">
+                  <!-- .stop: o card inteiro abre o formulário no clique — o
+                       chevron da fatura precisa só abrir/fechar o accordion,
+                       nunca abrir o modal junto. -->
+                  <template x-if="temFilhosCartao(row)">
+                    <button type="button" class="cg-cartao-toggle" @click.stop="toggleCartao(row)" :aria-expanded="cartaoAberto(row) ? 'true' : 'false'" :title="cartaoAberto(row) ? 'Esconder as compras que já estão nesta fatura' : 'Ver as compras que já estão nesta fatura'">
+                      <i class="bi" :class="cartaoAberto(row) ? 'bi-chevron-down' : 'bi-chevron-right'"></i>
+                      <span x-text="row.filhosCartao.length"></span>
+                    </button>
+                  </template>
+                  <template x-if="row._filhoCartao">
+                    <i class="bi bi-credit-card cg-muted" title="Já está dentro da fatura — não soma de novo nos totais"></i>
+                  </template>
                   <span class="text-truncate" x-text="row.titulo"></span>
                   <span class="cg-parcela-tag flex-shrink-0" x-show="row.parcela_total" x-text="row.parcela_atual + '/' + row.parcela_total"></span>
                 </div>
@@ -2547,6 +2586,16 @@
               <input type="checkbox" role="switch" class="form-check-input" id="recorrente" x-model="$store.txModal.form.recorrente" />
               <label class="form-check-label small" for="recorrente">Recorrente</label>
             </div>
+            <!-- Só faz sentido em saída (entrada não é compra no cartão) —
+                 x-if, não x-show: o <div> carrega .form-check/.mb-0, e
+                 utilitário do Bootstrap com !important já venceu display do
+                 x-show mais de uma vez neste projeto (ver CLAUDE.md). -->
+            <template x-if="$store.txModal.form.tipo === 'saida'">
+              <div class="form-check form-switch mb-0">
+                <input type="checkbox" role="switch" class="form-check-input" id="cartaoCredito" x-model="$store.txModal.form.cartao_credito" />
+                <label class="form-check-label small" for="cartaoCredito" title="Esta despesa já está inclusa na fatura do cartão do mês — o valor conta uma vez só, dentro da fatura">Cartão de crédito</label>
+              </div>
+            </template>
             <div class="d-flex align-items-center gap-1 ms-auto">
               <input type="number" min="1" class="form-control form-control-sm" placeholder="Parc." style="width: 80px;" x-model="$store.txModal.form.parcela_atual" title="Parcela atual (opcional)" />
               <span class="cg-muted small">/</span>

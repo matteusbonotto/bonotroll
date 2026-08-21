@@ -23,6 +23,12 @@ export const DEFAULT_CATEGORIES = [
   { nome: 'Bebidas', cor: '#D97706', icone: 'bi-cup-straw' },
   { nome: 'Saúde', cor: '#F43F5E', icone: 'bi-heart-pulse' },
   { nome: 'Beleza', cor: '#D946EF', icone: 'bi-magic' },
+  // A fatura do cartão é reconhecida pelo NOME desta categoria (não por um
+  // campo próprio na transação) — ver isCartaoCreditoBill em
+  // js/services/transactions.js. Precisa existir por padrão, senão marcar
+  // uma despesa como "cartão de crédito" não teria fatura nenhuma pra
+  // agrupar dentro.
+  { nome: 'Cartão de crédito', cor: '#7C3AED', icone: 'bi-credit-card' },
 ];
 
 export async function listCategories({ ownerId, groupId }) {

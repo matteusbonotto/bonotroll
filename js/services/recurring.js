@@ -115,6 +115,12 @@ export async function gerarRecorrentesPendentes({ ownerId, groupId }) {
         parcela_atual: parcelaAtual,
         parcela_total: ultima.parcela_total ?? null,
         observacoes: ultima.observacoes,
+        // Assinatura cobrada no cartão continua sendo cobrada no cartão no mês
+        // seguinte — sem carregar essa marcação, a ocorrência gerada voltaria a
+        // somar por fora da fatura do mês novo, reintroduzindo exatamente a
+        // duplicação que groupCartaoCredito existe pra evitar (o caso do
+        // usuário, "Amazon Prime", é justamente uma assinatura recorrente).
+        cartao_credito: !!ultima.cartao_credito,
       });
       criadas.push(nova);
       datasExistentes.add(cursorCadastro);

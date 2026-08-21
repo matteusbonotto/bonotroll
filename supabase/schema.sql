@@ -165,6 +165,19 @@ alter table transactions add column if not exists parcela_atual int check (parce
 alter table transactions add column if not exists parcela_total int check (parcela_total is null or parcela_total >= parcela_atual);
 alter table transactions add column if not exists recorrencia_serie_id uuid;
 
+-- "Essa despesa já está DENTRO da fatura do cartão" (2026-08-20). Marca uma
+-- saída avulsa (ex.: Amazon Prime R$19,90) como parte de uma despesa maior
+-- da categoria "Cartão de crédito" (ex.: "Fatura Cartão de Crédito" de
+-- R$2.000) já lançada no mesmo mês. Sem isso as duas somavam nas métricas
+-- como se fossem gastos independentes (R$2.019,90) — o valor da compra já
+-- está embutido no valor da fatura, então contar as duas é duplicação. O
+-- agrupamento em si NÃO é persistido (nada calculado é persistido, ver
+-- CLAUDE.md): é derivado a cada leitura por groupCartaoCredito em
+-- js/services/transactions.js, que casa este booleano com a fatura do mesmo
+-- mês. `not null default false` porque a ausência da marcação é o caso
+-- normal — despesa comum, contada inteira como sempre.
+alter table transactions add column if not exists cartao_credito boolean not null default false;
+
 -- Divisão de despesa entre múltiplos pagadores. Uma transação SEM nenhuma
 -- linha aqui continua sendo 100% do responsavel_id dela (retrocompatível —
 -- despesas antigas não precisam de migração). Linhas aqui só existem quando

@@ -1,4 +1,4 @@
-import { listTransactions, computeSummary, groupByCategory, groupByCompany, groupByMember, groupByPeriod, listPayersFor, shareForMember } from '../services/transactions.js';
+import { listTransactions, computeSummary, groupByCategory, groupByCompany, groupByMember, groupByPeriod, listPayersFor, shareForMember, groupCartaoCredito } from '../services/transactions.js';
 import { listAllItems as listAllResourceItems } from '../services/resources.js';
 import { listBudgets, computeBudgetProgress } from '../services/budgets.js';
 import { computeExpiryStatus, expiryStatusMeta } from '../utils/status.js';
@@ -240,13 +240,35 @@ export function dashboardView() {
       return nomes[this.periodoModo] || '';
     },
 
+    // Escopo SEM duplicação de cartão de crédito: uma compra marcada
+    // cartao_credito=true (ex.: Amazon Prime R$19,90) já está embutida no
+    // valor da fatura do mês (ex.: "Fatura Cartão de Crédito" R$2.000), então
+    // contar as duas somaria R$2.019,90 pra um gasto real de R$2.000. Aqui é
+    // o ÚNICO ponto do painel onde esse filtro é aplicado, de propósito: todo
+    // número da tela (resumoPara, resumoSelecionado, linhasQuebra ->
+    // dadosParaQuebra/gráficos/dashboard completo, comparativoMesAnterior via
+    // saidasNoMes) sai daqui ou de escopoFiltrado, que é derivado daqui.
+    //
+    // O que continua lendo this.escopo CRU, de propósito:
+    //   - contasAVencer: uma compra do cartão ainda não paga é uma dívida
+    //     real com data — escondê-la da lista de "o que precisa de atenção"
+    //     seria esconder dinheiro a pagar, não evitar duplicação (nada ali é
+    //     somado num total, é uma lista de itens).
+    //   - recentes: log de lançamentos, não métrica.
+    //   - orcamentoAlerta: orçamento é por categoria ("quanto gastei em
+    //     Delivery"), pergunta deliberadamente diferente de total de conta —
+    //     ver services/budgets.js, fora do escopo desta mudança.
+    get escopoAgrupado() {
+      return groupCartaoCredito(this.escopo, this.$store.app.categories).visiveis;
+    },
+
     // Escopo (saldo/comparativo/gráficos) restrito ao período selecionado —
     // "Contas a vencer"/Recursos usam this.escopo direto, sem esse filtro
     // (ver comentário em periodoModo acima).
     get escopoFiltrado() {
       const { inicio, fim } = this.periodoRange;
-      if (!inicio && !fim) return this.escopo;
-      return this.escopo.filter((t) => {
+      if (!inicio && !fim) return this.escopoAgrupado;
+      return this.escopoAgrupado.filter((t) => {
         const data = t.data_cadastro;
         if (!data) return false;
         if (inicio && data < inicio) return false;
@@ -326,9 +348,14 @@ export function dashboardView() {
     // acumulado) — esse comparativo é só das saídas DENTRO de cada mês,
     // pra responder "gastei mais ou menos que mês passado" (métrica
     // acionável que o saldo acumulado sozinho não responde).
+    // escopoAgrupado (não this.escopo) porque isto É uma métrica somada —
+    // com o escopo cru, a compra no cartão contaria de novo por cima da
+    // fatura e inflaria "gastei X esse mês" (ver escopoAgrupado). Não usa
+    // escopoFiltrado porque este comparativo tem o próprio recorte de mês,
+    // independente do período selecionado na tela.
     saidasNoMes(profileId, mesStr) {
       let total = 0;
-      for (const t of this.escopo) {
+      for (const t of this.escopoAgrupado) {
         if (t.tipo !== 'saida' || (t.data_cadastro || '').slice(0, 7) !== mesStr) continue;
         total += profileId ? this.shareFor(t, profileId) : Number(t.valor) || 0;
       }
