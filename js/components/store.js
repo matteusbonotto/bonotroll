@@ -255,10 +255,21 @@ export function appStore() {
       this.applyTheme(this.isDarkNow() ? 'light' : 'dark');
     },
 
+    // pushState (não replaceState): cada troca de tela vira uma entrada de
+    // histórico de verdade, então o botão físico "voltar" do Android/gesto
+    // do navegador anda por dentro do app (Transações -> Início) em vez de
+    // fechar o app direto — antes o replaceState só mantinha a URL/hash
+    // bookmarkável, sem empilhar histórico nenhum. Guard de mesma-tela evita
+    // empilhar uma entrada idêntica (ex.: clicar de novo no item já ativo
+    // da sidebar). O sync de volta (usuário aperta voltar de verdade) é
+    // "popstate" em js/app.js — que só LÊ o hash, nunca chama setView, pra
+    // não empurrar uma entrada nova por cima da que acabou de ser
+    // desempilhada (isso quebraria voltar de novo).
     setView(view) {
-      this.view = view;
       this.navOpen = false;
-      history.replaceState(null, '', '#/' + view);
+      if (view === this.view) return;
+      this.view = view;
+      history.pushState({ view }, '', '#/' + view);
     },
 
     // Chamado pelo botão "Atualizar agora" do banner de nova versão (ver

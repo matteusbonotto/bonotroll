@@ -48,6 +48,20 @@ document.addEventListener('alpine:init', () => {
   Alpine.data('categoryChart', categoryChart);
 });
 
+// Botão físico "voltar" do Android / gesto do navegador andando por DENTRO
+// do app (Transações -> Início), não fechando o app direto — setView (ver
+// store.js) empilha uma entrada de histórico de verdade a cada troca de
+// tela (pushState); isto aqui só faz o caminho INVERSO, sincronizar
+// $store.app.view com o que "voltar" já desempilhou. Nunca chama setView
+// de novo aqui — isso empurraria uma entrada nova por cima da que acabou
+// de sair, e o próximo "voltar" ficaria preso sem sair do lugar.
+window.addEventListener('popstate', () => {
+  const store = Alpine.store('app');
+  if (!store?.ready) return;
+  store.view = location.hash.replace('#/', '') || 'home';
+  store.navOpen = false;
+});
+
 // Trava o scroll do fundo, fecha com Esc, e devolve o foco — pros ~12
 // modais/drawers do app de uma vez, sem tocar em nenhum deles individualmente.
 // Um MutationObserver global em vez de cada tela avisar individualmente
