@@ -347,21 +347,18 @@ export function shoppingView() {
       }
     },
 
-    // Cancelar (só visível com a lista pausada): sair de vez dessa compra
-    // pausada, sem retomar. Diferente de finalizar() — não pergunta se quer
-    // lançar como despesa (a pessoa está desistindo, não fechando a
-    // compra), só encerra a lista (pra não ficar "pausada" pra sempre
-    // disputando com a lista nova pelo status de "ativa", ver
-    // getOrCreateActiveList em services/shoppingList.js) e abre uma nova
-    // lista em branco pra recomeçar. Itens continuam salvos no histórico.
+    // Cancelar (só visível com a lista pausada): sai do estado "pausada" SEM
+    // encerrar/esvaziar nada — a lista e os itens continuam exatamente como
+    // estavam, só editáveis de novo (volta pra "planejando"). Diferente de
+    // finalizar(): não pergunta se quer lançar despesa, não cria lista nova,
+    // não manda nada pro histórico — pedido explícito do usuário: "caso eu
+    // clique em cancelar, não deve limpar a lista de compras, só limpa se
+    // encerrar as compras".
     async cancelarPausada() {
-      const ok = confirm('Cancelar essa compra pausada? Os itens ficam salvos no histórico, mas essa lista é encerrada (sem virar despesa) e você começa uma lista nova.');
-      if (!ok) return;
       const store = this.$store.app;
       try {
-        await sl.finishShopping(this.list.id);
-        await this.novaLista();
-        store.notify('Compra pausada cancelada.');
+        this.list = await sl.cancelPausedShopping(this.list.id);
+        store.notify('Compra pausada cancelada — a lista continua como estava.');
       } catch (e) {
         store.notify(e.message || 'Não foi possível cancelar a compra.', 'danger');
       }

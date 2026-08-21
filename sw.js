@@ -8,7 +8,7 @@
 // segundo plano (evento "install" roda de novo) e ficar em estado "waiting"
 // até alguém assumir — é esse "waiting" que js/app.js detecta pra mostrar o
 // banner "Nova versão disponível" (ver updateNotifier em js/app.js).
-const CACHE_NAME = 'bonotto-v5';
+const CACHE_NAME = 'bonotto-v6';
 
 const APP_SHELL = [
   './',
@@ -65,6 +65,7 @@ const APP_SHELL = [
   './assets/icons/icon.svg?v=2',
   './assets/icons/icon-maskable.svg?v=2',
   './assets/icons/apple-touch-icon.png?v=2',
+  './assets/icons/badge-mono.png',
   './assets/logos/logo-colorida.svg',
 ];
 
@@ -105,7 +106,15 @@ self.addEventListener('push', (event) => {
       // PNG, não SVG: notificação nativa (Android/Chrome) não renderiza SVG
       // aqui — silenciosamente cai num ícone genérico do sistema.
       icon: './assets/icons/apple-touch-icon.png',
-      badge: './assets/icons/apple-touch-icon.png',
+      // "badge" é DIFERENTE de "icon": é o selo pequeno mono cromático que o
+      // SO extrai só pelo canal alfa (ignora a cor de verdade) pra mostrar
+      // na barra de status/como selinho — usar o mesmo PNG opaco (fundo
+      // branco sólido) do "icon" aqui fazia o SO enxergar o quadrado
+      // INTEIRO como "opaco" e desenhar um retângulo branco liso (bug
+      // relatado: "veio um retângulo branco em vez do logo"). badge-mono.png
+      // é a mesma marca, sem nenhum fundo — só o traço com alfa de verdade,
+      // resto 100% transparente.
+      badge: './assets/icons/badge-mono.png',
       tag: payload.tag || 'bonotto-generico',
       data: { url: payload.url || './index.html' },
     })

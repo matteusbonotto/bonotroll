@@ -126,7 +126,19 @@ export function transactionsView() {
         porMes.get(anoMes).push(t);
       }
       return [...porMes.entries()]
-        .sort(([a], [b]) => (a === 'sem-data' ? 1 : b === 'sem-data' ? -1 : b.localeCompare(a)))
+        // Mês atual sempre primeiro da fila, sem exceção (pedido explícito)
+        // — antes disso, ordenar só por string "aaaa-mm" descendente fazia
+        // um mês FUTURO (ex.: recorrência já gerada com antecedência,
+        // "set/26") aparecer antes do mês atual ("ago/26"), porque
+        // "2026-09" > "2026-08" na comparação de string. "Sem data" sempre
+        // por último; o resto continua mais recente -> mais antigo entre si.
+        .sort(([a], [b]) => {
+          if (a === hojeAnoMes) return -1;
+          if (b === hojeAnoMes) return 1;
+          if (a === 'sem-data') return 1;
+          if (b === 'sem-data') return -1;
+          return b.localeCompare(a);
+        })
         .map(([anoMes, linhas]) => ({
           chave: anoMes,
           label: this.labelMes(anoMes),

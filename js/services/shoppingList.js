@@ -75,6 +75,13 @@ async function updateList(id, patch) {
 export const startShopping = (id) => updateList(id, { status: 'comprando', iniciado_em: new Date().toISOString() });
 export const pauseShopping = (id) => updateList(id, { status: 'pausada' });
 export const resumeShopping = (id) => updateList(id, { status: 'comprando' });
+// "Cancelar" uma compra pausada: SÓ tira do estado "pausada", nunca mexe nos
+// itens nem cria lista nova — a lista e tudo que já foi adicionado continuam
+// exatamente como estavam, só editáveis de novo (mesmo status de antes de
+// iniciar a compra). Só "Encerrar Compra" (finishShopping) de fato encerra/
+// esvazia — pedido explícito: "caso eu clique em cancelar, não deve limpar
+// a lista de compras, só limpa se encerrar as compras".
+export const cancelPausedShopping = (id) => updateList(id, { status: 'planejando', iniciado_em: null });
 export const finishShopping = (id) => updateList(id, { status: 'finalizada', finalizado_em: new Date().toISOString() });
 export const linkListToTransaction = (id, transacaoId) => updateList(id, { transacao_id: transacaoId });
 export const setNomeMercado = (id, nomeMercado) => updateList(id, { nome_mercado: nomeMercado || null });
