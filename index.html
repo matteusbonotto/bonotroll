@@ -863,8 +863,8 @@
                       </button>
                     </td>
                     <td>
-                      <span class="cg-badge" :class="row.tipo === 'entrada' ? 'cg-badge--success' : 'cg-badge--danger'" :title="row.tipo === 'entrada' ? 'Entrada' : 'Saída'">
-                        <i class="bi" :class="row.tipo === 'entrada' ? 'bi-download' : 'bi-upload'"></i>
+                      <span class="cg-badge" :class="row.tipo === 'entrada' ? 'cg-badge--success' : 'cg-badge--danger'" :title="row.tipo === 'entrada' ? 'Entrada' : 'Saída'" role="img" :aria-label="row.tipo === 'entrada' ? 'Entrada' : 'Saída'">
+                        <i class="bi" :class="row.tipo === 'entrada' ? 'bi-download' : 'bi-upload'" aria-hidden="true"></i>
                       </span>
                     </td>
                     <td x-data="{ open: false }" @click.outside="open = false">
@@ -924,7 +924,7 @@
                           </button>
                         </template>
                         <template x-if="row._filhoCartao">
-                          <i class="bi bi-credit-card cg-muted" title="Já está dentro da fatura acima — não soma de novo nos totais"></i>
+                          <i class="bi bi-credit-card cg-muted" role="img" title="Já está dentro da fatura acima — não soma de novo nos totais" aria-label="Já está dentro da fatura acima — não soma de novo nos totais"></i>
                         </template>
                         <span x-text="row.titulo"></span>
                         <span class="cg-parcela-tag" x-show="row.parcela_total" x-text="row.parcela_atual + '/' + row.parcela_total"></span>
@@ -966,9 +966,9 @@
                     </td>
                     <td>
                       <div class="d-flex align-items-center gap-2">
-                        <div class="form-check mb-0">
-                          <input class="form-check-input cg-check-success" type="checkbox" :checked="!!row.data_pagamento" @change="togglePago(row)" title="Marcar/desmarcar como pago" />
-                        </div>
+                        <label class="form-check mb-0 cg-check-touch" title="Marcar/desmarcar como pago">
+                          <input class="form-check-input cg-check-success" type="checkbox" :checked="!!row.data_pagamento" @change="togglePago(row)" aria-label="Marcar/desmarcar como pago" />
+                        </label>
                         <span class="cg-badge" :class="'cg-badge--' + cgStatus.statusMeta(row._status).badge">
                           <i :class="'bi ' + cgStatus.statusMeta(row._status).icon"></i>
                           <span x-text="cgStatus.statusMeta(row._status).label"></span>
@@ -1037,7 +1037,7 @@
                           </button>
                         </template>
                         <template x-if="row._filhoCartao">
-                          <i class="bi bi-credit-card cg-muted" title="Já está dentro da fatura acima — não soma de novo nos totais"></i>
+                          <i class="bi bi-credit-card cg-muted" role="img" title="Já está dentro da fatura acima — não soma de novo nos totais" aria-label="Já está dentro da fatura acima — não soma de novo nos totais"></i>
                         </template>
                         <span class="text-truncate" x-text="row.titulo"></span>
                         <span class="cg-parcela-tag flex-shrink-0" x-show="row.parcela_total" x-text="row.parcela_atual + '/' + row.parcela_total"></span>
@@ -1093,9 +1093,9 @@
 
                 <div class="d-flex align-items-center justify-content-between">
                   <div class="d-flex align-items-center gap-2">
-                    <div class="form-check mb-0">
-                      <input class="form-check-input cg-check-success" type="checkbox" :checked="!!row.data_pagamento" @change="togglePago(row)" title="Marcar/desmarcar como pago" />
-                    </div>
+                    <label class="form-check mb-0 cg-check-touch" title="Marcar/desmarcar como pago">
+                      <input class="form-check-input cg-check-success" type="checkbox" :checked="!!row.data_pagamento" @change="togglePago(row)" aria-label="Marcar/desmarcar como pago" />
+                    </label>
                     <span class="cg-badge" :class="'cg-badge--' + cgStatus.statusMeta(row._status).badge">
                       <i :class="'bi ' + cgStatus.statusMeta(row._status).icon"></i>
                       <span x-text="cgStatus.statusMeta(row._status).label"></span>
@@ -1434,7 +1434,7 @@
             <div class="d-flex flex-column">
               <template x-for="item in itemsOrdenados" :key="item.id">
                 <div class="cg-item-row" :class="{ 'is-comprado': item.comprado }">
-                  <span class="cg-chip" :style="{ background: (categoryFor(item.categoria_id)?.cor || '#94A3B8') }">
+                  <span class="cg-chip" :style="{ background: (categoryFor(item.categoria_id)?.cor || '#94A3B8') }" role="img" :title="categoryFor(item.categoria_id)?.nome || 'Sem categoria'" :aria-label="categoryFor(item.categoria_id)?.nome || 'Sem categoria'">
                     <span class="cg-chip__dot"></span>
                   </span>
                   <div class="flex-fill min-w-0">
@@ -1452,8 +1452,8 @@
                   <template x-if="emCompra && item.comprado">
                     <button type="button" class="cg-btn btn btn-outline-secondary btn-sm" @click="desmarcarComprado(item)" aria-label="Desmarcar como comprado"><i class="bi bi-arrow-counterclockwise"></i></button>
                   </template>
-                  <button type="button" class="btn btn-sm btn-link" @click="abrirEdicao(item)" title="Editar"><i class="bi bi-pencil"></i></button>
-                  <button type="button" class="btn btn-sm btn-link text-danger" @click="removeItem(item.id)" title="Remover"><i class="bi bi-trash"></i></button>
+                  <button type="button" class="btn btn-sm btn-outline-secondary" @click="abrirEdicao(item)" title="Editar" aria-label="Editar"><i class="bi bi-pencil"></i></button>
+                  <button type="button" class="btn btn-sm btn-outline-danger" @click="removeItem(item.id)" title="Remover" aria-label="Remover"><i class="bi bi-trash"></i></button>
                 </div>
               </template>
             </div>
@@ -2197,10 +2197,18 @@
                 </div>
               </template>
 
-              <div class="d-flex gap-2 flex-wrap">
+              <!-- "Sair" (reversível — dá pra entrar de novo com o convite) e
+                   "Excluir" (irreversível, admin-only) eram visualmente
+                   gêmeos (mesma classe, mesmo peso) apesar da consequência
+                   bem diferente. Excluir vira link discreto + empurrado pro
+                   canto oposto (ms-auto) em vez de outro botão-pílula do
+                   mesmo tamanho — ação rara e perigosa fica menos "ao
+                   alcance do dedo", não mais (o confirm() de aviso continua
+                   em groupView.js, isto só muda o peso visual). -->
+              <div class="d-flex gap-2 flex-wrap align-items-center">
                 <button type="button" class="cg-btn btn btn-outline-danger" @click="sair()"><i class="bi bi-box-arrow-left"></i> Sair do grupo</button>
                 <template x-if="souAdmin()">
-                  <button type="button" class="cg-btn btn btn-outline-danger" @click="excluirGrupo()"><i class="bi bi-trash"></i> Excluir grupo</button>
+                  <button type="button" class="btn btn-sm btn-link text-danger ms-auto" @click="excluirGrupo()"><i class="bi bi-trash"></i> Excluir grupo</button>
                 </template>
               </div>
             </div>
@@ -2268,6 +2276,15 @@
                   <div class="flex-fill">
                     <h2 class="h6 fw-bold mb-1">Bancos</h2>
                     <p class="cg-muted small mb-0">Nomes e logos dos bancos usados nas Caixinhas.</p>
+                  </div>
+                  <i class="bi bi-chevron-right cg-muted"></i>
+                </div>
+
+                <div class="cg-list-flat cg-list-flat--hoverable px-3" role="button" @click="$store.cartaoModal.openManage()">
+                  <div class="cg-icon-badge"><i class="bi bi-credit-card"></i></div>
+                  <div class="flex-fill">
+                    <h2 class="h6 fw-bold mb-1">Cartões de crédito</h2>
+                    <p class="cg-muted small mb-0">Cada cartão é de uma pessoa e fica vinculado a um banco — as compras caem na fatura do cartão certo.</p>
                   </div>
                   <i class="bi bi-chevron-right cg-muted"></i>
                 </div>
@@ -2589,11 +2606,22 @@
             <!-- Só faz sentido em saída (entrada não é compra no cartão) —
                  x-if, não x-show: o <div> carrega .form-check/.mb-0, e
                  utilitário do Bootstrap com !important já venceu display do
-                 x-show mais de uma vez neste projeto (ver CLAUDE.md). -->
+                 x-show mais de uma vez neste projeto (ver CLAUDE.md). O
+                 seletor de cartão substitui o antigo switch booleano: escolher
+                 um cartão liga cartao_credito=true (a despesa passa a viver
+                 dentro da fatura daquele cartão no mês). "__legado__" é o
+                 sentinela de "cartão de crédito, mas não sei qual cartão"
+                 (dado antigo) — mantém a marcação sem gravar cartao_id. -->
             <template x-if="$store.txModal.form.tipo === 'saida'">
-              <div class="form-check form-switch mb-0">
-                <input type="checkbox" role="switch" class="form-check-input" id="cartaoCredito" x-model="$store.txModal.form.cartao_credito" />
-                <label class="form-check-label small" for="cartaoCredito" title="Esta despesa já está inclusa na fatura do cartão do mês — o valor conta uma vez só, dentro da fatura">Cartão de crédito</label>
+              <div class="d-flex align-items-center gap-2">
+                <select id="cartaoCredito" class="form-select form-select-sm" style="max-width: 230px;" x-model="$store.txModal.form.cartao_id" @change="$store.txModal.onCartaoChange()" title="Esta despesa já está inclusa na fatura do cartão do mês — o valor conta uma vez só, dentro da fatura">
+                  <option value="">Não é compra no cartão</option>
+                  <option value="__legado__">Cartão de crédito (cartão não informado)</option>
+                  <template x-for="c in $store.app.cartoes" :key="c.id">
+                    <option :value="c.id" x-text="c.nome"></option>
+                  </template>
+                  <option value="__novo__">+ Novo cartão...</option>
+                </select>
               </div>
             </template>
             <div class="d-flex align-items-center gap-1 ms-auto">
@@ -2970,6 +2998,71 @@
         <button type="button" class="cg-btn btn btn-outline-secondary flex-fill" @click="$store.bankModal.closeForm()">Cancelar</button>
         <button type="button" class="cg-btn btn btn-success flex-fill" :disabled="$store.bankModal.saving" @click="$store.bankModal.salvar()">
           <span x-text="$store.bankModal.editingId ? 'Salvar' : 'Criar banco'"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ MODAL: CARTÕES DE CRÉDITO (gerenciar — lista) + formulário empilhado ============
+       Mesmo padrão de dois modais empilhados de bankModal. Cartão é uma
+       identidade PESSOAL (owner-scoped): cada pessoa tem o(s) seu(s), cada
+       um vinculado a um banco. Ver .claude/discussions/001-cartao-credito-multi-cartao.md. -->
+  <div class="cg-modal-backdrop" x-show="$store.cartaoModal.open" x-cloak @click.self="$store.cartaoModal.closeManage()">
+    <div class="cg-modal" x-show="$store.cartaoModal.open" x-transition>
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <div>
+          <h2 class="h6 fw-bold mb-1">Cartões de crédito</h2>
+          <p class="cg-muted small mb-0">Cada cartão é de uma pessoa e fica vinculado a um banco — as compras caem na fatura do cartão certo.</p>
+        </div>
+        <button type="button" class="btn-close" @click="$store.cartaoModal.closeManage()" aria-label="Fechar"></button>
+      </div>
+
+      <button type="button" class="cg-btn btn btn-success btn-sm mb-3" @click="$store.cartaoModal.openCreate(null)"><i class="bi bi-plus-lg"></i> Novo cartão</button>
+
+      <p class="cg-muted small" x-show="$store.cartaoModal.loading">Carregando...</p>
+      <div class="cg-manager-list" x-show="!$store.cartaoModal.loading">
+        <template x-for="c in $store.cartaoModal.items" :key="c.id">
+          <div class="cg-manager-row">
+            <span class="cg-chip cg-chip--icon-only" style="background: #64748B;">
+              <i class="bi bi-credit-card"></i>
+            </span>
+            <span class="flex-fill text-truncate fw-semibold" x-text="c.nome"></span>
+            <span class="cg-muted small text-truncate" x-text="$store.app.bankById(c.banco_id)?.nome || ''"></span>
+            <button type="button" class="btn btn-sm btn-outline-secondary" @click="$store.cartaoModal.edit(c)" :aria-label="'Editar ' + c.nome"><i class="bi bi-pencil"></i></button>
+            <button type="button" class="btn btn-sm btn-outline-danger" @click="$store.cartaoModal.excluir(c)" :aria-label="'Excluir ' + c.nome"><i class="bi bi-trash"></i></button>
+          </div>
+        </template>
+        <p class="cg-muted small mb-0" x-show="!$store.cartaoModal.items.length">Nenhum cartão cadastrado ainda.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Formulário de cartão — empilhado por cima da lista quando ela também
+       está aberta ("Gerenciar cartões"), ou sozinho quando aberto direto do
+       seletor de cartão no formulário de despesa ("+ Novo cartão..."). -->
+  <div class="cg-modal-backdrop" :class="{ 'cg-modal-backdrop--stacked': $store.cartaoModal.open }" x-show="$store.cartaoModal.formOpen" x-cloak @click.self="$store.cartaoModal.closeForm()">
+    <div class="cg-modal cg-modal--sm" x-show="$store.cartaoModal.formOpen" x-transition>
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <h2 class="h6 fw-bold mb-0" x-text="$store.cartaoModal.editingId ? 'Editar cartão' : 'Novo cartão'"></h2>
+        <button type="button" class="btn-close" @click="$store.cartaoModal.closeForm()" aria-label="Fechar"></button>
+      </div>
+      <div class="mb-3">
+        <label class="form-label small">Nome do cartão</label>
+        <input type="text" class="form-control" x-model="$store.cartaoModal.nome" placeholder="Ex: Nubank, Inter, C6..." @keydown.enter.prevent="$store.cartaoModal.salvar()" required />
+      </div>
+      <div class="mb-3">
+        <label class="form-label small">Banco (opcional)</label>
+        <select class="form-select" x-model="$store.cartaoModal.bancoId">
+          <option value="">Sem banco vinculado</option>
+          <template x-for="b in $store.app.banks" :key="b.id">
+            <option :value="b.id" x-text="b.nome"></option>
+          </template>
+        </select>
+      </div>
+      <div class="d-flex gap-2">
+        <button type="button" class="cg-btn btn btn-outline-secondary flex-fill" @click="$store.cartaoModal.closeForm()">Cancelar</button>
+        <button type="button" class="cg-btn btn btn-success flex-fill" :disabled="$store.cartaoModal.saving" @click="$store.cartaoModal.salvar()">
+          <span x-text="$store.cartaoModal.editingId ? 'Salvar' : 'Criar cartão'"></span>
         </button>
       </div>
     </div>

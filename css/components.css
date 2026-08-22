@@ -56,7 +56,11 @@
   background: var(--color-surface);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
-  padding: var(--space-4);
+  /* 20px, não var(--space-4)/16px: é o valor que já renderizava de fato
+     (duas outras declarações de .cg-card, agora removidas de css/app.css e
+     desta seção, concordavam nisso) — mantido pra não regredir visualmente.
+     Reduz pra 16px no mobile logo abaixo, como já era. */
+  padding: 20px;
   transition: box-shadow 0.15s ease, transform 0.15s ease;
 }
 
@@ -370,6 +374,20 @@
   border-color: var(--color-success);
   box-shadow: 0 0 0 0.2rem rgba(22, 163, 74, 0.25);
 }
+/* Área clicável real do checkbox "pago" (Transações) era só a caixinha
+   nativa (1.3em ~= 21px), bem abaixo do --touch-target (48px). Em vez de
+   reinventar o hitbox por JS, o <input> passou a viver dentro de um <label>
+   (index.html) — clicar em qualquer ponto do label já alterna o checkbox,
+   comportamento nativo do HTML — e esta classe só dá padding a essa área. */
+.cg-check-touch {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-2);
+  margin: calc(var(--space-2) * -1);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.cg-check-touch:hover { background: var(--color-surface-alt); }
 
 .cg-chip--icon-only {
   width: 32px;
@@ -1062,76 +1080,16 @@
    Product interface refresh
    A quiet, information-first financial interface. These overrides intentionally
    keep the app's existing component contracts while replacing its visual model.
-   -------------------------------------------------------------------------- */
-:root {
-  --color-bg: #f4f5f6;
-  --color-surface: #ffffff;
-  --color-surface-alt: #eef1f2;
-  --color-text: #182321;
-  --color-text-muted: #687573;
-  --color-border: #dfe5e3;
-  --color-primary: #126b5c;
-  --color-primary-rgb: 18, 107, 92;
-  --color-primary-dark: #0a4d42;
-  --color-primary-soft: #e3f2ed;
-  --color-accent: #d96b45;
-  --color-danger: #c8374e;
-  --color-success: #168360;
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-pill: 999px;
-  --shadow-sm: 0 1px 2px rgba(19, 35, 30, 0.04);
-  --shadow-md: 0 8px 24px rgba(19, 35, 30, 0.08);
-  --shadow-lg: 0 16px 36px rgba(19, 35, 30, 0.13);
-}
 
-/* Bug real reportado ("tema escuro quebrado"): este bloco redefinia bg/
-   surface/text/border/primary-soft pro escuro, mas ESQUECIA de redefinir
-   --color-primary-dark e as sombras — como --color-primary-dark é usado como
-   COR DE TEXTO em cima de --color-primary-soft em vários lugares (banner de
-   demo, ícone ativo da sidebar, toggle de visualização...), o valor escuro
-   (feito pra funcionar sobre um soft CLARO) ficava quase invisível sobre o
-   soft ESCURO — texto escuro em fundo escuro. Precisa virar um tom CLARO
-   aqui, não o mesmo valor do modo claro. Também faltava o gatilho de "escuro
-   por preferência do sistema" (só existia o toggle manual [data-bs-theme]) —
-   sem isso, quem nunca clicou no botão de tema mas usa o SO em escuro via
-   prefers-color-scheme não via nada disto, só o de tokens.css. */
-:root[data-bs-theme="dark"] {
-  --color-bg: #111917;
-  --color-surface: #182321;
-  --color-surface-alt: #22302d;
-  --color-text: #edf5f1;
-  --color-text-muted: #a5b3ae;
-  --color-border: #2d3d39;
-  --color-primary-soft: #163b32;
-  --color-primary-dark: #5EEAB0;
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
-  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
-  --shadow-lg: 0 16px 36px rgba(0, 0, 0, 0.55);
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-bs-theme="light"]) {
-    --color-bg: #111917;
-    --color-surface: #182321;
-    --color-surface-alt: #22302d;
-    --color-text: #edf5f1;
-    --color-text-muted: #a5b3ae;
-    --color-border: #2d3d39;
-    --color-primary-soft: #163b32;
-    --color-primary-dark: #5EEAB0;
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
-    --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
-    --shadow-lg: 0 16px 36px rgba(0, 0, 0, 0.55);
-  }
-}
-/* [data-bs-theme="light"] explícito precisa reafirmar os valores claros de
-   --color-primary-dark, senão escolher "claro" na mão enquanto o SO está em
-   escuro herdaria o --color-primary-dark claro do bloco de cima por engano
-   (mesma lógica de precedência já usada pros outros tokens, ver tokens.css). */
-:root[data-bs-theme="light"] {
-  --color-primary-dark: #0a4d42;
-}
+   2026-08-22: esta seção tinha uma redeclaração inteira de :root (cor/raio/
+   sombra) que conflitava com css/tokens.css e com uma TERCEIRA redeclaração
+   em css/app.css — as três coexistiam sem nenhuma decisão documentada,
+   quem "ganhava" era só ordem de carregamento do arquivo (confirmado por
+   auditoria visual: o verde que renderizava de fato era o desta seção, não
+   o de tokens.css). Consolidado: os valores que já renderizavam agora vivem
+   só em css/tokens.css (comentário lá tem o histórico completo); esta seção
+   mantém só as regras de COMPONENTE (não-token) que já existiam aqui.
+   -------------------------------------------------------------------------- */
 
 body { font-size: var(--font-size-body); }
 
@@ -1215,7 +1173,10 @@ body { font-size: var(--font-size-body); }
   letter-spacing: 0;
   margin-bottom: 14px;
 }
-.cg-section-title > i { display: none; }
+/* Ícone escondido globalmente aqui não tinha justificativa documentada — o
+   HTML emite <i class="bi ..."> antes de todo .cg-section-title (ver
+   index.html) e esse ícone claramente era pra aparecer. Removido
+   (2026-08-22, auditoria visual). */
 
 .cg-hero-balance {
   background: var(--color-primary);
@@ -1248,8 +1209,13 @@ body { font-size: var(--font-size-body); }
 .cg-hero-stat__value { font-size: 1rem; }
 
 .cg-quick-actions { gap: 10px; }
+/* min-height era 42px aqui, abaixo do --touch-target (48px) documentado em
+   tokens.css — corrigido (2026-08-22). Toolbars compactas que dependiam da
+   altura menor (.cg-agrupar-toggle, .cg-btn.btn-sm, .cg-shopping-toggle,
+   quick actions da Início no mobile) têm min-height PRÓPRIO, mais
+   específico, então não regridem com esta mudança — ver app.css. */
 .cg-btn {
-  min-height: 42px;
+  min-height: var(--touch-target);
   border-radius: var(--radius-md);
   font-size: var(--font-size-body-sm);
   padding-inline: 16px;
@@ -1260,13 +1226,6 @@ body { font-size: var(--font-size-body); }
 .cg-quick-actions .btn-outline-success { color: var(--color-primary-dark); border-color: var(--color-primary); }
 .cg-quick-actions .btn-outline-secondary { color: var(--color-text); border-color: var(--color-border); }
 
-.cg-card {
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  box-shadow: none;
-  background: var(--color-surface);
-  padding: 20px;
-}
 .cg-grid-dashboard { gap: 16px; }
 .cg-due-row,
 .cg-due-row--overdue,
@@ -1304,6 +1263,22 @@ body { font-size: var(--font-size-body); }
    card escuro, um retângulo branco destoando de tudo em volta. */
 .progress { background-color: var(--color-surface-alt); }
 
+/* Mesmo problema de novo (Bootstrap só reage ao ATRIBUTO data-bs-theme, nunca
+   a prefers-color-scheme puro): a bolinha do switch (.form-check-input[role
+   =switch]) só troca pra clara com [data-bs-theme="dark"] presente — ver
+   bootstrap.css, regra "[data-bs-theme=dark] .form-switch .form-check-input
+   :not(:checked):not(:focus)". Quem usa o SO em escuro e nunca tocou no
+   toggle manual (Perfil → notificações push; modal de lançamento →
+   Pago/Recorrente/Cartão de crédito) ficava com a bolinha quase preta
+   (rgba(0,0,0,.25)) sobre fundo quase preto. Replica a MESMA regra do
+   Bootstrap sob o gatilho de sistema, igual ao padrão já usado no resto
+   deste arquivo/tokens.css. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-bs-theme="light"]) .form-switch .form-check-input:not(:checked):not(:focus) {
+    --bs-form-switch-bg: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='rgba%28255, 255, 255, 0.25%29'/%3e%3c/svg%3e");
+  }
+}
+
 .cg-card--stat, .cg-room-tile, .cg-resource-item, .cg-grid-view__card, .cg-item-row {
   border-radius: var(--radius-md);
   box-shadow: none;
@@ -1313,7 +1288,7 @@ body { font-size: var(--font-size-body); }
 .cg-table th { background: transparent; font-size: .67rem; letter-spacing: .08em; }
 .cg-table td { border-color: var(--color-border); vertical-align: middle; }
 
-.cg-modal { border-radius: 12px 12px 0 0; box-shadow: var(--shadow-lg); }
+.cg-modal { border-radius: var(--radius-lg) var(--radius-lg) 0 0; box-shadow: var(--shadow-lg); }
 @media (min-width: 768px) { .cg-modal { border-radius: var(--radius-lg); } }
 .cg-demo-banner { border-radius: var(--radius-sm); border-color: color-mix(in srgb, var(--color-primary) 25%, var(--color-border)); background: var(--color-primary-soft); }
 

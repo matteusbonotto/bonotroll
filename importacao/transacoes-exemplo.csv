@@ -6,7 +6,7 @@ saida,Vivo Internet,,Assinaturas,fixa,92.34,2026-08-22
 saida,Open English,,Curso,fixa,172.79,2026-08-02
 saida,Tokio Marine — Seguro casa,,Casa,fixa,34.40,2026-07-28
 saida,CPFL Paulista (energia),,Casa,variavel,196.50,2026-08-16
-saida,Sanasa (água),,Casa,variavel,119.64,2026-08-21
+saida,Águas Cristalinas Saneamento (água),,Casa,variavel,119.64,2026-08-21
 saida,Condomínio,,Casa,fixa,415.90,
 saida,Seguro Carro,,Carro,fixa,212.58,2026-07-18
 saida,Financiamento Carro,,Carro,fixa,765.87,2026-08-23
@@ -15,5 +15,5 @@ saida,Petlove,,Pet,variavel,44.90,2026-08-09
 saida,iFood / 99,,Delivery,variavel,500.00,
 saida,Financiamento Casa,,Casa,fixa,1000.00,2026-08-14
 saida,Dízimo,,Outro,variavel,200.00,2026-08-10
-entrada,Salário MB Labs,,Salário,fixa,6000.00,2026-08-06
-entrada,Salário Dinamo,,Salário,fixa,5200.00,2026-08-06
+entrada,Salário Vetor Nimbus Tecnologia,,Salário,fixa,6000.00,2026-08-06
+entrada,Salário Estúdio Alameda Criativa,,Salário,fixa,5200.00,2026-08-06

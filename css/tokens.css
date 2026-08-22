@@ -1,29 +1,43 @@
 :root {
-  /* Paleta 2026-08-20 (segunda rodada — a primeira só arredondou cantos e
-     não mudou cor nem escala nenhuma, resultado imperceptível). Verde
-     continua a base (trocar pra outra cor seria um pivô de marca que
-     ninguém pediu), mas MUITO mais saturado e confiante — o antigo #1F7A5C
-     é um verde-floresta discreto, perto de qualquer verde "institucional"
-     genérico; o novo é um verde-esmeralda vívido, o mesmo território visual
-     de apps financeiros modernos (sem copiar nenhum específico). */
-  --color-bg: #F6F8F7;
+  /* Paleta consolidada 2026-08-22 — auditoria visual encontrou TRÊS fontes
+     de verdade conflitantes pra estes tokens (aqui, e mais duas redeclarações
+     inteiras de :root em css/components.css e regras equivalentes em
+     css/app.css, cada "refresh" com valores próprios, sem nenhuma decisão
+     documentada por trás — quem vencia era só ordem de carregamento do
+     arquivo). Esta é agora a ÚNICA declaração de :root pra cor/raio/sombra
+     do projeto; os blocos duplicados foram removidos dos outros dois
+     arquivos. Os valores abaixo são os que JÁ renderizavam de fato (o
+     bloco "Product interface refresh" de components.css, por carregar
+     depois de tokens.css, vencia a cascata) — mantidos de propósito pra não
+     introduzir regressão visual não pedida; um verde-esmeralda mais fechado
+     (quase teal) que o #0E9F6E de uma consolidação anterior, que por sua vez
+     já tinha trocado o #1F7A5C original (verde-floresta discreto). */
+  --color-bg: #F4F5F6;
   --color-surface: #FFFFFF;
-  --color-surface-alt: #EEF2F0;
-  --color-text: #101828;
-  --color-text-muted: #667085;
-  --color-border: #E4E8E6;
+  --color-surface-alt: #EEF1F2;
+  --color-text: #182321;
+  --color-text-muted: #687573;
+  --color-border: #DFE5E3;
 
-  --color-primary: #0E9F6E;
-  --color-primary-rgb: 14, 159, 110;
-  --color-primary-dark: #06724E;
-  --color-primary-soft: #DCFCE9;
-  --color-accent: #FF6B4A;
+  --color-primary: #126B5C;
+  --color-primary-rgb: 18, 107, 92;
+  --color-primary-dark: #0A4D42;
+  --color-primary-soft: #E3F2ED;
+  --color-accent: #D96B45;
 
-  --color-success: #16A34A;
-  --color-danger: #E11D48;
+  --color-success: #168360;
+  --color-danger: #C8374E;
   --color-warning: #D97706;
   --color-info: #0EA5E9;
   --color-secondary: #64748B;
+
+  /* --color-primary-dark também é usado como COR DE TEXTO em cima de
+     --color-primary-soft (banner de demo, ícone ativo da sidebar, toggle de
+     visualização) — por isso ele muda de tom entre os temas mais abaixo
+     ([data-bs-theme="dark"]/prefers-color-scheme dark viram um verde-menta
+     claro; [data-bs-theme="light"] reafirma o tom escuro), nunca um valor
+     único fixo (texto escuro em fundo escuro era exatamente o bug real já
+     visto em produção que motivou essa variação por tema). */
 
   /* "Tinta" — preenchimento sólido neutro de alto contraste (ex.: botão de
      despesa no estilo "quase preto", visual editorial). Nunca usar
@@ -45,9 +59,14 @@
      --radius-pill = SÓ botão de ação principal e chip/badge — nunca nav,
                      nunca item de lista, nunca elemento largo/multi-linha
                      (isso é o que ficou "estranho" na primeira rodada). */
-  --radius-sm: 10px;
-  --radius-md: 14px;
-  --radius-lg: 20px;
+  /* --radius-lg tinha 3 valores coexistindo (20px aqui, 12px na redeclaração
+     de components.css, 14px hardcoded solto num .cg-card de app.css) —
+     12px é o que efetivamente renderizava (vencia a cascata) e é o valor
+     usado ao longo do app hoje (.cg-modal, .cg-card etc.), por isso é o
+     escolhido; o hardcode de 14px foi trocado por var(--radius-lg). */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
   --radius-pill: 999px;
 
   --space-1: 4px;
@@ -61,9 +80,9 @@
   /* Sombra mais presente, sem borda — elevação de verdade em vez de
      contorno. Ver .cg-card em components.css: borda removida, a sombra
      sozinha marca onde o card termina. */
-  --shadow-sm: 0 2px 8px rgba(20, 30, 25, 0.07);
-  --shadow-md: 0 12px 32px rgba(20, 30, 25, 0.12);
-  --shadow-lg: 0 20px 48px rgba(20, 30, 25, 0.16);
+  --shadow-sm: 0 1px 2px rgba(19, 35, 30, 0.04);
+  --shadow-md: 0 8px 24px rgba(19, 35, 30, 0.08);
+  --shadow-lg: 0 16px 36px rgba(19, 35, 30, 0.13);
 
   --font-family-base: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-size-base: 16px;
@@ -99,47 +118,50 @@
    funcionar mesmo com o sistema em escuro (mesma lógica de precedência). */
 @media (prefers-color-scheme: dark) {
   :root:not([data-bs-theme="light"]) {
-    --color-bg: #14181A;
-    --color-surface: #1E2427;
-    --color-surface-alt: #242B2E;
-    --color-text: #F2F3F1;
-    --color-text-muted: #A9B2AD;
-    --color-border: #2E3538;
-    --color-primary-soft: #17332A;
-    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
-    --shadow-md: 0 12px 32px rgba(0, 0, 0, 0.4);
-    --shadow-lg: 0 20px 48px rgba(0, 0, 0, 0.5);
+    --color-bg: #111917;
+    --color-surface: #182321;
+    --color-surface-alt: #22302D;
+    --color-text: #EDF5F1;
+    --color-text-muted: #A5B3AE;
+    --color-border: #2D3D39;
+    --color-primary-soft: #163B32;
+    --color-primary-dark: #5EEAB0;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+    --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
+    --shadow-lg: 0 16px 36px rgba(0, 0, 0, 0.55);
     --color-on-ink: #0E1512;
     color-scheme: dark;
   }
 }
 
 :root[data-bs-theme="dark"] {
-  --color-bg: #14181A;
-  --color-surface: #1E2427;
-  --color-surface-alt: #242B2E;
-  --color-text: #F2F3F1;
-  --color-text-muted: #A9B2AD;
-  --color-border: #2E3538;
-  --color-primary-soft: #17332A;
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 12px 32px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 20px 48px rgba(0, 0, 0, 0.5);
+  --color-bg: #111917;
+  --color-surface: #182321;
+  --color-surface-alt: #22302D;
+  --color-text: #EDF5F1;
+  --color-text-muted: #A5B3AE;
+  --color-border: #2D3D39;
+  --color-primary-soft: #163B32;
+  --color-primary-dark: #5EEAB0;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 16px 36px rgba(0, 0, 0, 0.55);
   --color-on-ink: #0E1512;
   color-scheme: dark;
 }
 
 :root[data-bs-theme="light"] {
-  --color-bg: #F6F8F7;
+  --color-bg: #F4F5F6;
   --color-surface: #FFFFFF;
-  --color-surface-alt: #EEF2F0;
-  --color-text: #101828;
-  --color-text-muted: #667085;
-  --color-border: #E4E8E6;
-  --color-primary-soft: #DCFCE9;
-  --shadow-sm: 0 2px 8px rgba(20, 30, 25, 0.07);
-  --shadow-md: 0 12px 32px rgba(20, 30, 25, 0.12);
-  --shadow-lg: 0 20px 48px rgba(20, 30, 25, 0.16);
+  --color-surface-alt: #EEF1F2;
+  --color-text: #182321;
+  --color-text-muted: #687573;
+  --color-border: #DFE5E3;
+  --color-primary-soft: #E3F2ED;
+  --color-primary-dark: #0A4D42;
+  --shadow-sm: 0 1px 2px rgba(19, 35, 30, 0.04);
+  --shadow-md: 0 8px 24px rgba(19, 35, 30, 0.08);
+  --shadow-lg: 0 16px 36px rgba(19, 35, 30, 0.13);
   --color-on-ink: #FFFFFF;
   color-scheme: light;
 }

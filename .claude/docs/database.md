@@ -2,7 +2,7 @@
 
 Fonte de verdade: `supabase/schema.sql` (idempotente — sempre `create table if not exists`, `drop policy if exists` antes de recriar). Este documento é o mapa rápido, não substitui ler o schema real antes de mudar algo.
 
-## Tabelas (18)
+## Tabelas (19)
 
 | Tabela | Papel |
 |---|---|
@@ -11,7 +11,8 @@ Fonte de verdade: `supabase/schema.sql` (idempotente — sempre `create table if
 | `categories` / `category_budgets` | categoria de transação/item, com limite mensal opcional |
 | `companies` | empresa/serviço (nome + logo), entidade compartilhada, única por owner/grupo |
 | `banks` | banco de uma Caixinha (nome + logo), mesma ideia de `companies` |
-| `transactions` | entrada/saída — fixa/variável, recorrência, parcela, vencimento/pagamento |
+| `cartoes` | cartão de crédito (nome + `banco_id`), **pessoal** (owner-scoped, nome único por dono) — ver `001-cartao-credito-multi-cartao.md` |
+| `transactions` | entrada/saída — fixa/variável, recorrência, parcela, vencimento/pagamento; `cartao_credito` (bool) + `cartao_id` (FK `cartoes`) |
 | `transaction_payers` | divisão de uma transação entre membros (% e valor) — ausência de linha = 100% do `responsavel_id` |
 | `resource_rooms` / `resource_categories` / `resource_items` | inventário doméstico em 3 níveis |
 | `caixinhas` / `caixinha_movimentacoes` | reserva por banco, multi-moeda; saldo é sempre SOMA das movimentações, nunca uma coluna própria |
@@ -32,6 +33,7 @@ owner_id = auth.uid() OR is_group_member(group_id)
 - **Dinheiro é sempre `numeric(12,2)`**, nunca `float`/`real`.
 - **Nada calculado é persistido** — saldo de caixinha, status de pagamento, total de lista de compras: sempre derivado das linhas brutas no momento da leitura, nunca uma coluna própria que possa divergir.
 - **Entidade "por nome, sem duplicata"** (`banks`, `companies`, `categories`, `resource_rooms`) tem índice único por `(owner_id, coalesce(group_id, ...), nome)`.
+- **`cartoes` é pessoal, não de grupo**: índice único por `(owner_id, lower(nome))` — sem `group_id` na unicidade, porque cada pessoa tem os SEUS cartões (a leitura é compartilhada no grupo, mas o nome é único por dono).
 - **`transaction_payers` vazio = não dividida** — 100% do `responsavel_id`, comportamento retrocompatível com transação antiga.
 
 ## Modo demo (`js/data/mockDb.js`)

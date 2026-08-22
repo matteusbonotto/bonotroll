@@ -187,6 +187,62 @@ test('groupCartaoCredito não mexe em quem não tem nada a ver com cartão (mesm
   assert.equal(visiveis[0], comum); // não clona nem adiciona campo em transação comum
 });
 
+// ---- Multi-cartão (2026-08-22, .claude/discussions/001-cartao-credito-multi-cartao.md) ----
+
+test('groupCartaoCredito: 2 faturas no MESMO mês de cartões DIFERENTES não se misturam (bug de produção)', () => {
+  const faturaMatheus = { id: 'f1', tipo: 'saida', categoria_id: 'cat-cartao', valor: 450, data_vencimento: '2026-08-10', cartao_id: 'cartao-nubank' };
+  const faturaBeatriz = { id: 'f2', tipo: 'saida', categoria_id: 'cat-cartao', valor: 300, data_vencimento: '2026-08-12', cartao_id: 'cartao-inter' };
+  const compraMatheus = { id: 't1', tipo: 'saida', categoria_id: 'cat-assinaturas', valor: 19.9, data_vencimento: '2026-08-03', cartao_credito: true, cartao_id: 'cartao-nubank' };
+  const compraBeatriz = { id: 't2', tipo: 'saida', categoria_id: 'cat-saude', valor: 80, data_vencimento: '2026-08-04', cartao_credito: true, cartao_id: 'cartao-inter' };
+  const { visiveis } = groupCartaoCredito([faturaMatheus, faturaBeatriz, compraMatheus, compraBeatriz], CATEGORIAS_CARTAO);
+
+  assert.equal(visiveis.length, 2);
+  assert.deepEqual(visiveis.find((t) => t.id === 'f1').filhosCartao.map((f) => f.id), ['t1']);
+  assert.deepEqual(visiveis.find((t) => t.id === 'f2').filhosCartao.map((f) => f.id), ['t2']);
+  // Sem o cartao_id, a compra da Beatriz cairia na PRIMEIRA fatura do mês (a do Matheus).
+  assert.equal(visiveis.find((t) => t.id === 'f1').filhosCartao.some((f) => f.id === 't2'), false);
+});
+
+test('groupCartaoCredito: compra com cartao_id não cai em fatura de OUTRO cartão no mesmo mês', () => {
+  const fatura = { id: 'f1', tipo: 'saida', categoria_id: 'cat-cartao', valor: 450, data_vencimento: '2026-08-10', cartao_id: 'cartao-nubank' };
+  const compraOutroCartao = { id: 't1', tipo: 'saida', categoria_id: 'cat-assinaturas', valor: 19.9, data_vencimento: '2026-08-03', cartao_credito: true, cartao_id: 'cartao-inter' };
+  const { visiveis } = groupCartaoCredito([fatura, compraOutroCartao], CATEGORIAS_CARTAO);
+
+  assert.equal(visiveis.length, 2); // a compra fica solta, não some
+  assert.deepEqual(visiveis.find((t) => t.id === 'f1').filhosCartao, []);
+  assert.equal(visiveis.find((t) => t.id === 't1').cartao_credito, true);
+});
+
+test('groupCartaoCredito legado: sem cartao_id, agrupa por responsavel_id + mês (não mais só mês)', () => {
+  const faturaMatheus = { id: 'f1', tipo: 'saida', categoria_id: 'cat-cartao', valor: 450, data_vencimento: '2026-08-10', responsavel_id: 'matheus' };
+  const faturaBeatriz = { id: 'f2', tipo: 'saida', categoria_id: 'cat-cartao', valor: 300, data_vencimento: '2026-08-12', responsavel_id: 'beatriz' };
+  const compraMatheus = { id: 't1', tipo: 'saida', categoria_id: 'cat-assinaturas', valor: 19.9, data_vencimento: '2026-08-03', cartao_credito: true, responsavel_id: 'matheus' };
+  const compraBeatriz = { id: 't2', tipo: 'saida', categoria_id: 'cat-saude', valor: 80, data_vencimento: '2026-08-04', cartao_credito: true, responsavel_id: 'beatriz' };
+  const { visiveis } = groupCartaoCredito([faturaMatheus, faturaBeatriz, compraMatheus, compraBeatriz], CATEGORIAS_CARTAO);
+
+  assert.equal(visiveis.length, 2);
+  assert.deepEqual(visiveis.find((t) => t.id === 'f1').filhosCartao.map((f) => f.id), ['t1']);
+  assert.deepEqual(visiveis.find((t) => t.id === 'f2').filhosCartao.map((f) => f.id), ['t2']);
+});
+
+test('groupCartaoCredito legado: compra sem cartao_id e sem responsavel_id não cai em fatura de outra pessoa', () => {
+  const fatura = { id: 'f1', tipo: 'saida', categoria_id: 'cat-cartao', valor: 450, data_vencimento: '2026-08-10', responsavel_id: 'matheus' };
+  const compraSemResp = { id: 't1', tipo: 'saida', categoria_id: 'cat-assinaturas', valor: 19.9, data_vencimento: '2026-08-03', cartao_credito: true };
+  const { visiveis } = groupCartaoCredito([fatura, compraSemResp], CATEGORIAS_CARTAO);
+
+  assert.equal(visiveis.length, 2); // fica solta — responsavel_id vazio não casa com a fatura do Matheus
+  assert.deepEqual(visiveis.find((t) => t.id === 'f1').filhosCartao, []);
+});
+
+test('groupCartaoCredito: fatura e compra com o MESMO cartao_id em meses diferentes não se juntam', () => {
+  const fatura = { id: 'f1', tipo: 'saida', categoria_id: 'cat-cartao', valor: 450, data_vencimento: '2026-08-10', cartao_id: 'cartao-nubank' };
+  const compraMesSeguinte = { id: 't1', tipo: 'saida', categoria_id: 'cat-assinaturas', valor: 19.9, data_vencimento: '2026-09-03', cartao_credito: true, cartao_id: 'cartao-nubank' };
+  const { visiveis } = groupCartaoCredito([fatura, compraMesSeguinte], CATEGORIAS_CARTAO);
+
+  assert.equal(visiveis.length, 2); // sem fatura do cartão no mês da compra, ela fica solta
+  assert.deepEqual(visiveis.find((t) => t.id === 'f1').filhosCartao, []);
+});
+
 test('groupByPeriod agrupa por mês e soma cada balde', () => {
   const txs = [
     { tipo: 'saida', data_cadastro: '2026-08-01', valor: 100 },

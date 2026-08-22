@@ -304,7 +304,7 @@ Use estes dados para popular o ambiente de demonstração/testes, refletindo o c
 - **Grupo**: "Família" com dois membros — Matheus e Beatriz.
 - **Categorias** (com cor própria): Assinaturas, Curso, Casa, Carro, Pet, Delivery, Outro, Salário.
 - **Exemplos de transações** (Saída): Amazon Prime R$19,90, Claro Móvel R$51,91, Nubank+ R$29,00, Vivo Internet R$92,34, Seguro Carro R$212,58, Financiamento Carro R$765,87, Condomínio R$415,90, Financiamento Casa R$1.000,00, Gasolina R$200,00.
-- **Exemplos de transações** (Entrada): Salário MB Labs (Matheus) R$6.000,00, Salário Dinamo (Beatriz) R$5.200,00.
+- **Exemplos de transações** (Entrada): Salário Vetor Nimbus Tecnologia (Matheus) R$6.000,00, Salário Estúdio Alameda Criativa (Beatriz) R$5.200,00.
 - **Card pessoal esperado (Matheus)**: Entrada R$6.000,00 · Saída R$3.265,21 · Saldo R$2.734,79.
 - **Card do grupo**: soma de Matheus + Beatriz (Entrada agregada R$11.200,00 e assim por diante).
 

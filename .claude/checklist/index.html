@@ -1,0 +1,681 @@
+<!doctype html>
+<html lang="pt-BR" data-bs-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bõnotto — Painel Operacional (.claude)</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<style>
+  :root {
+    --col-bg: #f1f3f6;
+    --card-bg: #ffffff;
+    --border: #e2e5ea;
+    --muted: #6b7280;
+  }
+  [data-bs-theme="dark"] {
+    --col-bg: #1b1f27;
+    --card-bg: #262b35;
+    --border: #363c48;
+    --muted: #9aa3b2;
+    color-scheme: dark;
+  }
+  body { background: var(--col-bg); font-size: .9rem; }
+  .k-header { background: var(--card-bg); border-bottom: 1px solid var(--border); }
+  .k-kpis { display: flex; gap: 0; border: 1px solid var(--border); border-radius: .5rem; overflow: hidden; background: var(--card-bg); }
+  .k-kpi { flex: 1 1 0; padding: .5rem .75rem; text-align: center; border-right: 1px solid var(--border); min-width: 88px; }
+  .k-kpi:last-child { border-right: none; }
+  .k-kpi .n { font-size: 1.15rem; font-weight: 700; line-height: 1.1; }
+  .k-kpi .l { font-size: .68rem; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; }
+  .k-charts canvas { max-height: 64px; }
+  .k-board { display: flex; gap: .75rem; overflow-x: auto; padding-bottom: .5rem; align-items: flex-start; }
+  .k-col { background: var(--col-bg); border-radius: .6rem; min-width: 270px; max-width: 270px; flex: 0 0 auto; display: flex; flex-direction: column; max-height: calc(100vh - 230px); }
+  .k-col-head { padding: .5rem .65rem; font-weight: 600; font-size: .78rem; text-transform: uppercase; letter-spacing: .03em; color: var(--muted); display: flex; justify-content: space-between; align-items: center; }
+  .k-col-body { flex: 1 1 auto; overflow-y: auto; padding: 0 .4rem .4rem; min-height: 40px; }
+  .k-col-body.k-dragover { background: rgba(13,110,253,.08); border-radius: .5rem; }
+  .k-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: .5rem; padding: .55rem .65rem; margin-bottom: .5rem; cursor: grab; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
+  .k-card:active { cursor: grabbing; }
+  .k-card.k-dragging { opacity: .4; }
+  .k-card .id { font-size: .68rem; color: var(--muted); font-weight: 600; }
+  .k-card .title { font-size: .84rem; font-weight: 600; margin: .15rem 0 .3rem; line-height: 1.25; }
+  .k-card .meta { font-size: .7rem; color: var(--muted); display: flex; justify-content: space-between; align-items: center; gap: .25rem; }
+  .k-card .tags { margin-top: .3rem; display: flex; flex-wrap: wrap; gap: .25rem; }
+  .k-card .tags .badge { font-weight: 500; font-size: .62rem; }
+  .k-card .foot { display: flex; justify-content: space-between; align-items: center; margin-top: .35rem; }
+  .k-badge-pri-CRITICAL { background: #7f1d1d !important; }
+  .k-badge-pri-HIGH { background: #dc2626 !important; }
+  .k-badge-pri-MEDIUM { background: #d97706 !important; }
+  .k-badge-pri-LOW { background: #64748b !important; }
+  .k-blocked-flag { color: #dc2626; }
+  .k-toolbar { background: var(--card-bg); border: 1px solid var(--border); border-radius: .5rem; padding: .5rem; }
+  .k-sync { font-size: .72rem; display: inline-flex; align-items: center; gap: .3rem; }
+  .k-sync.synced { color: #16a34a; }
+  .k-sync.unsynced { color: #d97706; }
+  .k-sync.syncing { color: #2563eb; }
+  .k-sync.error { color: #dc2626; }
+  .k-archived-row { background: var(--card-bg); border: 1px dashed var(--border); border-radius: .5rem; padding: .5rem; }
+  @media (max-width: 700px) {
+    .k-col { min-width: 82vw; max-width: 82vw; }
+  }
+</style>
+</head>
+<body>
+
+<div class="k-header p-2 px-3 sticky-top">
+  <div class="d-flex flex-wrap align-items-center gap-2 justify-content-between">
+    <div class="d-flex align-items-center gap-2">
+      <i class="bi bi-kanban fs-5"></i>
+      <strong>Bõnotto</strong> <span class="text-muted">— painel operacional (.claude)</span>
+    </div>
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      <span id="syncBadge" class="k-sync unsynced"><i class="bi bi-cloud"></i> <span id="syncLabel">carregando…</span></span>
+      <button class="btn btn-sm btn-outline-secondary" id="btnConnect" title="Conectar tasks.json para salvar direto no arquivo (Chrome/Edge)"><i class="bi bi-link-45deg"></i> Conectar arquivo</button>
+      <button class="btn btn-sm btn-outline-secondary" id="btnExport"><i class="bi bi-download"></i> Exportar</button>
+      <label class="btn btn-sm btn-outline-secondary mb-0" for="fileImport"><i class="bi bi-upload"></i> Importar</label>
+      <input type="file" id="fileImport" accept="application/json" class="d-none">
+      <button class="btn btn-sm btn-outline-secondary" id="btnTheme"><i class="bi bi-moon-stars"></i></button>
+      <button class="btn btn-sm btn-primary" id="btnNew"><i class="bi bi-plus-lg"></i> Novo item</button>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid p-3">
+
+  <div class="row g-2 mb-2">
+    <div class="col-12 col-lg-8">
+      <div class="k-kpis" id="kpiBar"></div>
+    </div>
+    <div class="col-12 col-lg-4">
+      <div class="k-toolbar h-100 d-flex align-items-center gap-3 k-charts">
+        <div class="text-center flex-fill"><canvas id="chartStatus" height="64"></canvas><div class="text-muted" style="font-size:.65rem">status</div></div>
+        <div class="text-center flex-fill"><canvas id="chartPriority" height="64"></canvas><div class="text-muted" style="font-size:.65rem">prioridade</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="k-toolbar mb-2 d-flex flex-wrap gap-2 align-items-center">
+    <input type="search" id="fQ" class="form-control form-control-sm" style="max-width:220px" placeholder="Pesquisar…">
+    <select id="fPriority" class="form-select form-select-sm" style="max-width:150px">
+      <option value="">Prioridade (todas)</option>
+      <option>CRITICAL</option><option>HIGH</option><option>MEDIUM</option><option>LOW</option>
+    </select>
+    <select id="fCategory" class="form-select form-select-sm" style="max-width:170px">
+      <option value="">Categoria (todas)</option>
+    </select>
+    <select id="fAgent" class="form-select form-select-sm" style="max-width:170px">
+      <option value="">Agente (todos)</option>
+    </select>
+    <div class="form-check form-switch ms-auto">
+      <input class="form-check-input" type="checkbox" id="fArchived">
+      <label class="form-check-label" for="fArchived" style="font-size:.78rem">Mostrar arquivados (depreciados/removidos)</label>
+    </div>
+  </div>
+
+  <div class="k-board" id="board"></div>
+
+  <div id="archivedWrap" class="mt-3 d-none">
+    <h6 class="text-muted">Arquivados (depreciados / removidos)</h6>
+    <div class="k-board" id="archivedBoard"></div>
+  </div>
+
+</div>
+
+<!-- Modal criar/editar -->
+<div class="modal fade" id="taskModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="taskModalTitle">Novo item</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="taskForm">
+          <input type="hidden" id="tId">
+          <div class="mb-2">
+            <label class="form-label small mb-1">Título *</label>
+            <input required class="form-control form-control-sm" id="tTitle">
+          </div>
+          <div class="mb-2">
+            <label class="form-label small mb-1">Descrição</label>
+            <textarea class="form-control form-control-sm" id="tDesc" rows="3"></textarea>
+          </div>
+          <div class="row g-2">
+            <div class="col-6">
+              <label class="form-label small mb-1">Categoria *</label>
+              <input required list="catList" class="form-control form-control-sm" id="tCategory">
+              <datalist id="catList">
+                <option value="Frontend"></option>
+                <option value="Backend"></option>
+                <option value="Database"></option>
+                <option value="UX/UI"></option>
+                <option value="Testing"></option>
+                <option value="Security"></option>
+                <option value="Docs"></option>
+                <option value="Architecture"></option>
+                <option value="Accessibility"></option>
+              </datalist>
+            </div>
+            <div class="col-6">
+              <label class="form-label small mb-1">Prioridade *</label>
+              <select required class="form-select form-select-sm" id="tPriority">
+                <option>CRITICAL</option><option>HIGH</option><option selected>MEDIUM</option><option>LOW</option>
+              </select>
+            </div>
+            <div class="col-6">
+              <label class="form-label small mb-1">Status</label>
+              <select class="form-select form-select-sm" id="tStatus"></select>
+            </div>
+            <div class="col-6">
+              <label class="form-label small mb-1">Agente</label>
+              <select class="form-select form-select-sm" id="tAgent">
+                <option value="">—</option>
+                <option>architect</option><option>backend</option><option>frontend</option>
+                <option>database</option><option>qa</option><option>security</option>
+                <option>ux-ui</option><option>product-manager</option><option>code-reviewer</option>
+                <option>claude</option>
+              </select>
+            </div>
+            <div class="col-6">
+              <label class="form-label small mb-1">Responsável</label>
+              <input class="form-control form-control-sm" id="tAssignee" placeholder="Matheus / Beatriz / —">
+            </div>
+            <div class="col-6">
+              <label class="form-label small mb-1">Tags (vírgula)</label>
+              <input class="form-control form-control-sm" id="tTags">
+            </div>
+            <div class="col-12">
+              <label class="form-label small mb-1">Dependências (IDs, vírgula)</label>
+              <input class="form-control form-control-sm" id="tDeps">
+            </div>
+            <div class="col-12">
+              <label class="form-label small mb-1">Observações</label>
+              <textarea class="form-control form-control-sm" id="tObs" rows="2"></textarea>
+            </div>
+          </div>
+          <div id="tMetaWrap" class="mt-3 d-none">
+            <hr>
+            <div class="small text-muted" id="tMetaInfo"></div>
+            <div class="small mt-2"><strong>Histórico</strong><ul class="mb-0" id="tHistory" style="font-size:.75rem"></ul></div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-sm btn-outline-danger me-auto d-none" id="btnDeleteFromModal"><i class="bi bi-archive"></i> Remover</button>
+        <button class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button class="btn btn-sm btn-primary" id="btnSaveTask">Salvar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const COLUMNS = [
+  { id: 'BACKLOG', label: 'Backlog' },
+  { id: 'PLANNED', label: 'Planejado' },
+  { id: 'IN_PROGRESS', label: 'Em progresso' },
+  { id: 'BLOCKED', label: 'Bloqueado' },
+  { id: 'REVIEW', label: 'Revisão' },
+  { id: 'TESTING', label: 'Testando' },
+  { id: 'DONE', label: 'Concluído' },
+];
+const ARCHIVE = ['DEPRECATED', 'REMOVED'];
+const LS_KEY = 'bonotto_ia_checklist_v1';
+
+let state = { version: 1, updatedAt: null, tasks: [] };
+let fileHandle = null;
+let dirty = false;
+let charts = {};
+
+function nowIso() { return new Date().toISOString(); }
+
+function setSync(status, label) {
+  const el = document.getElementById('syncBadge');
+  el.className = 'k-sync ' + status;
+  const icons = { synced: 'bi-cloud-check', syncing: 'bi-arrow-repeat', unsynced: 'bi-cloud-slash', error: 'bi-exclamation-triangle' };
+  el.querySelector('i').className = 'bi ' + (icons[status] || 'bi-cloud');
+  document.getElementById('syncLabel').textContent = label;
+}
+
+async function loadInitial() {
+  try {
+    const res = await fetch('./tasks.json', { cache: 'no-store' });
+    if (res.ok) {
+      state = await res.json();
+      localStorage.setItem(LS_KEY, JSON.stringify(state));
+      setSync('synced', 'Carregado de tasks.json (conecte o arquivo para salvar mudanças nele)');
+      render();
+      return;
+    }
+  } catch (e) { /* segue pro fallback */ }
+  const cached = localStorage.getItem(LS_KEY);
+  if (cached) {
+    state = JSON.parse(cached);
+    setSync('unsynced', 'Carregado do cache local (navegador) — tasks.json não acessível');
+  } else {
+    setSync('unsynced', 'Nenhum dado encontrado — comece criando um item ou importe um JSON');
+  }
+  render();
+}
+
+function persistLocal() {
+  state.updatedAt = nowIso();
+  localStorage.setItem(LS_KEY, JSON.stringify(state));
+  dirty = true;
+  if (fileHandle) writeToFile();
+  else setSync('unsynced', 'Alterado neste navegador — conecte o arquivo ou exporte pra salvar em tasks.json de verdade');
+}
+
+async function writeToFile() {
+  if (!fileHandle) return;
+  setSync('syncing', 'Salvando em tasks.json…');
+  try {
+    const writable = await fileHandle.createWritable();
+    await writable.write(JSON.stringify(state, null, 2));
+    await writable.close();
+    dirty = false;
+    setSync('synced', 'Salvo em tasks.json');
+  } catch (e) {
+    setSync('error', 'Falha ao salvar: ' + e.message);
+  }
+}
+
+document.getElementById('btnConnect').addEventListener('click', async () => {
+  if (!window.showOpenFilePicker) {
+    alert('Seu navegador não suporta salvar direto no arquivo (File System Access API — só Chrome/Edge desktop). Use Exportar/Importar como alternativa.');
+    return;
+  }
+  try {
+    const [handle] = await window.showOpenFilePicker({
+      types: [{ description: 'tasks.json', accept: { 'application/json': ['.json'] } }],
+    });
+    fileHandle = handle;
+    const file = await handle.getFile();
+    const text = await file.text();
+    if (text.trim()) {
+      if (confirm('Carregar o conteúdo desse arquivo agora (substitui o que está na tela)?')) {
+        state = JSON.parse(text);
+      }
+    }
+    render();
+    await writeToFile();
+  } catch (e) { /* usuário cancelou */ }
+});
+
+document.getElementById('btnExport').addEventListener('click', () => {
+  state.updatedAt = nowIso();
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'tasks.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+});
+
+document.getElementById('fileImport').addEventListener('change', (ev) => {
+  const file = ev.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const parsed = JSON.parse(reader.result);
+      if (!Array.isArray(parsed.tasks)) throw new Error('formato inválido: falta "tasks"');
+      if (!confirm(`Importar ${parsed.tasks.length} tarefa(s)? Isso substitui os dados atuais na tela (não afeta o arquivo até você salvar/exportar de novo).`)) return;
+      state = parsed;
+      persistLocal();
+      render();
+    } catch (e) {
+      alert('Não foi possível importar: ' + e.message);
+    }
+  };
+  reader.readAsText(file);
+  ev.target.value = '';
+});
+
+document.getElementById('btnTheme').addEventListener('click', () => {
+  const html = document.documentElement;
+  const next = html.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-bs-theme', next);
+});
+
+function fmtDate(iso) {
+  if (!iso) return '—';
+  try { return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }); } catch { return iso; }
+}
+
+function activeTasks() { return state.tasks.filter(t => !ARCHIVE.includes(t.status)); }
+function archivedTasks() { return state.tasks.filter(t => ARCHIVE.includes(t.status)); }
+
+function currentFilters() {
+  return {
+    q: document.getElementById('fQ').value.trim().toLowerCase(),
+    priority: document.getElementById('fPriority').value,
+    category: document.getElementById('fCategory').value,
+    agent: document.getElementById('fAgent').value,
+  };
+}
+
+function matchesFilter(t, f) {
+  if (f.priority && t.priority !== f.priority) return false;
+  if (f.category && t.category !== f.category) return false;
+  if (f.agent && (t.agent || '') !== f.agent) return false;
+  if (f.q) {
+    const hay = [t.id, t.title, t.description, ...(t.tags || [])].join(' ').toLowerCase();
+    if (!hay.includes(f.q)) return false;
+  }
+  return true;
+}
+
+function populateFilterOptions() {
+  const cats = [...new Set(state.tasks.map(t => t.category).filter(Boolean))].sort();
+  const agents = [...new Set(state.tasks.map(t => t.agent).filter(Boolean))].sort();
+  const catSel = document.getElementById('fCategory');
+  const agSel = document.getElementById('fAgent');
+  const prevCat = catSel.value;
+  const prevAgent = agSel.value;
+  catSel.innerHTML = ''; catSel.appendChild(new Option('Categoria (todas)', ''));
+  cats.forEach(c => catSel.appendChild(new Option(c, c)));
+  agSel.innerHTML = ''; agSel.appendChild(new Option('Agente (todos)', ''));
+  agents.forEach(a => agSel.appendChild(new Option(a, a)));
+  if (cats.includes(prevCat)) catSel.value = prevCat;
+  if (agents.includes(prevAgent)) agSel.value = prevAgent;
+}
+
+function cardHtml(t) {
+  const blocked = t.status === 'BLOCKED';
+  const depCount = (t.dependencies || []).length;
+  const tags = (t.tags || []).slice(0, 4).map(tag => `<span class="badge text-bg-light border">${escapeHtml(tag)}</span>`).join('');
+  return `
+  <div class="k-card" draggable="true" data-id="${t.id}">
+    <div class="d-flex justify-content-between align-items-start">
+      <span class="id">${t.id}</span>
+      <span class="badge k-badge-pri-${t.priority}">${t.priority}</span>
+    </div>
+    <div class="title">${blocked ? '<i class="bi bi-lock-fill k-blocked-flag"></i> ' : ''}${escapeHtml(t.title)}</div>
+    <div class="meta">
+      <span>${escapeHtml(t.category || '—')}${t.agent ? ' · ' + escapeHtml(t.agent) : ''}</span>
+      <span>${fmtDate(t.updatedAt)}</span>
+    </div>
+    ${tags ? `<div class="tags">${tags}</div>` : ''}
+    <div class="foot">
+      <span class="text-muted" style="font-size:.68rem">${depCount ? `<i class="bi bi-diagram-3"></i> ${depCount}` : ''}</span>
+      <div class="dropdown">
+        <button class="btn btn-sm btn-link p-0 text-muted" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></button>
+        <ul class="dropdown-menu dropdown-menu-end" style="font-size:.8rem">
+          <li><a class="dropdown-item" href="#" data-act="edit" data-id="${t.id}">Editar</a></li>
+          <li><a class="dropdown-item" href="#" data-act="done" data-id="${t.id}">Concluir</a></li>
+          <li><a class="dropdown-item" href="#" data-act="block" data-id="${t.id}">Bloquear</a></li>
+          <li><a class="dropdown-item" href="#" data-act="dup" data-id="${t.id}">Duplicar</a></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><a class="dropdown-item" href="#" data-act="deprecate" data-id="${t.id}">Depreciar</a></li>
+          <li><a class="dropdown-item text-danger" href="#" data-act="remove" data-id="${t.id}">Remover</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>`;
+}
+
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+function render() {
+  populateFilterOptions();
+  const f = currentFilters();
+  const tasks = activeTasks().filter(t => matchesFilter(t, f));
+
+  const board = document.getElementById('board');
+  board.innerHTML = COLUMNS.map(col => {
+    const items = tasks.filter(t => t.status === col.id);
+    return `
+    <div class="k-col">
+      <div class="k-col-head"><span>${col.label}</span><span class="badge text-bg-secondary">${items.length}</span></div>
+      <div class="k-col-body" data-status="${col.id}">
+        ${items.map(cardHtml).join('') || '<div class="text-muted text-center small py-3">vazio</div>'}
+      </div>
+    </div>`;
+  }).join('');
+
+  const showArchived = document.getElementById('fArchived').checked;
+  document.getElementById('archivedWrap').classList.toggle('d-none', !showArchived);
+  if (showArchived) {
+    const arch = archivedTasks().filter(t => matchesFilter(t, f));
+    const byStatus = ARCHIVE.map(st => ({
+      st, items: arch.filter(t => t.status === st),
+    }));
+    document.getElementById('archivedBoard').innerHTML = byStatus.map(g => `
+      <div class="k-col">
+        <div class="k-col-head"><span>${g.st}</span><span class="badge text-bg-secondary">${g.items.length}</span></div>
+        <div class="k-col-body" data-status="${g.st}">
+          ${g.items.map(cardHtml).join('') || '<div class="text-muted text-center small py-3">vazio</div>'}
+        </div>
+      </div>`).join('');
+  }
+
+  bindCardEvents();
+  bindDnD();
+  renderKpis();
+  renderCharts();
+}
+
+function renderKpis() {
+  const all = activeTasks();
+  const total = all.length;
+  const done = all.filter(t => t.status === 'DONE').length;
+  const activeCount = all.filter(t => ['IN_PROGRESS', 'REVIEW', 'TESTING'].includes(t.status)).length;
+  const blocked = all.filter(t => t.status === 'BLOCKED').length;
+  const backlog = all.filter(t => ['BACKLOG', 'PLANNED'].includes(t.status)).length;
+  const pct = total ? Math.round((done / total) * 100) : 0;
+  const kpis = [
+    ['Total', total], ['Concluído', done], ['Ativo', activeCount],
+    ['Bloqueado', blocked], ['Backlog', backlog], ['Progresso', pct + '%'],
+  ];
+  document.getElementById('kpiBar').innerHTML = kpis.map(([l, n]) =>
+    `<div class="k-kpi"><div class="n">${n}</div><div class="l">${l}</div></div>`).join('');
+}
+
+function renderCharts() {
+  const all = activeTasks();
+  const statusCounts = COLUMNS.map(c => all.filter(t => t.status === c.id).length);
+  const priorities = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'];
+  const priCounts = priorities.map(p => all.filter(t => t.priority === p).length);
+
+  if (charts.status) charts.status.destroy();
+  if (charts.priority) charts.priority.destroy();
+
+  charts.status = new Chart(document.getElementById('chartStatus'), {
+    type: 'doughnut',
+    data: { labels: COLUMNS.map(c => c.label), datasets: [{ data: statusCounts, backgroundColor: ['#94a3b8','#60a5fa','#2563eb','#dc2626','#a855f7','#f59e0b','#16a34a'] }] },
+    options: { plugins: { legend: { display: false } }, cutout: '65%' },
+  });
+  charts.priority = new Chart(document.getElementById('chartPriority'), {
+    type: 'doughnut',
+    data: { labels: priorities, datasets: [{ data: priCounts, backgroundColor: ['#7f1d1d','#dc2626','#d97706','#64748b'] }] },
+    options: { plugins: { legend: { display: false } }, cutout: '65%' },
+  });
+}
+
+function findTask(id) { return state.tasks.find(t => t.id === id); }
+
+function pushHistory(t, entry) {
+  t.history = t.history || [];
+  t.history.push({ timestamp: nowIso(), updatedBy: 'usuario-kanban', ...entry });
+}
+
+function changeStatus(id, to, note) {
+  const t = findTask(id);
+  if (!t) return;
+  const from = t.status;
+  if (from === to) return;
+  t.status = to;
+  t.updatedAt = nowIso();
+  pushHistory(t, { action: 'STATUS_CHANGED', from, to, note });
+  persistLocal();
+  render();
+}
+
+function bindCardEvents() {
+  document.querySelectorAll('[data-act]').forEach(el => {
+    el.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      const id = el.dataset.id;
+      const act = el.dataset.act;
+      const t = findTask(id);
+      if (!t) return;
+      if (act === 'edit') openModal(t);
+      else if (act === 'done') changeStatus(id, 'DONE');
+      else if (act === 'block') {
+        const motivo = prompt('Motivo do bloqueio:');
+        if (motivo === null) return;
+        changeStatus(id, 'BLOCKED', motivo);
+      } else if (act === 'dup') {
+        const copy = JSON.parse(JSON.stringify(t));
+        copy.id = t.id + '-COPY-' + Date.now().toString(36).slice(-4);
+        copy.title = t.title + ' (cópia)';
+        copy.status = 'BACKLOG';
+        copy.createdAt = nowIso(); copy.updatedAt = nowIso();
+        copy.history = [{ action: 'CREATED', to: 'BACKLOG', updatedBy: 'usuario-kanban', timestamp: nowIso(), note: 'Duplicado de ' + t.id }];
+        state.tasks.push(copy);
+        persistLocal(); render();
+      } else if (act === 'deprecate') {
+        const motivo = prompt('Motivo da depreciação:');
+        if (motivo === null) return;
+        const substituto = prompt('Substituído por (ID, opcional):') || null;
+        changeStatus(id, 'DEPRECATED', motivo + (substituto ? ` — substituído por ${substituto}` : ''));
+      } else if (act === 'remove') {
+        const motivo = prompt('Motivo da remoção:');
+        if (motivo === null) return;
+        changeStatus(id, 'REMOVED', motivo);
+      }
+    });
+  });
+  document.querySelectorAll('.k-card').forEach(card => {
+    card.addEventListener('click', (ev) => {
+      if (ev.target.closest('[data-act]') || ev.target.closest('.dropdown')) return;
+      const t = findTask(card.dataset.id);
+      if (t) openModal(t);
+    });
+  });
+}
+
+function bindDnD() {
+  document.querySelectorAll('.k-card').forEach(card => {
+    card.addEventListener('dragstart', (ev) => {
+      ev.dataTransfer.setData('text/plain', card.dataset.id);
+      card.classList.add('k-dragging');
+    });
+    card.addEventListener('dragend', () => card.classList.remove('k-dragging'));
+  });
+  document.querySelectorAll('.k-col-body').forEach(zone => {
+    zone.addEventListener('dragover', (ev) => { ev.preventDefault(); zone.classList.add('k-dragover'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('k-dragover'));
+    zone.addEventListener('drop', (ev) => {
+      ev.preventDefault();
+      zone.classList.remove('k-dragover');
+      const id = ev.dataTransfer.getData('text/plain');
+      changeStatus(id, zone.dataset.status);
+    });
+  });
+}
+
+// ---- Modal ----
+const modalEl = document.getElementById('taskModal');
+const bsModal = new bootstrap.Modal(modalEl);
+
+function fillStatusSelect() {
+  const sel = document.getElementById('tStatus');
+  sel.innerHTML = [...COLUMNS.map(c => c.id), ...ARCHIVE].map(s => `<option value="${s}">${s}</option>`).join('');
+}
+
+function openModal(task) {
+  fillStatusSelect();
+  document.getElementById('taskModalTitle').textContent = task ? `Editar ${task.id}` : 'Novo item';
+  document.getElementById('tId').value = task ? task.id : '';
+  document.getElementById('tTitle').value = task ? task.title : '';
+  document.getElementById('tDesc').value = task ? (task.description || '') : '';
+  document.getElementById('tCategory').value = task ? (task.category || '') : '';
+  document.getElementById('tPriority').value = task ? task.priority : 'MEDIUM';
+  document.getElementById('tStatus').value = task ? task.status : 'BACKLOG';
+  document.getElementById('tAgent').value = task ? (task.agent || '') : '';
+  document.getElementById('tAssignee').value = task ? (task.assignee || '') : '';
+  document.getElementById('tTags').value = task ? (task.tags || []).join(', ') : '';
+  document.getElementById('tDeps').value = task ? (task.dependencies || []).join(', ') : '';
+  document.getElementById('tObs').value = task ? (task.observacoes || '') : '';
+
+  const metaWrap = document.getElementById('tMetaWrap');
+  const delBtn = document.getElementById('btnDeleteFromModal');
+  if (task) {
+    metaWrap.classList.remove('d-none');
+    delBtn.classList.remove('d-none');
+    document.getElementById('tMetaInfo').innerHTML = `Criado em ${fmtDate(task.createdAt)} · Atualizado em ${fmtDate(task.updatedAt)}`;
+    document.getElementById('tHistory').innerHTML = (task.history || []).slice().reverse().map(h =>
+      `<li>${fmtDate(h.timestamp)} — <strong>${h.action}</strong>${h.from ? ` ${h.from}→${h.to}` : ''}${h.note ? `: ${escapeHtml(h.note)}` : ''} <span class="text-muted">(${h.updatedBy || '—'})</span></li>`
+    ).join('') || '<li class="text-muted">sem histórico</li>';
+  } else {
+    metaWrap.classList.add('d-none');
+    delBtn.classList.add('d-none');
+  }
+  bsModal.show();
+}
+
+document.getElementById('btnNew').addEventListener('click', () => openModal(null));
+
+document.getElementById('btnDeleteFromModal').addEventListener('click', () => {
+  const id = document.getElementById('tId').value;
+  const motivo = prompt('Motivo da remoção:');
+  if (motivo === null) return;
+  changeStatus(id, 'REMOVED', motivo);
+  bsModal.hide();
+});
+
+function nextId(prefix) {
+  const n = state.tasks.filter(t => t.id.startsWith(prefix)).length + 1;
+  return `${prefix}-${String(n).padStart(3, '0')}-${Date.now().toString(36).slice(-3)}`;
+}
+
+document.getElementById('btnSaveTask').addEventListener('click', () => {
+  const form = document.getElementById('taskForm');
+  if (!form.reportValidity()) return;
+  const id = document.getElementById('tId').value;
+  const tags = document.getElementById('tTags').value.split(',').map(s => s.trim()).filter(Boolean);
+  const deps = document.getElementById('tDeps').value.split(',').map(s => s.trim()).filter(Boolean);
+  const payload = {
+    title: document.getElementById('tTitle').value.trim(),
+    description: document.getElementById('tDesc').value.trim(),
+    category: document.getElementById('tCategory').value.trim(),
+    priority: document.getElementById('tPriority').value,
+    status: document.getElementById('tStatus').value,
+    agent: document.getElementById('tAgent').value || null,
+    assignee: document.getElementById('tAssignee').value.trim() || null,
+    tags, dependencies: deps,
+    observacoes: document.getElementById('tObs').value.trim(),
+  };
+
+  if (id) {
+    const t = findTask(id);
+    const statusChanged = t.status !== payload.status;
+    const from = t.status;
+    Object.assign(t, payload);
+    t.updatedAt = nowIso();
+    pushHistory(t, statusChanged ? { action: 'STATUS_CHANGED', from, to: payload.status } : { action: 'EDITED' });
+  } else {
+    const newId = nextId('TASK');
+    const t = { id: newId, ...payload, createdAt: nowIso(), updatedAt: nowIso(), history: [] };
+    pushHistory(t, { action: 'CREATED', to: payload.status });
+    state.tasks.push(t);
+  }
+  persistLocal();
+  bsModal.hide();
+  render();
+});
+
+['fQ', 'fPriority', 'fCategory', 'fAgent', 'fArchived'].forEach(id => {
+  document.getElementById(id).addEventListener('input', render);
+  document.getElementById(id).addEventListener('change', render);
+});
+
+loadInitial();
+</script>
+</body>
+</html>

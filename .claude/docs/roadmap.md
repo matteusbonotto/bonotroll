@@ -23,10 +23,17 @@ Estado real, não aspiracional. Fonte primária de detalhe: `docs/CHECKLIST-REBR
 - `prefers-reduced-motion` — já tratado globalmente em `css/app.css` (não "ausente por completo" como uma versão anterior deste doc dizia). Mesma correção.
 - "Quanto ainda posso gastar" com manchete própria na Home — já existe (`orcamentoAlerta`, `dashboard.js`, linha do hero balance "Restam RX do orçamento de Y"). Mesma correção.
 - README — já corrigido antes desta sessão (o próprio README documenta isso: "este README ficou desatualizado por um tempo dizendo o contrário").
+- `history.pushState` real pra navegação entre telas — **este documento estava desatualizado nesta linha específica** (dizia "genuinamente não iniciado" na seção Potential Improvements, abaixo). Na verdade foi implementado em 2026-08-21 (`setView` trocado de `history.replaceState` pra `pushState` + sync via `popstate`, `tests/e2e/navegacao-historico.spec.js`, ver `docs/CHECKLIST-REBRAND.md` Rodada 5). Corrigido aqui em 2026-08-22 durante a reorganização do `.claude/` — mesmo tipo de correção de causa raiz já aplicada 5x antes neste mesmo documento (ver Rodada 5 do checklist).
 
-## In Progress / Bloqueado por falta de sinal concreto
+## In Progress (2026-08-22)
 
-- "Aparência geral mais distinta/moderna" (pedido original, prioridade 2) + redesenho visual agressivo de Compras/Recursos/Caixinhas/Perfil — subjetivo demais pra ter critério de aceite sem exemplo/referência do usuário. Não é preguiça, é ausência de critério verificável (ver `.claude/agents/product-manager.md`).
+- **Cartão de crédito multi-banco** — bug de agrupamento (compra cai na fatura errada quando 2 pessoas têm fatura no mesmo mês) + gap de modelagem (sem entidade "cartão", sem suporte a múltiplos cartões por pessoa/banco). Decisão de arquitetura já tomada por 3 agentes independentes, ver `.claude/discussions/001-cartao-credito-multi-cartao.md`. Implementação em `TASK-023` (`.claude/checklist/tasks.json`).
+- **Privacidade do dado de demo** — `js/data/mockDb.js` usava nomes de empregador/concessionária reais aparentes, expostos publicamente via `?demo=1` no GitHub Pages. Regeneração com Faker em andamento (`FEAT-002`).
+- **Auditoria visual completa das 7 telas** — finalmente com mandato concreto do usuário (não mais "acho que devia ficar mais bonito" sem critério). Resultado vai alimentar `TASK-022` e potencialmente destravar os itens de redesenho abaixo.
+
+## Bloqueado por falta de sinal concreto (revisar depois da auditoria de 2026-08-22 acima)
+
+- "Aparência geral mais distinta/moderna" (pedido original, prioridade 2) + redesenho visual agressivo de Compras/Recursos/Caixinhas/Perfil — subjetivo demais pra ter critério de aceite sem exemplo/referência do usuário. Não é preguiça, é ausência de critério verificável (ver `.claude/agents/product-manager.md`). **Pode estar prestes a ser destravado** pela auditoria visual em andamento acima, que produz critério objetivo em vez de gosto pessoal.
 - "Ver mais" (Dashboard completo) considerado abaixo do esperado ("PowerBI profissional") — mesmo motivo, aguardando direção mais concreta.
 - Migração da tipografia solta (~66 `font-size` fora da escala de tokens) para `--font-size-*` — ver Technical Debt abaixo, motivo de não ter sido feita ainda (é a única pendência real desta lista que não é 100% subjetiva, mas ainda precisa de revisão visual do usuário antes de espalhar).
 
@@ -36,7 +43,7 @@ Estado real, não aspiracional. Fonte primária de detalhe: `docs/CHECKLIST-REBR
 - **`index.html` como god-file** — cresce a cada tela nova, sem separação física (tensão real do "sem build step", não erro óbvio a corrigir).
 - **Padrão `x-show` + utility Bootstrap `!important`** — mitigado pontualmente (`x-show.important`) cada vez que reaparece, mas não existe lint/convenção automatizada que previna a próxima ocorrência antes dela acontecer.
 - **Cobertura de teste não é exaustiva** — 47 unit + 23 e2e é uma base real, mas toda lógica nova sensível a dinheiro/data deveria ganhar teste no mesmo PR/rodada, não depois (política, não métrica de cobertura formal).
-- **Cartão de crédito com 2+ faturas no mesmo mês** (2 cartões diferentes) — despesas marcadas se agrupam todas na PRIMEIRA fatura encontrada daquele mês, não necessariamente na certa (não duplica valor, só atribuição visual). Só vale corrigir se for caso real do usuário.
+- ~~**Cartão de crédito com 2+ faturas no mesmo mês**~~ — virou caso real em 2026-08-22 (ver In Progress acima), não é mais dívida técnica arquivada, é trabalho ativo (`BUG-001`/`FEAT-001`).
 
 ## Potential Improvements (sugestões, não compromissos)
 

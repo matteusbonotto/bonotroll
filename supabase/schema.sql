@@ -106,6 +106,28 @@ create table if not exists banks (
 create unique index if not exists banks_owner_group_nome_uniq
   on banks (owner_id, coalesce(group_id, '00000000-0000-0000-0000-000000000000'::uuid), nome);
 
+-- Cartão de crédito como entidade própria, vinculado a um banco (2026-08-22).
+-- Antes "isso é uma fatura"/"essa compra está numa fatura" dependia só do
+-- NOME da categoria ("Cartão de crédito") + do booleano cartao_credito em
+-- transactions, sem nenhum jeito de saber DE QUEM é o cartão nem QUAL
+-- cartão (cada pessoa pode ter mais de um, em bancos diferentes) —
+-- groupCartaoCredito (js/services/transactions.js) agrupava pela primeira
+-- fatura encontrada no mês, ignorando responsavel_id, o que juntava a
+-- fatura de uma pessoa com a compra de outra. Cartão é pessoal (owner-
+-- scoped), diferente de banks/categories/companies que são compartilhados
+-- por grupo — por isso o índice único NÃO inclui group_id.
+create table if not exists cartoes (
+  id uuid primary key default uuid_generate_v4(),
+  owner_id uuid not null references profiles(id) on delete cascade,
+  group_id uuid references groups(id) on delete cascade,
+  banco_id uuid references banks(id) on delete set null,
+  nome text not null,
+  ativo boolean not null default true,
+  criado_em timestamptz not null default now()
+);
+create unique index if not exists cartoes_owner_nome_uniq
+  on cartoes (owner_id, lower(btrim(nome)));
+
 create table if not exists transactions (
   id uuid primary key default uuid_generate_v4(),
   owner_id uuid not null references profiles(id) on delete cascade,
@@ -177,6 +199,14 @@ alter table transactions add column if not exists recorrencia_serie_id uuid;
 -- mês. `not null default false` porque a ausência da marcação é o caso
 -- normal — despesa comum, contada inteira como sempre.
 alter table transactions add column if not exists cartao_credito boolean not null default false;
+
+-- Qual cartão pagou (2026-08-22) — nullable de propósito: despesas antigas
+-- com cartao_credito=true não sabem qual cartão foi (a entidade "cartão"
+-- não existia até agora) e continuam funcionando pelo heurístico de
+-- fallback em groupCartaoCredito (mês + responsavel_id). Só passa a ser
+-- preenchido pelas compras/faturas cadastradas depois que a UI ganhar o
+-- seletor de cartão — retrocompatível, igual transaction_payers.
+alter table transactions add column if not exists cartao_id uuid references cartoes(id) on delete set null;
 
 -- Divisão de despesa entre múltiplos pagadores. Uma transação SEM nenhuma
 -- linha aqui continua sendo 100% do responsavel_id dela (retrocompatível —
@@ -650,6 +680,20 @@ create policy "Editar banco próprio" on banks for update
   using (owner_id = auth.uid());
 drop policy if exists "Excluir banco próprio" on banks;
 create policy "Excluir banco próprio" on banks for delete
+  using (owner_id = auth.uid());
+
+alter table cartoes enable row level security;
+drop policy if exists "Ver cartões próprios ou do grupo" on cartoes;
+create policy "Ver cartões próprios ou do grupo" on cartoes for select
+  using (owner_id = auth.uid() or public.is_group_member(group_id));
+drop policy if exists "Criar cartão" on cartoes;
+create policy "Criar cartão" on cartoes for insert
+  with check (owner_id = auth.uid());
+drop policy if exists "Editar cartão próprio" on cartoes;
+create policy "Editar cartão próprio" on cartoes for update
+  using (owner_id = auth.uid());
+drop policy if exists "Excluir cartão próprio" on cartoes;
+create policy "Excluir cartão próprio" on cartoes for delete
   using (owner_id = auth.uid());
 
 -- with check só em "owner_id = auth.uid()" (sem o "or is_group_member")

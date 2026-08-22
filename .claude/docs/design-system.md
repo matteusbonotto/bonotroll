@@ -5,23 +5,25 @@ Diretriz completa e a evidência que a motivou: `docs/DESIGN-SYSTEM-2027.md` —
 ## Cores (`css/tokens.css`)
 
 ```text
---color-primary: #0E9F6E        (verde-esmeralda — ação principal, estado ativo de navegação, NUNCA texto decorativo)
---color-primary-dark: #06724E
---color-primary-soft: #DCFCE9
---color-accent: #FF6B4A         (usado em "encerrar"/estado de conclusão — ver .cg-shopping-toggle--finish)
---color-success: #16A34A        --color-danger: #E11D48
+--color-primary: #126B5C        (verde-esmeralda fechado/teal — ação principal, estado ativo de navegação, NUNCA texto decorativo)
+--color-primary-dark: #0A4D42   (vira #5EEAB0 no escuro — é usado como TEXTO em cima de --color-primary-soft)
+--color-primary-soft: #E3F2ED
+--color-accent: #D96B45         (usado em "encerrar"/estado de conclusão — ver .cg-shopping-toggle--finish)
+--color-success: #168360        --color-danger: #C8374E
 --color-warning: #D97706        --color-info: #0EA5E9
 --color-secondary: #64748B
 --color-bg / --color-surface / --color-surface-alt / --color-text / --color-text-muted / --color-border
    (cada um redefinido em 3 estados: claro padrão, escuro via prefers-color-scheme, escuro/claro forçado via [data-bs-theme])
 ```
 
+2026-08-22: estes eram os valores que já renderizavam de fato (havia 3 declarações de `:root` conflitantes — `tokens.css`, e uma redeclaração inteira cada em `components.css`/`app.css` — sem nenhuma decisão documentada, "quem vencia" era só ordem de carregamento do arquivo). Consolidado numa fonte só (`tokens.css`); os valores antigos documentados aqui antes (`#0E9F6E` etc., por sua vez uma consolidação anterior de `#1F7A5C`) nunca chegaram a renderizar depois que os blocos "refresh" foram introduzidos.
+
 ## Raio — cada um tem um papel fixo, sem exceção
 
 ```text
---radius-sm (10px)   controles pequenos, badge, tag — nunca card
---radius-md (14px)   controle padrão: input, select, botão pequeno, tile
---radius-lg (20px)   card/modal/superfície grande — nunca controle
+--radius-sm (6px)    controles pequenos, badge, tag — nunca card
+--radius-md (8px)    controle padrão: input, select, botão pequeno, tile
+--radius-lg (12px)   card/modal/superfície grande — nunca controle
 --radius-pill (999px) SÓ botão de ação principal e chip/badge — nunca nav, nunca item de lista largo
 ```
 
@@ -31,6 +33,8 @@ Diretriz completa e a evidência que a motivou: `docs/DESIGN-SYSTEM-2027.md` —
 --space-1..6: 4 / 8 / 12 / 16 / 24 / 32px
 --touch-target: 48px
 ```
+
+`.btn`/`.cg-btn` estavam em 40-42px (uma das duplicações de componente do item acima) — corrigido em 2026-08-22 pra respeitar `--touch-target` de verdade. Toolbars compactas que precisam de botão menor (`.cg-agrupar-toggle`, `.cg-shopping-toggle`, `.cg-btn.btn-sm` no mobile) têm seletor mais específico com seu próprio `min-height`, então continuam compactas.
 
 ## Tipografia (`--font-size-caption` … `--font-size-display`, ver tokens.css)
 

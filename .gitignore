@@ -4,3 +4,7 @@ node_modules/
 supabase/.temp/
 test-results/
 playwright-report/
+
+# local do agente (não versionar)
+.abacusai/
+.claude/memory/

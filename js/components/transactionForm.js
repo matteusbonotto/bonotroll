@@ -85,6 +85,11 @@ const emptyForm = () => ({
   // a aparecer dentro do accordion daquela fatura em Transações. Ver
   // groupCartaoCredito em services/transactions.js.
   cartao_credito: false,
+  // Qual cartão pagou (2026-08-22) — vazio = sem cartão (despesa comum, ou
+  // dado legado que não sabe qual cartão foi). Quando preenchido, o seletor
+  // de cartão no formulário também liga cartao_credito=true. Ver
+  // .claude/discussions/001-cartao-credito-multi-cartao.md.
+  cartao_id: '',
 });
 
 // Modal global de "nova/editar transação" (Alpine.store('txModal')) — aberto
@@ -240,6 +245,10 @@ export function txModalStore() {
         codigo_barras: tx.codigo_barras || '',
         qrcode_dados: tx.qrcode_dados || '',
         cartao_credito: !!tx.cartao_credito,
+        // Dado legado (cartao_credito=true sem cartao_id) abre no sentinela
+        // '__legado__' pra não perder a marcação ao salvar sem mexer no
+        // seletor — ver onCartaoChange.
+        cartao_id: tx.cartao_id || (tx.cartao_credito ? '__legado__' : ''),
       };
       this.showMore = true;
       this.comprovantePreviewUrl = null;
@@ -260,6 +269,28 @@ export function txModalStore() {
 
     onPagoChange(checked) {
       this.form.data_pagamento = checked ? todayIso() : '';
+    },
+
+    // ---------- Cartão de crédito ----------
+    // O seletor de cartão substitui o antigo switch booleano: escolher um
+    // cartão liga cartao_credito=true (a despesa passa a viver dentro da
+    // fatura daquele cartão no mês); escolher a opção vazia desliga. O
+    // sentinela '__legado__' representa "cartão de crédito, mas não sei
+    // qual cartão" (dado antigo) e mantém a marcação sem gravar cartao_id.
+    onCartaoChange() {
+      const v = this.form.cartao_id;
+      if (v === '__novo__') {
+        Alpine.store('cartaoModal').openCreate((cartao) => {
+          this.form.cartao_id = cartao.id;
+          this.form.cartao_credito = true;
+        });
+        return;
+      }
+      if (v === '__legado__') {
+        this.form.cartao_credito = true;
+        return;
+      }
+      this.form.cartao_credito = !!v;
     },
 
     // ---------- Divisão entre pagadores ----------
@@ -541,10 +572,14 @@ export function txModalStore() {
           observacoes: this.form.observacoes.trim() || null,
           codigo_barras: this.form.codigo_barras || null,
           qrcode_dados: this.form.qrcode_dados || null,
-          // Entrada nunca é compra no cartão (o switch nem aparece pra
+          // Entrada nunca é compra no cartão (o seletor nem aparece pra
           // entrada) — normaliza aqui pra uma marcação deixada pra trás ao
           // trocar saída->entrada no meio do formulário não persistir.
-          cartao_credito: this.form.tipo === 'saida' && !!this.form.cartao_credito,
+          // '__legado__' é o sentinela de "cartão de crédito, mas não sei
+          // qual cartão" (dado antigo, cartao_credito=true sem cartao_id):
+          // mantém a marcação mas não grava cartao_id nenhum.
+          cartao_credito: this.form.tipo === 'saida' && (this.form.cartao_id === '__legado__' || !!this.form.cartao_id),
+          cartao_id: this.form.tipo === 'saida' && this.form.cartao_id && this.form.cartao_id !== '__legado__' ? this.form.cartao_id : null,
           owner_id: store.profile.id,
           group_id: store.group?.group?.id ?? null,
         };

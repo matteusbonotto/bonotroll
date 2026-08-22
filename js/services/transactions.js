@@ -209,18 +209,33 @@ export function isCartaoCreditoBill(t, categorias) {
 // cai no mesmo mês de NENHUMA fatura existente fica visível solta como
 // sempre (nunca desaparece silenciosamente por falta de fatura).
 //
+// A chave de agrupamento (2026-08-22, ver .claude/discussions/001-cartao-
+// credito-multi-cartao.md) é o cartão quando presente: fatura e compra com
+// o MESMO cartao_id no mesmo mês se juntam, e duas faturas de cartões
+// diferentes no mesmo mês NÃO se misturam (era o bug de produção: agrupava
+// pela primeira fatura do mês, ignorando de quem era). Quando cartao_id
+// está ausente (dado legado, cadastrado antes da entidade "cartão"
+// existir), cai no fallback responsavel_id + mês — nunca na chave antiga
+// "só mês", que era a causa do bug.
+//
 // Retorna { visiveis } — visiveis é a lista "de topo" pra passar pra
 // computeSummary/groupByCategoria/etc: cada transação-fatura ganha um
 // array .filhosCartao (pode ser vazio) com as despesas agrupadas dentro
 // dela; despesas agrupadas NÃO aparecem soltas em visiveis (é assim que a
 // duplicação é evitada — quem soma visiveis nunca conta os filhos duas
 // vezes, já que o valor deles já está embutido no valor da própria fatura).
+function chaveFatura(t, mes) {
+  return t.cartao_id ? `cartao:${t.cartao_id}:${mes}` : `resp:${t.responsavel_id || ''}:${mes}`;
+}
 export function groupCartaoCredito(transactions, categorias) {
-  const faturasPorMes = new Map(); // 'aaaa-mm' -> primeira fatura daquele mês encontrada
+  const faturasPorChave = new Map(); // chave -> primeira fatura daquele mês/cartão/responsável encontrada
   for (const t of transactions) {
     if (!isCartaoCreditoBill(t, categorias)) continue;
     const mes = (t.data_vencimento || t.data_cadastro || '').slice(0, 7);
-    if (mes && !faturasPorMes.has(mes)) faturasPorMes.set(mes, t.id);
+    if (mes) {
+      const chave = chaveFatura(t, mes);
+      if (!faturasPorChave.has(chave)) faturasPorChave.set(chave, t.id);
+    }
   }
   const filhosPorFaturaId = new Map();
   const idsAgrupados = new Set();
@@ -228,8 +243,8 @@ export function groupCartaoCredito(transactions, categorias) {
     if (isCartaoCreditoBill(t, categorias)) continue; // fatura nunca é filha de si mesma
     if (t.tipo !== 'saida' || !t.cartao_credito) continue;
     const mes = (t.data_vencimento || t.data_cadastro || '').slice(0, 7);
-    const faturaId = mes && faturasPorMes.get(mes);
-    if (!faturaId) continue; // sem fatura no mês -> continua solta
+    const faturaId = mes && faturasPorChave.get(chaveFatura(t, mes));
+    if (!faturaId) continue; // sem fatura no mês/cartão/responsável -> continua solta
     if (!filhosPorFaturaId.has(faturaId)) filhosPorFaturaId.set(faturaId, []);
     filhosPorFaturaId.get(faturaId).push(t);
     idsAgrupados.add(t.id);

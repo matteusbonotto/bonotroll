@@ -5,6 +5,8 @@ import * as companiesService from '../services/companies.js';
 import { findCompanyByName } from '../services/companies.js';
 import * as banksService from '../services/banks.js';
 import { findBankByName } from '../services/banks.js';
+import * as cartoesService from '../services/cartoes.js';
+import { findCartaoByName } from '../services/cartoes.js';
 import * as notificationsService from '../services/notifications.js';
 import { gerarRecorrentesPendentes } from '../services/recurring.js';
 import { isDemoMode } from '../data/config.js';
@@ -21,6 +23,7 @@ export function appStore() {
     categories: [],
     companies: [],
     banks: [],
+    cartoes: [],
     notifications: [],
     // Vem da URL (#/transacoes etc.) pra sobreviver a um F5 — antes sempre
     // recarregava direto na Home, perdendo onde a pessoa estava.
@@ -104,6 +107,10 @@ export function appStore() {
       // find the table 'public.banks'" impedia entrar) — cai pra lista
       // vazia (só perde o logo compartilhado de banco até migrar).
       const banks = await banksService.listBanks({ ownerId: profile.id, groupId }).catch(() => []);
+      // `cartoes` é tabela nova (js/services/cartoes.js) — mesma ressalva de
+      // `banks`: se a migração ainda não rodou no Supabase do usuário, não
+      // pode travar o login inteiro, cai pra lista vazia.
+      const cartoes = await cartoesService.listCartoes({ ownerId: profile.id, groupId }).catch(() => []);
 
       this.session = session;
       this.profile = profile;
@@ -111,6 +118,7 @@ export function appStore() {
       this.categories = categories;
       this.companies = companies;
       this.banks = banks;
+      this.cartoes = cartoes;
 
       // Best-effort: varredura de notificações não deve travar o login se
       // falhar (ex.: tabela ainda não migrada no Supabase do usuário).
@@ -143,6 +151,7 @@ export function appStore() {
       this.categories = [];
       this.companies = [];
       this.banks = [];
+      this.cartoes = [];
       this.notifications = [];
       this.view = 'home';
       history.replaceState(null, '', location.pathname + location.search);
@@ -193,6 +202,24 @@ export function appStore() {
 
     bankByName(nome) {
       return findBankByName(this.banks, nome);
+    },
+
+    bankById(id) {
+      return this.banks.find((b) => b.id === id) || null;
+    },
+
+    async refreshCartoes() {
+      if (!this.profile) return;
+      const groupId = this.group?.group?.id;
+      this.cartoes = await cartoesService.listCartoes({ ownerId: this.profile.id, groupId });
+    },
+
+    cartaoById(id) {
+      return this.cartoes.find((c) => c.id === id) || null;
+    },
+
+    cartaoByName(nome) {
+      return findCartaoByName(this.cartoes, nome);
     },
 
     async refreshGroup() {

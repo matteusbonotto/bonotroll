@@ -372,7 +372,14 @@ export function dashboardView() {
       const passado = this.saidasNoMes(id, mesAnterior);
       // Sem gasto no mês anterior pra comparar (conta nova, ou mês parado)
       // — não dá pra calcular variação percentual de uma base zero.
-      const percentual = passado > 0 ? Math.round(((atual - passado) / passado) * 100) : null;
+      const percentualBruto = passado > 0 ? Math.round(((atual - passado) / passado) * 100) : null;
+      // Base pequena no mês anterior estoura o percentual pra valores sem
+      // nenhum significado prático (ex.: "12081% vs mês passado", visto em
+      // produção) — capa a magnitude em 999%, preservando o sinal (a seta
+      // pra cima/baixo no template usa esse sinal, não o texto).
+      const percentual = percentualBruto === null
+        ? null
+        : Math.sign(percentualBruto) * Math.min(Math.abs(percentualBruto), 999);
       return { atual, passado, percentual };
     },
 

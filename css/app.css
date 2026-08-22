@@ -175,9 +175,13 @@ a { color: var(--color-primary); }
   font-size: clamp(0.9rem, 3.5vw, 1.05rem);
   overflow-wrap: anywhere;
 }
+/* Era display:inline-flex — os 2 <span> irmãos do card de Saídas
+   ("Previsto: R$ X" e "N% vs mês passado") cabiam lado a lado na mesma
+   linha sempre que a coluna tinha espaço de sobra e ficavam grudados sem
+   separador nenhum ("Previsto: R$ 4.251,09 12081% vs mês passado").
+   display:block força cada delta pra própria linha, sempre (2026-08-22). */
 .cg-hero-stat__delta {
-  display: inline-flex;
-  align-items: center;
+  display: block;
   font-size: 0.7rem;
   font-weight: 600;
   opacity: 0.9;
@@ -382,6 +386,12 @@ a { color: var(--color-primary); }
   .cg-agrupar-toggle > .btn {
     padding: 4px 8px;
     font-size: 0.75rem;
+    /* min-height próprio (2026-08-22): sem isto, herdaria os 48px do .btn
+       base (--touch-target) — a compactação desta toolbar (Rodadas 2-3 do
+       rebrand) era sobre LARGURA (o bug do flex-wrap), mas sem um teto de
+       altura aqui o grupo "Agrupar" voltaria a ficar visualmente pesado ao
+       lado dos outros controles compactos da mesma linha. */
+    min-height: 38px;
   }
 }
 
@@ -664,7 +674,11 @@ button, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 .btn {
   --bs-btn-font-size: var(--font-size-body-sm);
   --bs-btn-border-radius: var(--radius-md);
-  min-height: 40px;
+  /* Era 40px — abaixo do --touch-target (48px) documentado em tokens.css,
+     corrigido (2026-08-22). Botões compactos específicos (.btn-sm dentro de
+     toolbars densas) têm suas próprias regras mais específicas logo abaixo
+     e não regridem com isto. */
+  min-height: var(--touch-target);
   padding: 8px 14px;
   font-weight: 700;
   box-shadow: none;
@@ -698,7 +712,8 @@ button, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 .btn-link { color: var(--color-primary-dark); text-decoration: none; }
 .btn-link:hover { color: var(--color-primary); }
 .btn:focus-visible, .cg-btn:focus-visible, .cg-btn-icon:focus-visible { outline: 3px solid color-mix(in srgb, var(--color-primary) 30%, transparent); outline-offset: 2px; }
-.cg-btn { min-height: 42px; }
+/* .cg-btn { min-height: 42px } redundante removido daqui (2026-08-22) — a
+   regra canônica (components.css) já usa var(--touch-target), 48px. */
 .cg-btn-icon { width: 40px; height: 40px; border-radius: var(--radius-md); border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text); }
 .cg-btn-icon:hover { background: var(--color-surface-alt); }
 
@@ -723,9 +738,17 @@ button, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 .form-check-input:checked { background-color: var(--color-primary); border-color: var(--color-primary); }
 .form-check-input:focus { box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), .13); }
 
-.cg-card { border: 1px solid var(--color-border); border-radius: 14px; box-shadow: 0 1px 1px rgba(17, 38, 30, .02); }
+/* .cg-card com border + border-radius:14px hardcoded + box-shadow duplicado
+   foi removido daqui (2026-08-22) — violava a regra do topo de
+   components.css ("sombra marca elevação, nunca borda, nunca as duas") e
+   era a 3ª declaração de --radius-lg coexistindo com valores diferentes. A
+   regra canônica (components.css) já cobre background/radius/shadow/padding
+   só com sombra, sem borda, via var(--radius-lg). */
 .cg-card--hoverable { cursor: pointer; }
-.cg-card--hoverable:hover { border-color: color-mix(in srgb, var(--color-primary) 32%, var(--color-border)); box-shadow: 0 10px 25px rgba(18, 45, 36, .08); transform: translateY(-2px); }
+/* border-color removido (2026-08-22): .cg-card não tem mais border nenhuma
+   (ver comentário acima), então border-color sozinho não tinha mais efeito
+   visual nenhum — dead code depois da remoção da borda. */
+.cg-card--hoverable:hover { box-shadow: 0 10px 25px rgba(18, 45, 36, .08); transform: translateY(-2px); }
 .cg-card--stat { border-top: 3px solid var(--color-primary); padding-top: 15px; }
 .cg-card--stat .cg-card__label { font-size: .67rem; letter-spacing: .08em; }
 .cg-card--stat .cg-card__value { font-size: clamp(1.2rem, 3vw, 1.75rem); }
@@ -786,6 +809,25 @@ button, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 .cg-table tbody tr { transition: background-color .12s ease; }
 .cg-table tbody tr:hover { background: color-mix(in srgb, var(--color-primary-soft) 35%, transparent); }
 
+/* Mitigação do problema documentado no comentário acima ("tabela pede
+   ~1205px, precisa rolar mesmo com espaço de sobra"): reportado com print em
+   1440px que o botão de editar (última coluna) ficava fora da área visível
+   sem nenhuma pista de que era preciso rolar. Sem resolver a causa raiz (o
+   input[type=date] continua pedindo ~150px, mudança estrutural maior, ainda
+   pendente), a última coluna fica fixa (sticky) na borda direita do
+   container com scroll — a ação de editar nunca some, mesmo rolando. */
+.cg-table th:last-child,
+.cg-table td:last-child {
+  position: sticky;
+  right: 0;
+  z-index: 1;
+  background: var(--color-surface);
+  box-shadow: -6px 0 8px -6px rgba(15, 30, 24, .25);
+}
+.cg-table thead th:last-child { background: var(--color-surface-alt); z-index: 2; }
+.cg-table tbody tr:hover td:last-child { background: color-mix(in srgb, var(--color-primary-soft) 80%, var(--color-surface)); }
+.cg-table tbody tr.cg-tx-filho td:last-child { background: color-mix(in srgb, var(--color-surface-alt) 55%, var(--color-surface)); }
+
 .cg-room-tile, .cg-resource-item, .cg-grid-view__card, .cg-item-row { border: 1px solid var(--color-border); border-radius: 12px; background: var(--color-surface); }
 .cg-room-tile:hover, .cg-resource-item:hover, .cg-grid-view__card:hover { border-color: color-mix(in srgb, var(--color-primary) 48%, var(--color-border)); box-shadow: 0 8px 20px rgba(17, 45, 35, .08); }
 .cg-room-tile--add { background: transparent; border-style: dashed; }
@@ -795,10 +837,16 @@ button, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 .cg-empty-state i { display: block; margin-bottom: 8px; color: var(--color-primary); opacity: .45; }
 
 @media (max-width: 767px) {
-  .btn { min-height: 42px; }
+  /* .btn { min-height: 42px } removido (2026-08-22) — reduzia o .btn de
+     volta abaixo do touch target só no mobile, exatamente onde toque de dedo
+     mais importa; a base já é var(--touch-target) (48px) em qualquer
+     largura. Toolbars compactas continuam com seu próprio min-height mais
+     específico (.cg-shopping-toggle, .cg-btn.btn-sm, .cg-agrupar-toggle
+     abaixo). */
   .cg-modal-backdrop { padding: 0; }
   .cg-modal { padding: 22px 18px; max-height: 92vh; }
-  .cg-card { border-radius: 12px; }
+  /* .cg-card { border-radius: 12px } removido — var(--radius-lg) já é 12px
+     em qualquer largura desde a consolidação de tokens, redundante. */
   .cg-table thead th, .cg-table tbody td { padding-inline: 9px; }
 }
 

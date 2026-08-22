@@ -57,7 +57,7 @@ begin
     (v_matheus_id, v_group_id, v_matheus_id, 'saida', 'Open English', (select id from categories where group_id = v_group_id and nome = 'Curso'), 'fixa', 172.79, current_date - 15, current_date - 15, current_date - 15, false),
     (v_matheus_id, v_group_id, v_matheus_id, 'saida', 'Tokio Marine — Seguro casa', (select id from categories where group_id = v_group_id and nome = 'Casa'), 'fixa', 34.40, current_date - 15, current_date - 20, current_date - 20, false),
     (v_matheus_id, v_group_id, v_matheus_id, 'saida', 'CPFL Paulista (energia)', (select id from categories where group_id = v_group_id and nome = 'Casa'), 'variavel', 196.50, current_date - 15, current_date - 1, null, false),
-    (v_matheus_id, v_group_id, v_matheus_id, 'saida', 'Sanasa (água)', (select id from categories where group_id = v_group_id and nome = 'Casa'), 'variavel', 119.64, current_date - 15, current_date + 4, null, false),
+    (v_matheus_id, v_group_id, v_matheus_id, 'saida', 'Águas Cristalinas Saneamento (água)', (select id from categories where group_id = v_group_id and nome = 'Casa'), 'variavel', 119.64, current_date - 15, current_date + 4, null, false),
     (v_matheus_id, v_group_id, v_matheus_id, 'saida', 'Condomínio', (select id from categories where group_id = v_group_id and nome = 'Casa'), 'fixa', 415.90, current_date - 15, null, null, false),
     (v_matheus_id, v_group_id, v_matheus_id, 'saida', 'Seguro Carro', (select id from categories where group_id = v_group_id and nome = 'Carro'), 'fixa', 212.58, current_date - 15, current_date - 30, current_date - 30, false),
     (v_matheus_id, v_group_id, v_matheus_id, 'saida', 'Financiamento Carro', (select id from categories where group_id = v_group_id and nome = 'Carro'), 'fixa', 765.87, current_date - 15, current_date + 6, null, false),
@@ -66,8 +66,8 @@ begin
     (v_matheus_id, v_group_id, v_matheus_id, 'saida', 'iFood / 99', (select id from categories where group_id = v_group_id and nome = 'Delivery'), 'variavel', 500.00, current_date - 15, null, null, false),
     (v_matheus_id, v_group_id, v_matheus_id, 'saida', 'Financiamento Casa', (select id from categories where group_id = v_group_id and nome = 'Casa'), 'fixa', 1000.00, current_date - 15, current_date - 3, null, false),
     (v_matheus_id, v_group_id, v_matheus_id, 'saida', 'Dízimo', (select id from categories where group_id = v_group_id and nome = 'Outro'), 'variavel', 200.00, current_date - 15, current_date - 7, current_date - 7, false),
-    (v_matheus_id, v_group_id, v_matheus_id, 'entrada', 'Salário MB Labs', (select id from categories where group_id = v_group_id and nome = 'Salário'), 'fixa', 6000.00, current_date - 15, current_date - 11, current_date - 11, true),
-    (v_beatriz_id, v_group_id, v_beatriz_id, 'entrada', 'Salário Dinamo', (select id from categories where group_id = v_group_id and nome = 'Salário'), 'fixa', 5200.00, current_date - 15, current_date - 11, current_date - 11, true);
+    (v_matheus_id, v_group_id, v_matheus_id, 'entrada', 'Salário Vetor Nimbus Tecnologia', (select id from categories where group_id = v_group_id and nome = 'Salário'), 'fixa', 6000.00, current_date - 15, current_date - 11, current_date - 11, true),
+    (v_beatriz_id, v_group_id, v_beatriz_id, 'entrada', 'Salário Estúdio Alameda Criativa', (select id from categories where group_id = v_group_id and nome = 'Salário'), 'fixa', 5200.00, current_date - 15, current_date - 11, current_date - 11, true);
 
   insert into shopping_lists (owner_id, group_id, nome, status)
   values (v_matheus_id, v_group_id, 'Compras da Semana', 'planejando')

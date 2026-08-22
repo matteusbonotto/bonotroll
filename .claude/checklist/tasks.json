@@ -1,0 +1,922 @@
+{
+  "version": 1,
+  "updatedAt": "2026-08-22T00:00:00-03:00",
+  "tasks": [
+    {
+      "id": "DONE-001",
+      "title": "Rebrand visual completo (Bõnotto)",
+      "description": "Logo, favicon, manifest, apple-touch-icon, atualizados nas 3 superfícies do app (tela de entrada, sidebar, menu mobile) e nas 7 telas.",
+      "category": "Frontend",
+      "priority": "HIGH",
+      "status": "DONE",
+      "stage": "RELEASE",
+      "agent": "frontend",
+      "assignee": null,
+      "tags": [
+        "rebrand",
+        "logo",
+        "pwa"
+      ],
+      "dependencies": [],
+      "relatedMemory": [],
+      "relatedDiscussions": [],
+      "relatedBugs": [],
+      "relatedDocs": [
+        "docs/CHECKLIST-REBRAND.md"
+      ],
+      "createdAt": "2026-08-20T00:00:00-03:00",
+      "updatedAt": "2026-08-20T00:00:00-03:00",
+      "history": [
+        {
+          "action": "CREATED",
+          "to": "DONE",
+          "updatedBy": "system",
+          "timestamp": "2026-08-20T00:00:00-03:00"
+        }
+      ]
+    },
+    {
+      "id": "DONE-002",
+      "title": "Multi-pagador em transações + saldo \"entre vocês\"",
+      "description": "transaction_payers (% e valor por pessoa), shareForMember, computeSaldosEntreMembros — dívida líquida entre Matheus e Beatriz.",
+      "category": "Backend",
+      "priority": "HIGH",
+      "status": "DONE",
+      "stage": "RELEASE",
+      "agent": "backend",
+      "tags": [
+        "divisao-despesa",
+        "casal"
+      ],
+      "dependencies": [],
+      "relatedDocs": [
+        ".claude/docs/business-rules.md"
+      ],
+      "createdAt": "2026-08-20T00:00:00-03:00",
+      "updatedAt": "2026-08-20T00:00:00-03:00",
+      "history": [
+        {
+          "action": "CREATED",
+          "to": "DONE",
+          "updatedBy": "system",
+          "timestamp": "2026-08-20T00:00:00-03:00"
+        }
+      ]
+    },
+    {
+      "id": "DONE-003",
+      "title": "Bancos/Categorias/Empresas como entidades compartilhadas",
+      "description": "Padrão find-or-create (findOrCreateBank etc.), sem duplicata por nome, modal empilhado padronizado (lista → formulário por cima) nos 4 casos.",
+      "category": "Backend",
+      "priority": "MEDIUM",
+      "status": "DONE",
+      "agent": "backend",
+      "tags": [
+        "find-or-create",
+        "bancos",
+        "categorias",
+        "empresas"
+      ],
+      "dependencies": [],
+      "createdAt": "2026-08-20T00:00:00-03:00",
+      "updatedAt": "2026-08-20T00:00:00-03:00",
+      "history": [
+        {
+          "action": "CREATED",
+          "to": "DONE",
+          "updatedBy": "system",
+          "timestamp": "2026-08-20T00:00:00-03:00"
+        }
+      ]
+    },
+    {
+      "id": "DONE-004",
+      "title": "Modos de visualização de Transações (layout × densidade) + Agrupar",
+      "description": "lista/grade/tabela × normal/compacta, livremente combináveis; Agrupar como filtro independente.",
+      "category": "Frontend",
+      "priority": "MEDIUM",
+      "status": "DONE",
+      "agent": "frontend",
+      "tags": [
+        "transacoes",
+        "ux"
+      ],
+      "dependencies": [],
+      "createdAt": "2026-08-20T00:00:00-03:00",
+      "updatedAt": "2026-08-20T00:00:00-03:00",
+      "history": [
+        {
+          "action": "CREATED",
+          "to": "DONE",
+          "updatedBy": "system",
+          "timestamp": "2026-08-20T00:00:00-03:00"
+        }
+      ]
+    },
+    {
+      "id": "DONE-005",
+      "title": "Modal de despesa reorganizado (seções + entrada rápida)",
+      "description": "Detalhes/Quem paga/Quando/Comprovante em seções; campo de entrada rápida (texto+valor) pré-preenche o formulário.",
+      "category": "Frontend",
+      "priority": "MEDIUM",
+      "status": "DONE",
+      "agent": "frontend",
+      "tags": [
+        "formulario",
+        "ux"
+      ],
+      "dependencies": [],
+      "createdAt": "2026-08-20T00:00:00-03:00",
+      "updatedAt": "2026-08-20T00:00:00-03:00",
+      "history": [
+        {
+          "action": "CREATED",
+          "to": "DONE",
+          "updatedBy": "system",
+          "timestamp": "2026-08-20T00:00:00-03:00"
+        }
+      ]
+    },
+    {
+      "id": "DONE-006",
+      "title": "Home: pago vs. previsto + lançamentos recentes com avatar/empresa/categoria",
+      "description": "entradas/saídas reais separadas de entradasPrevistas/saidasPrevistas; widget de lançamentos recentes com avatar do responsável + selo de empresa + badge de categoria.",
+      "category": "Frontend",
+      "priority": "MEDIUM",
+      "status": "DONE",
+      "agent": "frontend",
+      "tags": [
+        "home",
+        "dashboard"
+      ],
+      "dependencies": [],
+      "createdAt": "2026-08-20T00:00:00-03:00",
+      "updatedAt": "2026-08-20T00:00:00-03:00",
+      "history": [
+        {
+          "action": "CREATED",
+          "to": "DONE",
+          "updatedBy": "system",
+          "timestamp": "2026-08-20T00:00:00-03:00"
+        }
+      ]
+    },
+    {
+      "id": "DONE-007",
+      "title": "Dashboard completo (\"Ver mais\") estilo BI",
+      "description": "Reaproveita dashboardView() com todos os recortes (categoria/empresa/membro/fluxo/dia/mês/ano) de uma vez, Chart.js.",
+      "category": "Frontend",
+      "priority": "MEDIUM",
+      "status": "DONE",
+      "agent": "frontend",
+      "tags": [
+        "dashboard",
+        "graficos"
+      ],
+      "dependencies": [],
+      "createdAt": "2026-08-20T00:00:00-03:00",
+      "updatedAt": "2026-08-20T00:00:00-03:00",
+      "history": [
+        {
+          "action": "CREATED",
+          "to": "DONE",
+          "updatedBy": "system",
+          "timestamp": "2026-08-20T00:00:00-03:00"
+        }
+      ]
+    },
+    {
+      "id": "DONE-008",
+      "title": "Modo demo mockado representativo (v1)",
+      "description": "18 empresas + 4 bancos com logo, despesa dividida, item parcelado, caixinha multi-moeda. SUPERSEDIDO por FEAT-002 (2026-08-22): dados renomeados para genéricos via Faker por semelhança excessiva com dados reais (privacidade, deploy é GitHub Pages público).",
+      "category": "Backend",
+      "priority": "MEDIUM",
+      "status": "DONE",
+      "agent": "backend",
+      "tags": [
+        "mock",
+        "demo"
+      ],
+      "dependencies": [],
+      "relatedBugs": [],
+      "createdAt": "2026-08-20T00:00:00-03:00",
+      "updatedAt": "2026-08-22T00:00:00-03:00",
+      "history": [
+        {
+          "action": "CREATED",
+          "to": "DONE",
+          "updatedBy": "system",
+          "timestamp": "2026-08-20T00:00:00-03:00"
+        },
+        {
+          "action": "NOTE",
+          "updatedBy": "backend",
+          "timestamp": "2026-08-22T00:00:00-03:00",
+          "note": "Supersedido por FEAT-002 — ver .claude/memory/changes.md"
+        }
+      ]
+    },
+    {
+      "id": "DONE-009",
+      "title": "Despesa \"no cartão de crédito\" — accordion de fatura (v1)",
+      "description": "Categoria \"Cartão de crédito\" vira fatura (pai), cartao_credito=true vira filha, excluída dos totais/gráficos pra não duplicar. Limitação conhecida documentada: 2+ faturas no mesmo mês agrupam tudo na primeira encontrada — sendo corrigida agora em BUG-001/FEAT-001.",
+      "category": "Backend",
+      "priority": "HIGH",
+      "status": "DONE",
+      "agent": "backend",
+      "tags": [
+        "cartao-credito"
+      ],
+      "dependencies": [],
+      "relatedBugs": [
+        "BUG-001"
+      ],
+      "createdAt": "2026-08-20T00:00:00-03:00",
+      "updatedAt": "2026-08-22T00:00:00-03:00",
+      "history": [
+        {
+          "action": "CREATED",
+          "to": "DONE",
+          "updatedBy": "system",
+          "timestamp": "2026-08-20T00:00:00-03:00"
+        }
+      ]
+    },
+    {
+      "id": "DONE-010",
+      "title": "Suíte de testes real + CI leve",
+      "description": "47 unit (node --test) + 23 e2e (Playwright), GitHub Actions rodando em push/PR.",
+      "category": "Testing",
+      "priority": "HIGH",
+      "status": "DONE",
+      "agent": "qa",
+      "tags": [
+        "testes",
+        "ci"
+      ],
+      "dependencies": [],
+      "createdAt": "2026-08-19T00:00:00-03:00",
+      "updatedAt": "2026-08-20T00:00:00-03:00",
+      "history": [
+        {
+          "action": "CREATED",
+          "to": "DONE",
+          "updatedBy": "system",
+          "timestamp": "2026-08-19T00:00:00-03:00"
+        }
+      ]
+    },
+    {
+      "id": "DONE-011",
+      "title": "Money Engine — centavos inteiros",
+      "description": "js/utils/money.js (somar/subtrair/dividirIgualmente/iguais/maiorQue/percentual), em uso em transactions/caixinhas/shoppingList/budgets.",
+      "category": "Backend",
+      "priority": "HIGH",
+      "status": "DONE",
+      "agent": "backend",
+      "tags": [
+        "dinheiro",
+        "precisao"
+      ],
+      "dependencies": [],
+      "createdAt": "2026-08-19T00:00:00-03:00",
+      "updatedAt": "2026-08-21T00:00:00-03:00",
+      "history": [
+        {
+          "action": "CREATED",
+          "to": "DONE",
+          "updatedBy": "system",
+          "timestamp": "2026-08-19T00:00:00-03:00"
+        }
+      ]
+    },
+    {
+      "id": "DONE-012",
+      "title": "Acessibilidade: alternativa textual em gráfico + severidade de notificação + prefers-reduced-motion",
+      "description": "Tabela .visually-hidden equivalente a cada gráfico; INFO/ATTENTION/WARNING/CRITICAL em notificações; media query global de movimento reduzido.",
+      "category": "Accessibility",
+      "priority": "MEDIUM",
+      "status": "DONE",
+      "agent": "frontend",
+      "tags": [
+        "a11y",
+        "notificacoes"
+      ],
+      "dependencies": [],
+      "createdAt": "2026-08-19T00:00:00-03:00",
+      "updatedAt": "2026-08-21T00:00:00-03:00",
+      "history": [
+        {
+          "action": "CREATED",
+          "to": "DONE",
+          "updatedBy": "system",
+          "timestamp": "2026-08-19T00:00:00-03:00"
+        }
+      ]
+    },
+    {
+      "id": "DONE-013",
+      "title": "Botão físico voltar / gesto do navegador anda pelas telas",
+      "description": "setView trocado de history.replaceState para pushState + sincronização via popstate. Teste novo: tests/e2e/navegacao-historico.spec.js. NOTA DE CONSISTÊNCIA: .claude/docs/roadmap.md ainda listava isso como \"não iniciado\" em Potential Improvements — corrigido em 2026-08-22 durante a reorganização do .claude/.",
+      "category": "Frontend",
+      "priority": "MEDIUM",
+      "status": "DONE",
+      "agent": "frontend",
+      "tags": [
+        "navegacao",
+        "mobile",
+        "android"
+      ],
+      "dependencies": [],
+      "createdAt": "2026-08-21T00:00:00-03:00",
+      "updatedAt": "2026-08-21T00:00:00-03:00",
+      "history": [
+        {
+          "action": "CREATED",
+          "to": "DONE",
+          "updatedBy": "system",
+          "timestamp": "2026-08-21T00:00:00-03:00"
+        }
+      ]
+    },
+    {
+      "id": "DONE-014",
+      "title": "Migração cartao_credito aplicada na conta real (produção)",
+      "description": "npx supabase db query --linked -f supabase/schema.sql — coluna boolean confirmada em produção, default false.",
+      "category": "Database",
+      "priority": "HIGH",
+      "status": "DONE",
+      "agent": "database",
+      "tags": [
+        "supabase",
+        "migracao",
+        "producao"
+      ],
+      "dependencies": [],
+      "createdAt": "2026-08-21T00:00:00-03:00",
+      "updatedAt": "2026-08-21T00:00:00-03:00",
+      "history": [
+        {
+          "action": "CREATED",
+          "to": "DONE",
+          "updatedBy": "system",
+          "timestamp": "2026-08-21T00:00:00-03:00"
+        }
+      ]
+    },
+    {
+      "id": "DONE-015",
+      "title": "Sistema .claude/ v1 (agentes, comandos, docs vivos)",
+      "description": "8 agentes especialistas, 5 comandos (audit/implement/plan/review/test), 5 docs vivos (architecture/database/business-rules/design-system/roadmap).",
+      "category": "Docs",
+      "priority": "MEDIUM",
+      "status": "DONE",
+      "agent": "architect",
+      "tags": [
+        "meta",
+        "claude-code"
+      ],
+      "dependencies": [],
+      "createdAt": "2026-08-21T00:00:00-03:00",
+      "updatedAt": "2026-08-21T00:00:00-03:00",
+      "history": [
+        {
+          "action": "CREATED",
+          "to": "DONE",
+          "updatedBy": "system",
+          "timestamp": "2026-08-21T00:00:00-03:00"
+        }
+      ]
+    },
+    {
+      "id": "TASK-020",
+      "title": "Reorganizar .claude/ — memória, discussões, checklist Kanban",
+      "description": "Reconciliar 2 master-prompts trazidos pelo usuário (MASTER PROJECT BUILDER + BONOBOTT) com a estrutura .claude/ já existente (agentes/comandos/docs nativos do Claude Code) — sem duplicar o que já existe. Adiciona memory/, discussions/, checklist/ (este Kanban).",
+      "category": "Docs",
+      "priority": "HIGH",
+      "status": "IN_PROGRESS",
+      "agent": "claude",
+      "tags": [
+        "meta",
+        "claude-code",
+        "kanban"
+      ],
+      "dependencies": [],
+      "createdAt": "2026-08-22T00:00:00-03:00",
+      "updatedAt": "2026-08-22T00:00:00-03:00",
+      "history": [
+        {
+          "action": "CREATED",
+          "to": "IN_PROGRESS",
+          "updatedBy": "claude",
+          "timestamp": "2026-08-22T00:00:00-03:00"
+        }
+      ]
+    },
+    {
+      "id": "BUG-001",
+      "title": "Cartão de crédito: compra cai na 1ª fatura do mês, não na do responsável certo",
+      "description": "groupCartaoCredito agrupa por mês só (Map global mês→primeira fatura encontrada), ignorando responsavel_id. Com 2 faturas no mesmo mês (uma por pessoa), TODAS as compras marcadas caem na fatura de quem apareceu primeiro na lista — caso real relatado pelo usuário (Matheus tem fatura, Beatriz não; compras de ambos caem na do Matheus).",
+      "category": "Backend",
+      "priority": "HIGH",
+      "status": "DONE",
+      "agent": "architect",
+      "tags": [
+        "cartao-credito",
+        "bug-producao"
+      ],
+      "dependencies": [],
+      "relatedDocs": [
+        ".claude/docs/business-rules.md",
+        "docs/CHECKLIST-REBRAND.md"
+      ],
+      "createdAt": "2026-08-22T00:00:00-03:00",
+      "updatedAt": "2026-08-22T00:00:00-03:00",
+      "history": [
+        {
+          "action": "CREATED",
+          "to": "IN_PROGRESS",
+          "updatedBy": "claude",
+          "timestamp": "2026-08-22T00:00:00-03:00",
+          "note": "Discussão multiagente em andamento (architect + database + product-manager) antes de decidir a correção."
+        },
+        {
+          "action": "STATUS_CHANGED",
+          "from": "IN_PROGRESS",
+          "to": "PLANNED",
+          "updatedBy": "claude",
+          "timestamp": "2026-08-22T00:00:00-03:00",
+          "note": "Decisão tomada em .claude/discussions/001-cartao-credito-multi-cartao.md — será corrigido junto com FEAT-001 (TASK-023)."
+        },
+        {
+          "action": "STATUS_CHANGED",
+          "from": "IN_PROGRESS",
+          "to": "DONE",
+          "updatedBy": "claude",
+          "timestamp": "2026-08-22T16:11:30.076235-03:00",
+          "note": "Implementado, testado e documentado na rodada de 2026-08-22."
+        }
+      ]
+    },
+    {
+      "id": "FEAT-001",
+      "title": "Entidade \"cartão de crédito\" vinculada a banco, múltiplos cartões por pessoa",
+      "description": "Cada pessoa pode cadastrar seu(s) próprio(s) cartão(ões), vinculado(s) a um banco (Nubank, Itaú etc.), e escolher o cartão específico ao marcar uma despesa como paga no cartão — cobre o caso de dívida em mais de um cartão simultâneo. Efeito colateral esperado: resolve BUG-001 de raiz (fatura passa a ser identificada por cartão, não só por mês). DECIDIDO em .claude/discussions/001-cartao-credito-multi-cartao.md: tabela cartoes + FK cartao_id em transactions, RLS clonada de banks, fallback responsavel_id+mês pra dado legado.",
+      "category": "Database",
+      "priority": "HIGH",
+      "status": "DONE",
+      "agent": "database",
+      "tags": [
+        "cartao-credito",
+        "schema",
+        "gap"
+      ],
+      "dependencies": [
+        "BUG-001"
+      ],
+      "relatedDocs": [
+        "supabase/schema.sql",
+        "js/services/banks.js"
+      ],
+      "createdAt": "2026-08-22T00:00:00-03:00",
+      "updatedAt": "2026-08-22T00:00:00-03:00",
+      "history": [
+        {
+          "action": "CREATED",
+          "to": "PLANNED",
+          "updatedBy": "claude",
+          "timestamp": "2026-08-22T00:00:00-03:00"
+        },
+        {
+          "action": "STATUS_CHANGED",
+          "from": "PLANNED",
+          "to": "DONE",
+          "updatedBy": "claude",
+          "timestamp": "2026-08-22T16:11:30.076235-03:00",
+          "note": "Implementado, testado e documentado na rodada de 2026-08-22."
+        }
+      ]
+    },
+    {
+      "id": "FEAT-002",
+      "title": "Regenerar dados mock com Faker (remover semelhança com dados reais)",
+      "description": "CONCLUÍDO. seedDatabase() reescrito com nomes genéricos fixos + Faker best-effort (sem top-level await, pra não quebrar o boot do Alpine). Escopo estendido além do pedido original depois de confirmar que o repo GitHub é PÚBLICO: mesmos nomes reais também existiam em supabase/seed.sql, importacao/transacoes-exemplo.csv, importacao/movimentacoes.csv e prompt-app-controle-financeiro.md — todos corrigidos com os mesmos nomes genéricos, pra consistência. 47/47 unit + 24/24 e2e, nenhum teste precisou mudar. Residual conhecido e NÃO corrigido: histórico do git ainda tem os nomes antigos (decisão do usuário, não minha — ver .claude/memory/user-requirements.md).",
+      "category": "Backend",
+      "priority": "CRITICAL",
+      "status": "DONE",
+      "agent": "backend",
+      "tags": [
+        "privacidade",
+        "mock",
+        "demo",
+        "faker"
+      ],
+      "dependencies": [],
+      "relatedBugs": [
+        "BUG-002"
+      ],
+      "createdAt": "2026-08-22T00:00:00-03:00",
+      "updatedAt": "2026-08-22T00:00:00-03:00",
+      "history": [
+        {
+          "action": "CREATED",
+          "to": "IN_PROGRESS",
+          "updatedBy": "claude",
+          "timestamp": "2026-08-22T00:00:00-03:00",
+          "note": "Prioridade CRITICAL por exposição pública de dado sensível."
+        },
+        {
+          "action": "STATUS_CHANGED",
+          "from": "IN_PROGRESS",
+          "to": "DONE",
+          "updatedBy": "claude",
+          "timestamp": "2026-08-22T00:00:00-03:00",
+          "note": "Escopo estendido a seed.sql/CSVs/prompt doc depois de confirmar repo público."
+        }
+      ]
+    },
+    {
+      "id": "TASK-021",
+      "title": "Auditoria visual completa das 7 telas",
+      "description": "Concluída — Playwright real (mobile 390×844 + desktop 1440×900, claro/escuro/sistema), não só leitura de código. 2 achados CRITICAL (BUG-003 conflito de 3 fontes de tokens CSS; BUG-004 switch invisível no escuro sem toggle manual) + vários HIGH/MEDIUM/LOW por tela (Home: delta não quebra linha + percentual sem teto; Transações: botão editar pode ficar fora da área visível em 1440px; Compras: categoria só por cor no modo Lista; Grupo: Sair/Excluir com mesmo peso visual). Ver .claude/memory/bugs.md.",
+      "category": "UX/UI",
+      "priority": "HIGH",
+      "status": "DONE",
+      "agent": "ux-ui",
+      "tags": [
+        "design-review",
+        "todas-as-telas"
+      ],
+      "dependencies": [],
+      "relatedDocs": [
+        "docs/DESIGN-SYSTEM-2027.md",
+        ".claude/docs/design-system.md"
+      ],
+      "relatedBugs": [
+        "BUG-003",
+        "BUG-004"
+      ],
+      "createdAt": "2026-08-22T00:00:00-03:00",
+      "updatedAt": "2026-08-22T00:00:00-03:00",
+      "history": [
+        {
+          "action": "CREATED",
+          "to": "IN_PROGRESS",
+          "updatedBy": "claude",
+          "timestamp": "2026-08-22T00:00:00-03:00"
+        },
+        {
+          "action": "STATUS_CHANGED",
+          "from": "IN_PROGRESS",
+          "to": "DONE",
+          "updatedBy": "ux-ui",
+          "timestamp": "2026-08-22T00:00:00-03:00"
+        }
+      ]
+    },
+    {
+      "id": "TASK-022",
+      "title": "Aplicar correções encontradas na auditoria visual",
+      "description": "CONCLUÍDO. Tokens CSS consolidados em tokens.css (única fonte), touch-target 48px real, switch escuro corrigido, delta da Home + teto de percentual, coluna de ações sticky em Transações (1440px), aria-labels, botões unificados, Sair/Excluir diferenciados. 47/47 unit + 24/24 e2e. Deixado deliberadamente fora (baixa prioridade, novos DEBT abaixo): loading skeleton dos gráficos, touch target do stepper de Recursos, duplicação de .cg-badge--* dark mode entre arquivos, diferença de hover em .cg-card--hoverable.",
+      "category": "Frontend",
+      "priority": "HIGH",
+      "status": "DONE",
+      "agent": "frontend",
+      "tags": [
+        "design-review"
+      ],
+      "dependencies": [
+        "TASK-021"
+      ],
+      "createdAt": "2026-08-22T00:00:00-03:00",
+      "updatedAt": "2026-08-22T00:00:00-03:00",
+      "history": [
+        {
+          "action": "CREATED",
+          "to": "BACKLOG",
+          "updatedBy": "claude",
+          "timestamp": "2026-08-22T00:00:00-03:00"
+        },
+        {
+          "action": "STATUS_CHANGED",
+          "from": "BACKLOG",
+          "to": "IN_PROGRESS",
+          "updatedBy": "claude",
+          "timestamp": "2026-08-22T00:00:00-03:00"
+        },
+        {
+          "action": "STATUS_CHANGED",
+          "from": "IN_PROGRESS",
+          "to": "DONE",
+          "updatedBy": "frontend",
+          "timestamp": "2026-08-22T00:00:00-03:00",
+          "note": "47/47 unit + 24/24 e2e, verificado visualmente em ?demo=1."
+        }
+      ]
+    },
+    {
+      "id": "DEBT-003",
+      "title": "Loading skeleton nos gráficos da Home + touch target do stepper de Recursos",
+      "description": "Achados MEDIUM/LOW da auditoria visual (TASK-021), deixados fora de TASK-022 por baixa prioridade. Chart.js demora 2-4s pra importar dinamicamente e o card fica vazio sem indicação; stepper de quantidade em Recursos é 32×32px, abaixo do touch-target de 48px (frequência de uso baixa o suficiente pra não ser crítico).",
+      "category": "Frontend",
+      "priority": "LOW",
+      "status": "BACKLOG",
+      "agent": "frontend",
+      "tags": [
+        "design-review"
+      ],
+      "dependencies": [],
+      "createdAt": "2026-08-22T00:00:00-03:00",
+      "updatedAt": "2026-08-22T00:00:00-03:00",
+      "history": [
+        {
+          "action": "CREATED",
+          "to": "BACKLOG",
+          "updatedBy": "frontend",
+          "timestamp": "2026-08-22T00:00:00-03:00"
+        }
+      ]
+    },
+    {
+      "id": "DEBT-004",
+      "title": "Duplicação residual de .cg-badge--* (dark mode) e hover de .cg-card--hoverable entre components.css/app.css",
+      "description": "Notado durante a consolidação de tokens (TASK-022) mas não corrigido por não estar na lista de exceções autorizada e para não expandir escopo de redesenho. Mesma classe de problema do BUG-003, em escala menor.",
+      "category": "Frontend",
+      "priority": "LOW",
+      "status": "BACKLOG",
+      "agent": "frontend",
+      "tags": [
+        "dívida-técnica",
+        "css"
+      ],
+      "dependencies": [],
+      "createdAt": "2026-08-22T00:00:00-03:00",
+      "updatedAt": "2026-08-22T00:00:00-03:00",
+      "history": [
+        {
+          "action": "CREATED",
+          "to": "BACKLOG",
+          "updatedBy": "frontend",
+          "timestamp": "2026-08-22T00:00:00-03:00"
+        }
+      ]
+    },
+    {
+      "id": "TASK-023",
+      "title": "Migrar schema + services + UI do cartão de crédito (após decisão de arquitetura)",
+      "description": "Implementação real de FEAT-001 — decisão já registrada em .claude/discussions/001-cartao-credito-multi-cartao.md (architect+database+product-manager convergiram em opção B de forma independente). Sequenciado para começar só depois de FEAT-002 terminar (ambas tocam js/data/mockDb.js, evitar 2 agentes escrevendo no mesmo arquivo ao mesmo tempo).",
+      "category": "Backend",
+      "priority": "HIGH",
+      "status": "DONE",
+      "agent": "backend",
+      "tags": [
+        "cartao-credito"
+      ],
+      "dependencies": [
+        "FEAT-001"
+      ],
+      "createdAt": "2026-08-22T00:00:00-03:00",
+      "updatedAt": "2026-08-22T00:00:00-03:00",
+      "history": [
+        {
+          "action": "CREATED",
+          "to": "BACKLOG",
+          "updatedBy": "claude",
+          "timestamp": "2026-08-22T00:00:00-03:00"
+        },
+        {
+          "action": "STATUS_CHANGED",
+          "from": "PLANNED",
+          "to": "DONE",
+          "updatedBy": "claude",
+          "timestamp": "2026-08-22T16:11:30.076235-03:00",
+          "note": "Implementado, testado e documentado na rodada de 2026-08-22."
+        }
+      ]
+    },
+    {
+      "id": "TASK-024",
+      "title": "Revisão de segurança do novo modelo de cartões (RLS)",
+      "description": "Conferir policy RLS da nova tabela/coluna contra o padrão is_group_member (evitar recursão), conferir que cartão de uma pessoa não vaza pra leitura indevida do outro membro fora do grupo.",
+      "category": "Security",
+      "priority": "HIGH",
+      "status": "DONE",
+      "agent": "security",
+      "tags": [
+        "rls",
+        "cartao-credito"
+      ],
+      "dependencies": [
+        "TASK-023"
+      ],
+      "createdAt": "2026-08-22T00:00:00-03:00",
+      "updatedAt": "2026-08-22T00:00:00-03:00",
+      "history": [
+        {
+          "action": "CREATED",
+          "to": "BACKLOG",
+          "updatedBy": "claude",
+          "timestamp": "2026-08-22T00:00:00-03:00"
+        },
+        {
+          "action": "STATUS_CHANGED",
+          "from": "BACKLOG",
+          "to": "DONE",
+          "updatedBy": "claude",
+          "timestamp": "2026-08-22T16:11:30.076235-03:00",
+          "note": "Implementado, testado e documentado na rodada de 2026-08-22."
+        }
+      ]
+    },
+    {
+      "id": "TASK-025",
+      "title": "QA: testes unitários/e2e do multi-cartão + regressão da fatura",
+      "description": "Cobrir cenário 1 do usuário (pessoa sem fatura, compra fica solta), 2 faturas no mesmo mês, 2+ cartões por pessoa em bancos diferentes, despesa dividida paga num cartão só.",
+      "category": "Testing",
+      "priority": "HIGH",
+      "status": "DONE",
+      "agent": "qa",
+      "tags": [
+        "cartao-credito",
+        "testes"
+      ],
+      "dependencies": [
+        "TASK-023"
+      ],
+      "createdAt": "2026-08-22T00:00:00-03:00",
+      "updatedAt": "2026-08-22T00:00:00-03:00",
+      "history": [
+        {
+          "action": "CREATED",
+          "to": "BACKLOG",
+          "updatedBy": "claude",
+          "timestamp": "2026-08-22T00:00:00-03:00"
+        },
+        {
+          "action": "STATUS_CHANGED",
+          "from": "BACKLOG",
+          "to": "DONE",
+          "updatedBy": "claude",
+          "timestamp": "2026-08-22T16:11:30.076235-03:00",
+          "note": "Implementado, testado e documentado na rodada de 2026-08-22."
+        }
+      ]
+    },
+    {
+      "id": "TASK-026",
+      "title": "Code review final da rodada de hoje",
+      "description": "Revisão multidisciplinar (architecture/code/QA/security/UX/performance/docs) de tudo que sair desta rodada antes de considerar concluído.",
+      "category": "Docs",
+      "priority": "MEDIUM",
+      "status": "DONE",
+      "agent": "code-reviewer",
+      "tags": [
+        "review"
+      ],
+      "dependencies": [
+        "TASK-023",
+        "TASK-022",
+        "FEAT-002"
+      ],
+      "createdAt": "2026-08-22T00:00:00-03:00",
+      "updatedAt": "2026-08-22T00:00:00-03:00",
+      "history": [
+        {
+          "action": "CREATED",
+          "to": "BACKLOG",
+          "updatedBy": "claude",
+          "timestamp": "2026-08-22T00:00:00-03:00"
+        },
+        {
+          "action": "STATUS_CHANGED",
+          "from": "BACKLOG",
+          "to": "DONE",
+          "updatedBy": "claude",
+          "timestamp": "2026-08-22T16:11:30.076235-03:00",
+          "note": "Implementado, testado e documentado na rodada de 2026-08-22."
+        }
+      ]
+    },
+    {
+      "id": "DEBT-001",
+      "title": "Migrar ~66 font-size soltos para os tokens de tipografia",
+      "description": "Tokens já existem em css/tokens.css. Não é seguro automatizar cego — muda tamanho visível em várias telas de uma vez. Pode ganhar critério concreto com TASK-021.",
+      "category": "Frontend",
+      "priority": "LOW",
+      "status": "BACKLOG",
+      "agent": "frontend",
+      "tags": [
+        "dívida-técnica",
+        "tipografia"
+      ],
+      "dependencies": [
+        "TASK-021"
+      ],
+      "createdAt": "2026-08-20T00:00:00-03:00",
+      "updatedAt": "2026-08-22T00:00:00-03:00",
+      "history": [
+        {
+          "action": "CREATED",
+          "to": "BACKLOG",
+          "updatedBy": "system",
+          "timestamp": "2026-08-20T00:00:00-03:00"
+        }
+      ]
+    },
+    {
+      "id": "DEBT-002",
+      "title": "index.html como god-file",
+      "description": "Cresce a cada tela nova, sem separação física — tensão real do \"sem build step\", não erro óbvio a corrigir. Sem ação recomendada agora.",
+      "category": "Architecture",
+      "priority": "LOW",
+      "status": "BACKLOG",
+      "agent": "architect",
+      "tags": [
+        "dívida-técnica"
+      ],
+      "dependencies": [],
+      "createdAt": "2026-08-20T00:00:00-03:00",
+      "updatedAt": "2026-08-20T00:00:00-03:00",
+      "history": [
+        {
+          "action": "CREATED",
+          "to": "BACKLOG",
+          "updatedBy": "system",
+          "timestamp": "2026-08-20T00:00:00-03:00"
+        }
+      ]
+    },
+    {
+      "id": "IDEA-001",
+      "title": "Projeção de fim de mês / detecção de anomalia de gasto",
+      "description": "Dado histórico por categoria/pessoa já existe, falta só o cálculo. Sugestão, não compromisso.",
+      "category": "Backend",
+      "priority": "LOW",
+      "status": "BACKLOG",
+      "agent": "product-manager",
+      "tags": [
+        "sugestao"
+      ],
+      "dependencies": [],
+      "createdAt": "2026-08-20T00:00:00-03:00",
+      "updatedAt": "2026-08-20T00:00:00-03:00",
+      "history": [
+        {
+          "action": "CREATED",
+          "to": "BACKLOG",
+          "updatedBy": "system",
+          "timestamp": "2026-08-20T00:00:00-03:00"
+        }
+      ]
+    },
+    {
+      "id": "IDEA-002",
+      "title": "Auditoria WCAG 2.2 AA sistemática",
+      "description": "Além do que já existe (prefers-reduced-motion, .cg-back com aria-label, switches com <label>) — não tem varredura completa recente. Pode se apoiar em TASK-021.",
+      "category": "Accessibility",
+      "priority": "LOW",
+      "status": "BACKLOG",
+      "agent": "ux-ui",
+      "tags": [
+        "a11y",
+        "sugestao"
+      ],
+      "dependencies": [
+        "TASK-021"
+      ],
+      "createdAt": "2026-08-20T00:00:00-03:00",
+      "updatedAt": "2026-08-22T00:00:00-03:00",
+      "history": [
+        {
+          "action": "CREATED",
+          "to": "BACKLOG",
+          "updatedBy": "system",
+          "timestamp": "2026-08-20T00:00:00-03:00"
+        }
+      ]
+    },
+    {
+      "id": "IDEA-003",
+      "title": "Multi-moeda fora de Caixinhas",
+      "description": "Transações/Compras continuam só BRL — documentado como escopo atual, não bug. Só vira tarefa se o usuário pedir.",
+      "category": "Backend",
+      "priority": "LOW",
+      "status": "BACKLOG",
+      "agent": "product-manager",
+      "tags": [
+        "sugestao"
+      ],
+      "dependencies": [],
+      "createdAt": "2026-08-20T00:00:00-03:00",
+      "updatedAt": "2026-08-20T00:00:00-03:00",
+      "history": [
+        {
+          "action": "CREATED",
+          "to": "BACKLOG",
+          "updatedBy": "system",
+          "timestamp": "2026-08-20T00:00:00-03:00"
+        }
+      ]
+    }
+  ]
+}

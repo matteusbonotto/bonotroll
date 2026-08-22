@@ -56,9 +56,12 @@ test('fatura do cartão vira accordion e a compra dentro dela não soma duas vez
   // "Cartão de crédito" pegaria o modal de categorias, que fica montado no
   // DOM o tempo todo e agora lista uma categoria com esse nome.
   const modal = page.locator('.cg-modal', { hasText: 'Editar lançamento' }).first();
-  const switchCartao = modal.locator('#cartaoCredito');
-  await expect(switchCartao).toBeChecked();
-  await switchCartao.uncheck();
+  // O antigo switch booleano virou um seletor de cartão (2026-08-22): a
+  // compra do seed está no cartão Nubank do Matheus; desmarcar = escolher a
+  // opção vazia "Não é compra no cartão".
+  const seletorCartao = modal.locator('#cartaoCredito');
+  await expect(seletorCartao).toHaveValue('cartao-nubank-matheus');
+  await seletorCartao.selectOption('');
   await modal.getByRole('button', { name: 'Salvar' }).click();
   await page.waitForTimeout(800);
 
@@ -108,4 +111,44 @@ test('compra dentro da fatura continua aparecendo em "Contas a vencer" quando es
   await page.waitForTimeout(500);
   const secao = page.locator('section[x-data^="transactionsView"]');
   await expect(secao.locator('tbody tr', { hasText: 'Amazon Prime' })).toHaveCount(0);
+});
+
+// Multi-cartão (2026-08-22): o seed demo tem DUAS faturas no MESMO mês — a
+// do Matheus (Nubank, R$450) e a da Beatriz (Inter, R$300) — cada uma com
+// uma compra própria (Amazon Prime e Farmácia). Antes do cartao_id, a
+// compra da Beatriz caía na PRIMEIRA fatura do mês (a do Matheus). O teste
+// prova que cada fatura agrupa só as compras do SEU cartão.
+test('duas faturas no mesmo mês de cartões diferentes não misturam as compras', async ({ page }) => {
+  await page.goto('/?demo=1');
+  await page.getByText('Entrar como', { exact: false }).first().click();
+
+  await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Transações' }).first().click();
+  await page.waitForTimeout(500);
+  const secao = page.locator('section[x-data^="transactionsView"]');
+
+  // As duas faturas existem, cada uma com seu valor próprio.
+  const faturaMatheus = secao.locator('tbody tr', { hasText: 'Fatura Cartão de Crédito' });
+  const faturaBeatriz = secao.locator('tbody tr', { hasText: 'Fatura Cartão Inter' });
+  await expect(faturaMatheus).toHaveCount(1);
+  await expect(faturaBeatriz).toHaveCount(1);
+  await expect(faturaMatheus).toContainText('450');
+  await expect(faturaBeatriz).toContainText('300');
+
+  // Fechadas: nenhuma compra aparece solta.
+  await expect(secao.locator('tbody tr', { hasText: 'Amazon Prime' })).toHaveCount(0);
+  await expect(secao.locator('tbody tr', { hasText: 'Farmácia' })).toHaveCount(0);
+
+  // Abre a fatura do Matheus: só a compra DELE (Amazon Prime) está dentro.
+  await faturaMatheus.locator('.cg-cartao-toggle').click();
+  await page.waitForTimeout(200);
+  await expect(secao.locator('tbody tr.cg-tx-filho', { hasText: 'Amazon Prime' })).toHaveCount(1);
+  await expect(secao.locator('tbody tr.cg-tx-filho', { hasText: 'Farmácia' })).toHaveCount(0);
+  await faturaMatheus.locator('.cg-cartao-toggle').click();
+  await page.waitForTimeout(200);
+
+  // Abre a fatura da Beatriz: só a compra DELA (Farmácia) está dentro.
+  await faturaBeatriz.locator('.cg-cartao-toggle').click();
+  await page.waitForTimeout(200);
+  await expect(secao.locator('tbody tr.cg-tx-filho', { hasText: 'Farmácia' })).toHaveCount(1);
+  await expect(secao.locator('tbody tr.cg-tx-filho', { hasText: 'Amazon Prime' })).toHaveCount(0);
 });
