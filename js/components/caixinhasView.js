@@ -187,15 +187,24 @@ export function caixinhasView() {
     },
     // Exclusão frequente/baixo dano (docs/BONOTTO-2027-BLUEPRINT.md,
     // Conflito 3) — sem confirm(), com "Desfazer" no lugar: a linha some da
-    // UI na hora (otimista), e só é removida do banco de verdade alguns
-    // segundos depois, se ninguém desfizer.
+    // UI na hora (otimista). A exclusão real já acontece dentro de
+    // notifyUndo (ver store.js — corrigido em 2026-08-23 pra nunca mais
+    // "dizer que excluiu sem ter excluído"), então "Desfazer" precisa
+    // RECRIAR a movimentação (id novo, mesmos dados) — só devolver pro
+    // array local deixaria a UI mentindo (mostraria de volta algo que o
+    // banco não tem mais).
     async removerMovimentacao(mov) {
       const activeId = this.activeId;
       this.movByCaixinha[activeId] = this.movFor(activeId).filter((m) => m.id !== mov.id);
       this.$store.app.notifyUndo(
         'Movimentação removida.',
         () => cx.deleteMovimentacao(mov.id),
-        () => { this.movByCaixinha[activeId] = [mov, ...this.movFor(activeId).filter((m) => m.id !== mov.id)]; }
+        async () => {
+          const nova = await cx.createMovimentacao({
+            caixinhaId: mov.caixinha_id, tipo: mov.tipo, valor: mov.valor, data: mov.data, observacoes: mov.observacoes,
+          });
+          this.movByCaixinha[activeId] = [nova, ...this.movFor(activeId).filter((m) => m.id !== mov.id)];
+        }
       );
     },
 

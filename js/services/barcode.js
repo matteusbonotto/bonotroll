@@ -40,6 +40,32 @@ export async function startBarcodeScanner(elementId, onDetected) {
   );
 }
 
+// Traduz o erro real de getUserMedia/html5-qrcode pra uma mensagem que
+// ajuda a pessoa a agir — antes o app só dizia "não foi possível acessar a
+// câmera" pra QUALQUER causa, o que tornou um bug real relatado em uso
+// (2026-08-23) impossível de diagnosticar remotamente (sem acesso ao
+// dispositivo, "não funciona" sozinho não diz nada). Nomes de erro conforme
+// a MediaStream Web API (DOMException.name).
+export function mensagemErroCamera(e) {
+  const nome = e?.name || '';
+  if (nome === 'NotAllowedError' || nome === 'PermissionDeniedError') {
+    return 'Permissão de câmera negada — habilite o acesso à câmera nas configurações do navegador/app e tente de novo.';
+  }
+  if (nome === 'NotFoundError' || nome === 'DevicesNotFoundError') {
+    return 'Nenhuma câmera encontrada neste dispositivo.';
+  }
+  if (nome === 'NotReadableError' || nome === 'TrackStartError') {
+    return 'A câmera já está sendo usada por outro app — feche-o e tente de novo.';
+  }
+  if (nome === 'OverconstrainedError' || nome === 'ConstraintNotSatisfiedError') {
+    return 'A câmera deste dispositivo não atende ao que foi pedido.';
+  }
+  if (nome === 'SecurityError') {
+    return 'Acesso à câmera bloqueado nesta conexão (precisa ser https ou localhost).';
+  }
+  return `Não foi possível acessar a câmera${e?.message ? ` (${e.message})` : ''}. Digite manualmente.`;
+}
+
 export async function stopBarcodeScanner() {
   if (!scannerInstance) return;
   try {

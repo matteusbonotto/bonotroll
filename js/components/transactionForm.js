@@ -2,7 +2,7 @@ import { createTransaction, updateTransaction, deleteTransaction, uploadComprova
 import { createCompany, updateCompany, uploadCompanyLogo } from '../services/companies.js';
 import { notifyPayment } from '../services/notifications.js';
 import { recognizeText, parseReceiptText } from '../services/ocr.js';
-import { startBarcodeScanner, stopBarcodeScanner, interpretScannedCode } from '../services/barcode.js';
+import { startBarcodeScanner, stopBarcodeScanner, interpretScannedCode, mensagemErroCamera } from '../services/barcode.js';
 import { extractTextFromPdf } from '../services/pdf.js';
 import { todayIso, parseCurrencyInput } from '../utils/format.js';
 import { resizeImage } from '../utils/image.js';
@@ -100,6 +100,11 @@ export function txModalStore() {
     saving: false,
     showMore: false,
     form: emptyForm(),
+    // Linha crua vinda do banco quando o formulário abre pra EDITAR (não é
+    // recalculada a partir de `form`, que só guarda um subconjunto curado
+    // de campos) — só existe pra permitir restaurar de verdade em
+    // remove()/notifyUndo se a pessoa clicar "Desfazer" depois de excluir.
+    originalTx: null,
     uploadingComprovante: false,
     lendoComprovante: false,
     comprovantePreviewUrl: null,
@@ -220,6 +225,7 @@ export function txModalStore() {
     },
 
     openEdit(tx) {
+      this.originalTx = tx;
       this.form = {
         id: tx.id,
         tipo: tx.tipo,
@@ -429,7 +435,12 @@ export function txModalStore() {
         this.uploadingComprovante = false;
         this.lendoComprovante = true;
         try {
-          const texto = await recognizeText(file);
+          // Upload guarda o arquivo original (qualidade cheia, pra dar pra
+          // conferir depois) — só a cópia que alimenta o OCR é redimensionada.
+          // Ver js/utils/image.js::resizeImage: sem isso, foto crua de
+          // celular podia derrubar o app por memória (bug real, 2026-08-23).
+          const fotoOtimizada = await resizeImage(file, 2000, 0.9);
+          const texto = await recognizeText(fotoOtimizada);
           const dados = parseReceiptText(texto);
           const preencheu = this.aplicarDadosExtraidos(dados);
           if (preencheu) store.notify('Dados lidos da foto — confira antes de salvar.');
@@ -479,8 +490,9 @@ export function txModalStore() {
       await Alpine.nextTick();
       try {
         await startBarcodeScanner('cg-scanner-viewport-despesa', (codigo) => this.onCodigoComprovanteLido(codigo));
-      } catch {
-        this.scannerComprovanteErro = 'Não foi possível acessar a câmera.';
+      } catch (e) {
+        console.error('startBarcodeScanner falhou:', e);
+        this.scannerComprovanteErro = mensagemErroCamera(e);
       }
     },
     async fecharScannerComprovante() {
@@ -631,19 +643,31 @@ export function txModalStore() {
     },
 
     // Exclusão frequente/baixo dano (docs/BONOTTO-2027-BLUEPRINT.md,
-    // Conflito 3) — sem confirm(), com "Desfazer". Diferença dos outros 2
-    // casos (Caixinha/Recursos): o modal e a tabela são componentes Alpine
-    // separados sem array compartilhado, então a linha não some da tabela
-    // na hora — mas a exclusão de verdade (delete + cg:transactions-changed,
-    // que É o que faz ela sumir) só acontece se ninguém desfizer a tempo.
+    // Conflito 3) — sem confirm(), com "Desfazer". A exclusão real acontece
+    // já (dentro de notifyUndo, antes do toast aparecer — ver comentário em
+    // store.js::notifyUndo pra entender por que mudou); "Desfazer" recria o
+    // lançamento (com um id novo — o dado volta, não precisa ser
+    // exatamente a mesma linha) usando o snapshot cru capturado quando o
+    // formulário abriu, mais os pagadores (se a despesa era dividida, o
+    // delete em cascata também apagou `transaction_payers`).
     async remove() {
       if (!this.form.id) return;
       const id = this.form.id;
+      const originalTx = this.originalTx;
+      const payers = await listPayers(id).catch(() => []);
       this.open = false;
       Alpine.store('app').notifyUndo(
         'Lançamento excluído.',
         async () => { await deleteTransaction(id); window.dispatchEvent(new CustomEvent('cg:transactions-changed')); },
-        () => {}
+        async () => {
+          if (!originalTx) return; // sem o dado original (nunca deveria acontecer aqui) não dá pra restaurar de verdade
+          const { id: _id, criado_em: _criado, ...dadosRestaurar } = originalTx;
+          const nova = await createTransaction(dadosRestaurar);
+          if (payers.length) {
+            await setPayers(nova.id, payers.map(({ id: _pid, transaction_id: _tid, criado_em: _c, ...p }) => p));
+          }
+          window.dispatchEvent(new CustomEvent('cg:transactions-changed'));
+        }
       );
     },
   };

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-22T00:00:00-03:00",
+  "updatedAt": "2026-08-23T00:00:00-03:00",
   "tasks": [
     {
       "id": "DONE-001",
@@ -916,6 +916,184 @@
           "updatedBy": "system",
           "timestamp": "2026-08-20T00:00:00-03:00"
         }
+      ]
+    },
+    {
+      "id": "BUG-005",
+      "title": "Exclusão (transação/item de Recursos/movimentação de Caixinha) dizia \"excluído\" sem excluir de verdade",
+      "description": "notifyUndo (store.js) adiava a chamada real de exclusão pra dentro de um setTimeout(5000) — se a aba fechasse/recarregasse antes disso (comum no celular, tela apagando/trocando de app), a exclusão nunca acontecia, mesmo o toast já tendo dito \"excluído\". Relatado em uso real: \"tentei excluir uma despesa e diz que excluiu com sucesso, mas não excluiu\". Corrigido: a ação real agora roda ANTES do toast aparecer; \"Desfazer\" passou a recriar o dado (id novo) em vez de só cancelar algo que ainda não tinha rodado. Afeta os 3 lugares que usam notifyUndo (transactionForm.js, resourcesView.js, caixinhasView.js).",
+      "category": "Backend",
+      "priority": "CRITICAL",
+      "status": "DONE",
+      "agent": "claude",
+      "tags": ["bug-producao", "dados", "undo"],
+      "dependencies": [],
+      "relatedDocs": [".claude/memory/bugs.md"],
+      "createdAt": "2026-08-23T00:00:00-03:00",
+      "updatedAt": "2026-08-23T00:00:00-03:00",
+      "history": [
+        { "action": "CREATED", "to": "DONE", "updatedBy": "claude", "timestamp": "2026-08-23T00:00:00-03:00", "note": "52/52 unit + testes e2e de undo (Caixinha/Recursos) continuam verdes; novo teste tests/e2e/exclusao-transacao-persiste.spec.js prova o cenário exato do bug." }
+      ]
+    },
+    {
+      "id": "BUG-006",
+      "title": "App trava/reinicia (\"insuficiência de memória\") ao tirar foto pra OCR",
+      "description": "3 pontos (Compras::onFotoItem, Recursos::onFotoNomeItem, Transações::onComprovanteChange) passavam a foto crua da câmera (facilmente 4000×3000px+) direto pro Tesseract.js, sem nenhum redimensionamento — a regra antiga em image.js dizia \"nunca redimensionar foto de OCR\" pra não prejudicar a leitura de texto, mas isso também significava nenhum teto de memória. Corrigido: resizeImage(file, 2000, 0.9) antes do OCR nos 3 pontos — 2000px continua nitidamente legível, evita o consumo de memória de uma foto crua. Upload do comprovante em Transações continua salvando o arquivo ORIGINAL (só a cópia pro OCR é redimensionada).",
+      "category": "Frontend",
+      "priority": "CRITICAL",
+      "status": "DONE",
+      "agent": "claude",
+      "tags": ["bug-producao", "performance", "camera", "ocr"],
+      "dependencies": [],
+      "createdAt": "2026-08-23T00:00:00-03:00",
+      "updatedAt": "2026-08-23T00:00:00-03:00",
+      "history": [
+        { "action": "CREATED", "to": "DONE", "updatedBy": "claude", "timestamp": "2026-08-23T00:00:00-03:00", "note": "Não foi possível reproduzir o crash exato (depende de dispositivo real) — corrigido pela causa raiz identificada no código; resizeImage já tinha teste próprio (tests/e2e/resize-imagem.spec.js), continua verde." }
+      ]
+    },
+    {
+      "id": "BUG-007",
+      "title": "Gráfico de gastos por categoria em Compras nunca renderiza",
+      "description": "O canvas do gráfico (categoryChart()) mora dentro do modal \"Ver gráfico\", que começa escondido (x-show=display:none). Como só resumoPorCategoria era observado (não a visibilidade do modal), o Chart.js quase sempre desenhava pela primeira vez com o canvas em 0x0 (a pessoa marca itens como comprados ENQUANTO o modal ainda está fechado) — e abrir o modal depois nunca disparava um redesenho. Corrigido: agora também observa graficoAberto, re-renderizando toda vez que o modal abre.",
+      "category": "Frontend",
+      "priority": "HIGH",
+      "status": "DONE",
+      "agent": "claude",
+      "tags": ["bug-producao", "graficos", "compras"],
+      "dependencies": [],
+      "createdAt": "2026-08-23T00:00:00-03:00",
+      "updatedAt": "2026-08-23T00:00:00-03:00",
+      "history": [
+        { "action": "CREATED", "to": "DONE", "updatedBy": "claude", "timestamp": "2026-08-23T00:00:00-03:00" }
+      ]
+    },
+    {
+      "id": "TASK-027",
+      "title": "Ajustes de UX em Compras (grade sem jeito de excluir durante a compra, foco depois de adicionar item)",
+      "description": "Grade (viewMode='grade'/'compacta') durante emCompra só permitia marcar/desmarcar comprado ao tocar o card — não havia NENHUM jeito de remover um item errado sem sair do modo compra (raiz da confusão relatada \"trocar botão Comprar por Excluir\"). Adicionado botão de excluir no canto do card, só durante a compra. Também: depois de adicionar um item no modal (que fica aberto de propósito pra adicionar vários seguidos — comportamento intencional, não mudado), o foco agora volta pro campo de nome, porque sem isso cada item novo exigia um toque extra e parecia \"não fez nada\".",
+      "category": "Frontend",
+      "priority": "MEDIUM",
+      "status": "DONE",
+      "agent": "claude",
+      "tags": ["compras", "ux"],
+      "dependencies": [],
+      "createdAt": "2026-08-23T00:00:00-03:00",
+      "updatedAt": "2026-08-23T00:00:00-03:00",
+      "history": [
+        { "action": "CREATED", "to": "DONE", "updatedBy": "claude", "timestamp": "2026-08-23T00:00:00-03:00" }
+      ]
+    },
+    {
+      "id": "TASK-028",
+      "title": "Verificação: itens não comprados desaparecendo ao encerrar a compra",
+      "description": "Relatado em uso real. Investigado a fundo: finishShopping() só muda o status da lista pra \"finalizada\", nunca apaga shopping_list_items; o detalhe do histórico carrega TODOS os itens (comprados ou não). NÃO reproduzido — o comportamento já estava correto. Adicionado tests/e2e/encerrar-compra-preserva-itens.spec.js (marca só 1 item, encerra, confirma que os outros continuam no histórico) pra travar isso permanentemente e servir de prova caso o usuário veja de novo (nesse caso seria um bug novo, não este).",
+      "category": "Testing",
+      "priority": "MEDIUM",
+      "status": "DONE",
+      "agent": "claude",
+      "tags": ["compras", "verificacao"],
+      "dependencies": [],
+      "createdAt": "2026-08-23T00:00:00-03:00",
+      "updatedAt": "2026-08-23T00:00:00-03:00",
+      "history": [
+        { "action": "CREATED", "to": "DONE", "updatedBy": "claude", "timestamp": "2026-08-23T00:00:00-03:00", "note": "Teste passou de primeira — sem bug encontrado." }
+      ]
+    },
+    {
+      "id": "TASK-029",
+      "title": "Scanner de código de barras/QR não ativa a câmera (Compras e Transações)",
+      "description": "Investigado com Playwright + câmera falsa (--use-fake-device-for-media-stream): o fluxo funciona perfeitamente nesse ambiente controlado (vídeo anexado, sem erro, dimensões corretas) — não é um bug de sequenciamento/timing no código (abrirScanner já espera $nextTick antes de chamar startBarcodeScanner, então não sofre do mesmo bug de \"canvas escondido\" do BUG-007). Ou seja, a causa é específica do dispositivo/navegador real da Beatriz/Matheus (permissão negada, navegador incompatível, câmera em uso) — não reproduzível remotamente. Corrigido o que dava pra corrigir sem reproduzir: os 3 catches genéricos (shoppingList.js/resourcesView.js/transactionForm.js) engoliam o erro real; agora logam no console e mostram uma mensagem específica por tipo de erro (mensagemErroCamera em barcode.js: permissão negada / sem câmera / câmera em uso / contexto inseguro). Da próxima vez que acontecer, o console vai ter a causa exata.",
+      "category": "Frontend",
+      "priority": "HIGH",
+      "status": "DONE",
+      "agent": "claude",
+      "tags": ["bug-producao", "camera", "scanner"],
+      "dependencies": [],
+      "createdAt": "2026-08-23T00:00:00-03:00",
+      "updatedAt": "2026-08-23T00:00:00-03:00",
+      "history": [
+        { "action": "CREATED", "to": "BACKLOG", "updatedBy": "claude", "timestamp": "2026-08-23T00:00:00-03:00" },
+        { "action": "STATUS_CHANGED", "from": "BACKLOG", "to": "DONE", "updatedBy": "claude", "timestamp": "2026-08-23T00:00:00-03:00", "note": "Causa raiz não confirmada (não reproduzível remotamente) — mitigação real aplicada (erro real logado/exibido). Fechar de vez depende do usuário reportar a mensagem específica que aparecer da próxima vez." }
+      ]
+    },
+    {
+      "id": "TASK-030",
+      "title": "Verificar performance geral / layout da grade de Compras no mobile",
+      "description": "Relato vago (\"app lento e travando muito\", \"quebra de layout com botão quebrar e afins\") — o crash de memória do OCR (BUG-006) provavelmente já explica boa parte do \"travando\", mas não foi reverificado ao vivo depois da correção. Pendente: navegar Compras em mobile (390px, claro/escuro) procurando overflow/quebra visual nos botões de ação do item.",
+      "category": "Frontend",
+      "priority": "MEDIUM",
+      "status": "BACKLOG",
+      "agent": "ux-ui",
+      "tags": ["performance", "compras"],
+      "dependencies": ["BUG-006"],
+      "createdAt": "2026-08-23T00:00:00-03:00",
+      "updatedAt": "2026-08-23T00:00:00-03:00",
+      "history": [
+        { "action": "CREATED", "to": "BACKLOG", "updatedBy": "claude", "timestamp": "2026-08-23T00:00:00-03:00" }
+      ]
+    },
+    {
+      "id": "FEAT-003",
+      "title": "Categoria \"Mercado\" com limite de gasto no período + aviso aos membros ao ultrapassar",
+      "description": "Pedido novo: limite de gasto pra categoria Mercado, acumulando conforme as compras do período (provavelmente por lista de compras finalizada), avisando os membros do grupo quando ultrapassar. O app já tem parte disso (category_budgets/computeBudgetProgress, js/services/budgets.js) mas é sempre PESSOAL (owner_id), nunca de grupo — e não dispara notificação a ninguém quando estoura, só indicador visual. Precisa de: (1) decidir se orçamento de categoria vira group-scoped (mudança de schema/regra deliberada, hoje é decisão explícita \"sempre pessoal\") ou se é um limite específico à parte; (2) integrar com o sistema de notificação já existente (severidade INFO/ATTENTION/WARNING/CRITICAL) pra avisar o(s) outro(s) membro(s). Não iniciado — precisa de uma rodada de product-manager antes de desenhar a implementação.",
+      "category": "Backend",
+      "priority": "MEDIUM",
+      "status": "BACKLOG",
+      "agent": "product-manager",
+      "tags": ["compras", "orcamento", "notificacoes", "pedido-usuario"],
+      "dependencies": [],
+      "createdAt": "2026-08-23T00:00:00-03:00",
+      "updatedAt": "2026-08-23T00:00:00-03:00",
+      "history": [
+        { "action": "CREATED", "to": "BACKLOG", "updatedBy": "claude", "timestamp": "2026-08-23T00:00:00-03:00" }
+      ]
+    },
+    {
+      "id": "IDEA-004",
+      "title": "Comparar preço por data / recomendar melhor dia pra comprar (considerando fechamento do cartão)",
+      "description": "Ideia exploratória do usuário: comparar preços de compras anteriores por data pra sugerir a melhor data de compra, cruzando com a data de fechamento da fatura do cartão de crédito (agora que cartões são uma entidade, dá pra saber a data de fechamento se o usuário cadastrar). Precisa de escopo de produto antes de qualquer desenho técnico — não iniciado.",
+      "category": "Backend",
+      "priority": "LOW",
+      "status": "BACKLOG",
+      "agent": "product-manager",
+      "tags": ["sugestao", "pedido-usuario", "compras", "cartao-credito"],
+      "dependencies": [],
+      "createdAt": "2026-08-23T00:00:00-03:00",
+      "updatedAt": "2026-08-23T00:00:00-03:00",
+      "history": [
+        { "action": "CREATED", "to": "BACKLOG", "updatedBy": "claude", "timestamp": "2026-08-23T00:00:00-03:00" }
+      ]
+    },
+    {
+      "id": "IDEA-005",
+      "title": "Base de produtos de mercado (nome/imagem/marca) pra adicionar rápido, alimentando Recursos também",
+      "description": "Ideia exploratória: biblioteca de produtos com imagem/marca pra popular Compras (e Recursos) mais rápido que digitar/fotografar cada item. O código de barras já tem um caminho parecido (Open Food Facts, js/services/barcode.js::lookupProductByBarcode) — pode ser o ponto de partida. Precisa de escopo de produto (qual fonte de dado, custo, cobertura de produtos BR) antes de desenhar.",
+      "category": "Backend",
+      "priority": "LOW",
+      "status": "BACKLOG",
+      "agent": "product-manager",
+      "tags": ["sugestao", "pedido-usuario", "compras", "recursos"],
+      "dependencies": [],
+      "createdAt": "2026-08-23T00:00:00-03:00",
+      "updatedAt": "2026-08-23T00:00:00-03:00",
+      "history": [
+        { "action": "CREATED", "to": "BACKLOG", "updatedBy": "claude", "timestamp": "2026-08-23T00:00:00-03:00" }
+      ]
+    },
+    {
+      "id": "IDEA-006",
+      "title": "Reconhecer preços específicos do mercado escolhido",
+      "description": "Ideia exploratória, o próprio usuário sinalizou incerteza (\"não sei se isso é possível\"): escolher o mercado que pretende visitar e o app já sugerir os preços daquele mercado especificamente. Depende de uma fonte de dado de preço por mercado que provavelmente não existe de forma aberta/gratuita no Brasil — avaliar viabilidade antes de qualquer compromisso.",
+      "category": "Backend",
+      "priority": "LOW",
+      "status": "BACKLOG",
+      "agent": "product-manager",
+      "tags": ["sugestao", "pedido-usuario", "compras", "viabilidade-incerta"],
+      "dependencies": [],
+      "createdAt": "2026-08-23T00:00:00-03:00",
+      "updatedAt": "2026-08-23T00:00:00-03:00",
+      "history": [
+        { "action": "CREATED", "to": "BACKLOG", "updatedBy": "claude", "timestamp": "2026-08-23T00:00:00-03:00" }
       ]
     }
   ]

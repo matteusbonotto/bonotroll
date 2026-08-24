@@ -804,6 +804,30 @@
   justify-content: center;
   box-shadow: var(--shadow-sm);
 }
+/* Botão de excluir item durante a compra (grade de Compras) — bug real
+   corrigido em 2026-08-23: tocar o card durante emCompra só marca/desmarca
+   comprado, e antes não havia NENHUM jeito de remover um item sem sair do
+   modo compra. Canto oposto ao de prioridade (top-left), classe própria em
+   vez de reaproveitar .cg-star-mini--corner porque é um <button>, não um
+   <span>, e a cor precisa ser de perigo (vermelho), não âmbar de estrela. */
+.cg-item-delete-corner {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--color-surface);
+  color: var(--color-danger);
+  box-shadow: var(--shadow-sm);
+  z-index: 1;
+}
 
 /* ---------- Toasts (sucesso/erro de qualquer ação) ---------- */
 .cg-toast {

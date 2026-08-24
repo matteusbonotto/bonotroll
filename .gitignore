@@ -5,6 +5,5 @@ supabase/.temp/
 test-results/
 playwright-report/
 
-# local do agente (n„o versionar)
+# local do agente (n√£o versionar)
 .abacusai/
-.claude/memory/

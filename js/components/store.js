@@ -366,31 +366,46 @@ export function appStore() {
 
     // Toast com "Desfazer" (docs/BONOTTO-2027-BLUEPRINT.md, Conflito 3) —
     // substitui confirm() nas exclusões frequentes/de baixo dano (uma linha
-    // de histórico, um item avulso): a UI já reflete a exclusão na hora
-    // (quem chama já removeu do array local antes de chamar isto), e só
-    // depois de alguns segundos SEM desfazer é que a exclusão de verdade
-    // (a chamada de API) acontece — `aoConfirmar` é essa chamada real,
-    // `aoDesfazer` desfaz só o estado local (não precisa saber que a API
-    // nunca chegou a ser chamada).
-    notifyUndo(message, aoConfirmar, aoDesfazer) {
+    // de histórico, um item avulso).
+    //
+    // BUG REAL CORRIGIDO EM 2026-08-23 (relatado em uso real, "excluí uma
+    // despesa, disse que excluiu com sucesso, mas não excluiu"): a versão
+    // anterior daqui adiava a chamada de API de verdade (`aoConfirmar`) pra
+    // dentro de um `setTimeout(..., 5000)` — se a aba fechasse, recarregasse,
+    // ou o navegador suspendesse o timer (comum no celular, tela apagando/
+    // trocando de app) ANTES desses 5s, a exclusão de verdade NUNCA
+    // acontecia, mas o toast já tinha dito "excluído" no passado, uma
+    // mentira otimista sem chance de correção. Agora `aoConfirmar` roda e é
+    // aguardado ANTES do toast aparecer — quando a mensagem é mostrada, a
+    // ação já aconteceu de verdade, sem depender de nenhum timer sobreviver.
+    // "Desfazer" deixou de ser "cancelar algo que ainda não rodou" e virou
+    // "desfazer de verdade o que já rodou" — cada chamador agora precisa
+    // passar um `aoDesfazer` que recria/restaura o dado (não só o estado
+    // local), já que a exclusão real já foi feita.
+    async notifyUndo(message, aoConfirmar, aoDesfazer) {
+      try {
+        await aoConfirmar();
+      } catch (e) {
+        this.notify(e.message || 'Não consegui concluir a ação.', 'danger');
+        return;
+      }
       const id = `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
       let desfeito = false;
-      const timer = setTimeout(async () => {
-        if (desfeito) return;
+      const timer = setTimeout(() => {
         this.toasts = this.toasts.filter((t) => t.id !== id);
-        try {
-          await aoConfirmar();
-        } catch (e) {
-          this.notify(e.message || 'Não consegui concluir a exclusão.', 'danger');
-        }
       }, 5000);
       this.toasts.push({
         id, message, type: 'undo',
-        desfazer: () => {
+        desfazer: async () => {
+          if (desfeito) return;
           desfeito = true;
           clearTimeout(timer);
           this.toasts = this.toasts.filter((t) => t.id !== id);
-          aoDesfazer();
+          try {
+            await aoDesfazer();
+          } catch (e) {
+            this.notify(e.message || 'Não consegui desfazer.', 'danger');
+          }
         },
       });
     },

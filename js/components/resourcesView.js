@@ -1,8 +1,9 @@
 import * as res from '../services/resources.js';
 import { getOrCreateActiveList, addItem as addShoppingItem } from '../services/shoppingList.js';
 import { computeExpiryStatus, expiryStatusMeta } from '../utils/status.js';
-import { startBarcodeScanner, stopBarcodeScanner, lookupProductByBarcode } from '../services/barcode.js';
+import { startBarcodeScanner, stopBarcodeScanner, lookupProductByBarcode, mensagemErroCamera } from '../services/barcode.js';
 import { recognizeText, parseReceiptText } from '../services/ocr.js';
+import { resizeImage } from '../utils/image.js';
 
 const ITEM_FORM_VAZIO = () => ({ id: null, nome: '', quantidade: 1, data_validade: '', categoria_id: '' });
 const ROOM_FORM_VAZIO = () => ({ id: null, nome: '', icone: 'bi-door-open' });
@@ -394,8 +395,10 @@ export function resourcesView() {
 
     // Exclusão frequente/baixo dano (docs/BONOTTO-2027-BLUEPRINT.md,
     // Conflito 3) — sem confirm(), com "Desfazer": item some da grade na
-    // hora, exclusão de verdade (e atualização de sugestões) só acontece
-    // alguns segundos depois se ninguém desfizer.
+    // hora (otimista); a exclusão real já acontece dentro de notifyUndo
+    // (ver store.js — corrigido em 2026-08-23 pra nunca mais "dizer que
+    // excluiu sem ter excluído"), então "Desfazer" agora precisa RECRIAR o
+    // item (id novo, mesmos dados) em vez de só devolver pro array local.
     async removeItem(id) {
       const item = this.items.find((i) => i.id === id);
       this.items = this.items.filter((i) => i.id !== id);
@@ -403,7 +406,13 @@ export function resourcesView() {
       this.$store.app.notifyUndo(
         'Item removido.',
         async () => { await res.deleteItem(id); await this.carregarSugestoes(); },
-        () => { if (item) this.items = [item, ...this.items]; }
+        async () => {
+          if (!item) return;
+          const { id: _id, criado_em: _c, ...dados } = item;
+          const novo = await res.createItem(dados);
+          this.items = [novo, ...this.items];
+          await this.carregarSugestoes();
+        }
       );
     },
 
@@ -434,8 +443,9 @@ export function resourcesView() {
       await this.$nextTick();
       try {
         await startBarcodeScanner('cg-scanner-viewport-recursos', (codigo) => this.onCodigoLido(codigo));
-      } catch {
-        this.scannerErro = 'Não foi possível acessar a câmera. Digite o item manualmente.';
+      } catch (e) {
+        console.error('startBarcodeScanner falhou:', e);
+        this.scannerErro = mensagemErroCamera(e);
       }
     },
     async fecharScanner() {
@@ -462,7 +472,10 @@ export function resourcesView() {
       const store = this.$store.app;
       this.lendoFotoItem = true;
       try {
-        const texto = await recognizeText(file);
+        // Ver js/utils/image.js::resizeImage — sem isso, foto crua de
+        // celular podia derrubar o app por memória (bug real, 2026-08-23).
+        const fotoOtimizada = await resizeImage(file, 2000, 0.9);
+        const texto = await recognizeText(fotoOtimizada);
         const dados = parseReceiptText(texto);
         if (dados.titulo) {
           this.itemForm.nome = dados.titulo;

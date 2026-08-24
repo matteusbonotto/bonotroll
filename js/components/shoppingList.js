@@ -1,8 +1,9 @@
 import * as sl from '../services/shoppingList.js';
-import { startBarcodeScanner, stopBarcodeScanner, lookupProductByBarcode } from '../services/barcode.js';
+import { startBarcodeScanner, stopBarcodeScanner, lookupProductByBarcode, mensagemErroCamera } from '../services/barcode.js';
 import { createTransaction } from '../services/transactions.js';
 import { recognizeText, parseReceiptText } from '../services/ocr.js';
 import { todayIso, semAcento } from '../utils/format.js';
+import { resizeImage } from '../utils/image.js';
 
 const FILTRO_VAZIO = { categoriaId: '', status: '', prioridade: '', busca: '' };
 
@@ -219,7 +220,12 @@ export function shoppingView() {
       const store = this.$store.app;
       this.lendoFotoItem = true;
       try {
-        const texto = await recognizeText(file);
+        // Redimensiona ANTES do OCR — foto de celular crua (4000×3000px+)
+        // travava/derrubava o app por memória (bug real relatado em uso,
+        // 2026-08-23). 2000px de maior dimensão continua nitidamente
+        // legível pro Tesseract, só corta o excesso que não ajuda em nada.
+        const fotoOtimizada = await resizeImage(file, 2000, 0.9);
+        const texto = await recognizeText(fotoOtimizada);
         const dados = parseReceiptText(texto);
         if (dados.titulo) {
           this.novoItem.nome = dados.titulo;
@@ -255,6 +261,14 @@ export function shoppingView() {
         this.categoriaEscolhidaManualmente = false;
         await this.refreshItems();
         store.notify(`"${nomeAdicionado}" adicionado.`);
+        // O modal fica aberto de propósito pra colocar vários itens seguidos
+        // (comentário em index.html) — mas sem devolver o foco pro campo de
+        // nome, cada item novo exigia um toque extra só pra voltar a
+        // digitar, o que na prática parecia "não fez nada" (bug relatado em
+        // uso real, 2026-08-23). Devolve o foco pra reforçar que já pode
+        // digitar o próximo.
+        await this.$nextTick();
+        this.$refs.inputNovoItem?.focus();
       } catch (e) {
         store.notify(e.message || 'Não foi possível adicionar o item.', 'danger');
       } finally {
@@ -488,8 +502,14 @@ export function shoppingView() {
       await this.$nextTick();
       try {
         await startBarcodeScanner('cg-scanner-viewport', (codigo) => this.onCodigoLido(codigo));
-      } catch {
-        this.scannerErro = 'Não foi possível acessar a câmera. Digite o item manualmente.';
+      } catch (e) {
+        // Bug real relatado em uso (2026-08-23): "câmera não funciona" sem
+        // nenhum detalhe — o catch antigo engolia o erro de verdade
+        // (permissão negada, sem câmera, câmera em uso por outro app etc.),
+        // deixando impossível saber a causa real sem acesso ao dispositivo.
+        // Agora loga o erro de verdade e mostra o motivo quando dá.
+        console.error('startBarcodeScanner falhou:', e);
+        this.scannerErro = mensagemErroCamera(e);
       }
     },
 

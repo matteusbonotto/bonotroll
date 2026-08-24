@@ -1465,6 +1465,14 @@
           <div class="cg-grid-view" :class="{ 'cg-grid-view--compact': viewMode === 'compacta' }" x-show="viewMode !== 'lista' && itemsOrdenados.length">
             <template x-for="item in itemsOrdenados" :key="item.id">
               <div class="cg-card cg-grid-view__card" :class="{ 'is-comprado': item.comprado }" @click="emCompra ? (item.comprado ? desmarcarComprado(item) : abrirPreco(item)) : abrirEdicao(item)">
+                <!-- Durante a compra (emCompra), tocar o card só marca/desmarca
+                     comprado — antes não tinha NENHUM jeito de remover um item
+                     errado sem sair do modo compra (bug real relatado em uso:
+                     confusão entre "Comprar" e excluir, porque excluir não
+                     existia aqui). Botão dedicado, canto oposto ao de
+                     prioridade, só durante a compra (fora dela, tocar o card
+                     já abre o editor completo, que já tem Excluir). -->
+                <button type="button" class="cg-item-delete-corner" x-show="emCompra" @click.stop="removeItem(item.id)" title="Remover item" aria-label="Remover item"><i class="bi bi-trash"></i></button>
                 <span class="cg-star-mini cg-star-mini--corner" x-show="item.prioridade >= 4" title="Prioridade alta"><i class="bi bi-star-fill"></i></span>
                 <span class="cg-chip" :style="{ background: (categoryFor(item.categoria_id)?.cor || '#94A3B8') }">
                   <i class="bi" :class="item.comprado ? 'bi-check-lg' : 'bi-basket'"></i>
@@ -1582,12 +1590,27 @@
           </div>
 
           <!-- Gráfico da compra -->
+          <!-- Bug real corrigido em 2026-08-23 ("gráfico não funciona de
+               maneira alguma"): o x-if abaixo monta o Chart.js assim que
+               resumoPorCategoria deixa de estar vazio — o que normalmente
+               acontece ENQUANTO a pessoa ainda está comprando, com este
+               modal ainda fechado (x-show="graficoAberto" = display:none).
+               Um canvas dentro de um ancestral display:none tem 0x0 de
+               tamanho real, então o Chart.js desenha (uma vez, quebrado)
+               num espaço de 0px — e como só resumoPorCategoria era
+               observado, abrir o modal DEPOIS nunca disparava um redesenho.
+               Agora também observa graficoAberto: toda vez que o modal
+               abre, força um render novo, com o canvas já visível. -->
           <div class="cg-modal-backdrop" x-show="graficoAberto" x-cloak @click.self="graficoAberto = false">
             <div class="cg-modal">
               <h2 class="h6 fw-bold mb-3">Gastos por categoria nesta lista</h2>
               <template x-if="!resumoPorCategoria.length"><p class="cg-muted small">Ainda não há itens comprados com valor.</p></template>
               <template x-if="resumoPorCategoria.length">
-                <div x-data="categoryChart()" x-init="$watch('resumoPorCategoria', v => render(v)); render(resumoPorCategoria)">
+                <div x-data="categoryChart()" x-init="
+                  $watch('resumoPorCategoria', v => render(v));
+                  $watch('graficoAberto', (aberto) => aberto && render(resumoPorCategoria));
+                  render(resumoPorCategoria);
+                ">
                   <div style="height:240px;"><canvas x-ref="canvas" role="img" aria-label="Gráfico de gastos por categoria"></canvas></div>
                   <table class="visually-hidden">
                     <caption>Dados do gráfico em texto</caption>
