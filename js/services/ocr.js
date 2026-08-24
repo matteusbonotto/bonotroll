@@ -7,16 +7,85 @@ let workerPromise = null;
 async function getWorker() {
   if (!workerPromise) {
     workerPromise = (async () => {
-      const { createWorker } = await import('https://esm.sh/tesseract.js@5.1.1');
-      return createWorker('por');
+      const { createWorker, PSM } = await import('https://esm.sh/tesseract.js@5.1.1');
+      const worker = await createWorker('por');
+      // Bug real relatado em uso (2026-08-24): leitura de foto "péssima"
+      // (foto de embalagem de produto virou texto sem nexo). O modo padrão
+      // do Tesseract (PSM.SINGLE_BLOCK, pensado pra um bloco de texto tipo
+      // documento) não é adequado pra rótulo/embalagem de produto, onde o
+      // texto está espalhado em tamanhos/posições diferentes (marca, sabor,
+      // peso, validade cada um num canto). SPARSE_TEXT ("acha texto em
+      // qualquer lugar, sem estrutura") é o modo certo pra essa situação —
+      // é uma configuração conhecida do próprio Tesseract, não uma lib nova.
+      await worker.setParameters({ tessedit_pageseg_mode: PSM.SPARSE_TEXT });
+      return worker;
     })();
   }
   return workerPromise;
 }
 
+// Pré-processamento antes do OCR (2026-08-24, mesmo bug acima): escala de
+// cinza + esticamento de contraste (o pixel mais escuro vira preto, o mais
+// claro vira branco, o resto reescalado linearmente entre os dois) — sem
+// isso, o brilho/reflexo de uma lata/embalagem plástica e a cor de fundo
+// colorida (não branca, como um documento) atrapalham MUITO o
+// reconhecimento, porque o Tesseract foi treinado majoritariamente em texto
+// escuro sobre fundo claro uniforme. Canvas nativo, sem lib nova (mesma
+// regra já seguida em image.js::resizeImage). Só afeta a CÓPIA usada pro
+// OCR — nunca a imagem original (upload/comprovante continuam intactos).
+async function prepararParaOcr(file) {
+  try {
+    const bitmap = await createImageBitmap(file);
+    const canvas = document.createElement('canvas');
+    canvas.width = bitmap.width;
+    canvas.height = bitmap.height;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(bitmap, 0, 0);
+    bitmap.close?.();
+
+    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const px = imgData.data;
+    // Luminância perceptual (não média simples R+G+B/3) — combina melhor
+    // com como o olho humano (e o que o Tesseract espera) percebe contraste.
+    const cinzas = new Uint8ClampedArray(px.length / 4);
+    const histograma = new Uint32Array(256);
+    for (let i = 0, j = 0; i < px.length; i += 4, j++) {
+      const cinza = 0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2];
+      cinzas[j] = cinza;
+      histograma[Math.round(cinza)]++;
+    }
+    // Percentil (não min/max bruto) — uma lata/embalagem brilhante tem
+    // reflexo (alguns pixels bem perto de 255) e sombra (alguns bem perto
+    // de 0); esticar pelo min/max literal desses poucos pixels extremos não
+    // melhora o contraste do TEXTO em si. Corta os 2% mais escuros e os 2%
+    // mais claros como "ruído" e estica o resto — bem mais robusto contra
+    // brilho pontual de embalagem real (o caso relatado: lata de Nescau).
+    const total = cinzas.length;
+    const corte = total * 0.02;
+    let acumulado = 0;
+    let min = 0;
+    for (; min < 255; min++) { acumulado += histograma[min]; if (acumulado > corte) break; }
+    acumulado = 0;
+    let max = 255;
+    for (; max > 0; max--) { acumulado += histograma[max]; if (acumulado > corte) break; }
+    const alcance = Math.max(max - min, 1); // evita divisão por zero numa foto totalmente uniforme
+    for (let i = 0, j = 0; i < px.length; i += 4, j++) {
+      const esticado = ((cinzas[j] - min) / alcance) * 255;
+      px[i] = px[i + 1] = px[i + 2] = esticado;
+    }
+    ctx.putImageData(imgData, 0, 0);
+
+    const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+    return blob || file;
+  } catch {
+    return file; // pré-processamento é melhor-esforço — nunca impede o OCR de tentar com o original
+  }
+}
+
 export async function recognizeText(file) {
   const worker = await getWorker();
-  const { data } = await worker.recognize(file);
+  const preparado = await prepararParaOcr(file);
+  const { data } = await worker.recognize(preparado);
   return data.text || '';
 }
 

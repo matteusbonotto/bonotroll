@@ -17,6 +17,16 @@ export async function startBarcodeScanner(elementId, onDetected) {
       Formats.EAN_13, Formats.EAN_8, Formats.UPC_A, Formats.UPC_E,
       Formats.CODE_128, Formats.CODE_39, Formats.ITF, Formats.QR_CODE,
     ] : undefined,
+    // Bug real relatado em uso (2026-08-24): "QR code não funciona tão
+    // bem". Quando suportado (Chrome/Android — provavelmente o navegador
+    // real do usuário), usa a API nativa BarcodeDetector do próprio
+    // navegador em vez do decoder em JS puro da lib — mais rápida e muito
+    // mais precisa (usa aceleração de hardware do aparelho), de graça, sem
+    // lib nenhuma nova. Cai pro decoder em JS sozinho quando não suportado
+    // (Firefox/Safari). As duas formas de passar essa flag coexistem
+    // porque versões diferentes da lib leem uma ou outra.
+    useBarCodeDetectorIfSupported: true,
+    experimentalFeatures: { useBarCodeDetectorIfSupported: true },
   });
   await scannerInstance.start(
     { facingMode: 'environment' },
@@ -28,11 +38,21 @@ export async function startBarcodeScanner(elementId, onDetected) {
       // biblioteca realmente analisa, então a câmera "via" a imagem mas
       // nunca decodificava nada apontando pro código. Como função
       // (recalculada com o tamanho real do viewfinder) sempre bate com o
-      // que é mostrado. Mais larga que alta, do jeito que um código de
-      // barras 1D realmente é.
+      // que é mostrado.
+      //
+      // FORMATO CORRIGIDO EM 2026-08-24: era uma caixa larga e baixa
+      // (metade da altura da largura), pensada só pra código de barras 1D
+      // — só que a lib recorta a imagem analisada exatamente nessa caixa,
+      // e um QR code é QUADRADO. Numa caixa baixa, segurando o celular na
+      // distância natural, o topo/base do QR ficava cortado fora da área
+      // analisada — por isso "QR não funciona tão bem" (bug relatado em
+      // uso real). Caixa quadrada funciona bem pros dois formatos (um
+      // código de barras 1D cabe folgado dentro de um quadrado; um QR
+      // cabe justo) — é o padrão usado por praticamente todo leitor
+      // universal de código de barras + QR.
       qrbox: (viewfinderWidth, viewfinderHeight) => {
-        const largura = Math.floor(Math.min(viewfinderWidth, viewfinderHeight) * 0.9);
-        return { width: largura, height: Math.floor(largura * 0.5) };
+        const lado = Math.floor(Math.min(viewfinderWidth, viewfinderHeight) * 0.75);
+        return { width: lado, height: lado };
       },
     },
     (decodedText) => onDetected(decodedText),
@@ -78,21 +98,55 @@ export async function stopBarcodeScanner() {
   }
 }
 
-// Busca opcional de nome/categoria do produto pelo código de barras via Open Food Facts
-// (base pública e gratuita). Se falhar ou não encontrar, a UI cai para preenchimento manual.
+// Busca opcional de nome/categoria/imagem/marca do produto pelo código de
+// barras via Open Food Facts (base pública e gratuita, sem chave). Se falhar
+// ou não encontrar, a UI cai para preenchimento manual. `imagemUrl` (2026-08-24,
+// pedido explícito: "quero os formulários devidamente preenchidos ... com
+// imagem") deixa o item já com foto ao invés de precisar tirar uma.
 export async function lookupProductByBarcode(code) {
   try {
     const res = await fetch(`https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(code)}.json`);
     if (!res.ok) return null;
     const data = await res.json();
     if (data.status !== 1) return null;
-    return {
-      nome: data.product?.product_name?.trim() || null,
-      categoriaSugerida: data.product?.categories?.split(',')[0]?.trim() || null,
-    };
+    return produtoDeOff(data.product);
   } catch {
     return null;
   }
+}
+
+// Busca por NOME (não por código) na mesma base — usada como segunda
+// checagem depois do OCR de uma foto (2026-08-24, bug real relatado em uso:
+// "tirei foto de uma lata de Nescau e escreveu uns dados aleatórios"). OCR
+// puro (Tesseract) erra muito em embalagem real (fonte estilizada, brilho,
+// curvatura da lata) — em vez de confiar cegamente no texto bruto lido,
+// usa esse texto como TERMO DE BUSCA contra um banco de produtos real; se
+// achar uma correspondência plausível, o nome/imagem do produto real
+// substitui o palpite ruim do OCR. Usa a API v1 (busca por texto livre) —
+// a v2 só busca por filtro estruturado, não por texto livre.
+export async function searchProductByName(termo) {
+  const limpo = (termo || '').trim();
+  if (limpo.length < 3) return null;
+  try {
+    const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(limpo)}&search_simple=1&action=process&json=1&page_size=5`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const data = await res.json();
+    const primeiro = (data.products || []).find((p) => p.product_name?.trim());
+    return primeiro ? produtoDeOff(primeiro) : null;
+  } catch {
+    return null;
+  }
+}
+
+function produtoDeOff(product) {
+  if (!product) return null;
+  return {
+    nome: product.product_name?.trim() || null,
+    categoriaSugerida: product.categories?.split(',')[0]?.trim() || null,
+    marca: product.brands?.split(',')[0]?.trim() || null,
+    imagemUrl: product.image_front_small_url || product.image_url || null,
+  };
 }
 
 // ---------- Boleto (código de barras, padrão FEBRABAN, 44 dígitos) ----------

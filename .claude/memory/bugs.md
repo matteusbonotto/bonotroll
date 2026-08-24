@@ -86,6 +86,24 @@ Formato por item: ID / Título / Data / Origem / Severidade / Status / Causa / R
 - **Correção**: `x-init` agora também observa `graficoAberto`, forçando um `render()` novo toda vez que o modal abre (canvas já visível nesse momento).
 - **Arquivos afetados**: `index.html`.
 
+## BUG-008 — QR code não escaneia bem (barcode 1D funciona ok)
+
+- **Data**: relatado 2026-08-24, em uso real.
+- **Severidade**: HIGH.
+- **Status**: `FIXED` (mecanismo verificado com câmera falsa; decodificação real de QR depende de teste no dispositivo do usuário).
+- **Causa**: a caixa de leitura em `startBarcodeScanner` (`js/services/barcode.js`) era larga e baixa (metade da altura da largura) — pensada só pra código de barras 1D. A lib recorta a imagem analisada exatamente nessa caixa; um QR é quadrado, então na distância natural de uso o topo/base ficava cortado fora da área analisada.
+- **Correção**: caixa quadrada (funciona bem pros dois formatos). Também habilitado `useBarCodeDetectorIfSupported: true` — usa a API nativa `BarcodeDetector` do navegador (Chrome/Android) quando disponível, mais rápida/precisa que o decoder em JS puro, de graça.
+- **Arquivos afetados**: `js/services/barcode.js`.
+
+## BUG-009 — Leitura de foto (OCR) muito ruim
+
+- **Data**: relatado 2026-08-24, com exemplo concreto (foto de lata de Nescau virou texto sem nexo).
+- **Severidade**: HIGH.
+- **Status**: `FIXED` (pipeline confirmado rodando ponta a ponta sem erro; qualidade final em foto real só é confirmável no dispositivo do usuário — nenhum OCR client-side gratuito é garantidamente perfeito).
+- **Causa**: Tesseract.js no modo padrão (bloco único de texto, pensado pra documento) sem nenhum pré-processamento de imagem — embalagem colorida/brilhante confunde o reconhecimento (treinado majoritariamente em texto escuro sobre fundo branco uniforme).
+- **Correção**: (1) pré-processamento (escala de cinza + contraste esticado por percentil, robusto contra brilho de lata/plástico); (2) modo `PSM.SPARSE_TEXT` (acha texto espalhado, sem assumir bloco único); (3) o texto lido vira termo de busca contra a base de produtos Open Food Facts em vez de virar o título direto — corrige o palpite ruim do OCR quando acha um produto real.
+- **Arquivos afetados**: `js/services/ocr.js`, `js/services/barcode.js` (nova `searchProductByName`), `js/components/shoppingList.js`, `js/components/resourcesView.js`.
+
 ## Histórico anterior (rounds já fechadas, resumo — detalhe completo em `docs/CHECKLIST-REBRAND.md`)
 
 Todos os bugs das Rodadas 1-5 do rebrand (sidebar não-sticky, tabela cortando largura, tema escuro incompleto, FAB sobrepondo botões, `x-show`+Bootstrap utility ≥5 ocorrências, CSS duplicado em `.cg-card`/`.cg-main`/`.cg-modal`, ícone de PWA desatualizado, segmentado "Agrupar" esticando no mobile, CSV duplicando item, notificação push com badge sem transparência, "Cancelar" de Compras limpando lista errado, mês futuro não ordenado primeiro) estão todos `FIXED`/`VERIFIED` — não duplicados aqui, ver o documento fonte.

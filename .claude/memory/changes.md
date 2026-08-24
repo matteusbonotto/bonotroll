@@ -8,6 +8,12 @@ Na sequência, o usuário reportou (em tempo real, usando o app no mercado) uma 
 
 Pendente ao final desta sessão: scanner de código de barras/QR não investigado ainda (TASK-029), verificação de performance/layout geral da grade de Compras (TASK-030), e 3 pedidos de feature novos registrados como backlog (FEAT-003 Mercado com limite+aviso; IDEA-004/005/006 exploratórias, precisam de rodada de produto antes de qualquer desenho técnico).
 
+## 2026-08-24 — Scanner (QR) e OCR de foto, com banco de produtos real
+
+Usuário testou a rodada anterior: código de barras ok, QR "não tão bem", foto "péssima" (exemplo concreto: lata de Nescau virou texto aleatório). Causa raiz do QR: caixa de leitura desenhada só pra código de barras 1D (larga e baixa) cortava um QR quadrado fora da área analisada — corrigida pra quadrada, e habilitada a API nativa `BarcodeDetector` do navegador quando suportada (mais precisa, de graça). Causa raiz do OCR: Tesseract sem nenhum pré-processamento de imagem e no modo de segmentação errado pra rótulo de produto (assumia bloco único de texto tipo documento) — corrigido com pré-processamento (contraste por percentil, robusto contra brilho de embalagem) + modo de texto espalhado + uma camada nova: o texto lido agora é usado como busca contra a base pública Open Food Facts em vez de virar o título direto, corrigindo o palpite do OCR quando acha o produto real (também traz imagem/marca — usado pra preencher `foto_url` automaticamente em Compras e Recursos, tanto no scan de código de barras quanto na foto).
+
+Nota de processo: tentei validar o pipeline de OCR ponta a ponta com uma imagem sintética via Playwright, mas o próprio dev server tem live-reload que recarrega a página quando detecta mudança de arquivo — meu script criou um arquivo temporário DENTRO do diretório servido, disparando um reload no meio do teste e mascarando o resultado (parecia bug, era o teste se atropelando). Lição: qualquer diagnóstico futuro com Playwright precisa escrever arquivos temporários FORA da árvore servida pelo `python -m http.server`.
+
 
 `git log` já é a fonte de verdade de QUAIS arquivos mudaram. Este documento registra o motivo por trás de mudanças não óbvias a partir do diff sozinho — não duplicar aqui o que a mensagem de commit já explica bem.
 

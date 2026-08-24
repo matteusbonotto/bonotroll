@@ -1,5 +1,5 @@
 import * as sl from '../services/shoppingList.js';
-import { startBarcodeScanner, stopBarcodeScanner, lookupProductByBarcode, mensagemErroCamera } from '../services/barcode.js';
+import { startBarcodeScanner, stopBarcodeScanner, lookupProductByBarcode, searchProductByName, mensagemErroCamera } from '../services/barcode.js';
 import { createTransaction } from '../services/transactions.js';
 import { recognizeText, parseReceiptText } from '../services/ocr.js';
 import { todayIso, semAcento } from '../utils/format.js';
@@ -11,7 +11,7 @@ const FILTRO_VAZIO = { categoriaId: '', status: '', prioridade: '', busca: '' };
 // preco_unitario OU preco_por_kg conforme a unidade só na hora de salvar
 // (ver addItem/salvarEdicao) — mais simples que a pessoa pensar em "qual
 // dos dois campos preencher" dependendo da unidade escolhida.
-const NOVO_ITEM_VAZIO = () => ({ nome: '', categoria_id: '', unidade: 'un', quantidade: 1, prioridade: 3, preco: '', data_validade: '', codigo_barras: '' });
+const NOVO_ITEM_VAZIO = () => ({ nome: '', categoria_id: '', unidade: 'un', quantidade: 1, prioridade: 3, preco: '', data_validade: '', codigo_barras: '', foto_url: null });
 
 export function shoppingView() {
   return {
@@ -228,10 +228,20 @@ export function shoppingView() {
         const texto = await recognizeText(fotoOtimizada);
         const dados = parseReceiptText(texto);
         if (dados.titulo) {
-          this.novoItem.nome = dados.titulo;
+          // OCR puro erra muito em embalagem real (bug relatado em uso,
+          // 2026-08-24: "tirei foto de uma lata de Nescau e leu dado
+          // aleatório") — usa o texto lido como TERMO DE BUSCA contra um
+          // banco de produtos real (Open Food Facts) em vez de confiar
+          // cegamente nele; se achar um produto plausível, o nome/imagem
+          // reais substituem o palpite do OCR. Nunca trava o fluxo se a
+          // busca falhar (sem internet, produto não cadastrado etc.).
+          const produto = await searchProductByName(dados.titulo).catch(() => null);
+          this.novoItem.nome = produto?.nome || dados.titulo;
+          this.novoItem.foto_url = produto?.imagemUrl || null;
           this.onNomeInput();
           if (dados.vencimento) this.novoItem.data_validade = dados.vencimento;
-          store.notify(dados.vencimento ? 'Nome e validade lidos da foto — confira antes de adicionar.' : 'Nome lido da foto — confira antes de adicionar.');
+          const msgFoto = produto?.nome ? `Produto identificado: ${produto.nome}.` : 'Nome lido da foto — confira antes de adicionar.';
+          store.notify(dados.vencimento ? `${msgFoto} Validade também lida.` : msgFoto);
         } else {
           store.notify('Não consegui ler nenhum texto nessa foto.', 'danger');
         }
@@ -525,6 +535,7 @@ export function shoppingView() {
       try {
         const produto = await lookupProductByBarcode(codigo);
         this.novoItem.nome = produto?.nome || `Item ${codigo}`;
+        this.novoItem.foto_url = produto?.imagemUrl || null;
         this.onNomeInput();
         this.$store.app.notify(produto?.nome ? `Produto identificado: ${produto.nome}` : 'Código lido — confira o nome do item.');
       } catch (e) {

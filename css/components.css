@@ -810,6 +810,15 @@
    modo compra. Canto oposto ao de prioridade (top-left), classe própria em
    vez de reaproveitar .cg-star-mini--corner porque é um <button>, não um
    <span>, e a cor precisa ser de perigo (vermelho), não âmbar de estrela. */
+.cg-item-thumb {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-alt);
+  align-self: center;
+  margin-bottom: var(--space-1);
+}
 .cg-item-delete-corner {
   position: absolute;
   top: 6px;

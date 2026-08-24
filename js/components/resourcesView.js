@@ -1,11 +1,11 @@
 import * as res from '../services/resources.js';
 import { getOrCreateActiveList, addItem as addShoppingItem } from '../services/shoppingList.js';
 import { computeExpiryStatus, expiryStatusMeta } from '../utils/status.js';
-import { startBarcodeScanner, stopBarcodeScanner, lookupProductByBarcode, mensagemErroCamera } from '../services/barcode.js';
+import { startBarcodeScanner, stopBarcodeScanner, lookupProductByBarcode, searchProductByName, mensagemErroCamera } from '../services/barcode.js';
 import { recognizeText, parseReceiptText } from '../services/ocr.js';
 import { resizeImage } from '../utils/image.js';
 
-const ITEM_FORM_VAZIO = () => ({ id: null, nome: '', quantidade: 1, data_validade: '', categoria_id: '' });
+const ITEM_FORM_VAZIO = () => ({ id: null, nome: '', quantidade: 1, data_validade: '', categoria_id: '', foto_url: null });
 const ROOM_FORM_VAZIO = () => ({ id: null, nome: '', icone: 'bi-door-open' });
 const CATEGORIA_FORM_VAZIO = () => ({ id: null, nome: '' });
 
@@ -333,6 +333,7 @@ export function resourcesView() {
         quantidade: item.quantidade,
         data_validade: item.data_validade || '',
         categoria_id: item.category_id || '',
+        foto_url: item.foto_url || null,
       };
       this.scannerErro = '';
       this.itemModalAberto = true;
@@ -358,6 +359,11 @@ export function resourcesView() {
         } else {
           await res.createItem({
             ...patch,
+            // Foto vinda do scanner/OCR+busca (2026-08-24) — só no CREATE;
+            // edição de foto de item já existente continua só por
+            // onFotoChange (upload manual), pra não haver dois caminhos
+            // escrevendo o mesmo campo de jeitos diferentes.
+            foto_url: this.itemForm.foto_url || null,
             room_id: this.activeRoomId,
             owner_id: store.profile.id,
             group_id: store.group?.group?.id ?? null,
@@ -460,6 +466,7 @@ export function resourcesView() {
       try {
         const produto = await lookupProductByBarcode(codigo);
         this.itemForm.nome = produto?.nome || `Item ${codigo}`;
+        this.itemForm.foto_url = produto?.imagemUrl || null;
         store.notify(produto?.nome ? `Produto identificado: ${produto.nome}` : 'Código lido — confira o nome do item.');
       } catch (e) {
         store.notify(e.message || 'Não consegui identificar esse código.', 'danger');
@@ -478,9 +485,15 @@ export function resourcesView() {
         const texto = await recognizeText(fotoOtimizada);
         const dados = parseReceiptText(texto);
         if (dados.titulo) {
-          this.itemForm.nome = dados.titulo;
+          // Mesma correção de shoppingList.js::onFotoItem (2026-08-24): usa
+          // o texto lido como busca contra um banco de produtos real em vez
+          // de confiar cegamente no OCR puro.
+          const produto = await searchProductByName(dados.titulo).catch(() => null);
+          this.itemForm.nome = produto?.nome || dados.titulo;
+          this.itemForm.foto_url = produto?.imagemUrl || null;
           if (dados.vencimento) this.itemForm.data_validade = dados.vencimento;
-          store.notify(dados.vencimento ? 'Nome e validade lidos da foto — confira antes de salvar.' : 'Nome lido da foto — confira antes de salvar.');
+          const msgFoto = produto?.nome ? `Produto identificado: ${produto.nome}.` : 'Nome lido da foto — confira antes de salvar.';
+          store.notify(dados.vencimento ? `${msgFoto} Validade também lida.` : msgFoto);
         } else {
           store.notify('Não consegui ler nenhum texto nessa foto.', 'danger');
         }

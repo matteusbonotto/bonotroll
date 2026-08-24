@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-23T00:00:00-03:00",
+  "updatedAt": "2026-08-24T00:00:00-03:00",
   "tasks": [
     {
       "id": "DONE-001",
@@ -1094,6 +1094,54 @@
       "updatedAt": "2026-08-23T00:00:00-03:00",
       "history": [
         { "action": "CREATED", "to": "BACKLOG", "updatedBy": "claude", "timestamp": "2026-08-23T00:00:00-03:00" }
+      ]
+    },
+    {
+      "id": "BUG-008",
+      "title": "QR code não escaneia bem (barcode 1D funciona ok)",
+      "description": "Causa raiz confirmada em código: startBarcodeScanner (js/services/barcode.js) usava uma caixa de leitura LARGA E BAIXA (metade da altura da largura) pensada só pra código de barras 1D. A lib recorta a imagem analisada exatamente nessa caixa — um QR code é QUADRADO, então na distância natural de uso o topo/base do QR ficava cortado fora da área analisada. Corrigido: caixa quadrada (funciona bem pros dois formatos). Também habilitado useBarCodeDetectorIfSupported (API nativa do navegador, Chrome/Android — mais rápida e precisa que o decoder em JS puro, de graça, quando o navegador suportar).",
+      "category": "Frontend",
+      "priority": "HIGH",
+      "status": "DONE",
+      "agent": "claude",
+      "tags": ["bug-producao", "scanner", "qrcode"],
+      "dependencies": [],
+      "createdAt": "2026-08-24T00:00:00-03:00",
+      "updatedAt": "2026-08-24T00:00:00-03:00",
+      "history": [
+        { "action": "CREATED", "to": "DONE", "updatedBy": "claude", "timestamp": "2026-08-24T00:00:00-03:00", "note": "Verificado com câmera falsa (Playwright): vídeo anexa corretamente, caixa agora quadrada. Decodificação de QR real depende de teste em dispositivo do usuário." }
+      ]
+    },
+    {
+      "id": "BUG-009",
+      "title": "Leitura de foto (OCR) muito ruim — lê texto aleatório em embalagem real",
+      "description": "Relatado com exemplo concreto: foto de lata de Nescau virou texto sem nexo. Causa: Tesseract.js no modo padrão (PSM.SINGLE_BLOCK, pensado pra bloco de texto tipo documento) e sem nenhum pré-processamento de imagem — embalagem colorida/brilhante (não texto escuro sobre fundo branco uniforme, o caso que o Tesseract foi treinado majoritariamente pra ler) confunde muito o reconhecimento. Corrigido: (1) pré-processamento antes do OCR — escala de cinza + esticamento de contraste por PERCENTIL (corta os 2% mais escuros/claros como ruído antes de esticar, robusto contra brilho pontual de lata/plástico); (2) PSM.SPARSE_TEXT (acha texto em qualquer lugar da imagem, sem assumir bloco único — mais adequado pra rótulo com marca/sabor/peso/validade espalhados); (3) o texto lido agora é usado como TERMO DE BUSCA contra um banco de produtos real (Open Food Facts) em vez de virar o título direto — se achar um produto plausível, nome/imagem reais substituem o palpite do OCR.",
+      "category": "Backend",
+      "priority": "HIGH",
+      "status": "DONE",
+      "agent": "claude",
+      "tags": ["bug-producao", "ocr", "compras", "recursos"],
+      "dependencies": [],
+      "createdAt": "2026-08-24T00:00:00-03:00",
+      "updatedAt": "2026-08-24T00:00:00-03:00",
+      "history": [
+        { "action": "CREATED", "to": "DONE", "updatedBy": "claude", "timestamp": "2026-08-24T00:00:00-03:00", "note": "Confirmado via chamada direta do handler que o pipeline completo roda (evento->onFotoItem->resizeImage->recognizeText) sem erro. Qualidade final do OCR em foto real de produto só é confirmável no dispositivo do usuário — nenhuma OCR client-side gratuita é garantidamente perfeita; a busca por nome (item 3) existe justamente pra compensar isso." }
+      ]
+    },
+    {
+      "id": "FEAT-004",
+      "title": "Formulário preenchido com imagem do produto (Compras e Recursos)",
+      "description": "Pedido explícito: 'quero que os formulários sejam devidamente preenchidos ... se possível já com imagem'. lookupProductByBarcode (Open Food Facts) e a nova searchProductByName agora também retornam imagemUrl/marca, não só nome/categoria — usado pra preencher foto_url automaticamente ao escanear código de barras OU ao tirar foto (via a correção de nome do BUG-009). Adicionada exibição da foto no card da grade de Compras e no modal de novo item de Compras/Recursos.",
+      "category": "Frontend",
+      "priority": "MEDIUM",
+      "status": "DONE",
+      "agent": "claude",
+      "tags": ["compras", "recursos", "produto", "pedido-usuario"],
+      "dependencies": ["BUG-009"],
+      "createdAt": "2026-08-24T00:00:00-03:00",
+      "updatedAt": "2026-08-24T00:00:00-03:00",
+      "history": [
+        { "action": "CREATED", "to": "DONE", "updatedBy": "claude", "timestamp": "2026-08-24T00:00:00-03:00" }
       ]
     }
   ]
