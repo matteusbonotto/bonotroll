@@ -4,6 +4,13 @@ Log de decisões arquiteturais/técnicas relevantes. Uma linha de contexto não 
 
 ---
 
+## 2026-09-01 — Todo deploy futuro DEVE bumpar `CACHE_NAME` do service worker
+
+- **Decisão**: nunca fazer `git push origin main` que mude qualquer arquivo do `APP_SHELL` (`sw.js`) sem também bumpar `CACHE_NAME` no mesmo commit/rodada.
+- **Por quê**: os 2 deploys anteriores a este (correção de exclusão/OCR/QR, 2026-08-23/24) mudaram `js/`/`css/`/`index.html` sem bumpar `CACHE_NAME` — usuário reportou "pedi correções e até hoje não foram aplicadas". A causa raiz não era o deploy em si (confirmado: `main` = `origin/main` = GitHub Pages, conteúdo novo confirmado ao vivo via fetch), mas o service worker nunca detectou versão nova pra oferecer/forçar a atualização no PWA instalado — é exatamente o mesmo tipo de bug já catalogado antes neste projeto ("ícone do app instalado ficava desatualizado", `docs/CHECKLIST-REBRAND.md` Rodada 3).
+- **Impacto**: `sw.js` bumpado v6→v7 (commit `5708e81`). Regra vale daqui pra frente pra qualquer agente/sessão.
+- **Status**: ATIVO, regra permanente.
+
 ## 2026-08-22 — Cartão de crédito vira entidade própria (tabela `cartoes`)
 
 - **Decisão**: nova tabela `cartoes` (dono, banco vinculado via FK a `banks`, nome), nova coluna `transactions.cartao_id` (nullable). `groupCartaoCredito` agrupa por `cartao_id` quando presente, cai no fallback `responsavel_id+mês` para dado legado.
