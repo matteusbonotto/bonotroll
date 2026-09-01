@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-09-01T00:00:00-03:00",
+  "updatedAt": "2026-09-01T14:30:00-03:00",
   "tasks": [
     {
       "id": "DONE-001",
@@ -1143,6 +1143,40 @@
       "updatedAt": "2026-08-24T00:00:00-03:00",
       "history": [
         { "action": "CREATED", "to": "DONE", "updatedBy": "claude", "timestamp": "2026-08-24T00:00:00-03:00" }
+      ]
+    },
+    {
+      "id": "BUG-010",
+      "title": "Dado real ainda visível no modo demo (cache local antigo, não o código)",
+      "description": "Usuário reportou de novo, mesmo com BUG-002 já corrigido em código desde 22/08: 'vejo meu nome, o da Bia, contas e salários de verdade'. Causa real: js/data/mockDb.js::loadDb() só semeia dado novo quando o localStorage está VAZIO — qualquer navegador que já tinha aberto ?demo=1 ANTES da correção de privacidade ficava com o dado antigo (MB Labs/Dinamo) salvo pra sempre, mesmo com o código já certo há dias. Corrigido bumpando a chave (bonotto_demo_db_v1 -> v2) + removendo explicitamente a chave antiga do navegador, forçando recriação 100% genérica em qualquer dispositivo. CACHE_NAME do service worker também bumpado (v7->v8) pra esta mudança de app shell propagar.",
+      "category": "Backend",
+      "priority": "CRITICAL",
+      "status": "DONE",
+      "agent": "claude",
+      "tags": ["privacidade", "mock", "demo", "cache"],
+      "relatedBugs": ["BUG-002"],
+      "dependencies": [],
+      "createdAt": "2026-09-01T00:00:00-03:00",
+      "updatedAt": "2026-09-01T00:00:00-03:00",
+      "history": [
+        { "action": "CREATED", "to": "DONE", "updatedBy": "claude", "timestamp": "2026-09-01T00:00:00-03:00", "note": "Deploy confirmado ao vivo no CDN (cache-bust) mostrando bonotto_demo_db_v2 e CACHE_NAME v8." }
+      ]
+    },
+    {
+      "id": "BUG-011",
+      "title": "Botões grandes demais / quebra de texto ruim na Lista de Compras (visão notebook)",
+      "description": "Usuário relatou com print: botão 'Comprar' e ícones de editar/excluir grandes demais na visão Lista de Compras, empurrando o nome do item pra quebrar mal em 2 linhas. Causa raiz: a correção de touch-target de 48px (BUG-003, 22/08) nunca excluiu .btn-sm PURO (só .cg-btn.btn-sm tinha exceção) — todo botão .btn.btn-sm sem o prefixo .cg- (usado em editar/excluir por toda parte: Compras, Recursos, managers) ficou forçado a 48px, estourando a linha de 44px do caderno (--cg-notebook-line) da visão Lista. Corrigido: .btn-sm ganha altura própria (36px) + ajuste de padding do item-row (6px->4px) pra voltar a bater exatamente com a pauta do caderno.",
+      "category": "Frontend",
+      "priority": "HIGH",
+      "status": "DONE",
+      "agent": "claude",
+      "tags": ["bug-producao", "css", "compras", "regressao"],
+      "relatedBugs": ["BUG-003"],
+      "dependencies": [],
+      "createdAt": "2026-09-01T00:00:00-03:00",
+      "updatedAt": "2026-09-01T00:00:00-03:00",
+      "history": [
+        { "action": "CREATED", "to": "DONE", "updatedBy": "claude", "timestamp": "2026-09-01T00:00:00-03:00", "note": "Achado por inspeção direta do CSS depois do relato com print — não é cache, era regressão real introduzida pela própria correção de acessibilidade de 22/08. 29/29 e2e verdes depois da correção." }
       ]
     }
   ]

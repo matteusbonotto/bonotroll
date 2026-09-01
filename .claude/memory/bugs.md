@@ -104,6 +104,24 @@ Formato por item: ID / Título / Data / Origem / Severidade / Status / Causa / R
 - **Correção**: (1) pré-processamento (escala de cinza + contraste esticado por percentil, robusto contra brilho de lata/plástico); (2) modo `PSM.SPARSE_TEXT` (acha texto espalhado, sem assumir bloco único); (3) o texto lido vira termo de busca contra a base de produtos Open Food Facts em vez de virar o título direto — corrige o palpite ruim do OCR quando acha um produto real.
 - **Arquivos afetados**: `js/services/ocr.js`, `js/services/barcode.js` (nova `searchProductByName`), `js/components/shoppingList.js`, `js/components/resourcesView.js`.
 
+## BUG-010 — Dado real ainda visível no modo demo (cache local antigo, não o código)
+
+- **Data**: relatado de novo 2026-09-01, mesmo com BUG-002 corrigido em código desde 22/08.
+- **Severidade**: CRITICAL.
+- **Status**: `FIXED` — deploy confirmado ao vivo (cache-bust) mostrando a chave nova.
+- **Causa**: `js/data/mockDb.js::loadDb()` só semeia dado novo quando `localStorage` está vazio. Qualquer navegador que já tinha aberto `?demo=1` ANTES da correção de privacidade continuava com o dado antigo salvo pra sempre — o código já estava certo há dias, mas o dado JÁ GRAVADO no navegador nunca era substituído.
+- **Correção**: chave bumpada (`bonotto_demo_db_v1` → `v2`) + remoção explícita da chave antiga, forçando recriação genérica em qualquer dispositivo. `CACHE_NAME` do service worker também bumpado (v7→v8).
+- **Prevenção**: mesma lição do `CACHE_NAME` (ver decisão de 2026-09-01 em `.claude/memory/decisions.md`) — qualquer estrutura de dado local persistente (localStorage, IndexedDB) precisa de versionamento explícito na CHAVE, não só no código, sempre que o CONTEÚDO gerado mudar por motivo de privacidade/correção — nunca assumir que corrigir o gerador corrige quem já gerou.
+
+## BUG-011 — Botões grandes demais / quebra de texto ruim na Lista de Compras
+
+- **Data**: relatado com print, 2026-09-01.
+- **Severidade**: HIGH — regressão introduzida pela própria correção de acessibilidade (BUG-003, 22/08).
+- **Status**: `FIXED`.
+- **Causa**: a correção de touch-target 48px só excluiu `.cg-btn.btn-sm`, nunca `.btn.btn-sm` puro (Bootstrap sem `.cg-btn`) — usado em toda ação secundária de linha densa (editar/excluir em Compras/Recursos/managers). Na visão Lista de Compras isso estourava a linha de 44px do caderno (`--cg-notebook-line`).
+- **Correção**: `.btn-sm` ganha altura própria (36px) + ajuste de padding do item-row (6px→4px) pra alinhar de novo com a pauta do caderno.
+- **Prevenção**: ao aplicar uma regra de acessibilidade/tamanho globalmente, checar explicitamente TODAS as variantes de classe existentes (`.cg-btn.X` E `.btn.X` puro), não só a mais visível.
+
 ## Histórico anterior (rounds já fechadas, resumo — detalhe completo em `docs/CHECKLIST-REBRAND.md`)
 
 Todos os bugs das Rodadas 1-5 do rebrand (sidebar não-sticky, tabela cortando largura, tema escuro incompleto, FAB sobrepondo botões, `x-show`+Bootstrap utility ≥5 ocorrências, CSS duplicado em `.cg-card`/`.cg-main`/`.cg-modal`, ícone de PWA desatualizado, segmentado "Agrupar" esticando no mobile, CSV duplicando item, notificação push com badge sem transparência, "Cancelar" de Compras limpando lista errado, mês futuro não ordenado primeiro) estão todos `FIXED`/`VERIFIED` — não duplicados aqui, ver o documento fonte.
