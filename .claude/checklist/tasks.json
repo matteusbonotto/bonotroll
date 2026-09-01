@@ -1178,6 +1178,23 @@
       "history": [
         { "action": "CREATED", "to": "DONE", "updatedBy": "claude", "timestamp": "2026-09-01T00:00:00-03:00", "note": "Achado por inspeção direta do CSS depois do relato com print — não é cache, era regressão real introduzida pela própria correção de acessibilidade de 22/08. 29/29 e2e verdes depois da correção." }
       ]
+    },
+    {
+      "id": "BUG-012",
+      "title": "PWA exige limpar cache/reinstalar manualmente pra ver correção nova",
+      "description": "Usuário: 'não tem aplicativo bom com esse comportamento' — com razão. Causa raiz dupla: (1) o fetch() do próprio service worker pra arquivos same-origin não ignorava o Cache-Control do navegador (GitHub Pages manda max-age=600) — 'rede primeiro' podia devolver resposta do cache HTTP DO NAVEGADOR com até 10min de idade, sem sinal nenhum de que não era rede de verdade; (2) modelo de banner manual ('Atualizar agora') exigia a pessoa notar e clicar. Corrigido dos dois lados: fetch() com {cache:'no-store'} nos 2 pontos same-origin; sw.js chama self.skipWaiting() ao instalar; js/app.js recarrega sozinho no controllerchange (com trava contra loop). Banner/applyUpdate() removidos por ficarem mortos. Ver decisão completa em .claude/memory/decisions.md.",
+      "category": "Architecture",
+      "priority": "CRITICAL",
+      "status": "DONE",
+      "agent": "claude",
+      "tags": ["pwa", "service-worker", "cache", "arquitetura"],
+      "relatedBugs": ["BUG-010"],
+      "dependencies": [],
+      "createdAt": "2026-09-01T00:00:00-03:00",
+      "updatedAt": "2026-09-01T00:00:00-03:00",
+      "history": [
+        { "action": "CREATED", "to": "DONE", "updatedBy": "claude", "timestamp": "2026-09-01T00:00:00-03:00", "note": "CACHE_NAME v8->v9. Deploy confirmado ao vivo no CDN (cache-bust). Prova definitiva do ciclo completo de auto-update só na PRÓXIMA rodada de deploy (v9->v10+) — não simulável num único deploy." }
+      ]
     }
   ]
 }

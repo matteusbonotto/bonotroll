@@ -11,6 +11,15 @@ Log de decisões arquiteturais/técnicas relevantes. Uma linha de contexto não 
 - **Impacto**: novo trigger `notificar_orcamento_estourado` (modo real) + `generateBudgetAlerts` (modo demo) — mesma divisão real×demo já usada por `notifyPayment`/`notificar_pagamento_para_grupo`. Funciona pra QUALQUER categoria com orçamento definido, não só "Mercado" (a pergunta do usuário era sobre Mercado especificamente, mas nada no mecanismo é Mercado-específico — generalizar não custou esforço extra).
 - **Status**: ATIVO.
 
+## 2026-09-01 — PWA atualiza sozinho (skipWaiting + no-store), sem banner manual
+
+- **Decisão**: `sw.js` chama `self.skipWaiting()` assim que termina de instalar (nunca mais espera clique em banner); `js/app.js` recarrega a página sozinho quando `controllerchange` dispara de verdade (com trava contra loop e contra disparar na primeira ativação de uma aba nova). Banner "Nova versão disponível"/`applyUpdate()` removidos (ficaram mortos).
+- **Por quê**: usuário relatou, com razão, que nenhum app profissional exige limpar cache/reinstalar manualmente pra ver uma correção. Investigando a fundo, achei DUAS causas empilhadas: (1) o próprio `fetch()` do service worker pra arquivos same-origin não ignorava o `Cache-Control` do navegador (GitHub Pages manda `max-age=600`) — "rede primeiro" podia devolver uma resposta do CACHE HTTP DO NAVEGADOR (não do SW) com até 10min de idade, então às vezes uma correção só "pegava" no reload seguinte, de forma imprevisível; (2) mesmo quando pegava, exigir que a pessoa notasse um banner e clicasse não é comportamento aceitável.
+- **Alternativas**: manter o banner manual e só corrigir o `no-store` — rejeitado, porque o problema relatado não era só "às vezes demora", era "não deveria precisar de ação nenhuma".
+- **Impacto**: `sw.js`, `js/app.js`, `js/components/store.js` (removido `applyUpdate()`/`updateAvailable`), `index.html` (banner removido). `CACHE_NAME` bumpado v8→v9.
+- **Risco aceito conscientemente**: um reload automático pode, em teoria, interromper alguém no meio de preencher um formulário — mitigado só parcialmente (aviso rápido antes do reload, `Alpine.store('app').notify(...)`), não há checagem de "formulário sujo" antes de recarregar. Aceitável dado que deploys são raros (não é uma troca de versão a cada minuto) e o app é de 2 usuários, não um produto com tráfego alto onde isso importaria mais.
+- **Status**: ATIVO. A prova definitiva desse mecanismo só acontece na PRÓXIMA rodada de deploy depois desta (v9→v10+), que vai exercitar o caminho de atualização de verdade pela primeira vez — não dá pra simular isso num teste automatizado sem servir duas versões reais em sequência.
+
 ## 2026-09-01 — Todo deploy futuro DEVE bumpar `CACHE_NAME` do service worker
 
 - **Decisão**: nunca fazer `git push origin main` que mude qualquer arquivo do `APP_SHELL` (`sw.js`) sem também bumpar `CACHE_NAME` no mesmo commit/rodada.
