@@ -663,13 +663,18 @@
   background: transparent;
   border: none;
   border-radius: 0;
-  /* 4px (não 6px) de padding vertical: com o .btn-sm agora em 36px de
-     altura (ver app.css), 36+4+4=44px bate exatamente com
-     --cg-notebook-line — a linha da pauta do caderno alinha certinho de
-     novo (2026-09-01). */
-  padding: 4px 2px;
+  /* 2026-09-01: nome e ações viraram 2 linhas (ver index.html) — a fileira
+     inteira agora cresce com o conteúdo em vez de tentar caber tudo numa
+     linha só de 44px; min-height continua sendo só um PISO, não o teto. */
+  padding: 6px 2px;
   min-height: var(--cg-notebook-line);
   gap: var(--space-2);
+  align-items: flex-start;
+}
+.cg-notebook .cg-item-row__meta {
+  margin-top: 2px;
+  flex-wrap: wrap;
+  row-gap: 4px;
 }
 .cg-notebook .cg-item-row.is-comprado { background: transparent; border: none; }
 .cg-notebook .cg-item-row__nome {

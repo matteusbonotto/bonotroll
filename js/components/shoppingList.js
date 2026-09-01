@@ -287,15 +287,29 @@ export function shoppingView() {
       }
     },
 
+    // Sem "Desfazer" até 2026-09-01 — usuário relatou uso real: pessoas
+    // tentando tocar "Comprar" (risque o item) acabavam acertando o
+    // "Excluir" do lado (erro de dedo comum em fileira apertada) e o item
+    // sumia de vez, sem chance de reverter. Mesmo padrão já usado em
+    // Recursos/Caixinha/Transações (docs/BONOTTO-2027-BLUEPRINT.md,
+    // Conflito 3) — exclusão frequente/baixo dano usa "Desfazer" em vez de
+    // confirm(), mas NUNCA sem rede de segurança nenhuma. A exclusão real
+    // já acontece dentro de notifyUndo (nunca "diz que excluiu sem ter
+    // excluído" — ver store.js); "Desfazer" recria o item (id novo).
     async removeItem(id) {
       const store = this.$store.app;
-      try {
-        await sl.removeItem(id);
-        await this.refreshItems();
-        store.notify('Item removido.');
-      } catch (e) {
-        store.notify(e.message || 'Não foi possível remover o item.', 'danger');
-      }
+      const item = this.items.find((i) => i.id === id);
+      this.items = this.items.filter((i) => i.id !== id);
+      store.notifyUndo(
+        'Item removido.',
+        async () => { await sl.removeItem(id); },
+        async () => {
+          if (!item) return;
+          const { id: _id, list_id: _lid, criado_em: _c, subtotal: _s, comprado: _cp, ...dados } = item;
+          await sl.addItem(item.list_id, dados);
+          await this.refreshItems();
+        }
+      );
     },
 
     // ---------- Edição completa de um item já existente ----------
