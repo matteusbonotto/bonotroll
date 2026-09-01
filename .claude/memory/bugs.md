@@ -122,6 +122,24 @@ Formato por item: ID / Título / Data / Origem / Severidade / Status / Causa / R
 - **Correção**: `.btn-sm` ganha altura própria (36px) + ajuste de padding do item-row (6px→4px) pra alinhar de novo com a pauta do caderno.
 - **Prevenção**: ao aplicar uma regra de acessibilidade/tamanho globalmente, checar explicitamente TODAS as variantes de classe existentes (`.cg-btn.X` E `.btn.X` puro), não só a mais visível.
 
+## BUG-013 — Fileira de item em Compras (Lista) espremia o nome e cortava/quebrava texto
+
+- **Data**: confirmado com print, 2026-09-01, depois do deploy do BUG-011.
+- **Severidade**: CRITICAL — reproduzido e fotografado (Playwright, 390px) antes de corrigir.
+- **Status**: `FIXED`.
+- **Causa**: era largura, não altura — "Comprar" + lápis + lixeira competindo com o nome do item numa linha só espremiam o texto numa faixa tão estreita que "Detergente" cortava e "Massa para brownie" quebrava em 3 linhas.
+- **Correção**: nome numa linha própria (largura total); ações foram pra uma segunda linha, ao lado da quantidade.
+- **Prevenção**: ao corrigir altura de botão (BUG-011), eu não tinha verificado LARGURA disponível pro texto ao lado — lição: corrigir uma dimensão não garante que a outra esteja certa, verificar visualmente (screenshot real) antes de dar por certo.
+
+## BUG-014 — Exclusão acidental de item em Compras (dedo escorregava pra "Excluir")
+
+- **Data**: relatado 2026-09-01, uso real de terceiros testando o app.
+- **Severidade**: CRITICAL — perda de dado real, sem "Desfazer" nenhum.
+- **Status**: `FIXED`.
+- **Causa**: `removeItem` em `js/components/shoppingList.js` deletava direto, sem a proteção de "Desfazer" que o BUG-005 já tinha aplicado em Recursos/Caixinha/Transações — Compras ficou de fora daquela rodada.
+- **Correção**: `removeItem` agora usa `store.notifyUndo` (mesmo padrão); "Editar" também virou espaçador físico entre "Comprar" e "Excluir".
+- **Prevenção**: quando um padrão de segurança (undo) é aplicado a um conjunto de entidades, checar explicitamente TODAS as entidades com exclusão frequente do app, não só as reportadas na hora — Compras tinha exatamente o mesmo risco e ficou sem a correção por quase 10 dias.
+
 ## Histórico anterior (rounds já fechadas, resumo — detalhe completo em `docs/CHECKLIST-REBRAND.md`)
 
 Todos os bugs das Rodadas 1-5 do rebrand (sidebar não-sticky, tabela cortando largura, tema escuro incompleto, FAB sobrepondo botões, `x-show`+Bootstrap utility ≥5 ocorrências, CSS duplicado em `.cg-card`/`.cg-main`/`.cg-modal`, ícone de PWA desatualizado, segmentado "Agrupar" esticando no mobile, CSV duplicando item, notificação push com badge sem transparência, "Cancelar" de Compras limpando lista errado, mês futuro não ordenado primeiro) estão todos `FIXED`/`VERIFIED` — não duplicados aqui, ver o documento fonte.

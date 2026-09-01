@@ -1193,7 +1193,42 @@
       "createdAt": "2026-09-01T00:00:00-03:00",
       "updatedAt": "2026-09-01T00:00:00-03:00",
       "history": [
-        { "action": "CREATED", "to": "DONE", "updatedBy": "claude", "timestamp": "2026-09-01T00:00:00-03:00", "note": "CACHE_NAME v8->v9. Deploy confirmado ao vivo no CDN (cache-bust). Prova definitiva do ciclo completo de auto-update só na PRÓXIMA rodada de deploy (v9->v10+) — não simulável num único deploy." }
+        { "action": "CREATED", "to": "DONE", "updatedBy": "claude", "timestamp": "2026-09-01T00:00:00-03:00", "note": "CACHE_NAME v8->v9. Deploy confirmado ao vivo no CDN (cache-bust)." },
+        { "action": "NOTE", "updatedBy": "claude", "timestamp": "2026-09-01T00:00:00-03:00", "note": "CONFIRMADO PELO USUÁRIO: o deploy seguinte (v9->v10) aplicou sozinho, sem clicar em nada — 'atualizou pra versão mais atual'. Ciclo completo de auto-update funcionando de ponta a ponta." }
+      ]
+    },
+    {
+      "id": "BUG-013",
+      "title": "Fileira de item em Compras (Lista) espremia o nome e cortava/quebrava texto",
+      "description": "Usuário confirmou com print novo, depois do deploy anterior: 'Comprar' + lápis + lixeira numa linha só com o nome espremiam o texto numa faixa tão estreita que 'Detergente' cortava e 'Massa para brownie' quebrava em até 3 linhas — reproduzido e fotografado via Playwright em 390px antes de corrigir. Causa: era um problema de LARGURA (3 elementos de ação competindo com o texto), não de altura (que já tinha sido corrigido no BUG-011). Corrigido: nome numa linha própria, largura total; ações (Comprar/editar/excluir) foram pra uma segunda linha, abaixo, ao lado da quantidade.",
+      "category": "Frontend",
+      "priority": "CRITICAL",
+      "status": "DONE",
+      "agent": "claude",
+      "tags": ["bug-producao", "compras", "layout", "mobile"],
+      "relatedBugs": ["BUG-011"],
+      "dependencies": [],
+      "createdAt": "2026-09-01T00:00:00-03:00",
+      "updatedAt": "2026-09-01T00:00:00-03:00",
+      "history": [
+        { "action": "CREATED", "to": "DONE", "updatedBy": "claude", "timestamp": "2026-09-01T00:00:00-03:00", "note": "Verificado com screenshot real (Playwright, 390px) antes e depois — 'Detergente' e 'Massa para brownie' agora cabem inteiros numa linha. 30/30 e2e verdes." }
+      ]
+    },
+    {
+      "id": "BUG-014",
+      "title": "Exclusão acidental de item em Compras (dedo escorregava de 'Comprar' pra 'Excluir')",
+      "description": "Usuário relatou uso real (pessoas de fora testando o app): mirando 'Comprar' pra riscar o item da lista, o dedo acertava 'Excluir' do lado (fileira apertada) e o item sumia PRA SEMPRE, sem chance de reverter — risco de perda de dado real, mais grave que estética. Corrigido em duas frentes: (1) 'Editar' virou espaçador físico entre 'Comprar' e 'Excluir' (já ajuda a separar fisicamente); (2) removeItem() (shoppingList.js) ganhou o mesmo padrão de 'Desfazer' já usado em Recursos/Caixinha/Transações desde o BUG-005 — a exclusão real só acontece dentro de notifyUndo, nunca antes, e 'Desfazer' recria o item. Faltava exatamente essa proteção nesta tela, que tinha ficado de fora da rodada do BUG-005.",
+      "category": "Frontend",
+      "priority": "CRITICAL",
+      "status": "DONE",
+      "agent": "claude",
+      "tags": ["bug-producao", "compras", "perda-de-dado", "ux"],
+      "relatedBugs": ["BUG-005"],
+      "dependencies": [],
+      "createdAt": "2026-09-01T00:00:00-03:00",
+      "updatedAt": "2026-09-01T00:00:00-03:00",
+      "history": [
+        { "action": "CREATED", "to": "DONE", "updatedBy": "claude", "timestamp": "2026-09-01T00:00:00-03:00", "note": "Novo teste tests/e2e/desfazer-item-compras.spec.js — remove, confirma que sumiu, clica Desfazer, confirma que voltou. 30/30 e2e verdes." }
       ]
     }
   ]
