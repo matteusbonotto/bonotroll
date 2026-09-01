@@ -8,7 +8,7 @@
 // segundo plano (evento "install" roda de novo) e ficar em estado "waiting"
 // até alguém assumir — é esse "waiting" que js/app.js detecta pra mostrar o
 // banner "Nova versão disponível" (ver updateNotifier em js/app.js).
-const CACHE_NAME = 'bonotto-v8';
+const CACHE_NAME = 'bonotto-v9';
 
 const APP_SHELL = [
   './',
@@ -70,12 +70,22 @@ const APP_SHELL = [
 ];
 
 self.addEventListener('install', (event) => {
+  // MUDANÇA DE PROJETO (2026-09-01, bug real relatado em uso: "mesmo
+  // limpando cache/reinstalando, não via a correção"): skipWaiting() aqui +
+  // clients.claim() no activate (já existia) fazem o SW novo assumir
+  // SOZINHO assim que termina de instalar, sem esperar a pessoa notar e
+  // clicar no banner "Nova versão disponível". js/app.js recarrega a
+  // página automaticamente quando isso acontece (controllerchange) — ver
+  // comentário lá. Isso não é o motivo do bug relatado (a troca sempre
+  // funcionou quando alguém clicava) — o motivo real era o fetch() abaixo
+  // não ignorar o cache HTTP do navegador, então mesmo "rede primeiro"
+  // podia devolver um arquivo com até --touch-target de 10min de idade
+  // (Cache-Control: max-age=600 do GitHub Pages). Mas manter esperando
+  // clique manual, quando o problema real já cansa qualquer pessoa a
+  // procurar "limpar cache" nas configurações do navegador, não é o
+  // comportamento de nenhum app profissional — corrigido dos dois lados.
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL))
-    // Sem self.skipWaiting() aqui de propósito: um SW novo instalado fica em
-    // "waiting" até o cliente mandar SKIP_WAITING (banner de atualização) —
-    // se pulasse direto, o usuário nunca veria o aviso e a troca de versão
-    // aconteceria por baixo dos panos no meio do uso.
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)).then(() => self.skipWaiting())
   );
 });
 
@@ -149,9 +159,20 @@ self.addEventListener('fetch', (event) => {
 
   // Navegação (usuário abrindo/recarregando a página): tenta a rede, cai para o
   // shell em cache quando offline.
+  //
+  // { cache: 'no-store' } (2026-09-01, bug real relatado em uso: "limpei
+  // cache, reinstalei o app, e mesmo assim via a versão antiga") — sem
+  // isso, este fetch() ainda respeita o Cache-Control normal do navegador
+  // (GitHub Pages manda max-age=600 no HTML/JS/CSS). Ou seja: "rede
+  // primeiro" podia devolver uma resposta do CACHE HTTP DO PRÓPRIO
+  // NAVEGADOR (não deste Service Worker) com até 10min de idade, sem
+  // nenhum jeito de perceber que era "cache" em vez de "rede de verdade" —
+  // parecia ter atualizado, mas às vezes só trocava no PRÓXIMO reload,
+  // dependendo de quando o cache dos 10min expirava. no-store força ignorar
+  // esse cache do navegador sempre, indo na rede de verdade toda vez.
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(request).catch(() => caches.match('./index.html'))
+      fetch(request, { cache: 'no-store' }).catch(() => caches.match('./index.html'))
     );
     return;
   }
@@ -176,7 +197,7 @@ self.addEventListener('fetch', (event) => {
     // cache antigo até um SEGUNDO reload (o primeiro só atualizava o cache
     // em segundo plano), o que fazia deploy parecer "não aplicado".
     event.respondWith(
-      fetch(request)
+      fetch(request, { cache: 'no-store' }) // mesmo motivo do bloco "navigate" acima — nunca confiar no cache HTTP do navegador aqui
         .then((response) => {
           // clone() PRECISA acontecer aqui, síncrono, antes de qualquer coisa
           // assíncrona — chamar depois (ex.: dentro do .then() de

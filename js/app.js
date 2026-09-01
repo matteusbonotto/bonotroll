@@ -232,39 +232,36 @@ window.addEventListener('appinstalled', () => {
   Alpine.store('app').installPrompt = null;
 });
 
+// AUTO-ATUALIZAÇÃO (2026-09-01) — bug real relatado em uso: mesmo limpando
+// cache e reinstalando o app manualmente, a pessoa continuava vendo versão
+// antiga; e mesmo quando via o banner "Nova versão disponível", precisar
+// notar e clicar nele não é o comportamento de nenhum app profissional.
+// sw.js agora chama self.skipWaiting() assim que termina de instalar (não
+// fica mais esperando ninguém clicar em nada) — isso dispara
+// "controllerchange" aqui sozinho, e a página recarrega sozinha, sempre.
+// `refreshing` existe só pra garantir UM reload (controllerchange pode
+// disparar mais de uma vez em teoria; sem essa trava viraria loop).
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker
-      .register('./sw.js')
-      .then((reg) => watchForUpdate(reg))
-      .catch(() => {
-        // ambiente sem suporte (ex.: file://) — segue sem PWA offline
-      });
+  let refreshing = false;
+  // `controllerchange` dispara tanto na PRIMEIRA ativação (aba nova, sem
+  // controller nenhum antes — não é atualização, não recarrega nada) quanto
+  // em toda atualização de verdade depois. `tinhaController` guarda esse
+  // "antes" pra distinguir os dois casos — e é atualizado a cada disparo
+  // (não fixado uma única vez), senão uma aba aberta por muito tempo só
+  // pegaria a checagem certa na primeira troca e nunca mais nas seguintes.
+  let tinhaController = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    const eraAtualizacao = tinhaController;
+    tinhaController = true;
+    if (!eraAtualizacao || refreshing) return;
+    refreshing = true;
+    Alpine.store('app')?.notify?.('Atualizando para a versão mais recente…');
+    location.reload();
   });
-}
 
-// Mostra o banner "Nova versão disponível" (index.html, ligado a
-// $store.app.updateAvailable) assim que um SW novo termina de instalar e
-// fica esperando pra assumir. Cobre os dois jeitos de isso acontecer: já
-// existe um "waiting" no momento do register (aba ficou aberta enquanto um
-// deploy novo rodava) ou um instala DEPOIS (evento "updatefound").
-function watchForUpdate(registration) {
-  const flagWaiting = () => {
-    // navigator.serviceWorker.controller só existe se este NÃO é o primeiro
-    // SW da aba (ou seja: é atualização, não instalação inicial) — sem essa
-    // checagem o banner apareceria também na primeira visita.
-    if (registration.waiting && navigator.serviceWorker.controller) {
-      Alpine.store('app').updateAvailable = true;
-    }
-  };
-
-  if (registration.waiting) flagWaiting();
-
-  registration.addEventListener('updatefound', () => {
-    const installing = registration.installing;
-    if (!installing) return;
-    installing.addEventListener('statechange', () => {
-      if (installing.state === 'installed') flagWaiting();
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {
+      // ambiente sem suporte (ex.: file://) — segue sem PWA offline
     });
   });
 }

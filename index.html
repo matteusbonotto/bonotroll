@@ -60,12 +60,6 @@
     <i class="bi bi-wifi-off"></i> Sem conexão — algumas ações serão guardadas e enviadas depois
   </div>
 
-  <div class="cg-update-banner" x-show="$store.app.updateAvailable" x-cloak x-transition>
-    <i class="bi bi-arrow-repeat"></i>
-    <span>Nova versão do Bõnotto disponível.</span>
-    <button type="button" class="btn btn-sm btn-light fw-semibold" @click="$store.app.applyUpdate()">Atualizar agora</button>
-  </div>
-
   <div class="cg-update-banner" x-show="$store.app.installPrompt" x-cloak x-transition>
     <i class="bi bi-download"></i>
     <span>Instale o Bõnotto na tela de início pra abrir mais rápido e receber notificações.</span>

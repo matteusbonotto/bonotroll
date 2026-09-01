@@ -31,7 +31,6 @@ export function appStore() {
     online: navigator.onLine,
     isDemoMode: isDemoMode(),
     toasts: [],
-    updateAvailable: false,
     // installPrompt guarda o evento "beforeinstallprompt" capturado em
     // app.js (só o navegador consegue reabrir esse prompt, e só uma vez por
     // evento — precisa ficar guardado até a pessoa clicar em "Instalar").
@@ -307,28 +306,9 @@ export function appStore() {
       history.pushState({ view }, '', '#/' + view);
     },
 
-    // Chamado pelo botão "Atualizar agora" do banner de nova versão (ver
-    // updateNotifier em js/app.js, que seta updateAvailable = true quando
-    // detecta um service worker novo em estado "waiting").
-    async applyUpdate() {
-      const reg = await navigator.serviceWorker.getRegistration();
-      if (!reg?.waiting) {
-        // Não deveria acontecer (o banner só aparece com um waiting
-        // presente), mas se sumiu por algum motivo um reload simples ainda
-        // resolve na prática.
-        location.reload();
-        return;
-      }
-      // O novo SW assumindo já dispara o próprio "activate" dele (em sw.js),
-      // que limpa qualquer cache com nome diferente do CACHE_NAME atual —
-      // aqui só falta recarregar pra servir os arquivos novos.
-      navigator.serviceWorker.addEventListener('controllerchange', () => location.reload(), { once: true });
-      reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-    },
-
     // Botão "Limpar cache" (Perfil) — escape hatch manual pra quando algo
-    // parece desatualizado/quebrado e trocar de versão sozinho (banner de
-    // update) não resolveu. Mais agressivo que applyUpdate(): apaga TODO
+    // parece desatualizado/quebrado mesmo com a auto-atualização (ver
+    // controllerchange em js/app.js) já em vigor. Mais agressivo: apaga TODO
     // Cache Storage (não só o do app) e desregistra o service worker
     // inteiro, forçando ele reinstalar do zero no próximo load — o mesmo
     // efeito de "limpar cache e recarregar" do DevTools, só que sem precisar
