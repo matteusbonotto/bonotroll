@@ -663,7 +663,11 @@
   background: transparent;
   border: none;
   border-radius: 0;
-  padding: 6px 2px;
+  /* 4px (não 6px) de padding vertical: com o .btn-sm agora em 36px de
+     altura (ver app.css), 36+4+4=44px bate exatamente com
+     --cg-notebook-line — a linha da pauta do caderno alinha certinho de
+     novo (2026-09-01). */
+  padding: 4px 2px;
   min-height: var(--cg-notebook-line);
   gap: var(--space-2);
 }

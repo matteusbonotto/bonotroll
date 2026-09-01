@@ -4,7 +4,10 @@
 
 import { isDemoMode } from './config.js';
 
-const STORAGE_KEY = 'bonotto_demo_db_v1';
+// v2 (2026-09-01): bump deliberado pra forçar recriação em QUALQUER
+// navegador que já tinha dado salvo antes da correção de privacidade — ver
+// CHAVES_ANTIGAS/loadDb() logo abaixo.
+const STORAGE_KEY = 'bonotto_demo_db_v2';
 const SESSION_KEY = 'bonotto_demo_session';
 
 // Versão pinada (mesmo padrão de qualquer outro import pesado via esm.sh
@@ -466,6 +469,17 @@ function seedDatabase(nomes = NOMES_GENERICOS_PADRAO) {
 // Gated por isDemoMode(): no modo real ninguém nunca lê `db`, então nem
 // vale a pena montar nada (e, principalmente, nunca escreve o mock no
 // localStorage de quem está no modo real).
+// Chaves antigas de dado demo (antes da correção de privacidade de
+// 2026-08-22) — qualquer navegador que já tinha aberto ?demo=1 antes disso
+// ficava PRA SEMPRE com "MB Labs"/"Dinamo"/"Sanasa" (nomes reais) salvos
+// localmente, porque loadDb() só semeia quando a chave está vazia — o
+// código já tinha sido corrigido há dias, mas o dado local de quem já
+// tinha visitado o demo antes nunca era substituído (bug real relatado em
+// uso, 2026-09-01: "vejo meu nome, o da Bia, contas e salários de
+// verdade"). Removidas explicitamente aqui, não só abandonadas, pra tirar
+// o dado sensível do navegador de vez, não só parar de lê-lo.
+const CHAVES_ANTIGAS = ['bonotto_demo_db_v1'];
+
 function loadDb() {
   if (!isDemoMode()) return {};
   const raw = localStorage.getItem(STORAGE_KEY);
@@ -475,6 +489,9 @@ function loadDb() {
     } catch {
       /* dado corrompido: recria a seed abaixo */
     }
+  }
+  for (const chave of CHAVES_ANTIGAS) {
+    if (chave !== STORAGE_KEY) localStorage.removeItem(chave);
   }
   const seeded = seedDatabase();
   localStorage.setItem(STORAGE_KEY, JSON.stringify(seeded));

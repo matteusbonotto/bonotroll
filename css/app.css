@@ -685,6 +685,22 @@ button, input, select, textarea { -webkit-tap-highlight-color: transparent; }
   transition: transform .15s ease, box-shadow .15s ease, background-color .15s ease, border-color .15s ease;
 }
 .btn:active { transform: translateY(1px); }
+/* .btn-sm PURO (Bootstrap, sem .cg-btn) nunca tinha sido excluído da regra
+   acima — o comentário dizia que ".btn-sm têm suas próprias regras", mas
+   essas regras só cobriam .cg-btn.btn-sm, nunca o .btn.btn-sm cru usado em
+   toda ação secundária de linha densa (editar/excluir em Compras/Recursos/
+   managers). Resultado: botão "Comprar"/lápis/lixeira em Compras (visão
+   Lista) ficavam com 48px de altura dentro de uma linha de caderno
+   desenhada pra 44px (--cg-notebook-line) — estourava a linha e empurrava
+   o nome do item pra quebrar mal (bug real relatado em uso, 2026-09-01,
+   com print). Corrigido dando ao .btn-sm cru uma altura própria, menor que
+   o padrão mas ainda confortável de tocar (acima do mínimo AA de 24px) —
+   mesmo trade-off já aceito em outro lugar do projeto pra ação secundária
+   de baixa/média frequência (ver DEBT-003, stepper de Recursos 32×32px). */
+.btn-sm {
+  min-height: 36px;
+  padding: 4px 10px;
+}
 .btn-success, .btn-primary {
   --bs-btn-bg: var(--color-primary);
   --bs-btn-border-color: var(--color-primary);

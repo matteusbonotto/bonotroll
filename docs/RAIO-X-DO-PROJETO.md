@@ -860,7 +860,7 @@ Alvo de toque mínimo 48×48px em todo controle interativo; contraste AA; botõe
 
 ## 16. Modo demonstração × modo real
 
-`js/data/config.js` decide tudo: enquanto `SUPABASE_URL`/`SUPABASE_ANON_KEY` forem os valores placeholder, `isDemoMode()` retorna `true` e **nenhuma chamada de rede acontece** — todo o app roda sobre `js/data/mockDb.js`, um "banco" de brinquedo em `localStorage` (`bonotto_demo_db_v1`) que espelha exatamente a forma de dados do `schema.sql` real, com dois perfis de exemplo (Matheus/Beatriz) já populados.
+`js/data/config.js` decide tudo: enquanto `SUPABASE_URL`/`SUPABASE_ANON_KEY` forem os valores placeholder, `isDemoMode()` retorna `true` e **nenhuma chamada de rede acontece** — todo o app roda sobre `js/data/mockDb.js`, um "banco" de brinquedo em `localStorage` (`bonotto_demo_db_v2` — bumpado de v1 em 2026-09-01 pra forçar recriação em navegadores com dado antigo pré-Faker) que espelha exatamente a forma de dados do `schema.sql` real, com dois perfis de exemplo (Matheus/Beatriz) já populados.
 
 Diferenças conhecidas entre os dois modos:
 - `ensureDefaultCategories`/`ensureDefaultRooms` só rodam em modo real (no primeiro login) — o modo demo já nasce com os dados semeados estaticamente em `mockDb.js`, então rodar de novo seria redundante.

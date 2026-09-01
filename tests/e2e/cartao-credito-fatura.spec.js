@@ -98,7 +98,7 @@ test('compra dentro da fatura continua aparecendo em "Contas a vencer" quando es
   // (`computeStatus`: pago nunca aparece em "a vencer"), garantindo que só
   // as duas desta cena disputem o topo, não importa a data real de hoje.
   await page.evaluate(() => {
-    const db = JSON.parse(localStorage.getItem('bonotto_demo_db_v1'));
+    const db = JSON.parse(localStorage.getItem('bonotto_demo_db_v2'));
     const dia1 = `${new Date().toISOString().slice(0, 8)}01`;
     const hoje = new Date().toISOString().slice(0, 10);
     for (const t of db.transactions) {
@@ -108,7 +108,7 @@ test('compra dentro da fatura continua aparecendo em "Contas a vencer" quando es
         t.data_pagamento = hoje;
       }
     }
-    localStorage.setItem('bonotto_demo_db_v1', JSON.stringify(db));
+    localStorage.setItem('bonotto_demo_db_v2', JSON.stringify(db));
   });
   await page.reload();
 

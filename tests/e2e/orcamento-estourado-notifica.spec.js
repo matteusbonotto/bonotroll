@@ -16,7 +16,7 @@ test('orçamento de "Mercado" estourado aparece no sino e notifica os dois membr
   // tecnicamente estourou o próprio orçamento pessoal — inspeciona o "banco"
   // demo direto (mais confiável que alternar de perfil pela UI).
   const notificacoesPorPerfil = await page.evaluate(() => {
-    const db = JSON.parse(localStorage.getItem('bonotto_demo_db_v1'));
+    const db = JSON.parse(localStorage.getItem('bonotto_demo_db_v2'));
     const estouradas = db.notifications.filter((n) => n.tipo === 'orcamento_estourado');
     return [...new Set(estouradas.map((n) => n.profile_id))];
   });
