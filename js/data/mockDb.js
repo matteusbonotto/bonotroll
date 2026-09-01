@@ -164,6 +164,11 @@ function seedDatabase(nomes = NOMES_GENERICOS_PADRAO) {
     { id: 'cat-outro', nome: 'Outro', cor: '#64748B', icone: 'bi-three-dots' },
     { id: 'cat-salario', nome: 'Salário', cor: '#EAB308', icone: 'bi-cash-coin' },
     { id: 'cat-alimentos', nome: 'Alimentos', cor: '#16A34A', icone: 'bi-basket' },
+    // Nome EXATO que finalizar() (js/components/shoppingList.js) procura pra
+    // categorizar a despesa gerada ao encerrar uma compra — sem essa
+    // categoria aqui, o modo demo nunca demonstrava a associação nem o
+    // orçamento/aviso de estouro (2026-09-01).
+    { id: 'cat-mercado', nome: 'Mercado', cor: '#16A34A', icone: 'bi-basket' },
     { id: 'cat-limpeza', nome: 'Limpeza', cor: '#06B6D4', icone: 'bi-droplet' },
     { id: 'cat-higiene', nome: 'Higiene', cor: '#EC4899', icone: 'bi-droplet-half' },
     { id: 'cat-bebidas', nome: 'Bebidas', cor: '#D97706', icone: 'bi-cup-straw' },
@@ -233,6 +238,13 @@ function seedDatabase(nomes = NOMES_GENERICOS_PADRAO) {
     tx({ tipo: 'saida', titulo: 'Gasolina', categoria_id: 'cat-carro', tipo_despesa: 'variavel', valor: 200.00, empresa_servico: 'Shell', data_vencimento: isoDaysFromNow(-5), data_pagamento: isoDaysFromNow(-5) }),
     tx({ tipo: 'saida', titulo: 'Petlove', categoria_id: 'cat-pet', tipo_despesa: 'variavel', valor: 44.90, empresa_servico: 'Petlove', data_vencimento: isoDaysFromNow(-8), data_pagamento: isoDaysFromNow(-8) }),
     tx({ tipo: 'saida', titulo: 'iFood / 99', categoria_id: 'cat-delivery', tipo_despesa: 'variavel', valor: 500.00, empresa_servico: 'iFood', data_vencimento: null }),
+    // Compra de mercado já lançada este mês, de propósito ACIMA do limite de
+    // category_budgets abaixo — demonstra o orçamento de "Mercado" estourado
+    // (2026-09-01, pedido explícito: categoria com limite + aviso ao grupo).
+    // isoDaysFromNow(0), não um negativo pequeno tipo -2: perto da virada do
+    // mês (dia 1-2), "2 dias atrás" cai no mês ANTERIOR e o orçamento nunca
+    // aparece estourado — bug real encontrado testando isto no dia 1º.
+    tx({ tipo: 'saida', titulo: 'Compras da semana', categoria_id: 'cat-mercado', tipo_despesa: 'variavel', valor: 820.00, data_cadastro: isoDaysFromNow(0), data_pagamento: isoDaysFromNow(0) }),
     // Dividida entre os dois membros do grupo (60/40) — exemplo do multi-
     // pagador (transaction_payers) já no primeiro login, senão ninguém vê o
     // avatar-stack/"Dividido" ou o saldo "Entre vocês" sem criar uma despesa
@@ -439,6 +451,10 @@ function seedDatabase(nomes = NOMES_GENERICOS_PADRAO) {
     push_subscriptions: [],
     category_budgets: [
       { id: uid('budget'), owner_id: matheusId, group_id: groupId, categoria_id: 'cat-delivery', valor_limite: 300, criado_em: new Date().toISOString() },
+      // Já estourado de propósito (compra de R$820 lançada acima, limite
+      // R$700) — demonstra o aviso ao grupo em ?demo=1 sem precisar de
+      // nenhuma ação manual (2026-09-01).
+      { id: uid('budget'), owner_id: matheusId, group_id: groupId, categoria_id: 'cat-mercado', valor_limite: 700, criado_em: new Date().toISOString() },
       { id: uid('budget'), owner_id: matheusId, group_id: groupId, categoria_id: 'cat-casa', valor_limite: 1200, criado_em: new Date().toISOString() },
       { id: uid('budget'), owner_id: matheusId, group_id: groupId, categoria_id: 'cat-pet', valor_limite: 100, criado_em: new Date().toISOString() },
     ],

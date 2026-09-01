@@ -78,6 +78,7 @@ export function severidadeDe(notificacao) {
   const titulo = (notificacao.titulo || '').toLowerCase();
   if (notificacao.tipo === 'pagamento') return 'info';
   if (notificacao.tipo === 'estoque') return 'attention'; // em falta é chato, não é crise
+  if (notificacao.tipo === 'orcamento_estourado') return 'critical'; // já aconteceu, mesmo peso de "vencido"/"venceu"
   // vencimento_despesa e validade compartilham a mesma dualidade textual
   if (/vencid|venceu|falta/.test(titulo)) return 'critical'; // já passou/já acabou
   if (/vence|vencendo/.test(titulo)) return 'warning'; // ainda dá tempo de agir

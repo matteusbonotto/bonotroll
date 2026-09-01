@@ -127,6 +127,14 @@ export function appStore() {
         .then(() => this.refreshNotifications())
         .catch(() => {});
 
+      // Orçamento por categoria estourado (ex.: "Mercado") — só faz algo em
+      // modo demo (modo real é o trigger notificar_orcamento_estourado no
+      // banco, ver supabase/schema.sql); best-effort, mesmo padrão acima.
+      notificationsService
+        .generateBudgetAlerts({ ownerId: profile.id, groupId })
+        .then(() => this.refreshNotifications())
+        .catch(() => {});
+
       // Idem pra recorrência: gera os lançamentos recorrentes pendentes em
       // segundo plano, sem travar o login. Avisa quantos foram criados e
       // avisa as telas abertas (ex.: dashboard/transações já carregadas)

@@ -5,6 +5,9 @@ import { computeStatus, computeExpiryStatus } from '../utils/status.js';
 import { formatCurrency, todayIso } from '../utils/format.js';
 import { listTransactions } from './transactions.js';
 import { listAllItems } from './resources.js';
+import { listBudgets, computeBudgetProgress } from './budgets.js';
+import { listCategories } from './categories.js';
+import { getMyGroup } from './groups.js';
 
 export async function listNotifications(profileId) {
   let rows;
@@ -135,6 +138,55 @@ export async function generateForProfile({ profileId, groupId }) {
 // UPDATE de data_pagamento sem precisar de nenhuma chamada daqui. Em modo
 // DEMO (mockDb, sem RLS/trigger nenhum) esse caminho client-side continua
 // sendo o único jeito de existir, então segue rodando normalmente.
+// Orçamento por categoria (ex.: "Mercado") estourando o limite do mês —
+// pedido explícito: "se ultrapassar deve avisar os membros". Mesma divisão
+// demo×real de notifyPayment logo abaixo: em modo REAL isso é feito pelo
+// trigger `notificar_orcamento_estourado` direto no banco (security
+// definer, ver supabase/schema.sql) porque o cliente não pode gravar
+// notificação pro profile_id de outro membro sob RLS normal. Em modo DEMO
+// (mockDb, sem RLS) não existe trigger nenhum — é este código que faz o
+// equivalente, verificando o orçamento de CADA membro do grupo (orçamento
+// continua pessoal, mas o aviso é pro grupo inteiro) e escrevendo a
+// notificação pra todos quando alguém estourar.
+export async function generateBudgetAlerts({ ownerId, groupId }) {
+  if (!isDemoMode()) return;
+  const mesAtual = todayIso().slice(0, 7);
+  const grupo = groupId ? await getMyGroup(ownerId).catch(() => null) : null;
+  const membros = grupo?.members?.length ? grupo.members.map((m) => m.id) : [ownerId];
+
+  const rows = [];
+  for (const membroId of membros) {
+    const [transacoesEscopo, budgets, categorias] = await Promise.all([
+      listTransactions({ ownerId: membroId, groupId }),
+      listBudgets(membroId),
+      listCategories({ ownerId: membroId, groupId }),
+    ]);
+    // computeBudgetProgress espera a lista já restrita a ESTE responsável
+    // (mesmo filtro de dashboard.js::orcamentoAlerta) — listTransactions
+    // devolve o escopo inteiro (próprio + grupo), que sem esse filtro
+    // somaria a despesa de TODO o grupo no orçamento pessoal de uma pessoa só.
+    const minhas = transacoesEscopo.filter((t) => t.responsavel_id === membroId);
+    // Mesmo limiar de dashboard.js::orcamentoAlerta ("estourado: percentual >= 100").
+    const estourados = computeBudgetProgress(minhas, budgets, categorias).filter((p) => p.limite > 0 && p.percentual >= 100);
+    for (const p of estourados) {
+      const dedupeKey = `orcamento_estourado:${membroId}:${p.categoriaId}:${mesAtual}`;
+      for (const destinatarioId of membros) {
+        rows.push({
+          profile_id: destinatarioId,
+          tipo: 'orcamento_estourado',
+          titulo: `Orçamento de "${p.categoria?.nome || 'categoria'}" estourou`,
+          corpo: `Gasto: ${formatCurrency(p.gasto)} · Limite: ${formatCurrency(p.limite)}`,
+          referencia_tabela: 'category_budgets',
+          referencia_id: p.id,
+          dedupe_key: dedupeKey,
+          lida: false,
+        });
+      }
+    }
+  }
+  await inserirSeNovo(rows);
+}
+
 export async function notifyPayment({ transaction, payerProfileId, memberIds }) {
   if (!isDemoMode()) return;
   const rows = memberIds

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-24T00:00:00-03:00",
+  "updatedAt": "2026-09-01T00:00:00-03:00",
   "tasks": [
     {
       "id": "DONE-001",
@@ -1035,17 +1035,18 @@
     {
       "id": "FEAT-003",
       "title": "Categoria \"Mercado\" com limite de gasto no período + aviso aos membros ao ultrapassar",
-      "description": "Pedido novo: limite de gasto pra categoria Mercado, acumulando conforme as compras do período (provavelmente por lista de compras finalizada), avisando os membros do grupo quando ultrapassar. O app já tem parte disso (category_budgets/computeBudgetProgress, js/services/budgets.js) mas é sempre PESSOAL (owner_id), nunca de grupo — e não dispara notificação a ninguém quando estoura, só indicador visual. Precisa de: (1) decidir se orçamento de categoria vira group-scoped (mudança de schema/regra deliberada, hoje é decisão explícita \"sempre pessoal\") ou se é um limite específico à parte; (2) integrar com o sistema de notificação já existente (severidade INFO/ATTENTION/WARNING/CRITICAL) pra avisar o(s) outro(s) membro(s). Não iniciado — precisa de uma rodada de product-manager antes de desenhar a implementação.",
+      "description": "CONCLUÍDO (2026-09-01). Orçamento continua PESSOAL (owner_id, category_budgets sem mudança de schema) — o que muda é o AVISO, que vai pro grupo inteiro, não só quem estourou (mesmo espírito do cartão de crédito: pessoal mas visível ao grupo). Modo real: trigger security-definer novo `notificar_orcamento_estourado` (supabase/schema.sql), mesmo padrão de notificar_pagamento_para_grupo, ancorado em responsavel_id pra bater com o filtro já usado em dashboard.js::orcamentoAlerta. Modo demo: função nova `generateBudgetAlerts` (js/services/notifications.js), chamada no login e logo após finalizar() lançar a despesa (feedback imediato). dedupe_key por owner+categoria+mês evita repetir aviso a cada nova compra no mesmo mês já estourado. Categoria \"Mercado\" + orçamento de exemplo adicionados ao seed de demo (não existia lá, só em conta real via ensureDefaultCategories). Bug encontrado no processo: data de exemplo usando \"2 dias atrás\" cruzava pro mês anterior perto da virada do mês (reproduzido testando no dia 1º) — corrigido pra sempre \"hoje\".",
       "category": "Backend",
       "priority": "MEDIUM",
-      "status": "BACKLOG",
-      "agent": "product-manager",
+      "status": "DONE",
+      "agent": "claude",
       "tags": ["compras", "orcamento", "notificacoes", "pedido-usuario"],
       "dependencies": [],
       "createdAt": "2026-08-23T00:00:00-03:00",
-      "updatedAt": "2026-08-23T00:00:00-03:00",
+      "updatedAt": "2026-09-01T00:00:00-03:00",
       "history": [
-        { "action": "CREATED", "to": "BACKLOG", "updatedBy": "claude", "timestamp": "2026-08-23T00:00:00-03:00" }
+        { "action": "CREATED", "to": "BACKLOG", "updatedBy": "claude", "timestamp": "2026-08-23T00:00:00-03:00" },
+        { "action": "STATUS_CHANGED", "from": "BACKLOG", "to": "DONE", "updatedBy": "claude", "timestamp": "2026-09-01T00:00:00-03:00", "note": "52 unit + e2e novo (orcamento-estourado-notifica.spec.js) verdes." }
       ]
     },
     {

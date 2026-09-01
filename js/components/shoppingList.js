@@ -1,6 +1,7 @@
 import * as sl from '../services/shoppingList.js';
 import { startBarcodeScanner, stopBarcodeScanner, lookupProductByBarcode, searchProductByName, mensagemErroCamera } from '../services/barcode.js';
 import { createTransaction } from '../services/transactions.js';
+import { generateBudgetAlerts } from '../services/notifications.js';
 import { recognizeText, parseReceiptText } from '../services/ocr.js';
 import { todayIso, semAcento } from '../utils/format.js';
 import { resizeImage } from '../utils/image.js';
@@ -414,6 +415,14 @@ export function shoppingView() {
           await sl.linkListToTransaction(this.list.id, tx.id);
           window.dispatchEvent(new CustomEvent('cg:transactions-changed'));
           store.notify('Compra lançada no financeiro.');
+          // Best-effort: se essa compra estourou o orçamento de "Mercado" (ou
+          // qualquer categoria com limite), avisa na hora em vez de esperar a
+          // próxima varredura de 5min. Modo real: o trigger do banco já cobre
+          // isso sozinho (ver supabase/schema.sql); chamar de novo aqui não
+          // duplica notificação (dedupe_key), só não faz nada.
+          generateBudgetAlerts({ ownerId: store.profile.id, groupId: store.group?.group?.id ?? null })
+            .then(() => store.refreshNotifications())
+            .catch(() => {});
         }
 
         await this.novaLista();

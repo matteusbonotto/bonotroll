@@ -88,13 +88,25 @@ test('compra dentro da fatura continua aparecendo em "Contas a vencer" quando es
 
   // Puxa o vencimento da fatura E da compra pro dia 1 do mês corrente: as
   // duas continuam no mesmo mês (então a compra segue agrupada dentro da
-  // fatura) e a compra passa a ser a mais antiga da fila de "a vencer",
-  // garantindo que ela caiba no corte de 5 itens da lista.
+  // fatura). "Contas a vencer" (dashboard.js::contasAVencer) mostra só as 5
+  // datas mais urgentes do escopo inteiro — sem isolar o cenário, o teste
+  // fica refém de quantos OUTROS itens do seed calham de estar vencidos no
+  // dia em que ele roda (o seed usa datas relativas a "hoje": conforme o
+  // tempo real passa, mais itens cruzam pra "vencido" e disputam esse
+  // corte de 5, derrubando o teste sem nenhuma mudança de código real —
+  // já aconteceu). Corrigido marcando toda outra transação como PAGA
+  // (`computeStatus`: pago nunca aparece em "a vencer"), garantindo que só
+  // as duas desta cena disputem o topo, não importa a data real de hoje.
   await page.evaluate(() => {
     const db = JSON.parse(localStorage.getItem('bonotto_demo_db_v1'));
     const dia1 = `${new Date().toISOString().slice(0, 8)}01`;
+    const hoje = new Date().toISOString().slice(0, 10);
     for (const t of db.transactions) {
-      if (t.titulo === 'Amazon Prime' || t.titulo === 'Fatura Cartão de Crédito') t.data_vencimento = dia1;
+      if (t.titulo === 'Amazon Prime' || t.titulo === 'Fatura Cartão de Crédito') {
+        t.data_vencimento = dia1;
+      } else if (t.tipo === 'saida' && !t.data_pagamento) {
+        t.data_pagamento = hoje;
+      }
     }
     localStorage.setItem('bonotto_demo_db_v1', JSON.stringify(db));
   });

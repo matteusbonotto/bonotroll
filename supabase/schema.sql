@@ -832,6 +832,94 @@ create trigger notificar_pagamento_trigger
   when (new.data_pagamento is not null and old.data_pagamento is null and new.group_id is not null)
   execute function public.notificar_pagamento_para_grupo();
 
+-- =========================================================
+-- NOTIFICAR O GRUPO QUANDO UM ORÇAMENTO POR CATEGORIA ESTOURA (2026-09-01)
+--
+-- Pedido explícito: categoria "Mercado" (ou qualquer outra com orçamento
+-- definido) com limite de gasto no mês — ao ultrapassar, avisar OS MEMBROS,
+-- não só quem estourou. Mesmo padrão do trigger de pagamento acima: security
+-- definer, ignora RLS de propósito, dispara sozinho — depender do cliente
+-- inserir notificação pro profile_id de outro membro já se provou frágil
+-- sob RLS real (ver comentário do trigger de pagamento). Orçamento continua
+-- pessoal (owner_id, ver js/services/budgets.js) — só o AVISO é de grupo.
+-- dedupe_key por owner+categoria+mês: só a compra que FAZ o total cruzar o
+-- limite gera aviso; compras seguintes no mesmo mês/categoria não repetem.
+-- =========================================================
+
+create or replace function public.notificar_orcamento_estourado()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_limite numeric(12,2);
+  v_gasto numeric(12,2);
+  v_categoria_nome text;
+  v_mes text;
+begin
+  -- Ancorado em responsavel_id (não owner_id): "quanto ESSA pessoa gastou
+  -- nesta categoria" é a mesma pergunta que dashboard.js::orcamentoAlerta já
+  -- faz no cliente (filtra por responsavel_id antes de chamar
+  -- computeBudgetProgress) — sem responsável definido não há orçamento
+  -- pessoal de ninguém pra checar.
+  if new.tipo <> 'saida' or new.categoria_id is null or new.responsavel_id is null then
+    return new;
+  end if;
+
+  select valor_limite into v_limite
+  from category_budgets
+  where owner_id = new.responsavel_id and categoria_id = new.categoria_id;
+
+  if v_limite is null or v_limite <= 0 then
+    return new;
+  end if;
+
+  v_mes := to_char(new.data_cadastro, 'YYYY-MM');
+
+  select coalesce(sum(valor), 0) into v_gasto
+  from transactions
+  where responsavel_id = new.responsavel_id
+    and categoria_id = new.categoria_id
+    and tipo = 'saida'
+    and to_char(data_cadastro, 'YYYY-MM') = v_mes;
+
+  -- Mesmo limiar já usado no card de saldo da Home (dashboard.js::orcamentoAlerta,
+  -- "estourado: percentual >= 100") — uma única definição de "estourou" no produto inteiro.
+  if v_gasto < v_limite then
+    return new;
+  end if;
+
+  select nome into v_categoria_nome from categories where id = new.categoria_id;
+
+  insert into notifications (profile_id, tipo, titulo, corpo, referencia_tabela, referencia_id, dedupe_key, lida)
+  select
+    destinatarios.profile_id,
+    'orcamento_estourado',
+    'Orçamento de "' || coalesce(v_categoria_nome, 'categoria') || '" estourou',
+    'Gasto: R$ ' || to_char(v_gasto, 'FM999999990.00') || ' · Limite: R$ ' || to_char(v_limite, 'FM999999990.00'),
+    'category_budgets',
+    new.categoria_id,
+    'orcamento_estourado:' || new.responsavel_id || ':' || new.categoria_id || ':' || v_mes,
+    false
+  from (
+    select new.responsavel_id as profile_id
+    union
+    select gm.profile_id from group_members gm where new.group_id is not null and gm.group_id = new.group_id
+  ) as destinatarios
+  on conflict (profile_id, dedupe_key) do nothing;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists notificar_orcamento_trigger on transactions;
+create trigger notificar_orcamento_trigger
+  after insert or update on transactions
+  for each row
+  when (new.tipo = 'saida' and new.categoria_id is not null)
+  execute function public.notificar_orcamento_estourado();
+
 alter table push_subscriptions enable row level security;
 drop policy if exists "Gerenciar a própria inscrição de push" on push_subscriptions;
 create policy "Gerenciar a própria inscrição de push" on push_subscriptions for all

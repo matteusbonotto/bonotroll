@@ -17,6 +17,12 @@ Nota de processo: tentei validar o pipeline de OCR ponta a ponta com uma imagem 
 
 `git log` já é a fonte de verdade de QUAIS arquivos mudaram. Este documento registra o motivo por trás de mudanças não óbvias a partir do diff sozinho — não duplicar aqui o que a mensagem de commit já explica bem.
 
+## 2026-09-01 — Reconciliação de status + FEAT-003 (orçamento de Mercado)
+
+Usuário perguntou "foi pro GitHub Pages ou só pra main?" e reportou "pedi correções e até hoje não foram aplicadas". Investigação: `main` E GitHub Pages são a mesma coisa (`gh api .../pages` confirma `source.branch = main`), e o conteúdo mais recente estava mesmo no ar (confirmado buscando o CSS publicado de verdade). Causa real da sensação de "nada mudou": o service worker (PWA) usa `CACHE_NAME` versionado e os 2 deploys anteriores esqueceram de bumpar essa versão — corrigido (v6→v7). Reli a memória inteira (decisions/bugs/user-requirements) pra reconciliar item por item o que tinha sido pedido vs. o que estava realmente aplicado — todos os BUG-00X estavam de fato corrigidos e no ar; o que faltava de verdade eram os pedidos de FEATURE novos (FEAT-003, IDEA-004/005/006), não bugs esquecidos.
+
+Na sequência, implementei FEAT-003: categoria "Mercado" com limite de gasto + aviso ao grupo quando estoura. Ver `.claude/memory/decisions.md` pra decisão de design (orçamento continua pessoal, só o aviso é de grupo).
+
 ## 2026-08-22 — Rodada: cartão de crédito multi-banco + privacidade do mock + auditoria visual
 
 Contexto completo: usuário trouxe 2 "master prompts" próprios (MASTER PROJECT BUILDER + BONOBOTT) pedindo pra reorganizar `.claude/` com o que eles descrevem (memória persistente, discussões entre agentes, checklist Kanban) — decisão de adaptação: **não** criar a árvore genérica `IA/` que os prompts descrevem, porque o projeto já tinha adaptado esse mesmo objetivo pra mecanismos nativos do Claude Code (agentes reais em `.claude/agents/`, skills em vez de "comandos" genéricos) numa sessão anterior (`.claude/prompt-agentssr.md`, o prompt que originou essa adaptação). Reorganizar em cima do que já existe, preenchendo só as peças que faltavam (`memory/`, `discussions/`, `checklist/`), é mais fiel ao princípio dos próprios prompts trazidos pelo usuário ("Nunca presumir que uma capacidade existe" / "não duplicar capacidades") do que seguir a árvore literal.

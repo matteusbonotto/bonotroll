@@ -4,6 +4,13 @@ Log de decisões arquiteturais/técnicas relevantes. Uma linha de contexto não 
 
 ---
 
+## 2026-09-01 — Orçamento estourado avisa o GRUPO, mas o orçamento continua pessoal
+
+- **Decisão**: `category_budgets` continua `owner_id`-scoped (sem mudança de schema/regra) — a novidade é só o destinatário da notificação, que passa a incluir todos os membros do grupo, não só quem definiu/estourou o próprio orçamento.
+- **Por quê**: pedido do usuário ("assim como cartão de crédito... avise os membros") — mesmo espírito já usado pro cartão de crédito (instrumento pessoal, visibilidade de grupo). Generalizar pra "avisar o grupo" em vez de criar um conceito novo de "orçamento compartilhado" evita reabrir a decisão já registrada de 2026-08-20 sobre orçamento ser sempre pessoal.
+- **Impacto**: novo trigger `notificar_orcamento_estourado` (modo real) + `generateBudgetAlerts` (modo demo) — mesma divisão real×demo já usada por `notifyPayment`/`notificar_pagamento_para_grupo`. Funciona pra QUALQUER categoria com orçamento definido, não só "Mercado" (a pergunta do usuário era sobre Mercado especificamente, mas nada no mecanismo é Mercado-específico — generalizar não custou esforço extra).
+- **Status**: ATIVO.
+
 ## 2026-09-01 — Todo deploy futuro DEVE bumpar `CACHE_NAME` do service worker
 
 - **Decisão**: nunca fazer `git push origin main` que mude qualquer arquivo do `APP_SHELL` (`sw.js`) sem também bumpar `CACHE_NAME` no mesmo commit/rodada.
