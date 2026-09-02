@@ -480,11 +480,13 @@
   min-height: var(--touch-target);
   border-radius: var(--radius-pill);
   font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-body-sm);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   padding-inline: var(--space-5);
+  box-shadow: none;
 }
 
 .cg-btn-icon {
@@ -606,6 +608,20 @@
    uma do lado da outra: pílula preenchida vs. retângulo com borda). */
 .cg-shopping-toggle--outline { background: transparent; border: 1.5px solid var(--color-warning); color: var(--color-warning); }
 .cg-shopping-toggle--outline:hover { background: color-mix(in srgb, var(--color-warning) 12%, transparent); }
+
+/* Variante compacta (2026-09-02, pedido explícito): usada só no cabeçalho
+   da Lista de Compras, ao lado do título — precisa caber na MESMA linha
+   que o nome da lista, inclusive no mobile, então é bem menor que o
+   .cg-shopping-toggle "solto" (56px) usado em outros lugares hipotéticos.
+   Mais específico que a regra base (2 classes), sempre vence independente
+   de media query/ordem de arquivo. */
+.cg-shopping-toggle.cg-shopping-toggle--compact {
+  min-height: 38px;
+  font-size: 0.8rem;
+  padding-inline: 12px;
+  gap: 6px;
+}
+.cg-shopping-toggle--compact i { font-size: 0.9rem; }
 
 /* ---------- Item de lista de compras ---------- */
 .cg-item-row {
@@ -779,6 +795,30 @@
   border-color: var(--color-primary);
 }
 
+/* Rodapé de ações do card de Compras na Grade/Grade compacta (2026-09-02,
+   pedido explícito do usuário) — Editar/Excluir/Comprar (ou Desfazer),
+   mesma ordem e mesma regra de visibilidade da view Lista (.cg-item-row).
+   Classe NOVA e exclusiva deste rodapé — NÃO estender .cg-grid-view__card
+   nem .cg-grid-view diretamente aqui, que são COMPARTILHADOS com a Grade
+   de Transações (outro x-data); qualquer ajuste específico de Compras
+   precisa ficar contido nesta classe própria, usada só no template de
+   Compras (index.html). */
+.cg-grid-view__actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  width: 100%;
+  margin-top: 2px;
+  padding-top: 6px;
+  border-top: 1px solid var(--color-border);
+}
+.cg-grid-view--compact .cg-grid-view__actions {
+  gap: 4px;
+  padding-top: 4px;
+}
+
 /* ---------- Seletor de prioridade (1-5 estrelas) — lista de compras ---------- */
 .cg-star-picker {
   display: inline-flex;
@@ -817,8 +857,11 @@
    corrigido em 2026-08-23: tocar o card durante emCompra só marca/desmarca
    comprado, e antes não havia NENHUM jeito de remover um item sem sair do
    modo compra. Canto oposto ao de prioridade (top-left), classe própria em
-   vez de reaproveitar .cg-star-mini--corner porque é um <button>, não um
-   <span>, e a cor precisa ser de perigo (vermelho), não âmbar de estrela. */
+   vez de reaproveitar .cg-star-mini--corner porque era um <button>, não um
+   <span>, e a cor precisava ser de perigo (vermelho), não âmbar de estrela.
+   Substituído (2026-09-02) pelo rodapé .cg-grid-view__actions logo abaixo
+   (Editar/Excluir/Comprar, mesma regra da view Lista) — .cg-item-delete-corner
+   não é mais usado em index.html, removido daqui junto. */
 .cg-item-thumb {
   width: 40px;
   height: 40px;
@@ -827,24 +870,6 @@
   background: var(--color-surface-alt);
   align-self: center;
   margin-bottom: var(--space-1);
-}
-.cg-item-delete-corner {
-  position: absolute;
-  top: 6px;
-  left: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
-  min-height: 0;
-  padding: 0;
-  border: none;
-  border-radius: 50%;
-  background: var(--color-surface);
-  color: var(--color-danger);
-  box-shadow: var(--shadow-sm);
-  z-index: 1;
 }
 
 /* ---------- Toasts (sucesso/erro de qualquer ação) ---------- */
@@ -1256,13 +1281,6 @@ body { font-size: var(--font-size-body); }
    altura menor (.cg-agrupar-toggle, .cg-btn.btn-sm, .cg-shopping-toggle,
    quick actions da Início no mobile) têm min-height PRÓPRIO, mais
    específico, então não regridem com esta mudança — ver app.css. */
-.cg-btn {
-  min-height: var(--touch-target);
-  border-radius: var(--radius-md);
-  font-size: var(--font-size-body-sm);
-  padding-inline: 16px;
-  box-shadow: none;
-}
 .cg-quick-actions .btn-danger { background: var(--color-ink); border-color: var(--color-ink); color: var(--color-on-ink); }
 .cg-quick-actions .btn-outline-danger { color: var(--color-text); border-color: var(--color-border); }
 .cg-quick-actions .btn-outline-success { color: var(--color-primary-dark); border-color: var(--color-primary); }

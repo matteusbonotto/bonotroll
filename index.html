@@ -1168,18 +1168,41 @@
         <!-- ===== LISTA DE COMPRAS ===== -->
         <section class="cg-view-compras" x-show="$store.app.view === 'compras'" x-data="shoppingView()" x-init="init()">
           <div class="cg-card cg-shopping-panel mb-2 mb-md-3" x-show="list">
-            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2 mb-md-3">
-              <div>
-                <div class="cg-section-title mb-0"><i class="bi bi-cart3"></i> <span x-text="list?.nome"></span></div>
-                <span class="cg-muted small" x-text="planejando ? 'Planejando' : emCompra ? 'Comprando agora' : pausada ? 'Pausada' : 'Finalizada'"></span>
+            <!-- Importar CSV virou botão fixo no canto superior direito do
+                 painel (pedido explícito, 2026-09-02) — antes disputava
+                 espaço/linha com "Ver gráfico"/"Histórico" no resumo abaixo.
+                 position:absolute dentro de .cg-shopping-panel (position:
+                 relative), num respiro reservado no topo do card
+                 (padding-top maior, ver components/app.css) pra nunca
+                 sobrepor o cabeçalho (título + Iniciar/Encerrar etc.) que
+                 já ocupa esse canto no fluxo normal logo abaixo. -->
+            <button type="button" class="cg-shopping-panel__import" @click="abrirImportacao()" title="Importar CSV" aria-label="Importar CSV"><i class="bi bi-upload"></i></button>
+
+            <!-- Cabeçalho (título + Iniciar/Encerrar/Pausar/Retomar/Cancelar)
+                 numa linha só, inclusive no mobile (2026-09-02, pedido
+                 explícito) — sem a utility "flex-wrap" do Bootstrap (o
+                 default de flex já é nowrap), o título trunca com "…"
+                 (min-w-0 + text-truncate) em vez de forçar o grupo de
+                 botões pra uma segunda linha, e o grupo de botões nunca
+                 encolhe (flex-shrink-0, largura de conteúdo preservada).
+                 Effect relatado antes desta mudança: esse bloco sozinho
+                 empurrava a lista de itens pra quase fora da tela no
+                 celular ("ocupa uns 40% da tela"). -->
+            <div class="cg-shopping-header d-flex align-items-center justify-content-between gap-2 mb-2 mb-md-3">
+              <div class="min-w-0">
+                <div class="cg-section-title mb-0 d-flex align-items-center gap-2 min-w-0">
+                  <i class="bi bi-cart3 flex-shrink-0"></i>
+                  <span class="text-truncate" x-text="list?.nome"></span>
+                </div>
+                <span class="cg-muted small text-truncate d-block" x-text="planejando ? 'Planejando' : emCompra ? 'Comprando agora' : pausada ? 'Pausada' : 'Finalizada'"></span>
               </div>
-              <div class="d-flex flex-wrap gap-2">
-                <button type="button" class="cg-shopping-toggle" :class="emCompra ? 'cg-shopping-toggle--finish' : 'cg-shopping-toggle--start'" @click="toggleStart()">
+              <div class="cg-shopping-header__actions d-flex align-items-center gap-2 flex-shrink-0">
+                <button type="button" class="cg-shopping-toggle cg-shopping-toggle--compact" :class="emCompra ? 'cg-shopping-toggle--finish' : 'cg-shopping-toggle--start'" @click="toggleStart()" :aria-label="emCompra ? 'Encerrar Compra' : 'Iniciar Compra'">
                   <i class="bi" :class="emCompra ? 'bi-flag-fill' : 'bi-play-fill'"></i>
-                  <span x-text="emCompra ? 'Encerrar Compra' : 'Iniciar Compra'"></span>
+                  <span class="cg-shopping-toggle__label" x-text="emCompra ? 'Encerrar Compra' : 'Iniciar Compra'"></span>
                 </button>
-                <button type="button" class="cg-shopping-toggle cg-shopping-toggle--outline" x-show="emCompra" @click="pausar()"><i class="bi bi-pause-fill"></i> Pausar</button>
-                <button type="button" class="cg-shopping-toggle cg-shopping-toggle--outline" x-show="pausada" @click="retomar()"><i class="bi bi-play-fill"></i> Retomar</button>
+                <button type="button" class="cg-shopping-toggle cg-shopping-toggle--outline cg-shopping-toggle--compact" x-show="emCompra" @click="pausar()" aria-label="Pausar"><i class="bi bi-pause-fill"></i> <span class="cg-shopping-toggle__label">Pausar</span></button>
+                <button type="button" class="cg-shopping-toggle cg-shopping-toggle--outline cg-shopping-toggle--compact" x-show="pausada" @click="retomar()" aria-label="Retomar"><i class="bi bi-play-fill"></i> <span class="cg-shopping-toggle__label">Retomar</span></button>
                 <!-- Cancelar: só aparece pausada — distinta de "Retomar" (que
                      também é só voltar a comprar, mesma coisa que clicar em
                      "Iniciar Compra" de novo enquanto pausada, os dois hoje
@@ -1190,7 +1213,7 @@
                      nova em branco. Baixa ênfase de propósito (outline,
                      btn-sm, não a mesma família .cg-shopping-toggle) pra não
                      competir visualmente com "Retomar". -->
-                <button type="button" class="cg-btn btn btn-outline-danger btn-sm" x-show="pausada" @click="cancelarPausada()"><i class="bi bi-x-circle"></i> Cancelar</button>
+                <button type="button" class="cg-btn btn btn-outline-danger btn-sm" x-show="pausada" @click="cancelarPausada()" aria-label="Cancelar"><i class="bi bi-x-circle"></i> <span class="cg-shopping-toggle__label">Cancelar</span></button>
               </div>
             </div>
 
@@ -1199,22 +1222,23 @@
               <div class="min-w-0"><span class="cg-muted small d-block">Total a pagar</span><span class="fw-bold" :title="cgFormat.formatCurrency(resumo.valorTotal)" x-text="cgFormat.formatCurrencyCompact(resumo.valorTotal)"></span></div>
               <button type="button" class="cg-btn btn btn-outline-secondary btn-sm ms-auto" @click="graficoAberto = true"><i class="bi bi-pie-chart"></i> Ver gráfico</button>
               <button type="button" class="cg-btn btn btn-outline-secondary btn-sm" @click="abrirHistorico()"><i class="bi bi-clock-history"></i> Histórico</button>
-              <button type="button" class="cg-btn btn btn-outline-secondary btn-sm" @click="abrirImportacao()"><i class="bi bi-upload"></i> Importar CSV</button>
             </div>
 
             <!-- Mercado (aparece no histórico depois) e limite de gasto
                  (opcional, com barra verde/amarelo/vermelho conforme se
                  aproxima ou passa do limite) — os dois editáveis a
-                 qualquer momento, não só ao iniciar a compra. -->
+                 qualquer momento, não só ao iniciar a compra. Lado a lado
+                 mesmo no mobile (col-6 col-6, pedido explícito 2026-09-02 —
+                 antes col-12 col-sm-6 empilhava os dois abaixo de ~576px). -->
             <div class="row g-2 g-md-3 border-top pt-2 pt-md-3 mt-1">
-              <div class="col-12 col-sm-6">
+              <div class="col-6">
                 <label class="form-label small">Mercado (opcional)</label>
                 <input type="text" class="form-control form-control-sm" placeholder="Ex: Extra, Carrefour…" :value="list?.nome_mercado || ''" @change="salvarNomeMercado($event.target.value)" />
               </div>
-              <div class="col-12 col-sm-6">
+              <div class="col-6">
                 <label class="form-label small">Limite de gasto (opcional)</label>
                 <div class="d-flex align-items-center gap-2 flex-wrap">
-                  <span class="fw-bold fs-5" x-text="list?.limite_gasto ? cgFormat.formatCurrency(list.limite_gasto) : 'Sem limite'"></span>
+                  <span class="fw-bold fs-5 text-truncate" x-text="list?.limite_gasto ? cgFormat.formatCurrency(list.limite_gasto) : 'Sem limite'"></span>
                   <button type="button" class="cg-btn-icon btn btn-outline-secondary" @click="abrirLimiteGasto()" title="Editar limite de gasto" aria-label="Editar limite de gasto"><i class="bi bi-pencil"></i></button>
                   <template x-if="statusLimiteGasto">
                     <div class="cg-limite-kpi" :class="'cg-limite-kpi--' + statusLimiteGasto.nivel">
@@ -1279,7 +1303,7 @@
                       <input type="file" accept="image/*" class="d-none" @change="onFotoItem($event)" :disabled="lendoFotoItem" />
                     </label>
                   </div>
-                  <div class="d-flex align-items-center gap-2 mt-2" x-show="novoItem.foto_url">
+                  <div class="d-flex align-items-center gap-2 mt-2" x-show.important="novoItem.foto_url">
                     <img :src="novoItem.foto_url" alt="" style="width:40px;height:40px;object-fit:contain;border-radius:var(--radius-md);background:var(--color-surface-alt);" />
                     <span class="cg-muted small">Foto identificada automaticamente</span>
                   </div>
@@ -1452,22 +1476,22 @@
                         <span class="cg-star-mini" x-show="item.prioridade >= 4" title="Prioridade alta"><i class="bi bi-star-fill"></i></span>
                       </div>
                       <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                        <!-- Ordem pedida explicitamente (2026-09-02): Editar,
+                             Excluir, Comprar por último (à direita) — mesmo
+                             isso pondo Excluir do lado de Comprar de novo.
+                             O espaçador físico do lápis (ordem antiga, ver
+                             git log) era só reforço de UX; a proteção real
+                             contra exclusão acidental é o "Desfazer" (5s) em
+                             removeItem() (shoppingList.js), que não depende
+                             de posição de botão nenhuma. -->
+                        <button type="button" class="btn btn-sm btn-outline-secondary" @click="abrirEdicao(item)" title="Editar" aria-label="Editar"><i class="bi bi-pencil"></i></button>
+                        <button type="button" class="btn btn-sm btn-outline-danger" @click="removeItem(item.id)" title="Remover" aria-label="Remover"><i class="bi bi-trash"></i></button>
                         <template x-if="emCompra && itemEmEdicaoId !== item.id && !item.comprado">
                           <button type="button" class="cg-btn btn btn-success btn-sm" @click="abrirPreco(item)">Comprar</button>
                         </template>
                         <template x-if="emCompra && item.comprado">
                           <button type="button" class="cg-btn btn btn-outline-secondary btn-sm" @click="desmarcarComprado(item)" aria-label="Desmarcar como comprado"><i class="bi bi-arrow-counterclockwise"></i></button>
                         </template>
-                        <!-- Editar entre "Comprar" e "Excluir" de propósito
-                             (2026-09-01, bug real relatado em uso: pessoas
-                             mirando "Comprar" acertavam "Excluir" do lado e
-                             perdiam o item) — o lápis funciona como
-                             espaçador físico entre a ação principal e a
-                             destrutiva, reduzindo erro de dedo. A rede de
-                             segurança de verdade é o "Desfazer" agora em
-                             removeItem() (shoppingList.js). -->
-                        <button type="button" class="btn btn-sm btn-outline-secondary" @click="abrirEdicao(item)" title="Editar" aria-label="Editar"><i class="bi bi-pencil"></i></button>
-                        <button type="button" class="btn btn-sm btn-outline-danger ms-1" @click="removeItem(item.id)" title="Remover" aria-label="Remover"><i class="bi bi-trash"></i></button>
                       </div>
                     </div>
                   </div>
@@ -1482,14 +1506,6 @@
           <div class="cg-grid-view" :class="{ 'cg-grid-view--compact': viewMode === 'compacta' }" x-show="viewMode !== 'lista' && itemsOrdenados.length">
             <template x-for="item in itemsOrdenados" :key="item.id">
               <div class="cg-card cg-grid-view__card" :class="{ 'is-comprado': item.comprado }" @click="emCompra ? (item.comprado ? desmarcarComprado(item) : abrirPreco(item)) : abrirEdicao(item)">
-                <!-- Durante a compra (emCompra), tocar o card só marca/desmarca
-                     comprado — antes não tinha NENHUM jeito de remover um item
-                     errado sem sair do modo compra (bug real relatado em uso:
-                     confusão entre "Comprar" e excluir, porque excluir não
-                     existia aqui). Botão dedicado, canto oposto ao de
-                     prioridade, só durante a compra (fora dela, tocar o card
-                     já abre o editor completo, que já tem Excluir). -->
-                <button type="button" class="cg-item-delete-corner" x-show="emCompra" @click.stop="removeItem(item.id)" title="Remover item" aria-label="Remover item"><i class="bi bi-trash"></i></button>
                 <span class="cg-star-mini cg-star-mini--corner" x-show="item.prioridade >= 4" title="Prioridade alta"><i class="bi bi-star-fill"></i></span>
                 <!-- Foto do produto (2026-08-24, pedido explícito: leitura de
                      código de barras/foto deve preencher o formulário
@@ -1504,6 +1520,24 @@
                 <div class="fw-semibold text-truncate w-100" x-text="item.nome"></div>
                 <div class="cg-muted small" x-text="item.quantidade + ' ' + item.unidade"></div>
                 <div class="fw-semibold" x-show="item.comprado" :title="cgFormat.formatCurrency(item.subtotal)" x-text="cgFormat.formatCurrencyCompact(item.subtotal)"></div>
+                <!-- Rodapé de ações (2026-09-02, pedido explícito): mesmas 3
+                     ações e mesma ordem/regra de visibilidade da view Lista
+                     (Editar, Excluir sempre; Comprar/Desfazer só durante a
+                     compra) — substitui o ícone de lixeira isolado no canto
+                     que existia antes (só emCompra, sem editar). @click.stop
+                     no wrapper impede que o clique num botão dispare também
+                     o @click do card inteiro (abrir editor / marcar comprado)
+                     logo acima. -->
+                <div class="cg-grid-view__actions" @click.stop>
+                  <button type="button" class="btn btn-sm btn-outline-secondary" @click="abrirEdicao(item)" title="Editar" aria-label="Editar"><i class="bi bi-pencil"></i></button>
+                  <button type="button" class="btn btn-sm btn-outline-danger" @click="removeItem(item.id)" title="Remover" aria-label="Remover"><i class="bi bi-trash"></i></button>
+                  <template x-if="emCompra && itemEmEdicaoId !== item.id && !item.comprado">
+                    <button type="button" class="cg-btn btn btn-success btn-sm" @click="abrirPreco(item)">Comprar</button>
+                  </template>
+                  <template x-if="emCompra && item.comprado">
+                    <button type="button" class="cg-btn btn btn-outline-secondary btn-sm" @click="desmarcarComprado(item)" aria-label="Desmarcar como comprado"><i class="bi bi-arrow-counterclockwise"></i></button>
+                  </template>
+                </div>
               </div>
             </template>
           </div>
@@ -1859,7 +1893,7 @@
                     <input type="file" accept="image/*" class="d-none" @change="onFotoNomeItem($event)" :disabled="lendoFotoItem" />
                   </label>
                 </div>
-                <div class="d-flex align-items-center gap-2 mt-2" x-show="itemForm.foto_url">
+                <div class="d-flex align-items-center gap-2 mt-2" x-show.important="itemForm.foto_url">
                   <img :src="itemForm.foto_url" alt="" style="width:40px;height:40px;object-fit:contain;border-radius:var(--radius-md);background:var(--color-surface-alt);" />
                   <span class="cg-muted small">Foto identificada automaticamente</span>
                 </div>
@@ -2228,22 +2262,28 @@
 
               <!-- "Entre vocês" (docs/BONOTTO-2027-BLUEPRINT.md §8, fluxo de
                    casal) — quem deve quanto pra quem, sem precisar somar de
-                   cabeça. Só aparece havendo alguma dívida líquida. -->
+                   cabeça. Só aparece havendo alguma dívida líquida.
+                   Sem .cg-card p-0 próprio aqui (2026-09-02) — era card
+                   dentro de card (o .cg-card externo já engloba a tela toda
+                   de Grupo), a sombra do BUG-003 vinha junto e criava uma
+                   segunda superfície elevada visível dentro da primeira.
+                   .cg-list-flat já é o componente certo pra linha sem
+                   elevação própria; border-top + label de seção substituem
+                   o card como separador visual entre o bloco de membros
+                   acima e este. -->
               <template x-if="saldosEntreMembros.length">
-                <div class="mb-3">
+                <div class="mb-3 pt-3 border-top">
                   <div class="cg-muted small fw-semibold text-uppercase mb-2">Entre vocês</div>
-                  <div class="cg-card p-0">
-                    <template x-for="(s, i) in saldosEntreMembros" :key="i">
-                      <div class="cg-list-flat px-3">
-                        <div class="cg-icon-badge"><i class="bi bi-arrow-left-right"></i></div>
-                        <div class="flex-fill">
-                          <span x-text="nomeMembro(s.devedorId)"></span> deve
-                          <strong x-text="cgFormat.formatCurrency(s.valor)"></strong>
-                          pra <span x-text="nomeMembro(s.credorId)"></span>
-                        </div>
+                  <template x-for="(s, i) in saldosEntreMembros" :key="i">
+                    <div class="cg-list-flat">
+                      <div class="cg-icon-badge"><i class="bi bi-arrow-left-right"></i></div>
+                      <div class="flex-fill">
+                        <span x-text="nomeMembro(s.devedorId)"></span> deve
+                        <strong x-text="cgFormat.formatCurrency(s.valor)"></strong>
+                        pra <span x-text="nomeMembro(s.credorId)"></span>
                       </div>
-                    </template>
-                  </div>
+                    </div>
+                  </template>
                 </div>
               </template>
 

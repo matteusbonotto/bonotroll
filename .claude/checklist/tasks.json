@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-09-01T14:30:00-03:00",
+  "updatedAt": "2026-09-02T00:00:00-03:00",
   "tasks": [
     {
       "id": "DONE-001",
@@ -926,13 +926,25 @@
       "priority": "CRITICAL",
       "status": "DONE",
       "agent": "claude",
-      "tags": ["bug-producao", "dados", "undo"],
+      "tags": [
+        "bug-producao",
+        "dados",
+        "undo"
+      ],
       "dependencies": [],
-      "relatedDocs": [".claude/memory/bugs.md"],
+      "relatedDocs": [
+        ".claude/memory/bugs.md"
+      ],
       "createdAt": "2026-08-23T00:00:00-03:00",
       "updatedAt": "2026-08-23T00:00:00-03:00",
       "history": [
-        { "action": "CREATED", "to": "DONE", "updatedBy": "claude", "timestamp": "2026-08-23T00:00:00-03:00", "note": "52/52 unit + testes e2e de undo (Caixinha/Recursos) continuam verdes; novo teste tests/e2e/exclusao-transacao-persiste.spec.js prova o cenário exato do bug." }
+        {
+          "action": "CREATED",
+          "to": "DONE",
+          "updatedBy": "claude",
+          "timestamp": "2026-08-23T00:00:00-03:00",
+          "note": "52/52 unit + testes e2e de undo (Caixinha/Recursos) continuam verdes; novo teste tests/e2e/exclusao-transacao-persiste.spec.js prova o cenário exato do bug."
+        }
       ]
     },
     {
@@ -943,12 +955,23 @@
       "priority": "CRITICAL",
       "status": "DONE",
       "agent": "claude",
-      "tags": ["bug-producao", "performance", "camera", "ocr"],
+      "tags": [
+        "bug-producao",
+        "performance",
+        "camera",
+        "ocr"
+      ],
       "dependencies": [],
       "createdAt": "2026-08-23T00:00:00-03:00",
       "updatedAt": "2026-08-23T00:00:00-03:00",
       "history": [
-        { "action": "CREATED", "to": "DONE", "updatedBy": "claude", "timestamp": "2026-08-23T00:00:00-03:00", "note": "Não foi possível reproduzir o crash exato (depende de dispositivo real) — corrigido pela causa raiz identificada no código; resizeImage já tinha teste próprio (tests/e2e/resize-imagem.spec.js), continua verde." }
+        {
+          "action": "CREATED",
+          "to": "DONE",
+          "updatedBy": "claude",
+          "timestamp": "2026-08-23T00:00:00-03:00",
+          "note": "Não foi possível reproduzir o crash exato (depende de dispositivo real) — corrigido pela causa raiz identificada no código; resizeImage já tinha teste próprio (tests/e2e/resize-imagem.spec.js), continua verde."
+        }
       ]
     },
     {
@@ -959,12 +982,21 @@
       "priority": "HIGH",
       "status": "DONE",
       "agent": "claude",
-      "tags": ["bug-producao", "graficos", "compras"],
+      "tags": [
+        "bug-producao",
+        "graficos",
+        "compras"
+      ],
       "dependencies": [],
       "createdAt": "2026-08-23T00:00:00-03:00",
       "updatedAt": "2026-08-23T00:00:00-03:00",
       "history": [
-        { "action": "CREATED", "to": "DONE", "updatedBy": "claude", "timestamp": "2026-08-23T00:00:00-03:00" }
+        {
+          "action": "CREATED",
+          "to": "DONE",
+          "updatedBy": "claude",
+          "timestamp": "2026-08-23T00:00:00-03:00"
+        }
       ]
     },
     {
@@ -975,12 +1007,20 @@
       "priority": "MEDIUM",
       "status": "DONE",
       "agent": "claude",
-      "tags": ["compras", "ux"],
+      "tags": [
+        "compras",
+        "ux"
+      ],
       "dependencies": [],
       "createdAt": "2026-08-23T00:00:00-03:00",
       "updatedAt": "2026-08-23T00:00:00-03:00",
       "history": [
-        { "action": "CREATED", "to": "DONE", "updatedBy": "claude", "timestamp": "2026-08-23T00:00:00-03:00" }
+        {
+          "action": "CREATED",
+          "to": "DONE",
+          "updatedBy": "claude",
+          "timestamp": "2026-08-23T00:00:00-03:00"
+        }
       ]
     },
     {
@@ -991,12 +1031,21 @@
       "priority": "MEDIUM",
       "status": "DONE",
       "agent": "claude",
-      "tags": ["compras", "verificacao"],
+      "tags": [
+        "compras",
+        "verificacao"
+      ],
       "dependencies": [],
       "createdAt": "2026-08-23T00:00:00-03:00",
       "updatedAt": "2026-08-23T00:00:00-03:00",
       "history": [
-        { "action": "CREATED", "to": "DONE", "updatedBy": "claude", "timestamp": "2026-08-23T00:00:00-03:00", "note": "Teste passou de primeira — sem bug encontrado." }
+        {
+          "action": "CREATED",
+          "to": "DONE",
+          "updatedBy": "claude",
+          "timestamp": "2026-08-23T00:00:00-03:00",
+          "note": "Teste passou de primeira — sem bug encontrado."
+        }
       ]
     },
     {
@@ -1007,13 +1056,29 @@
       "priority": "HIGH",
       "status": "DONE",
       "agent": "claude",
-      "tags": ["bug-producao", "camera", "scanner"],
+      "tags": [
+        "bug-producao",
+        "camera",
+        "scanner"
+      ],
       "dependencies": [],
       "createdAt": "2026-08-23T00:00:00-03:00",
       "updatedAt": "2026-08-23T00:00:00-03:00",
       "history": [
-        { "action": "CREATED", "to": "BACKLOG", "updatedBy": "claude", "timestamp": "2026-08-23T00:00:00-03:00" },
-        { "action": "STATUS_CHANGED", "from": "BACKLOG", "to": "DONE", "updatedBy": "claude", "timestamp": "2026-08-23T00:00:00-03:00", "note": "Causa raiz não confirmada (não reproduzível remotamente) — mitigação real aplicada (erro real logado/exibido). Fechar de vez depende do usuário reportar a mensagem específica que aparecer da próxima vez." }
+        {
+          "action": "CREATED",
+          "to": "BACKLOG",
+          "updatedBy": "claude",
+          "timestamp": "2026-08-23T00:00:00-03:00"
+        },
+        {
+          "action": "STATUS_CHANGED",
+          "from": "BACKLOG",
+          "to": "DONE",
+          "updatedBy": "claude",
+          "timestamp": "2026-08-23T00:00:00-03:00",
+          "note": "Causa raiz não confirmada (não reproduzível remotamente) — mitigação real aplicada (erro real logado/exibido). Fechar de vez depende do usuário reportar a mensagem específica que aparecer da próxima vez."
+        }
       ]
     },
     {
@@ -1024,12 +1089,22 @@
       "priority": "MEDIUM",
       "status": "BACKLOG",
       "agent": "ux-ui",
-      "tags": ["performance", "compras"],
-      "dependencies": ["BUG-006"],
+      "tags": [
+        "performance",
+        "compras"
+      ],
+      "dependencies": [
+        "BUG-006"
+      ],
       "createdAt": "2026-08-23T00:00:00-03:00",
       "updatedAt": "2026-08-23T00:00:00-03:00",
       "history": [
-        { "action": "CREATED", "to": "BACKLOG", "updatedBy": "claude", "timestamp": "2026-08-23T00:00:00-03:00" }
+        {
+          "action": "CREATED",
+          "to": "BACKLOG",
+          "updatedBy": "claude",
+          "timestamp": "2026-08-23T00:00:00-03:00"
+        }
       ]
     },
     {
@@ -1040,13 +1115,30 @@
       "priority": "MEDIUM",
       "status": "DONE",
       "agent": "claude",
-      "tags": ["compras", "orcamento", "notificacoes", "pedido-usuario"],
+      "tags": [
+        "compras",
+        "orcamento",
+        "notificacoes",
+        "pedido-usuario"
+      ],
       "dependencies": [],
       "createdAt": "2026-08-23T00:00:00-03:00",
       "updatedAt": "2026-09-01T00:00:00-03:00",
       "history": [
-        { "action": "CREATED", "to": "BACKLOG", "updatedBy": "claude", "timestamp": "2026-08-23T00:00:00-03:00" },
-        { "action": "STATUS_CHANGED", "from": "BACKLOG", "to": "DONE", "updatedBy": "claude", "timestamp": "2026-09-01T00:00:00-03:00", "note": "52 unit + e2e novo (orcamento-estourado-notifica.spec.js) verdes." }
+        {
+          "action": "CREATED",
+          "to": "BACKLOG",
+          "updatedBy": "claude",
+          "timestamp": "2026-08-23T00:00:00-03:00"
+        },
+        {
+          "action": "STATUS_CHANGED",
+          "from": "BACKLOG",
+          "to": "DONE",
+          "updatedBy": "claude",
+          "timestamp": "2026-09-01T00:00:00-03:00",
+          "note": "52 unit + e2e novo (orcamento-estourado-notifica.spec.js) verdes."
+        }
       ]
     },
     {
@@ -1057,12 +1149,22 @@
       "priority": "LOW",
       "status": "BACKLOG",
       "agent": "product-manager",
-      "tags": ["sugestao", "pedido-usuario", "compras", "cartao-credito"],
+      "tags": [
+        "sugestao",
+        "pedido-usuario",
+        "compras",
+        "cartao-credito"
+      ],
       "dependencies": [],
       "createdAt": "2026-08-23T00:00:00-03:00",
       "updatedAt": "2026-08-23T00:00:00-03:00",
       "history": [
-        { "action": "CREATED", "to": "BACKLOG", "updatedBy": "claude", "timestamp": "2026-08-23T00:00:00-03:00" }
+        {
+          "action": "CREATED",
+          "to": "BACKLOG",
+          "updatedBy": "claude",
+          "timestamp": "2026-08-23T00:00:00-03:00"
+        }
       ]
     },
     {
@@ -1073,12 +1175,22 @@
       "priority": "LOW",
       "status": "BACKLOG",
       "agent": "product-manager",
-      "tags": ["sugestao", "pedido-usuario", "compras", "recursos"],
+      "tags": [
+        "sugestao",
+        "pedido-usuario",
+        "compras",
+        "recursos"
+      ],
       "dependencies": [],
       "createdAt": "2026-08-23T00:00:00-03:00",
       "updatedAt": "2026-08-23T00:00:00-03:00",
       "history": [
-        { "action": "CREATED", "to": "BACKLOG", "updatedBy": "claude", "timestamp": "2026-08-23T00:00:00-03:00" }
+        {
+          "action": "CREATED",
+          "to": "BACKLOG",
+          "updatedBy": "claude",
+          "timestamp": "2026-08-23T00:00:00-03:00"
+        }
       ]
     },
     {
@@ -1089,12 +1201,22 @@
       "priority": "LOW",
       "status": "BACKLOG",
       "agent": "product-manager",
-      "tags": ["sugestao", "pedido-usuario", "compras", "viabilidade-incerta"],
+      "tags": [
+        "sugestao",
+        "pedido-usuario",
+        "compras",
+        "viabilidade-incerta"
+      ],
       "dependencies": [],
       "createdAt": "2026-08-23T00:00:00-03:00",
       "updatedAt": "2026-08-23T00:00:00-03:00",
       "history": [
-        { "action": "CREATED", "to": "BACKLOG", "updatedBy": "claude", "timestamp": "2026-08-23T00:00:00-03:00" }
+        {
+          "action": "CREATED",
+          "to": "BACKLOG",
+          "updatedBy": "claude",
+          "timestamp": "2026-08-23T00:00:00-03:00"
+        }
       ]
     },
     {
@@ -1105,12 +1227,22 @@
       "priority": "HIGH",
       "status": "DONE",
       "agent": "claude",
-      "tags": ["bug-producao", "scanner", "qrcode"],
+      "tags": [
+        "bug-producao",
+        "scanner",
+        "qrcode"
+      ],
       "dependencies": [],
       "createdAt": "2026-08-24T00:00:00-03:00",
       "updatedAt": "2026-08-24T00:00:00-03:00",
       "history": [
-        { "action": "CREATED", "to": "DONE", "updatedBy": "claude", "timestamp": "2026-08-24T00:00:00-03:00", "note": "Verificado com câmera falsa (Playwright): vídeo anexa corretamente, caixa agora quadrada. Decodificação de QR real depende de teste em dispositivo do usuário." }
+        {
+          "action": "CREATED",
+          "to": "DONE",
+          "updatedBy": "claude",
+          "timestamp": "2026-08-24T00:00:00-03:00",
+          "note": "Verificado com câmera falsa (Playwright): vídeo anexa corretamente, caixa agora quadrada. Decodificação de QR real depende de teste em dispositivo do usuário."
+        }
       ]
     },
     {
@@ -1121,12 +1253,23 @@
       "priority": "HIGH",
       "status": "DONE",
       "agent": "claude",
-      "tags": ["bug-producao", "ocr", "compras", "recursos"],
+      "tags": [
+        "bug-producao",
+        "ocr",
+        "compras",
+        "recursos"
+      ],
       "dependencies": [],
       "createdAt": "2026-08-24T00:00:00-03:00",
       "updatedAt": "2026-08-24T00:00:00-03:00",
       "history": [
-        { "action": "CREATED", "to": "DONE", "updatedBy": "claude", "timestamp": "2026-08-24T00:00:00-03:00", "note": "Confirmado via chamada direta do handler que o pipeline completo roda (evento->onFotoItem->resizeImage->recognizeText) sem erro. Qualidade final do OCR em foto real de produto só é confirmável no dispositivo do usuário — nenhuma OCR client-side gratuita é garantidamente perfeita; a busca por nome (item 3) existe justamente pra compensar isso." }
+        {
+          "action": "CREATED",
+          "to": "DONE",
+          "updatedBy": "claude",
+          "timestamp": "2026-08-24T00:00:00-03:00",
+          "note": "Confirmado via chamada direta do handler que o pipeline completo roda (evento->onFotoItem->resizeImage->recognizeText) sem erro. Qualidade final do OCR em foto real de produto só é confirmável no dispositivo do usuário — nenhuma OCR client-side gratuita é garantidamente perfeita; a busca por nome (item 3) existe justamente pra compensar isso."
+        }
       ]
     },
     {
@@ -1137,12 +1280,24 @@
       "priority": "MEDIUM",
       "status": "DONE",
       "agent": "claude",
-      "tags": ["compras", "recursos", "produto", "pedido-usuario"],
-      "dependencies": ["BUG-009"],
+      "tags": [
+        "compras",
+        "recursos",
+        "produto",
+        "pedido-usuario"
+      ],
+      "dependencies": [
+        "BUG-009"
+      ],
       "createdAt": "2026-08-24T00:00:00-03:00",
       "updatedAt": "2026-08-24T00:00:00-03:00",
       "history": [
-        { "action": "CREATED", "to": "DONE", "updatedBy": "claude", "timestamp": "2026-08-24T00:00:00-03:00" }
+        {
+          "action": "CREATED",
+          "to": "DONE",
+          "updatedBy": "claude",
+          "timestamp": "2026-08-24T00:00:00-03:00"
+        }
       ]
     },
     {
@@ -1153,13 +1308,26 @@
       "priority": "CRITICAL",
       "status": "DONE",
       "agent": "claude",
-      "tags": ["privacidade", "mock", "demo", "cache"],
-      "relatedBugs": ["BUG-002"],
+      "tags": [
+        "privacidade",
+        "mock",
+        "demo",
+        "cache"
+      ],
+      "relatedBugs": [
+        "BUG-002"
+      ],
       "dependencies": [],
       "createdAt": "2026-09-01T00:00:00-03:00",
       "updatedAt": "2026-09-01T00:00:00-03:00",
       "history": [
-        { "action": "CREATED", "to": "DONE", "updatedBy": "claude", "timestamp": "2026-09-01T00:00:00-03:00", "note": "Deploy confirmado ao vivo no CDN (cache-bust) mostrando bonotto_demo_db_v2 e CACHE_NAME v8." }
+        {
+          "action": "CREATED",
+          "to": "DONE",
+          "updatedBy": "claude",
+          "timestamp": "2026-09-01T00:00:00-03:00",
+          "note": "Deploy confirmado ao vivo no CDN (cache-bust) mostrando bonotto_demo_db_v2 e CACHE_NAME v8."
+        }
       ]
     },
     {
@@ -1170,13 +1338,26 @@
       "priority": "HIGH",
       "status": "DONE",
       "agent": "claude",
-      "tags": ["bug-producao", "css", "compras", "regressao"],
-      "relatedBugs": ["BUG-003"],
+      "tags": [
+        "bug-producao",
+        "css",
+        "compras",
+        "regressao"
+      ],
+      "relatedBugs": [
+        "BUG-003"
+      ],
       "dependencies": [],
       "createdAt": "2026-09-01T00:00:00-03:00",
       "updatedAt": "2026-09-01T00:00:00-03:00",
       "history": [
-        { "action": "CREATED", "to": "DONE", "updatedBy": "claude", "timestamp": "2026-09-01T00:00:00-03:00", "note": "Achado por inspeção direta do CSS depois do relato com print — não é cache, era regressão real introduzida pela própria correção de acessibilidade de 22/08. 29/29 e2e verdes depois da correção." }
+        {
+          "action": "CREATED",
+          "to": "DONE",
+          "updatedBy": "claude",
+          "timestamp": "2026-09-01T00:00:00-03:00",
+          "note": "Achado por inspeção direta do CSS depois do relato com print — não é cache, era regressão real introduzida pela própria correção de acessibilidade de 22/08. 29/29 e2e verdes depois da correção."
+        }
       ]
     },
     {
@@ -1187,14 +1368,32 @@
       "priority": "CRITICAL",
       "status": "DONE",
       "agent": "claude",
-      "tags": ["pwa", "service-worker", "cache", "arquitetura"],
-      "relatedBugs": ["BUG-010"],
+      "tags": [
+        "pwa",
+        "service-worker",
+        "cache",
+        "arquitetura"
+      ],
+      "relatedBugs": [
+        "BUG-010"
+      ],
       "dependencies": [],
       "createdAt": "2026-09-01T00:00:00-03:00",
       "updatedAt": "2026-09-01T00:00:00-03:00",
       "history": [
-        { "action": "CREATED", "to": "DONE", "updatedBy": "claude", "timestamp": "2026-09-01T00:00:00-03:00", "note": "CACHE_NAME v8->v9. Deploy confirmado ao vivo no CDN (cache-bust)." },
-        { "action": "NOTE", "updatedBy": "claude", "timestamp": "2026-09-01T00:00:00-03:00", "note": "CONFIRMADO PELO USUÁRIO: o deploy seguinte (v9->v10) aplicou sozinho, sem clicar em nada — 'atualizou pra versão mais atual'. Ciclo completo de auto-update funcionando de ponta a ponta." }
+        {
+          "action": "CREATED",
+          "to": "DONE",
+          "updatedBy": "claude",
+          "timestamp": "2026-09-01T00:00:00-03:00",
+          "note": "CACHE_NAME v8->v9. Deploy confirmado ao vivo no CDN (cache-bust)."
+        },
+        {
+          "action": "NOTE",
+          "updatedBy": "claude",
+          "timestamp": "2026-09-01T00:00:00-03:00",
+          "note": "CONFIRMADO PELO USUÁRIO: o deploy seguinte (v9->v10) aplicou sozinho, sem clicar em nada — 'atualizou pra versão mais atual'. Ciclo completo de auto-update funcionando de ponta a ponta."
+        }
       ]
     },
     {
@@ -1205,13 +1404,26 @@
       "priority": "CRITICAL",
       "status": "DONE",
       "agent": "claude",
-      "tags": ["bug-producao", "compras", "layout", "mobile"],
-      "relatedBugs": ["BUG-011"],
+      "tags": [
+        "bug-producao",
+        "compras",
+        "layout",
+        "mobile"
+      ],
+      "relatedBugs": [
+        "BUG-011"
+      ],
       "dependencies": [],
       "createdAt": "2026-09-01T00:00:00-03:00",
       "updatedAt": "2026-09-01T00:00:00-03:00",
       "history": [
-        { "action": "CREATED", "to": "DONE", "updatedBy": "claude", "timestamp": "2026-09-01T00:00:00-03:00", "note": "Verificado com screenshot real (Playwright, 390px) antes e depois — 'Detergente' e 'Massa para brownie' agora cabem inteiros numa linha. 30/30 e2e verdes." }
+        {
+          "action": "CREATED",
+          "to": "DONE",
+          "updatedBy": "claude",
+          "timestamp": "2026-09-01T00:00:00-03:00",
+          "note": "Verificado com screenshot real (Playwright, 390px) antes e depois — 'Detergente' e 'Massa para brownie' agora cabem inteiros numa linha. 30/30 e2e verdes."
+        }
       ]
     },
     {
@@ -1222,13 +1434,194 @@
       "priority": "CRITICAL",
       "status": "DONE",
       "agent": "claude",
-      "tags": ["bug-producao", "compras", "perda-de-dado", "ux"],
-      "relatedBugs": ["BUG-005"],
+      "tags": [
+        "bug-producao",
+        "compras",
+        "perda-de-dado",
+        "ux"
+      ],
+      "relatedBugs": [
+        "BUG-005"
+      ],
       "dependencies": [],
       "createdAt": "2026-09-01T00:00:00-03:00",
       "updatedAt": "2026-09-01T00:00:00-03:00",
       "history": [
-        { "action": "CREATED", "to": "DONE", "updatedBy": "claude", "timestamp": "2026-09-01T00:00:00-03:00", "note": "Novo teste tests/e2e/desfazer-item-compras.spec.js — remove, confirma que sumiu, clica Desfazer, confirma que voltou. 30/30 e2e verdes." }
+        {
+          "action": "CREATED",
+          "to": "DONE",
+          "updatedBy": "claude",
+          "timestamp": "2026-09-01T00:00:00-03:00",
+          "note": "Novo teste tests/e2e/desfazer-item-compras.spec.js — remove, confirma que sumiu, clica Desfazer, confirma que voltou. 30/30 e2e verdes."
+        }
+      ]
+    },
+    {
+      "id": "BUG-015",
+      "title": "Regressões críticas de CSS encontradas na auditoria de UX (pílula, título de seção, ícone quebrado, card-em-card)",
+      "description": "Auditoria de UX/UI proativa (não reportada pelo usuário, pedida explicitamente: 'identificar gaps, erros, falhas, defeitos, e brechas que não estamos considerando') encontrou 4 regressões de declaração-CSS-duplicada (o padrão já documentado no CLAUDE.md: mesma especificidade, a de baixo no arquivo vence silenciosamente) mais 1 efeito colateral da correção de touch-target: (C1) '.btn'/'.cg-btn' tinham 2 declarações de border-radius conflitantes — pílula nunca renderizava de fato, revertia pra radius-md; (C2) '.cg-section-title' tinha versão antiga (1.05rem/700/space-3) em app.css vencendo a versão correta e documentada em components.css; (C3) x-show sem .important em cima de foto de prévia vazia (novoItem.foto_url/itemForm.foto_url em Compras) nunca escondia o wrapper — ícone de imagem quebrada aparecia; (C4) card dentro de card em Grupo > 'Entre vocês' (.cg-card aninhado dentro do .cg-card externo da tela, sombra duplicada); (H1, achado extra durante a correção) o seletor de cor de Perfil ficava 36x48 em vez de 36x36 porque min-height do .form-control genérico (48px) vencia a altura inline do input[type=color].",
+      "category": "Frontend",
+      "priority": "CRITICAL",
+      "status": "DONE",
+      "agent": "frontend",
+      "tags": [
+        "css",
+        "regressao",
+        "design-system",
+        "auditoria-ux"
+      ],
+      "relatedBugs": [
+        "BUG-003",
+        "BUG-011"
+      ],
+      "dependencies": [],
+      "createdAt": "2026-09-02T00:00:00-03:00",
+      "updatedAt": "2026-09-02T00:00:00-03:00",
+      "history": [
+        {
+          "action": "CREATED",
+          "to": "DONE",
+          "updatedBy": "frontend",
+          "timestamp": "2026-09-02T00:00:00-03:00",
+          "note": "90/90 unitários, 30/30 e2e (1 flake isolado de infra em sair-modo-demo.spec.js, não reproduzido em 2 reexecuções). Verificado via script Playwright medindo border-radius/font-size/display real dos elementos, não só inspeção visual."
+        }
+      ]
+    },
+    {
+      "id": "TASK-031",
+      "title": "Compras: ordem de botões Editar/Excluir/Comprar + rodapé de 3 botões na Grade + cabeçalho mobile compacto",
+      "description": "Pedido do usuário (rodada de 7 melhorias pós-BUG-013/014), itens 1 e 7: (1) fileira da view Lista reordenada para Editar->Excluir->Comprar/Desfazer (antes: Comprar->Editar->Excluir, com o lápis como espaçador físico); mesmo padrão replicado num rodapé novo (.cg-grid-view__actions) nas views Grade/Grade compacta, substituindo o antigo ícone isolado de lixeira (.cg-item-delete-corner, removido). Decisão explícita: reordenar mesmo colocando Excluir ao lado de Comprar de novo é seguro porque a proteção real contra exclusão acidental (BUG-014) é o Desfazer de 5s em removeItem(), que não depende de posição de botão. (7) Cabeçalho mobile compactado: título+toggles (Iniciar/Encerrar/Pausar/Retomar/Cancelar) numa linha só via .cg-shopping-toggle--compact (38px, rótulo de texto some abaixo de 420px, ícone+aria-label continuam); Importar CSV virou botão circular fixo no canto superior direito do painel (.cg-shopping-panel__import); Mercado/Limite de gasto viraram col-6/col-6 (lado a lado mesmo no mobile, antes col-12/col-sm-6 empilhava).",
+      "category": "Frontend",
+      "priority": "HIGH",
+      "status": "DONE",
+      "agent": "frontend",
+      "tags": [
+        "compras",
+        "ux",
+        "mobile",
+        "pedido-usuario"
+      ],
+      "relatedBugs": [
+        "BUG-013",
+        "BUG-014"
+      ],
+      "dependencies": [],
+      "createdAt": "2026-09-02T00:00:00-03:00",
+      "updatedAt": "2026-09-02T00:00:00-03:00",
+      "history": [
+        {
+          "action": "CREATED",
+          "to": "DONE",
+          "updatedBy": "frontend",
+          "timestamp": "2026-09-02T00:00:00-03:00",
+          "note": "90/90 unitários; e2e de Compras + suíte completa (30/30) verdes. Verificado com Playwright em 375x667 e 1366x900, 3 modos de visualização, 3 estados (planejando/comprando/pausada), claro/escuro/sistema — sem overflow horizontal."
+        }
+      ]
+    },
+    {
+      "id": "TASK-032",
+      "title": "Recursos e Caixinhas: adicionar view \"Lista\" (hoje só têm grade)",
+      "description": "Pedido do usuário (rodada de 7 melhorias), item 2: Recursos e Caixinhas atualmente só têm view em grade — adicionar view em lista. Escopo definido pelo agente architect: Recursos ganha view lista só no nível de ITEM (cg-resource-item, dentro de cômodo>subcategoria) — a grade de cômodos/subcategorias continua só grade, são tiles de navegação, não fazem sentido como lista; Caixinhas ganha view lista como alternativa à grade única de bancos/caixinhas (não há drill-down room->categoria aqui). Reutilizar .cg-list-row (linha com borda própria, já usada em modais de histórico) — nunca confundir com .cg-list-flat (linha sem borda, dentro de um único card). Cada tela replica seu próprio viewMode local + chave de localStorage própria (bonotto_view_recursos, bonotto_view_caixinhas), mesmo padrão já usado em Compras (shoppingList.js).",
+      "category": "Frontend",
+      "priority": "MEDIUM",
+      "status": "TODO",
+      "agent": "frontend",
+      "tags": [
+        "recursos",
+        "caixinhas",
+        "ux",
+        "pedido-usuario"
+      ],
+      "dependencies": [],
+      "createdAt": "2026-09-02T00:00:00-03:00",
+      "updatedAt": "2026-09-02T00:00:00-03:00",
+      "history": [
+        {
+          "action": "CREATED",
+          "to": "TODO",
+          "updatedBy": "claude",
+          "timestamp": "2026-09-02T00:00:00-03:00"
+        }
+      ]
+    },
+    {
+      "id": "TASK-033",
+      "title": "Transações: agrupamento por Ano > Mês (hoje só tem 1 nível, mês)",
+      "description": "Pedido do usuário (rodada de 7 melhorias), item 3: '2026 Agora / ago / set // 2027 / ago' — hierarquia de 2 níveis Ano>Mês, mês atual rotulado Agora. Utilitário puro já criado e testado: js/utils/periodo.js::agruparPorAnoMes(transactions, {mesAtualIso, extrairData, computeResumo, labelMes}) — devolve lista FLAT de seções de mês (mesmo formato de gruposPorPeriodo hoje), decorada com ano/isAnoAtual/anoLabel/primeiroDoAno (true só na primeira seção de cada ano, sinaliza onde o template insere o cabeçalho de ano, sem x-for aninhado). 13 testes novos (65/65 total antes do dateInput.js). Falta: integrar em transactionTable.js (trocar gruposPorPeriodo por chamada a agruparPorAnoMes) e no template index.html (inserir cabeçalho de ano antes de toda seção com primeiroDoAno, reaproveitando o padrão overridesAbertura com chaves ano:${ano} pra permitir colapsar o ano inteiro, combinado com o toggle de mês já existente).",
+      "category": "Frontend",
+      "priority": "MEDIUM",
+      "status": "TODO",
+      "agent": "frontend",
+      "tags": [
+        "transacoes",
+        "agrupamento",
+        "pedido-usuario"
+      ],
+      "dependencies": [],
+      "createdAt": "2026-09-02T00:00:00-03:00",
+      "updatedAt": "2026-09-02T00:00:00-03:00",
+      "history": [
+        {
+          "action": "CREATED",
+          "to": "TODO",
+          "updatedBy": "claude",
+          "timestamp": "2026-09-02T00:00:00-03:00",
+          "note": "js/utils/periodo.js e tests/unit/periodo.test.js já prontos e testados — só falta a integração em transactionTable.js/index.html."
+        }
+      ]
+    },
+    {
+      "id": "TASK-034",
+      "title": "Campo de data digitável (calendário nativo + digitação livre) em todos os 16 componentes de data",
+      "description": "Pedido do usuário (rodada de 7 melhorias), item 5: DATA DE VALIDADE, além de usar o calendário, quero poder digitar no campo livremente a data em todos os componentes de data — datas em 2027/2028 demoram demais pra selecionar clicando no calendário nativo. Utilitário puro já criado e testado: js/utils/dateInput.js (formatarDataBR/parseDataBR/aplicarMascaraData — validação de calendário real via Date+setFullYear round-trip, cobre bissexto; máscara com barra automática e tratamento de backspace-na-barra; ano sempre 4 dígitos). 25 testes novos (90/90 total). Falta integrar nos 16 <input type=date> de index.html: 14 usam x-model direto (candidatos a uma diretiva Alpine reutilizável, ex. Alpine.directive('datamask', ...) registrada em js/app.js — evita duplicar a lógica de máscara 14x, e Alpine.directive é a mesma API que o framework usa internamente pra x-model); as outras 2 (linhas ~956/959 e ~1080/1084 de index.html, células da tabela de Transações) têm fiação própria via x-effect+@change chamando setVencimento(row,valor)/setDataPagamento(row,valor) — manter esse padrão local, só trocar o input nativo por um mascarado usando as mesmas 3 funções puras diretamente.",
+      "category": "Frontend",
+      "priority": "MEDIUM",
+      "status": "TODO",
+      "agent": "frontend",
+      "tags": [
+        "data",
+        "formulario",
+        "ux",
+        "pedido-usuario"
+      ],
+      "dependencies": [],
+      "createdAt": "2026-09-02T00:00:00-03:00",
+      "updatedAt": "2026-09-02T00:00:00-03:00",
+      "history": [
+        {
+          "action": "CREATED",
+          "to": "TODO",
+          "updatedBy": "claude",
+          "timestamp": "2026-09-02T00:00:00-03:00",
+          "note": "js/utils/dateInput.js e tests/unit/dateInput.test.js já prontos e testados — só falta a integração nos 16 pontos de index.html."
+        }
+      ]
+    },
+    {
+      "id": "TASK-035",
+      "title": "Quantidade digitável (além dos controles +/-) em todos os componentes de quantidade",
+      "description": "Pedido do usuário (rodada de 7 melhorias), item 6: Quantidades, quero além de usar os controles, poder digitar livremente os valores. Levantamento: .cg-num-stepper (novoItem.quantidade/edicaoForm.quantidade/itemForm.quantidade em Compras, index.html linhas ~1307-1310/1539-1542/1877-1880) JÁ é digitável (input type=number real dentro do stepper). O único ponto que falta é .cg-qty-stepper em Recursos (index.html linha ~1828-1832, grade de itens dentro de cômodo>subcategoria) — hoje é um span x-text=item.quantidade sem input nenhum. Precisa virar um input type=number (reaproveitando o mesmo padrão visual/debounce de ajustar(item, delta) em resourcesView.js, que já debounça 500ms antes de chamar res.updateItem — adicionar um definirQuantidade(item, valor) equivalente pro caminho de digitação direta).",
+      "category": "Frontend",
+      "priority": "LOW",
+      "status": "TODO",
+      "agent": "frontend",
+      "tags": [
+        "recursos",
+        "quantidade",
+        "ux",
+        "pedido-usuario"
+      ],
+      "dependencies": [],
+      "createdAt": "2026-09-02T00:00:00-03:00",
+      "updatedAt": "2026-09-02T00:00:00-03:00",
+      "history": [
+        {
+          "action": "CREATED",
+          "to": "TODO",
+          "updatedBy": "claude",
+          "timestamp": "2026-09-02T00:00:00-03:00",
+          "note": "Escopo é bem menor do que o pedido sugeria: .cg-num-stepper (Compras) já era digitável; só .cg-qty-stepper (Recursos) precisa da mudança."
+        }
       ]
     }
   ]

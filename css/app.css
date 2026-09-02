@@ -64,6 +64,55 @@ html {
   padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
 }
 
+/* Painel de topo da Lista de Compras — botão "Importar CSV" fixo no canto
+   superior direito do card (pedido explícito, 2026-09-02: antes disputava
+   linha com "Ver gráfico"/"Histórico" no resumo). position:relative aqui
+   pra conter o :absolute do botão; padding-top reservado a mais pra ele
+   NUNCA sobrepor o cabeçalho (título + Iniciar/Encerrar/Pausar/Retomar/
+   Cancelar) que ocupa o mesmo canto no fluxo normal, logo abaixo. */
+.cg-shopping-panel {
+  position: relative;
+  padding-top: 52px;
+}
+.cg-shopping-panel__import {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  min-height: 0;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--shadow-sm);
+  z-index: 1;
+}
+.cg-shopping-panel__import:hover { background: var(--color-surface-alt); }
+
+/* Cabeçalho da Lista de Compras (título + toggles de fluxo) sempre numa
+   linha só (ver index.html — sem a utility "flex-wrap", nowrap é o default
+   do flexbox) — mesmo assim, "Iniciar Compra"/"Encerrar Compra" + "Pausar"/
+   "Retomar" + "Cancelar" (os 3 juntos só quando a lista está pausada) não
+   cabem como botão-com-texto num celular estreito por menor que a escala
+   fique. Abaixo de ~420px o rótulo de texto some (ícone + aria-label
+   continuam garantindo o nome acessível) só neste grupo — nunca no resto
+   do app, escopado por .cg-shopping-header__actions. */
+@media (max-width: 420px) {
+  .cg-shopping-header__actions .cg-shopping-toggle__label {
+    display: none;
+  }
+  .cg-shopping-header__actions .cg-shopping-toggle.cg-shopping-toggle--compact,
+  .cg-shopping-header__actions .cg-btn.btn-sm {
+    padding-inline: 10px;
+    gap: 0;
+  }
+}
+
 [x-cloak] { display: none !important; }
 
 a { color: var(--color-primary); }
@@ -315,32 +364,28 @@ a { color: var(--color-primary); }
     min-height: 38px;
     padding: 5px 9px;
   }
-  /* Continua sendo a ação principal da tela (Iniciar/Encerrar Compra) —
-     não fica do tamanho de botão secundário, só um pouco menos dominante
-     numa tela de ~390px de largura. Reduzido de novo (era 48px/0.95rem)
-     depois de feedback direto no celular: "botões grande em lista de
-     compra" — ainda maior que os .btn-sm ao lado (é a ação primária da
-     tela), só não do tamanho de antes. */
-  .cg-shopping-toggle {
-    min-height: 42px;
-    font-size: 0.82rem;
-    padding-inline: var(--space-3);
-    gap: 6px;
-  }
-  .cg-shopping-toggle i {
-    font-size: 0.9rem;
-  }
+  /* .cg-shopping-toggle sem modificador ficava 42px/0.82rem aqui (era a
+     única redução existente) — substituído (2026-09-02) pelo modificador
+     .cg-shopping-toggle--compact (components.css, mais específico, sempre
+     vence), aplicado direto no HTML nos 3 botões do cabeçalho da Lista de
+     Compras, unificando mobile e desktop numa escala só. Removido daqui
+     pra não deixar 2 declarações concorrentes pro mesmo elemento (ver
+     CLAUDE.md, "declaração de CSS duplicada... a de baixo ganha
+     silenciosamente" — evitando redescobrir esse problema de novo). */
 
   /* Painel de topo da Lista de Compras (toggle Iniciar/Pausar/Retomar/
-     Cancelar, Itens/Total, Ver gráfico/Histórico/Importar CSV, Mercado,
-     Limite de gasto) — reportado com print: no celular esse bloco de
-     controles dominava a tela toda, empurrando a lista de itens (o que a
-     pessoa quer ver de verdade enquanto compra) pra baixo do fold. Reduz
-     só o padding do card em si; o espaçamento ENTRE as seções internas já
-     foi ajustado direto no HTML (classes responsivas gap-*/pt-*/g-* com
-     variante -md- pra manter o desktop como estava). */
+     Cancelar, Itens/Total, Ver gráfico/Histórico, Mercado, Limite de
+     gasto) — reportado com print: no celular esse bloco de controles
+     dominava a tela toda, empurrando a lista de itens (o que a pessoa quer
+     ver de verdade enquanto compra) pra baixo do fold. Reduz o padding do
+     card em si (mantendo o padding-top maior — reserva do botão Importar
+     CSV no canto, ver regra base .cg-shopping-panel acima); o espaçamento
+     ENTRE as seções internas já foi ajustado direto no HTML (classes
+     responsivas gap-*/pt-*/g-* com variante -md- pra manter o desktop como
+     estava). */
   .cg-shopping-panel {
     padding: var(--space-3);
+    padding-top: 48px;
   }
 
   /* Ações rápidas da Início (Nova despesa/Despesa fixa/Nova entrada/Lista
@@ -423,10 +468,14 @@ a { color: var(--color-primary); }
   .cg-grid-dashboard { grid-template-columns: 1.4fr 1fr; }
 }
 
+/* font-size/font-weight/margin-bottom removidos daqui (2026-09-02) — eram
+   valores soltos antigos que colidiam com a versão correta e documentada em
+   components.css (font-size: var(--font-size-title-sm), font-weight: 750,
+   margin-bottom: 14px) e venciam por carregar depois, revertendo o Design
+   System silenciosamente. display/align-items/gap sobrevivem: não existem
+   na regra de components.css e alinham o <i> que antecede todo
+   .cg-section-title no HTML. */
 .cg-section-title {
-  font-size: 1.05rem;
-  font-weight: 700;
-  margin-bottom: var(--space-3);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -654,6 +703,13 @@ a { color: var(--color-primary); }
    Chromium (::-webkit-color-swatch-wrapper/::-webkit-color-swatch) dá
    controle total da forma, igual a qualquer outro controle do app. */
 .form-control-color {
+  /* min-height do .form-control genérico (touch-target, 48px) força uma
+     altura maior que o width:36px/height:36px inline deste input em todo
+     lugar que ele é usado (seletor de cor de Perfil/Categoria) — vira um
+     retângulo em vez do quadrado 36×36 pretendido. Removido aqui (2026-09-02,
+     mesma auditoria da correção de H1 — sem isso a correção de H1 não tinha
+     efeito visível neste controle específico, só nos demais). */
+  min-height: auto;
   border-radius: var(--radius-sm) !important;
   overflow: hidden;
   padding: 0;
@@ -673,7 +729,6 @@ button, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 
 .btn {
   --bs-btn-font-size: var(--font-size-body-sm);
-  --bs-btn-border-radius: var(--radius-md);
   /* Era 40px — abaixo do --touch-target (48px) documentado em tokens.css,
      corrigido (2026-08-22). Botões compactos específicos (.btn-sm dentro de
      toolbars densas) têm suas próprias regras mais específicas logo abaixo
@@ -735,7 +790,10 @@ button, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 
 .form-label { margin-bottom: 7px; color: var(--color-text); font-size: var(--font-size-body-sm); font-weight: 700; }
 .form-control, .form-select {
-  min-height: 44px;
+  /* min-height: 44px removido daqui (2026-09-02) — redeclarava e vencia por
+     ordem o min-height: var(--touch-target) (48px) já correto, definido mais
+     acima neste mesmo arquivo. As outras propriedades abaixo são aditivas
+     (não colidem com a regra de cima) e continuam válidas. */
   padding-inline: 12px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
