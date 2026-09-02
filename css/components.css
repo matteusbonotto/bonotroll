@@ -110,6 +110,21 @@
   background: var(--color-surface-alt);
   border-color: var(--color-primary);
 }
+/* Linha de lista que substitui um tile de grade CLICÁVEL (drill-down) —
+   ex.: grade/lista de Caixinhas. .cg-list-row por si só não é clicável em
+   todo uso (ex.: histórico de movimentação não é), então o cursor pointer
+   fica num modificador composto, não na classe base. */
+.cg-list-row.cg-list-row--clickable { cursor: pointer; }
+/* Equivalente em lista do tile tracejado ".cg-room-tile--add" — usado
+   quando a visão Lista substitui uma grade que tinha um tile de "adicionar
+   novo" dentro dela (ex.: "Nova caixinha"). */
+.cg-list-row.cg-list-row--add {
+  border-style: dashed;
+  color: var(--color-text-muted);
+  background: transparent;
+  cursor: pointer;
+}
+.cg-list-row.cg-list-row--add:hover { color: var(--color-primary); border-color: var(--color-primary); }
 
 /* height: 100% (não min-height) de propósito — o .row do Bootstrap já
    estica as colunas .col-* pra mesma altura (flexbox, align-items:
@@ -1081,6 +1096,17 @@
   cursor: pointer;
 }
 .cg-resource-item__foto.has-foto { cursor: default; }
+/* Visão Lista de Recursos (Pedido 1, 2026-09-02): mesma foto/ícone do card
+   de grade, só num tamanho fixo pequeno em vez de aspect-ratio 16:10 —
+   dentro de uma linha horizontal (.cg-list-row) não tem uma largura de
+   coluna própria pra manter essa proporção larga. Seletor composto com a
+   classe base, não substitui ela. */
+.cg-resource-item__foto.cg-resource-item__foto--list {
+  width: 56px;
+  height: 56px;
+  aspect-ratio: auto;
+  border-radius: var(--radius-md);
+}
 /* position:absolute tira a <img> do cálculo de tamanho do flex container —
    sem isso, quando a foto tem proporção diferente de 16:10 (ex.: quadrada),
    a proporção NATURAL da imagem "vaza" pro tamanho do container e o
@@ -1122,6 +1148,31 @@
   min-width: 24px;
   text-align: center;
   font-weight: 700;
+}
+/* Pedido 2 (2026-09-02): era um <span> só de leitura, virou um
+   <input type="number"> de verdade (digitação direta, ver
+   resourcesView.js::definirQuantidade) — reseta a aparência nativa de
+   input pra continuar parecendo o número simples de antes, sem borda nem
+   spinner do navegador brigando visualmente com os botões -/+ que já
+   fazem esse papel. Seletor composto (não só ".cg-qty-stepper__value")
+   pra garantir precedência sobre a regra genérica acima. */
+.cg-qty-stepper input.cg-qty-stepper__value {
+  width: 40px;
+  border: none;
+  background: transparent;
+  color: var(--color-text);
+  padding: 0;
+  -moz-appearance: textfield;
+}
+.cg-qty-stepper input.cg-qty-stepper__value::-webkit-outer-spin-button,
+.cg-qty-stepper input.cg-qty-stepper__value::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.cg-qty-stepper input.cg-qty-stepper__value:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
+  border-radius: var(--radius-sm);
 }
 
 /* ---------- Tabela responsiva ---------- */

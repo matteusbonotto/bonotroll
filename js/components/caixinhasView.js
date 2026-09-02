@@ -17,6 +17,15 @@ export function caixinhasView() {
     activeId: null, // null = grade de bancos
     filtroResponsavel: '', // '' = todos os membros
 
+    // Grade (padrão) ou lista — única grade desta tela (bancos/caixinhas,
+    // sem drill-down de categoria como em Recursos). Mesmo padrão de
+    // persistência de shoppingList.js::viewMode.
+    viewMode: localStorage.getItem('bonotto_view_caixinhas') || 'grade',
+    setViewMode(mode) {
+      this.viewMode = mode;
+      localStorage.setItem('bonotto_view_caixinhas', mode);
+    },
+
     // Cotação BRL de cada moeda estrangeira em uso, buscada uma vez por
     // moeda (não por caixinha) depois de carregar — ver services/fx.js.
     // null enquanto não carregou ou se a busca falhar (sem cotação, some

@@ -33,6 +33,17 @@ export function resourcesView() {
     // atrapalhava enxergar a grade de cômodos logo abaixo dela.
     sugestoesAbertas: false,
 
+    // Grade (padrão) ou lista — só no nível de ITEM (grid dentro de
+    // cômodo/subcategoria, ver .cg-resource-grid). Cômodo e subcategoria
+    // continuam só grade (são tiles de navegação/drill-down, não fazem
+    // sentido como lista). Mesmo padrão de persistência de
+    // shoppingList.js::viewMode.
+    viewMode: localStorage.getItem('bonotto_view_recursos') || 'grade',
+    setViewMode(mode) {
+      this.viewMode = mode;
+      localStorage.setItem('bonotto_view_recursos', mode);
+    },
+
     itemModalAberto: false,
     itemForm: ITEM_FORM_VAZIO(),
     salvandoItem: false,
@@ -387,6 +398,24 @@ export function resourcesView() {
     // (a mais lenta podia "voltar" o valor pra uma versão desatualizada).
     ajustar(item, delta) {
       item.quantidade = res.ajustarQuantidade(item, delta);
+      clearTimeout(this._debounceQty[item.id]);
+      this._debounceQty[item.id] = setTimeout(async () => {
+        try {
+          await res.updateItem(item.id, { quantidade: item.quantidade });
+          await this.carregarSugestoes();
+        } catch (e) {
+          this.$store.app.notify(e.message || 'Não foi possível salvar a quantidade.', 'danger');
+          await this.carregarItens();
+        }
+      }, 500);
+    },
+
+    // Caminho de digitação direta (Pedido 2 — antes só dava pra ajustar de
+    // 1 em 1 pelos botões +/-). Mesmo padrão otimista+debounced de ajustar()
+    // acima, partindo do valor digitado em vez de um delta; nunca deixa
+    // negativo/NaN persistir (texto vazio, "-3", "abc" etc viram 0).
+    definirQuantidade(item, valorDigitado) {
+      item.quantidade = Math.max(0, Number(valorDigitado) || 0);
       clearTimeout(this._debounceQty[item.id]);
       this._debounceQty[item.id] = setTimeout(async () => {
         try {

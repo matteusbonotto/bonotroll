@@ -1837,36 +1837,93 @@
                 <div class="cg-empty-state"><i class="bi bi-box-seam"></i><p class="mt-2 mb-0">Nenhum item aqui ainda.</p></div>
               </template>
 
-              <div class="cg-resource-grid">
-                <template x-for="item in items" :key="item.id">
-                  <div class="cg-resource-item" :class="{ 'is-alerta': expiryKey(item) === 'vencendo', 'is-critico': expiryKey(item) === 'vencido' || expiryKey(item) === 'em_falta' }">
-                    <button type="button" class="cg-resource-item__edit" @click="abrirEditarItem(item)" aria-label="Editar"><i class="bi bi-pencil"></i></button>
-                    <label class="cg-resource-item__foto" :class="{ 'has-foto': item.foto_url }">
-                      <template x-if="item.foto_url"><img :src="item.foto_url" :alt="item.nome" /></template>
-                      <template x-if="!item.foto_url && item.icone && uploadingFotoId !== item.id"><i :class="'bi ' + item.icone"></i></template>
-                      <template x-if="!item.foto_url && !item.icone && uploadingFotoId !== item.id"><i class="bi bi-camera"></i></template>
-                      <span x-show="uploadingFotoId === item.id" class="spinner-border spinner-border-sm"></span>
-                      <input type="file" accept="image/*" class="d-none" @change="onFotoChange(item, $event)" :disabled="uploadingFotoId === item.id" />
-                    </label>
+              <!-- Grade (padrão) / Lista — só neste nível (item); cômodo e
+                   subcategoria são tiles de navegação, ficam só grade. -->
+              <template x-if="items.length">
+                <div class="d-flex justify-content-end mb-2">
+                  <div class="cg-view-toggle">
+                    <button type="button" :class="{ 'is-active': viewMode === 'grade' }" @click="setViewMode('grade')" title="Grade"><i class="bi bi-grid-3x3-gap"></i></button>
+                    <button type="button" :class="{ 'is-active': viewMode === 'lista' }" @click="setViewMode('lista')" title="Lista"><i class="bi bi-list-ul"></i></button>
+                  </div>
+                </div>
+              </template>
 
-                    <div class="cg-resource-item__body">
-                      <div class="fw-semibold text-truncate" x-text="item.nome"></div>
-                      <div class="d-flex align-items-center gap-1 flex-wrap">
-                        <span class="cg-badge" :class="'cg-badge--' + expiryMeta(item).badge" x-show="expiryKey(item) !== 'ok'">
-                          <i :class="'bi ' + expiryMeta(item).icon"></i> <span x-text="expiryMeta(item).label"></span>
-                        </span>
-                        <span class="cg-muted small" x-show="item.data_validade" x-text="cgFormat.formatDate(item.data_validade)"></span>
+              <template x-if="viewMode === 'grade'">
+                <div class="cg-resource-grid">
+                  <template x-for="item in items" :key="item.id">
+                    <div class="cg-resource-item" :class="{ 'is-alerta': expiryKey(item) === 'vencendo', 'is-critico': expiryKey(item) === 'vencido' || expiryKey(item) === 'em_falta' }">
+                      <button type="button" class="cg-resource-item__edit" @click="abrirEditarItem(item)" aria-label="Editar"><i class="bi bi-pencil"></i></button>
+                      <label class="cg-resource-item__foto" :class="{ 'has-foto': item.foto_url }">
+                        <template x-if="item.foto_url"><img :src="item.foto_url" :alt="item.nome" /></template>
+                        <template x-if="!item.foto_url && item.icone && uploadingFotoId !== item.id"><i :class="'bi ' + item.icone"></i></template>
+                        <template x-if="!item.foto_url && !item.icone && uploadingFotoId !== item.id"><i class="bi bi-camera"></i></template>
+                        <span x-show="uploadingFotoId === item.id" class="spinner-border spinner-border-sm"></span>
+                        <input type="file" accept="image/*" class="d-none" @change="onFotoChange(item, $event)" :disabled="uploadingFotoId === item.id" />
+                      </label>
+
+                      <div class="cg-resource-item__body">
+                        <div class="fw-semibold text-truncate" x-text="item.nome"></div>
+                        <div class="d-flex align-items-center gap-1 flex-wrap">
+                          <span class="cg-badge" :class="'cg-badge--' + expiryMeta(item).badge" x-show="expiryKey(item) !== 'ok'">
+                            <i :class="'bi ' + expiryMeta(item).icon"></i> <span x-text="expiryMeta(item).label"></span>
+                          </span>
+                          <span class="cg-muted small" x-show="item.data_validade" x-text="cgFormat.formatDate(item.data_validade)"></span>
+                        </div>
+                      </div>
+
+                      <div class="cg-qty-stepper">
+                        <button type="button" data-repeat @click="ajustar(item, -1)" :disabled="item.quantidade <= 0" aria-label="Diminuir quantidade"><i class="bi bi-dash"></i></button>
+                        <input type="number" min="0" class="cg-qty-stepper__value" :value="item.quantidade" @input="definirQuantidade(item, $event.target.value)" @click.stop aria-label="Quantidade" />
+                        <button type="button" data-repeat @click="ajustar(item, 1)" aria-label="Aumentar quantidade"><i class="bi bi-plus"></i></button>
                       </div>
                     </div>
+                  </template>
+                </div>
+              </template>
 
-                    <div class="cg-qty-stepper">
-                      <button type="button" data-repeat @click="ajustar(item, -1)" :disabled="item.quantidade <= 0" aria-label="Diminuir quantidade"><i class="bi bi-dash"></i></button>
-                      <span class="cg-qty-stepper__value" x-text="item.quantidade"></span>
-                      <button type="button" data-repeat @click="ajustar(item, 1)" aria-label="Aumentar quantidade"><i class="bi bi-plus"></i></button>
+              <!-- Lista: mesmo conteúdo do card de grade, só reorganizado
+                   horizontalmente (foto/ícone à esquerda, nome+meta no meio
+                   crescendo, stepper de quantidade à direita). Nome fica na
+                   SUA PRÓPRIA linha, largura total — mesma correção de
+                   cg-item-row (Compras, 2026-09-01): nome dividindo espaço
+                   com stepper+editar numa linha só truncava até nomes
+                   curtos ("Cobertor extra" virava "Cob…"). Meta (badge de
+                   validade) e ações vão pra uma segunda linha por baixo. -->
+              <template x-if="viewMode === 'lista'">
+                <div class="d-flex flex-column gap-2">
+                  <template x-for="item in items" :key="item.id">
+                    <div class="cg-list-row d-flex align-items-start gap-3 p-2" :class="{ 'is-alerta': expiryKey(item) === 'vencendo', 'is-critico': expiryKey(item) === 'vencido' || expiryKey(item) === 'em_falta' }">
+                      <label class="cg-resource-item__foto cg-resource-item__foto--list flex-shrink-0" :class="{ 'has-foto': item.foto_url }">
+                        <template x-if="item.foto_url"><img :src="item.foto_url" :alt="item.nome" /></template>
+                        <template x-if="!item.foto_url && item.icone && uploadingFotoId !== item.id"><i :class="'bi ' + item.icone"></i></template>
+                        <template x-if="!item.foto_url && !item.icone && uploadingFotoId !== item.id"><i class="bi bi-camera"></i></template>
+                        <span x-show="uploadingFotoId === item.id" class="spinner-border spinner-border-sm"></span>
+                        <input type="file" accept="image/*" class="d-none" @change="onFotoChange(item, $event)" :disabled="uploadingFotoId === item.id" />
+                      </label>
+
+                      <div class="min-w-0 flex-fill">
+                        <div class="fw-semibold text-truncate" x-text="item.nome"></div>
+                        <div class="d-flex align-items-center justify-content-between gap-2 mt-1">
+                          <div class="d-flex align-items-center gap-1 flex-wrap min-w-0">
+                            <span class="cg-badge" :class="'cg-badge--' + expiryMeta(item).badge" x-show="expiryKey(item) !== 'ok'">
+                              <i :class="'bi ' + expiryMeta(item).icon"></i> <span x-text="expiryMeta(item).label"></span>
+                            </span>
+                            <span class="cg-muted small" x-show="item.data_validade" x-text="cgFormat.formatDate(item.data_validade)"></span>
+                          </div>
+                          <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                            <div class="cg-qty-stepper">
+                              <button type="button" data-repeat @click="ajustar(item, -1)" :disabled="item.quantidade <= 0" aria-label="Diminuir quantidade"><i class="bi bi-dash"></i></button>
+                              <input type="number" min="0" class="cg-qty-stepper__value" :value="item.quantidade" @input="definirQuantidade(item, $event.target.value)" aria-label="Quantidade" />
+                              <button type="button" data-repeat @click="ajustar(item, 1)" aria-label="Aumentar quantidade"><i class="bi bi-plus"></i></button>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" @click="abrirEditarItem(item)" aria-label="Editar"><i class="bi bi-pencil"></i></button>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </template>
-              </div>
+                  </template>
+                </div>
+              </template>
             </div>
           </template>
 
@@ -2045,8 +2102,19 @@
               </template>
             </div>
 
+            <!-- Grade (padrão) / Lista — única grade desta tela (sem
+                 drill-down de categoria como em Recursos). -->
+            <template x-if="!activeId && caixinhasFiltradas.length">
+              <div class="d-flex justify-content-end mb-2">
+                <div class="cg-view-toggle">
+                  <button type="button" :class="{ 'is-active': viewMode === 'grade' }" @click="setViewMode('grade')" title="Grade"><i class="bi bi-grid-3x3-gap"></i></button>
+                  <button type="button" :class="{ 'is-active': viewMode === 'lista' }" @click="setViewMode('lista')" title="Lista"><i class="bi bi-list-ul"></i></button>
+                </div>
+              </div>
+            </template>
+
             <!-- Grade de bancos -->
-            <template x-if="!activeId">
+            <template x-if="!activeId && viewMode === 'grade'">
               <div class="cg-room-grid">
                 <template x-for="c in caixinhasFiltradas" :key="c.id">
                   <div class="cg-room-tile" role="button" tabindex="0" @click="selecionar(c.id)" @keydown.enter="selecionar(c.id)">
@@ -2069,6 +2137,49 @@
                 <button type="button" class="cg-room-tile cg-room-tile--add" @click="$store.caixinhaModal.openNew()">
                   <i class="bi bi-plus-lg"></i>
                   <span class="cg-room-tile__nome">Nova caixinha</span>
+                </button>
+              </div>
+            </template>
+
+            <!-- Lista: mesmo conteúdo do card de grade (avatar do dono,
+                 logo/nome do banco, saldo, conversão BRL, barra de meta), só
+                 reorganizado horizontalmente. Nome do banco na SUA PRÓPRIA
+                 linha, largura total — mesma correção de cg-item-row
+                 (Compras, 2026-09-01): nome dividindo linha com saldo+editar
+                 truncava até "Nubank" pra "Nub…" num telão de 375px. Saldo/
+                 conversão/meta vão pra uma segunda linha por baixo. -->
+            <template x-if="!activeId && viewMode === 'lista'">
+              <div class="d-flex flex-column gap-2">
+                <template x-for="c in caixinhasFiltradas" :key="c.id">
+                  <div class="cg-list-row cg-list-row--clickable d-flex align-items-start gap-3 p-2" role="button" tabindex="0" @click="selecionar(c.id)" @keydown.enter="selecionar(c.id)">
+                    <div class="d-flex align-items-center gap-1 flex-shrink-0">
+                      <span class="cg-avatar cg-avatar--sm" x-show="$store.app.group" :style="{ borderColor: responsavelFor(c.owner_id)?.cor || 'var(--color-primary-soft)', background: responsavelFor(c.owner_id)?.cor || 'var(--color-primary)' }" :title="responsavelFor(c.owner_id)?.nome">
+                        <template x-if="responsavelFor(c.owner_id)?.avatar_url"><img :src="responsavelFor(c.owner_id).avatar_url" /></template>
+                        <template x-if="!responsavelFor(c.owner_id)?.avatar_url"><span x-text="cgFormat.initials(responsavelFor(c.owner_id)?.nome)" style="font-size:0.6rem;"></span></template>
+                      </span>
+                      <img :src="bankFor(c.banco_nome)?.logo_url" x-show="bankFor(c.banco_nome)?.logo_url" style="width:36px;height:36px;border-radius:50%;object-fit:cover;" />
+                      <i class="bi bi-bank2" x-show="!bankFor(c.banco_nome)?.logo_url" style="font-size:1.4rem;color:var(--color-primary);"></i>
+                    </div>
+                    <div class="min-w-0 flex-fill">
+                      <div class="fw-semibold text-truncate" x-text="c.banco_nome"></div>
+                      <div class="d-flex align-items-center gap-2 mt-1">
+                        <div class="progress flex-fill" style="height: 4px; max-width: 140px;" x-show="progressoFor(c) !== null">
+                          <div class="progress-bar bg-success" :style="{ width: progressoFor(c) + '%' }"></div>
+                        </div>
+                        <div class="text-end flex-shrink-0 ms-auto">
+                          <div class="fw-semibold" x-text="formatMoeda(totaisFor(c.id).saldo, c.moeda)"></div>
+                          <div class="cg-muted" style="font-size: 0.68rem;" x-show="conversaoBRLFor(c)" x-text="conversaoBRLFor(c)"></div>
+                        </div>
+                      </div>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-secondary flex-shrink-0" @click.stop="$store.caixinhaModal.openEdit(c)" aria-label="Editar caixinha"><i class="bi bi-pencil"></i></button>
+                  </div>
+                </template>
+                <!-- Equivalente ao tile tracejado "Nova caixinha" da grade —
+                     sem isso, a lista não teria como criar uma caixinha nova
+                     a não ser voltando pra grade. -->
+                <button type="button" class="cg-list-row cg-list-row--add d-flex align-items-center justify-content-center gap-2 p-2" @click="$store.caixinhaModal.openNew()">
+                  <i class="bi bi-plus-lg"></i> Nova caixinha
                 </button>
               </div>
             </template>
