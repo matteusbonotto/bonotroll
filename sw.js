@@ -5,10 +5,11 @@
 //
 // Versionamento: todo deploy que muda algum arquivo do APP_SHELL abaixo deve
 // bumpar CACHE_NAME. Isso faz o browser detectar um SW novo, instalá-lo em
-// segundo plano (evento "install" roda de novo) e ficar em estado "waiting"
-// até alguém assumir — é esse "waiting" que js/app.js detecta pra mostrar o
-// banner "Nova versão disponível" (ver updateNotifier em js/app.js).
-const CACHE_NAME = 'bonotto-v10';
+// segundo plano (evento "install" roda de novo) e assumir sozinho assim que
+// terminar (skipWaiting() + controllerchange recarrega a página — ver
+// js/app.js e o comentário do evento "install" abaixo; não existe mais
+// banner manual desde a correção de auto-atualização de 2026-09-01).
+const CACHE_NAME = 'bonotto-v11';
 
 const APP_SHELL = [
   './',
@@ -87,13 +88,6 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)).then(() => self.skipWaiting())
   );
-});
-
-// Disparado pelo botão "Atualizar agora" do banner (js/app.js) via
-// registration.waiting.postMessage(...). Só depois disso o novo SW assume
-// (dispara "controllerchange" no cliente, que então recarrega a página).
-self.addEventListener('message', (event) => {
-  if (event.data?.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
 // ---------- Web Push ----------
