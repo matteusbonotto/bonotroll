@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-09-02T00:00:00-03:00",
+  "updatedAt": "2026-09-03T00:00:00-03:00",
   "tasks": [
     {
       "id": "DONE-001",
@@ -1524,7 +1524,7 @@
       "description": "Pedido do usuário (rodada de 7 melhorias), item 2: Recursos e Caixinhas atualmente só têm view em grade — adicionar view em lista. Escopo definido pelo agente architect: Recursos ganha view lista só no nível de ITEM (cg-resource-item, dentro de cômodo>subcategoria) — a grade de cômodos/subcategorias continua só grade, são tiles de navegação, não fazem sentido como lista; Caixinhas ganha view lista como alternativa à grade única de bancos/caixinhas (não há drill-down room->categoria aqui). Reutilizar .cg-list-row (linha com borda própria, já usada em modais de histórico) — nunca confundir com .cg-list-flat (linha sem borda, dentro de um único card). Cada tela replica seu próprio viewMode local + chave de localStorage própria (bonotto_view_recursos, bonotto_view_caixinhas), mesmo padrão já usado em Compras (shoppingList.js).",
       "category": "Frontend",
       "priority": "MEDIUM",
-      "status": "TODO",
+      "status": "DONE",
       "agent": "frontend",
       "tags": [
         "recursos",
@@ -1541,6 +1541,13 @@
           "to": "TODO",
           "updatedBy": "claude",
           "timestamp": "2026-09-02T00:00:00-03:00"
+        },
+        {
+          "action": "STATUS_CHANGE",
+          "to": "DONE",
+          "updatedBy": "frontend",
+          "timestamp": "2026-09-02T00:00:00-03:00",
+          "note": "90/90 unitarios, 32/32 e2e (1 flake de infra nao relacionado). Novo teste tests/e2e/view-lista-recursos-caixinhas.spec.js."
         }
       ]
     },
@@ -1576,7 +1583,7 @@
       "description": "Pedido do usuário (rodada de 7 melhorias), item 5: DATA DE VALIDADE, além de usar o calendário, quero poder digitar no campo livremente a data em todos os componentes de data — datas em 2027/2028 demoram demais pra selecionar clicando no calendário nativo. Utilitário puro já criado e testado: js/utils/dateInput.js (formatarDataBR/parseDataBR/aplicarMascaraData — validação de calendário real via Date+setFullYear round-trip, cobre bissexto; máscara com barra automática e tratamento de backspace-na-barra; ano sempre 4 dígitos). 25 testes novos (90/90 total). Falta integrar nos 16 <input type=date> de index.html: 14 usam x-model direto (candidatos a uma diretiva Alpine reutilizável, ex. Alpine.directive('datamask', ...) registrada em js/app.js — evita duplicar a lógica de máscara 14x, e Alpine.directive é a mesma API que o framework usa internamente pra x-model); as outras 2 (linhas ~956/959 e ~1080/1084 de index.html, células da tabela de Transações) têm fiação própria via x-effect+@change chamando setVencimento(row,valor)/setDataPagamento(row,valor) — manter esse padrão local, só trocar o input nativo por um mascarado usando as mesmas 3 funções puras diretamente.",
       "category": "Frontend",
       "priority": "MEDIUM",
-      "status": "TODO",
+      "status": "DONE",
       "agent": "frontend",
       "tags": [
         "data",
@@ -1586,7 +1593,7 @@
       ],
       "dependencies": [],
       "createdAt": "2026-09-02T00:00:00-03:00",
-      "updatedAt": "2026-09-02T00:00:00-03:00",
+      "updatedAt": "2026-09-03T00:00:00-03:00",
       "history": [
         {
           "action": "CREATED",
@@ -1594,6 +1601,13 @@
           "updatedBy": "claude",
           "timestamp": "2026-09-02T00:00:00-03:00",
           "note": "js/utils/dateInput.js e tests/unit/dateInput.test.js já prontos e testados — só falta a integração nos 16 pontos de index.html."
+        },
+        {
+          "action": "STATUS_CHANGE",
+          "to": "DONE",
+          "updatedBy": "frontend",
+          "timestamp": "2026-09-03T00:00:00-03:00",
+          "note": "90/90 unitarios, 34/34 e2e. Diretiva Alpine x-datamask (js/app.js) integrada nos 16 pontos (14 via x-model direto, 2 com fiacao propria em transactionTable). Botao de calendario com fallback via showPicker(). Encontradas e corrigidas 2 falhas de TESTE (nao do app) durante verificacao: data-mascarada.spec.js simulava so o evento change no input nativo (Alpine x-model escuta input, nao change) e exclusao-transacao-persiste.spec.js ficou borderline no timeout padrao de 30s por causa do custo extra de render dos novos campos de data no modal (setTimeout local pra 60s)."
         }
       ]
     },
@@ -1603,7 +1617,7 @@
       "description": "Pedido do usuário (rodada de 7 melhorias), item 6: Quantidades, quero além de usar os controles, poder digitar livremente os valores. Levantamento: .cg-num-stepper (novoItem.quantidade/edicaoForm.quantidade/itemForm.quantidade em Compras, index.html linhas ~1307-1310/1539-1542/1877-1880) JÁ é digitável (input type=number real dentro do stepper). O único ponto que falta é .cg-qty-stepper em Recursos (index.html linha ~1828-1832, grade de itens dentro de cômodo>subcategoria) — hoje é um span x-text=item.quantidade sem input nenhum. Precisa virar um input type=number (reaproveitando o mesmo padrão visual/debounce de ajustar(item, delta) em resourcesView.js, que já debounça 500ms antes de chamar res.updateItem — adicionar um definirQuantidade(item, valor) equivalente pro caminho de digitação direta).",
       "category": "Frontend",
       "priority": "LOW",
-      "status": "TODO",
+      "status": "DONE",
       "agent": "frontend",
       "tags": [
         "recursos",
@@ -1621,6 +1635,13 @@
           "updatedBy": "claude",
           "timestamp": "2026-09-02T00:00:00-03:00",
           "note": "Escopo é bem menor do que o pedido sugeria: .cg-num-stepper (Compras) já era digitável; só .cg-qty-stepper (Recursos) precisa da mudança."
+        },
+        {
+          "action": "STATUS_CHANGE",
+          "to": "DONE",
+          "updatedBy": "frontend",
+          "timestamp": "2026-09-02T00:00:00-03:00",
+          "note": "90/90 unitarios, 32/32 e2e (1 flake de infra nao relacionado). Novo teste tests/e2e/view-lista-recursos-caixinhas.spec.js."
         }
       ]
     }

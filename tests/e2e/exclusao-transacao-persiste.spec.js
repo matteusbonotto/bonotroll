@@ -10,6 +10,17 @@
 import { test, expect } from '@playwright/test';
 
 test('excluir uma transação sem clicar "Desfazer" remove ela de verdade, mesmo recarregando a página', async ({ page }) => {
+  // Timeout maior que o padrão (30s) — 2026-09-02: o modal de edição ganhou
+  // campo de data digitável (.cg-date-field, 3 ocorrências: cadastro/
+  // vencimento/pagamento, cada um com o campo mascarado + botão de
+  // calendário + input nativo escondido) e este teste abre/fecha o modal
+  // até 15 vezes procurando uma transação não-recorrente — a soma dos
+  // elementos extra por abertura empurrava o teste pra cima de 30s,
+  // borderline (29-31s medido), sem nenhum travamento real (confirmado com
+  // script isolado: o fluxo completo de editar+excluir+persistir roda em
+  // poucos segundos por ciclo, só a MULTIPLICAÇÃO por até 15 ciclos de
+  // busca que soma).
+  test.setTimeout(60000);
   await page.goto('/?demo=1');
   await page.getByText('Entrar como', { exact: false }).first().click();
   await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Transações' }).first().click();

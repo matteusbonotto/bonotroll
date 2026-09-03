@@ -1044,6 +1044,62 @@
   min-width: 0;
 }
 
+/* ---------- Campo de data digitável (dd/mm/aaaa) + calendário nativo ---------- */
+/* Ver js/utils/dateInput.js (máscara/parse) e a diretiva Alpine x-datamask
+   (js/app.js). O campo de texto visível é o `.form-control` normal; o
+   segundo <input type="date"> do grupo é o seletor nativo do sistema,
+   aberto pelo botão ao lado (showPicker(), com fallback de esconder o botão
+   em navegadores sem suporte — ver `.cg-sem-date-picker` mais abaixo). */
+.cg-date-field {
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+  position: relative;
+  width: 100%;
+}
+.cg-date-field .form-control {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.cg-date-field__btn {
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  border-radius: var(--radius-sm);
+  padding: 0 0.55rem;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text);
+}
+/* O <input type="date"> nativo fica "escondido" mas continua sendo
+   RENDERIZADO de verdade (nunca display:none) — showPicker() do
+   Chrome/Edge lança erro num elemento que não está sendo renderizado.
+   Técnica padrão de "visualmente oculto, mas presente" (mesma família do
+   clássico .sr-only), com pointer-events:none porque o clique de abrir é
+   sempre pelo botão ao lado, nunca direto neste input. */
+.cg-date-field__nativo {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+/* Firefox/Safari não implementam showPicker() — sem o botão, o clique nele
+   não faria nada (ou lançaria erro sem o try/catch do app.js). O campo
+   mascarado continua funcionando normalmente nesses navegadores. */
+html.cg-sem-date-picker .cg-date-field__btn {
+  display: none;
+}
+
 /* ---------- Recursos: card de item (redesenhado — era só uma pilha de
    controles soltos: botão "Foto" ocupando a largura toda, lápis boiando no
    canto sem alinhamento) ---------- */

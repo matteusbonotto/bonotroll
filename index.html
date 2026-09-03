@@ -322,9 +322,17 @@
             </select>
             <template x-if="periodoModo === 'personalizado'">
               <div class="d-flex align-items-center gap-2">
-                <input type="date" class="form-control form-control-sm" x-model="periodoInicio" />
+                <div class="cg-date-field" style="max-width: 160px;">
+                  <input type="text" inputmode="numeric" autocomplete="off" class="form-control form-control-sm" placeholder="dd/mm/aaaa" x-datamask="periodoInicio" />
+                  <button type="button" class="cg-date-field__btn" @click="cgAbrirSeletorNativo($event)" aria-label="Escolher data no calendário"><i class="bi bi-calendar3"></i></button>
+                  <input type="date" class="cg-date-field__nativo" tabindex="-1" aria-hidden="true" x-model="periodoInicio" />
+                </div>
                 <span class="cg-muted small">até</span>
-                <input type="date" class="form-control form-control-sm" x-model="periodoFim" />
+                <div class="cg-date-field" style="max-width: 160px;">
+                  <input type="text" inputmode="numeric" autocomplete="off" class="form-control form-control-sm" placeholder="dd/mm/aaaa" x-datamask="periodoFim" />
+                  <button type="button" class="cg-date-field__btn" @click="cgAbrirSeletorNativo($event)" aria-label="Escolher data no calendário"><i class="bi bi-calendar3"></i></button>
+                  <input type="date" class="cg-date-field__nativo" tabindex="-1" aria-hidden="true" x-model="periodoFim" />
+                </div>
               </div>
             </template>
           </div>
@@ -515,9 +523,17 @@
                   </select>
                   <template x-if="periodoModo === 'personalizado'">
                     <div class="d-flex align-items-center gap-2">
-                      <input type="date" class="form-control form-control-sm" x-model="periodoInicio" />
+                      <div class="cg-date-field" style="max-width: 160px;">
+                        <input type="text" inputmode="numeric" autocomplete="off" class="form-control form-control-sm" placeholder="dd/mm/aaaa" x-datamask="periodoInicio" />
+                        <button type="button" class="cg-date-field__btn" @click="cgAbrirSeletorNativo($event)" aria-label="Escolher data no calendário"><i class="bi bi-calendar3"></i></button>
+                        <input type="date" class="cg-date-field__nativo" tabindex="-1" aria-hidden="true" x-model="periodoInicio" />
+                      </div>
                       <span class="cg-muted small">até</span>
-                      <input type="date" class="form-control form-control-sm" x-model="periodoFim" />
+                      <div class="cg-date-field" style="max-width: 160px;">
+                        <input type="text" inputmode="numeric" autocomplete="off" class="form-control form-control-sm" placeholder="dd/mm/aaaa" x-datamask="periodoFim" />
+                        <button type="button" class="cg-date-field__btn" @click="cgAbrirSeletorNativo($event)" aria-label="Escolher data no calendário"><i class="bi bi-calendar3"></i></button>
+                        <input type="date" class="cg-date-field__nativo" tabindex="-1" aria-hidden="true" x-model="periodoFim" />
+                      </div>
                     </div>
                   </template>
                 </div>
@@ -756,11 +772,19 @@
             <div class="row g-2 align-items-end mt-1">
               <div class="col-6 col-md-3">
                 <label class="form-label small mb-1 cg-muted">Vencimento de</label>
-                <input type="date" class="form-control form-control-sm" x-model="filtro.dataInicio" />
+                <div class="cg-date-field">
+                  <input type="text" inputmode="numeric" autocomplete="off" class="form-control form-control-sm" placeholder="dd/mm/aaaa" x-datamask="filtro.dataInicio" />
+                  <button type="button" class="cg-date-field__btn" @click="cgAbrirSeletorNativo($event)" aria-label="Escolher data no calendário"><i class="bi bi-calendar3"></i></button>
+                  <input type="date" class="cg-date-field__nativo" tabindex="-1" aria-hidden="true" x-model="filtro.dataInicio" />
+                </div>
               </div>
               <div class="col-6 col-md-3">
                 <label class="form-label small mb-1 cg-muted">até</label>
-                <input type="date" class="form-control form-control-sm" x-model="filtro.dataFim" />
+                <div class="cg-date-field">
+                  <input type="text" inputmode="numeric" autocomplete="off" class="form-control form-control-sm" placeholder="dd/mm/aaaa" x-datamask="filtro.dataFim" />
+                  <button type="button" class="cg-date-field__btn" @click="cgAbrirSeletorNativo($event)" aria-label="Escolher data no calendário"><i class="bi bi-calendar3"></i></button>
+                  <input type="date" class="cg-date-field__nativo" tabindex="-1" aria-hidden="true" x-model="filtro.dataFim" />
+                </div>
               </div>
               <div class="col-12 col-md-6 d-flex flex-wrap gap-2">
                 <button type="button" class="btn btn-outline-secondary btn-sm" @click="aplicarMesAtual()">Este mês</button>
@@ -953,10 +977,18 @@
                       </div>
                     </td>
                     <td>
-                      <input type="date" class="form-control form-control-sm" style="min-width: 150px;" x-effect="$nextTick(() => $el.value = row.data_vencimento || '')" @change="setVencimento(row, $event.target.value)" />
+                      <div class="cg-date-field" style="min-width: 150px;">
+                        <input type="text" inputmode="numeric" autocomplete="off" class="form-control form-control-sm" placeholder="dd/mm/aaaa" x-effect="const v = cgDateInput.formatarDataBR(row.data_vencimento); if (document.activeElement !== $el) $el.value = v" @input="$el.value = cgDateInput.aplicarMascaraData($el.value, $el._ultimoTexto || ''); $el._ultimoTexto = $el.value; const iso = cgDateInput.parseDataBR($el.value); if (iso || $el.value === '') setVencimento(row, iso || '')" />
+                        <button type="button" class="cg-date-field__btn" @click="cgAbrirSeletorNativo($event)" aria-label="Escolher data no calendário"><i class="bi bi-calendar3"></i></button>
+                        <input type="date" class="cg-date-field__nativo" tabindex="-1" aria-hidden="true" x-effect="$nextTick(() => $el.value = row.data_vencimento || '')" @change="setVencimento(row, $event.target.value)" />
+                      </div>
                     </td>
                     <td>
-                      <input type="date" class="form-control form-control-sm" style="min-width: 150px;" x-effect="$nextTick(() => $el.value = row.data_pagamento || '')" @change="setDataPagamento(row, $event.target.value)" />
+                      <div class="cg-date-field" style="min-width: 150px;">
+                        <input type="text" inputmode="numeric" autocomplete="off" class="form-control form-control-sm" placeholder="dd/mm/aaaa" x-effect="const v = cgDateInput.formatarDataBR(row.data_pagamento); if (document.activeElement !== $el) $el.value = v" @input="$el.value = cgDateInput.aplicarMascaraData($el.value, $el._ultimoTexto || ''); $el._ultimoTexto = $el.value; const iso = cgDateInput.parseDataBR($el.value); if (iso || $el.value === '') setDataPagamento(row, iso || '')" />
+                        <button type="button" class="cg-date-field__btn" @click="cgAbrirSeletorNativo($event)" aria-label="Escolher data no calendário"><i class="bi bi-calendar3"></i></button>
+                        <input type="date" class="cg-date-field__nativo" tabindex="-1" aria-hidden="true" x-effect="$nextTick(() => $el.value = row.data_pagamento || '')" @change="setDataPagamento(row, $event.target.value)" />
+                      </div>
                     </td>
                     <td>
                       <div class="d-flex align-items-center gap-2">
@@ -1077,11 +1109,19 @@
                 <div class="d-flex align-items-start gap-3 mb-2">
                   <div class="cg-flex-even">
                     <label class="cg-field-label"><i class="bi bi-calendar-event"></i> Vencimento</label>
-                    <input type="date" class="form-control form-control-sm" x-effect="$nextTick(() => $el.value = row.data_vencimento || '')" @change="setVencimento(row, $event.target.value)" />
+                    <div class="cg-date-field">
+                      <input type="text" inputmode="numeric" autocomplete="off" class="form-control form-control-sm" placeholder="dd/mm/aaaa" x-effect="const v = cgDateInput.formatarDataBR(row.data_vencimento); if (document.activeElement !== $el) $el.value = v" @input="$el.value = cgDateInput.aplicarMascaraData($el.value, $el._ultimoTexto || ''); $el._ultimoTexto = $el.value; const iso = cgDateInput.parseDataBR($el.value); if (iso || $el.value === '') setVencimento(row, iso || '')" />
+                      <button type="button" class="cg-date-field__btn" @click="cgAbrirSeletorNativo($event)" aria-label="Escolher data no calendário"><i class="bi bi-calendar3"></i></button>
+                      <input type="date" class="cg-date-field__nativo" tabindex="-1" aria-hidden="true" x-effect="$nextTick(() => $el.value = row.data_vencimento || '')" @change="setVencimento(row, $event.target.value)" />
+                    </div>
                   </div>
                   <div class="cg-flex-even">
                     <label class="cg-field-label"><i class="bi bi-calendar-check"></i> Pago em</label>
-                    <input type="date" class="form-control form-control-sm" x-effect="$nextTick(() => $el.value = row.data_pagamento || '')" @change="setDataPagamento(row, $event.target.value)" />
+                    <div class="cg-date-field">
+                      <input type="text" inputmode="numeric" autocomplete="off" class="form-control form-control-sm" placeholder="dd/mm/aaaa" x-effect="const v = cgDateInput.formatarDataBR(row.data_pagamento); if (document.activeElement !== $el) $el.value = v" @input="$el.value = cgDateInput.aplicarMascaraData($el.value, $el._ultimoTexto || ''); $el._ultimoTexto = $el.value; const iso = cgDateInput.parseDataBR($el.value); if (iso || $el.value === '') setDataPagamento(row, iso || '')" />
+                      <button type="button" class="cg-date-field__btn" @click="cgAbrirSeletorNativo($event)" aria-label="Escolher data no calendário"><i class="bi bi-calendar3"></i></button>
+                      <input type="date" class="cg-date-field__nativo" tabindex="-1" aria-hidden="true" x-effect="$nextTick(() => $el.value = row.data_pagamento || '')" @change="setDataPagamento(row, $event.target.value)" />
+                    </div>
                   </div>
                 </div>
 
@@ -1345,7 +1385,11 @@
                   </div>
                   <div class="col-6">
                     <label class="form-label small">Validade (opcional)</label>
-                    <input type="date" class="form-control" x-model="novoItem.data_validade" />
+                    <div class="cg-date-field">
+                      <input type="text" inputmode="numeric" autocomplete="off" class="form-control" placeholder="dd/mm/aaaa" x-datamask="novoItem.data_validade" />
+                      <button type="button" class="cg-date-field__btn" @click="cgAbrirSeletorNativo($event)" aria-label="Escolher data no calendário"><i class="bi bi-calendar3"></i></button>
+                      <input type="date" class="cg-date-field__nativo" tabindex="-1" aria-hidden="true" x-model="novoItem.data_validade" />
+                    </div>
                   </div>
                 </div>
                 <div class="mb-3">
@@ -1585,7 +1629,11 @@
                 </div>
                 <div class="col-6">
                   <label class="form-label small">Validade</label>
-                  <input type="date" class="form-control form-control-sm" x-model="edicaoForm.data_validade" />
+                  <div class="cg-date-field">
+                    <input type="text" inputmode="numeric" autocomplete="off" class="form-control form-control-sm" placeholder="dd/mm/aaaa" x-datamask="edicaoForm.data_validade" />
+                    <button type="button" class="cg-date-field__btn" @click="cgAbrirSeletorNativo($event)" aria-label="Escolher data no calendário"><i class="bi bi-calendar3"></i></button>
+                    <input type="date" class="cg-date-field__nativo" tabindex="-1" aria-hidden="true" x-model="edicaoForm.data_validade" />
+                  </div>
                 </div>
                 <div class="col-12">
                   <label class="form-label small">Código de barras</label>
@@ -1973,7 +2021,11 @@
                 </div>
                 <div class="col-6">
                   <label class="form-label small">Validade (opcional)</label>
-                  <input type="date" class="form-control" x-model="itemForm.data_validade" />
+                  <div class="cg-date-field">
+                    <input type="text" inputmode="numeric" autocomplete="off" class="form-control" placeholder="dd/mm/aaaa" x-datamask="itemForm.data_validade" />
+                    <button type="button" class="cg-date-field__btn" @click="cgAbrirSeletorNativo($event)" aria-label="Escolher data no calendário"><i class="bi bi-calendar3"></i></button>
+                    <input type="date" class="cg-date-field__nativo" tabindex="-1" aria-hidden="true" x-model="itemForm.data_validade" />
+                  </div>
                 </div>
               </div>
               <div class="d-flex gap-2">
@@ -2295,7 +2347,11 @@
               </div>
               <div class="mb-3">
                 <label class="form-label small">Data</label>
-                <input type="date" class="form-control" x-model="movForm.data" />
+                <div class="cg-date-field">
+                  <input type="text" inputmode="numeric" autocomplete="off" class="form-control" placeholder="dd/mm/aaaa" x-datamask="movForm.data" />
+                  <button type="button" class="cg-date-field__btn" @click="cgAbrirSeletorNativo($event)" aria-label="Escolher data no calendário"><i class="bi bi-calendar3"></i></button>
+                  <input type="date" class="cg-date-field__nativo" tabindex="-1" aria-hidden="true" x-model="movForm.data" />
+                </div>
               </div>
               <div class="mb-3">
                 <label class="form-label small">Observações (opcional)</label>
@@ -2776,7 +2832,11 @@
           <div class="row g-2 mb-2">
             <div :class="$store.txModal.usaCadenciaParaVencimento ? 'col-12' : 'col-6'">
               <label class="form-label">Cadastro</label>
-              <input type="date" class="form-control" x-model="$store.txModal.form.data_cadastro" />
+              <div class="cg-date-field">
+                <input type="text" inputmode="numeric" autocomplete="off" class="form-control" placeholder="dd/mm/aaaa" x-datamask="$store.txModal.form.data_cadastro" />
+                <button type="button" class="cg-date-field__btn" @click="cgAbrirSeletorNativo($event)" aria-label="Escolher data no calendário"><i class="bi bi-calendar3"></i></button>
+                <input type="date" class="cg-date-field__nativo" tabindex="-1" aria-hidden="true" x-model="$store.txModal.form.data_cadastro" />
+              </div>
             </div>
             <!-- Vencimento é OU este campo (despesa variável, ou fixa sem
                  cadência mensal/anual) OU o "dia do mês"/"dia+mês do ano" lá
@@ -2785,7 +2845,11 @@
                  data (ver $store.txModal.usaCadenciaParaVencimento). -->
             <div class="col-6" x-show="!$store.txModal.usaCadenciaParaVencimento" x-cloak>
               <label class="form-label">Vencimento</label>
-              <input type="date" class="form-control" x-model="$store.txModal.form.data_vencimento" />
+              <div class="cg-date-field">
+                <input type="text" inputmode="numeric" autocomplete="off" class="form-control" placeholder="dd/mm/aaaa" x-datamask="$store.txModal.form.data_vencimento" />
+                <button type="button" class="cg-date-field__btn" @click="cgAbrirSeletorNativo($event)" aria-label="Escolher data no calendário"><i class="bi bi-calendar3"></i></button>
+                <input type="date" class="cg-date-field__nativo" tabindex="-1" aria-hidden="true" x-model="$store.txModal.form.data_vencimento" />
+              </div>
             </div>
           </div>
 
@@ -2835,7 +2899,11 @@
           <template x-if="$store.txModal.form.data_pagamento">
             <div class="mb-2">
               <label class="form-label small mb-1">Pago em</label>
-              <input type="date" class="form-control form-control-sm" style="max-width: 200px;" x-model="$store.txModal.form.data_pagamento" />
+              <div class="cg-date-field" style="max-width: 200px;">
+                <input type="text" inputmode="numeric" autocomplete="off" class="form-control form-control-sm" placeholder="dd/mm/aaaa" x-datamask="$store.txModal.form.data_pagamento" />
+                <button type="button" class="cg-date-field__btn" @click="cgAbrirSeletorNativo($event)" aria-label="Escolher data no calendário"><i class="bi bi-calendar3"></i></button>
+                <input type="date" class="cg-date-field__nativo" tabindex="-1" aria-hidden="true" x-model="$store.txModal.form.data_pagamento" />
+              </div>
             </div>
           </template>
 

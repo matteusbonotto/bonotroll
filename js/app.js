@@ -19,11 +19,18 @@ import { categoryChart } from './components/charts.js';
 import * as format from './utils/format.js';
 import { STATUS_META, statusMeta, severityMeta } from './utils/status.js';
 import { generateForProfile } from './services/notifications.js';
+import { formatarDataBR, parseDataBR, aplicarMascaraData } from './utils/dateInput.js';
 
 // Exposto globalmente só para uso direto nas expressões do template (index.html),
 // que não passa por bundler e não pode importar módulos ES ali.
 window.cgFormat = format;
 window.cgStatus = { STATUS_META, statusMeta, severityMeta };
+// Usado inline no HTML pelos 2 campos de data com fiação própria (linha de
+// vencimento/pagamento da tabela de Transações, que sincronizam via
+// callback em vez de x-model direto — ver setVencimento/setDataPagamento em
+// js/components/transactionTable.js) — os outros 14 campos usam a diretiva
+// x-datamask abaixo, que já importa estas 3 funções direto do módulo.
+window.cgDateInput = { formatarDataBR, parseDataBR, aplicarMascaraData };
 
 // Este listener precisa ser registrado ANTES do script do Alpine (carregado com
 // `defer` no index.html, depois deste módulo) para garantir que os stores e
@@ -48,6 +55,55 @@ document.addEventListener('alpine:init', () => {
   Alpine.data('groupView', groupView);
   Alpine.data('profileView', profileView);
   Alpine.data('categoryChart', categoryChart);
+
+  // Diretiva x-datamask="expressao" — campo de data digitável (dd/mm/aaaa)
+  // ligado por two-way binding direto numa expressão Alpine (ex.:
+  // "movForm.data", "$store.txModal.form.data_vencimento"), do mesmo jeito
+  // que x-model faria com um <input type="date"> nativo. Existe porque
+  // digitar uma data em 2027/2028 clicando no calendário nativo mês a mês é
+  // lento demais — a pessoa passa a poder digitar "15032027" e o campo vira
+  // "15/03/2027" sozinho (ver js/utils/dateInput.js para a máscara/parse).
+  //
+  // Só escreve de volta na expressão quando o texto digitado forma uma data
+  // COMPLETA E VÁLIDA (parseDataBR só devolve não-null nesse caso) — uma
+  // data em progresso ("15/03/2" ou mesmo "32/13/2027", inválida mas
+  // completa) fica visível no campo sem nunca chegar a sujar o valor ISO
+  // salvo, que só muda quando há algo realmente gravável. Campo esvaziado de
+  // propósito (apagar tudo) TAMBÉM grava '' — é a única forma de "limpar"
+  // uma data opcional (ex.: validade) sem abrir o seletor nativo.
+  Alpine.directive('datamask', (el, { expression }, { evaluateLater, effect, cleanup }) => {
+    const getValor = evaluateLater(expression);
+    const setValor = (novoIso) => {
+      Alpine.evaluate(el, `${expression} = ${JSON.stringify(novoIso)}`);
+    };
+
+    const aoDigitar = () => {
+      const anterior = el._cgTextoAnterior || '';
+      const novoTexto = aplicarMascaraData(el.value, anterior);
+      el._cgTextoAnterior = novoTexto;
+      if (el.value !== novoTexto) el.value = novoTexto;
+      if (novoTexto === '') { setValor(''); return; }
+      const iso = parseDataBR(novoTexto);
+      if (iso !== null) setValor(iso);
+    };
+    el.addEventListener('input', aoDigitar);
+    cleanup(() => el.removeEventListener('input', aoDigitar));
+
+    // Mantém o texto visível sincronizado quando o valor ISO muda por fora
+    // (reset de formulário, seleção pelo calendário nativo ao lado — ver
+    // .cg-date-field__nativo, que usa x-model na MESMA expressão) — mas
+    // nunca enquanto a pessoa está com o campo focado digitando, senão a
+    // remontagem do texto por aqui brigaria com o que ela está no meio de
+    // escrever.
+    effect(() => {
+      getValor((iso) => {
+        if (document.activeElement === el) return;
+        const texto = formatarDataBR(iso);
+        el.value = texto;
+        el._cgTextoAnterior = texto;
+      });
+    });
+  });
 });
 
 // Botão físico "voltar" do Android / gesto do navegador andando por DENTRO
@@ -106,6 +162,28 @@ window.addEventListener('popstate', () => {
     if (aberto) aberto.click();
   });
 })();
+
+// Botão de calendário ao lado de todo campo de data mascarado (.cg-date-field
+// — ver css/components.css e a diretiva x-datamask acima) — abre o seletor
+// nativo do sistema operacional escondido dentro do mesmo grupo via
+// showPicker(). Só Chrome/Edge implementam showPicker() (checado uma vez só,
+// no carregamento); em navegadores sem suporte (Firefox/Safari) a classe
+// abaixo esconde o botão pela CSS — o campo digitável continua sendo a
+// única forma de preencher a data, que já era o pedido original, então
+// nada se perde ali.
+if (typeof HTMLInputElement === 'undefined' || typeof HTMLInputElement.prototype.showPicker !== 'function') {
+  document.documentElement.classList.add('cg-sem-date-picker');
+}
+window.cgAbrirSeletorNativo = (event) => {
+  const grupo = event.currentTarget.closest('.cg-date-field');
+  const nativo = grupo?.querySelector('input[type="date"]');
+  if (!nativo || typeof nativo.showPicker !== 'function') return;
+  try {
+    nativo.showPicker();
+  } catch {
+    // Best-effort — nunca deixa o clique no botão quebrar a tela.
+  }
+};
 
 // Pressionar-e-segurar em qualquer botão marcado com data-repeat (steppers
 // de quantidade em Compras/Recursos) acelera automaticamente — um toque
