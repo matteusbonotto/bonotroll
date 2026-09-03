@@ -1557,7 +1557,7 @@
       "description": "Pedido do usuário (rodada de 7 melhorias), item 3: '2026 Agora / ago / set // 2027 / ago' — hierarquia de 2 níveis Ano>Mês, mês atual rotulado Agora. Utilitário puro já criado e testado: js/utils/periodo.js::agruparPorAnoMes(transactions, {mesAtualIso, extrairData, computeResumo, labelMes}) — devolve lista FLAT de seções de mês (mesmo formato de gruposPorPeriodo hoje), decorada com ano/isAnoAtual/anoLabel/primeiroDoAno (true só na primeira seção de cada ano, sinaliza onde o template insere o cabeçalho de ano, sem x-for aninhado). 13 testes novos (65/65 total antes do dateInput.js). Falta: integrar em transactionTable.js (trocar gruposPorPeriodo por chamada a agruparPorAnoMes) e no template index.html (inserir cabeçalho de ano antes de toda seção com primeiroDoAno, reaproveitando o padrão overridesAbertura com chaves ano:${ano} pra permitir colapsar o ano inteiro, combinado com o toggle de mês já existente).",
       "category": "Frontend",
       "priority": "MEDIUM",
-      "status": "TODO",
+      "status": "DONE",
       "agent": "frontend",
       "tags": [
         "transacoes",
@@ -1566,7 +1566,7 @@
       ],
       "dependencies": [],
       "createdAt": "2026-09-02T00:00:00-03:00",
-      "updatedAt": "2026-09-02T00:00:00-03:00",
+      "updatedAt": "2026-09-03T00:00:00-03:00",
       "history": [
         {
           "action": "CREATED",
@@ -1574,6 +1574,13 @@
           "updatedBy": "claude",
           "timestamp": "2026-09-02T00:00:00-03:00",
           "note": "js/utils/periodo.js e tests/unit/periodo.test.js já prontos e testados — só falta a integração em transactionTable.js/index.html."
+        },
+        {
+          "action": "STATUS_CHANGE",
+          "to": "DONE",
+          "updatedBy": "frontend",
+          "timestamp": "2026-09-03T00:00:00-03:00",
+          "note": "90/90 unitarios, 35/35 e2e. gruposPorPeriodo agora delega pra agruparPorAnoMes (js/utils/periodo.js); cabecalho de ano reaproveita overridesAbertura com prefixo ano: ; novo secaoVisivel() decide a cascata ano-aberto+mes-aberto. Novo teste tests/e2e/agrupamento-ano.spec.js injeta 2 transacoes de ano seguinte pra provar o 2o nivel de verdade (seed demo so tem 1 ano)."
         }
       ]
     },

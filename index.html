@@ -813,7 +813,33 @@
           <template x-if="sortedRows.length">
           <div>
             <template x-for="secao in secoesExibidas" :key="secao.chave">
-            <div class="mb-3">
+            <div>
+              <!-- Cabeçalho de ANO (2 níveis: Ano > Mês) — só antes da
+                   PRIMEIRA seção de mês de cada ano (secao.primeiroDoAno);
+                   nunca no balde "sem-data" (secao.anoLabel vem null ali —
+                   ver agruparPorAnoMes em js/utils/periodo.js). Reaproveita
+                   o mesmo mecanismo de abrir/fechar dos grupos de mês
+                   (estaAnoAberto/toggleAno por baixo de overridesAbertura,
+                   só com o prefixo "ano:" na chave). -->
+              <template x-if="agrupando && secao.primeiroDoAno && secao.anoLabel">
+                <button type="button" class="btn w-100 d-flex align-items-center justify-content-between gap-2 p-2 mb-2" style="background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); font-size: 1.05rem; font-weight: 700;" @click="toggleAno(secao.ano)">
+                  <span class="d-flex align-items-center gap-2">
+                    <span class="cg-badge cg-badge--success" style="padding: 2px 8px; font-size: 0.65rem;" x-show="secao.isAnoAtual">Agora</span>
+                    <span x-text="secao.anoLabel"></span>
+                  </span>
+                  <i class="bi" :class="estaAnoAberto(secao.ano) ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+                </button>
+              </template>
+
+              <!-- Seção de mês (cabeçalho + corpo) só é desenhada se o ANO
+                   dela estiver aberto (secaoVisivel, transactionTable.js) —
+                   senão colapsar o ano deixaria os cabeçalhos de mês soltos
+                   aparecendo mesmo com o ano fechado. Fora do agrupamento
+                   por período (sem nível de ano, secao.ano undefined) ou
+                   com "agrupando" desligado, secaoVisivel sempre devolve
+                   true — comportamento de sempre, sem mudança. -->
+              <template x-if="secaoVisivel(secao)">
+              <div class="mb-3">
               <!-- Cabeçalho do grupo — x-if (não x-show) de propósito: some
                    do DOM inteiro quando "agrupando" desliga, em vez de só
                    ficar invisível — evita depender de display:none contra
@@ -1197,6 +1223,8 @@
             </template>
           </div>
 
+              </div>
+              </template>
               </div>
               </template>
             </div>

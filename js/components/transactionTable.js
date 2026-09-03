@@ -4,6 +4,7 @@ import { STATUS_META, statusMeta, computeStatus } from '../utils/status.js';
 import { exportToCsv } from '../services/csvImport.js';
 import * as format from '../utils/format.js';
 import { todayIso } from '../utils/format.js';
+import { agruparPorAnoMes } from '../utils/periodo.js';
 
 const FILTRO_VAZIO = { tipo: '', categoriaId: '', responsavelId: '', status: '', tipoDespesa: '', busca: '', dataInicio: '', dataFim: '' };
 
@@ -89,6 +90,19 @@ export function transactionsView() {
       this.overridesAbertura[chave] = !this.estaAberto(chave, abertoPorPadrao);
     },
 
+    // Nível de ANO do accordion "Período" (ver agruparPorAnoMes em
+    // ../utils/periodo.js) — reaproveita o MESMO mecanismo de estado dos
+    // grupos de mês (overridesAbertura/estaAberto/toggleGrupo), só com um
+    // prefixo "ano:" na chave pra nunca colidir com uma chave de mês
+    // ("aaaa-mm" ou "sem-data"). Aberto por padrão (só colapsa quando a
+    // pessoa clica) — diferente do mês, que só abre por padrão no mês atual.
+    estaAnoAberto(ano) {
+      return this.estaAberto('ano:' + ano, true);
+    },
+    toggleAno(ano) {
+      this.toggleGrupo('ano:' + ano, true);
+    },
+
     labelMes(anoMes) {
       if (anoMes === 'sem-data') return 'Sem data';
       const [ano, mes] = anoMes.split('-');
@@ -109,44 +123,22 @@ export function transactionsView() {
       return r;
     },
 
-    // Por mês ("aaaa-mm", rótulo "ago/26"), 1 nível só — o ano fica embutido
-    // no rótulo em vez de virar um segundo nível de accordion (mais simples
-    // de combinar com "dentro da seção é a mesma tabela/grade de sempre").
-    // Usa vencimento (ou cadastro, se não tiver vencimento) como a data que
+    // Por Ano > Mês (agruparPorAnoMes, ../utils/periodo.js) — lista FLAT de
+    // seções de MÊS (chave "aaaa-mm"/"sem-data"), já decorada com os campos
+    // de ano (ano/isAnoAtual/anoLabel/primeiroDoAno) que o template usa pra
+    // desenhar o cabeçalho de ano por cima, sem precisar de um x-for
+    // aninhado (ver comentário de arquitetura no topo de periodo.js). Usa
+    // vencimento (ou cadastro, se não tiver vencimento) como a data que
     // define o período — é a mesma data que a pessoa já olha pra saber
     // "isso é de quando". Sem nenhuma das duas (raro) cai num grupo "Sem
     // data" à parte em vez de sumir da lista.
     get gruposPorPeriodo() {
-      const hojeAnoMes = todayIso().slice(0, 7);
-      const porMes = new Map();
-      for (const t of this.sortedRows) {
-        const base = t.data_vencimento || t.data_cadastro || null;
-        const anoMes = base ? base.slice(0, 7) : 'sem-data';
-        if (!porMes.has(anoMes)) porMes.set(anoMes, []);
-        porMes.get(anoMes).push(t);
-      }
-      return [...porMes.entries()]
-        // Mês atual sempre primeiro da fila, sem exceção (pedido explícito)
-        // — antes disso, ordenar só por string "aaaa-mm" descendente fazia
-        // um mês FUTURO (ex.: recorrência já gerada com antecedência,
-        // "set/26") aparecer antes do mês atual ("ago/26"), porque
-        // "2026-09" > "2026-08" na comparação de string. "Sem data" sempre
-        // por último; o resto continua mais recente -> mais antigo entre si.
-        .sort(([a], [b]) => {
-          if (a === hojeAnoMes) return -1;
-          if (b === hojeAnoMes) return 1;
-          if (a === 'sem-data') return 1;
-          if (b === 'sem-data') return -1;
-          return b.localeCompare(a);
-        })
-        .map(([anoMes, linhas]) => ({
-          chave: anoMes,
-          label: this.labelMes(anoMes),
-          isAtual: anoMes === hojeAnoMes,
-          abertoPorPadrao: anoMes === hojeAnoMes,
-          linhas,
-          resumo: this.resumoGrupo(linhas),
-        }));
+      return agruparPorAnoMes(this.sortedRows, {
+        mesAtualIso: todayIso().slice(0, 7),
+        extrairData: (t) => t.data_vencimento || t.data_cadastro || null,
+        computeResumo: (linhas) => this.resumoGrupo(linhas),
+        labelMes: (anoMes) => this.labelMes(anoMes),
+      });
     },
 
     get gruposSimples() {
@@ -188,6 +180,21 @@ export function transactionsView() {
       // troca (confirmado ao vivo, não só teoria).
       if (!this.agrupando) return [{ chave: '__todos__', label: null, linhas: this.sortedRows, abertoPorPadrao: true, resumo: this.resumoGrupo([]) }];
       return this.agrupamento === 'periodo' ? this.gruposPorPeriodo : this.gruposSimples;
+    },
+
+    // Decide se a seção (cabeçalho de mês + corpo) aparece no template — 2
+    // condições em cascata, não uma só: (1) sem agrupamento, tudo aparece,
+    // comportamento de sempre; (2) com agrupamento ligado mas fora do modo
+    // "período" (responsável/movimentação/categoria), não existe nível de
+    // ano — `secao.ano` vem undefined nesses grupos, então sempre visível
+    // aqui; (3) em "período", só aparece se o ANO da seção estiver aberto —
+    // o mês individual dentro do ano aberto continua controlado à parte
+    // pelo x-if existente (!agrupando || estaAberto(secao.chave, ...)), que
+    // decide especificamente o CORPO da tabela, não a seção inteira.
+    secaoVisivel(secao) {
+      if (!this.agrupando) return true;
+      if (secao.ano === undefined) return true;
+      return this.estaAnoAberto(secao.ano);
     },
 
     init() {
