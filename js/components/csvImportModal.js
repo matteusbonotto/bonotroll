@@ -1,10 +1,11 @@
-import { parseCsvFile, applyMapping, IMPORT_TARGETS, normalizarDataCsv } from '../services/csvImport.js';
+import { parseCsvFile, applyMapping, IMPORT_TARGETS, normalizarDataCsv, baixarTemplateCsv } from '../services/csvImport.js';
 import { createTransaction } from '../services/transactions.js';
 import { createCategory } from '../services/categories.js';
 import { createCompany, updateCompany } from '../services/companies.js';
-import { todayIso } from '../utils/format.js';
+import { todayIso, MOEDAS_SUPORTADAS } from '../utils/format.js';
 import * as sl from '../services/shoppingList.js';
 import * as res from '../services/resources.js';
+import * as cx from '../services/caixinhas.js';
 
 // Modal global de importação de CSV (Alpine.store('csvModal')) — reaproveitado
 // para transações e para itens de lista de compras.
@@ -74,6 +75,10 @@ export function csvModalStore() {
       this.step = 'preview';
     },
 
+    baixarModelo() {
+      baixarTemplateCsv(this.target);
+    },
+
     async confirmar() {
       const store = Alpine.store('app');
       const mapeadas = applyMapping(this.rawRows, this.mapping);
@@ -140,7 +145,7 @@ export function csvModalStore() {
               group_id: store.group?.group?.id ?? null,
             });
             this._itemsCache.push(criado);
-          } else {
+          } else if (this.target === 'itens_compra') {
             if (!row.nome) throw new Error('nome do item é obrigatório');
             const unidade = ['kg', 'g'].includes((row.unidade || '').toLowerCase()) ? row.unidade.toLowerCase() : 'un';
             await sl.addItem(this.listId, {
@@ -149,6 +154,37 @@ export function csvModalStore() {
               unidade,
               quantidade: Number(String(row.quantidade || 1).replace(',', '.')) || 1,
             });
+          } else {
+            // caixinhas: sem find-or-create por nome — banco_nome não é
+            // único aqui (a própria tela permite mais de uma caixinha no
+            // mesmo banco, ex.: moedas diferentes), então cada linha vira
+            // uma caixinha nova, igual a "Nova caixinha" manual.
+            if (!row.banco_nome) throw new Error('banco é obrigatório');
+            const meta = row.meta ? Number(String(row.meta).replace(',', '.')) || null : null;
+            const valorInicial = row.valor_inicial ? Number(String(row.valor_inicial).replace(',', '.')) || 0 : 0;
+            const moeda = (row.moeda || 'BRL').toUpperCase();
+            // Valida contra a lista real de moedas que o app sabe converter
+            // (MOEDAS_SUPORTADAS) — sem isso, um código digitado errado no
+            // CSV ("REAL" em vez de "BRL") criava a caixinha mesmo assim e
+            // ela ficava com símbolo/cotação errados pra sempre, sem aviso
+            // nenhum na hora que daria pra corrigir fácil.
+            if (moeda && !MOEDAS_SUPORTADAS.some((m) => m.codigo === moeda)) {
+              throw new Error(`moeda "${row.moeda}" não reconhecida (use ${MOEDAS_SUPORTADAS.map((m) => m.codigo).join(', ')})`);
+            }
+            const caixinha = await cx.createCaixinha({
+              bancoNome: row.banco_nome,
+              moeda,
+              meta,
+              icone: row.icone || null,
+              ownerId: store.profile.id,
+              groupId: store.group?.group?.id ?? null,
+            });
+            // Valor inicial é opcional: cria a caixinha vazia mesmo sem ele
+            // (mesmo fluxo de "Nova caixinha" manual, que também começa
+            // zerada até o primeiro aporte) em vez de falhar a linha.
+            if (valorInicial > 0) {
+              await cx.createMovimentacao({ caixinhaId: caixinha.id, tipo: 'guardado', valor: valorInicial, data: todayIso() });
+            }
           }
           ok++;
         } catch (e) {
@@ -161,6 +197,7 @@ export function csvModalStore() {
       window.dispatchEvent(new CustomEvent('cg:transactions-changed'));
       window.dispatchEvent(new CustomEvent('cg:shopping-changed'));
       window.dispatchEvent(new CustomEvent('cg:recursos-changed'));
+      window.dispatchEvent(new CustomEvent('cg:caixinhas-changed'));
     },
 
     // Casa o nome da coluna "comodo" com um cômodo já existente (cria os

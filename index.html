@@ -2134,9 +2134,12 @@
 
         <!-- ===== CAIXINHAS ===== -->
         <section x-show="$store.app.view === 'caixinhas'" x-data="caixinhasView()" x-init="init()">
-          <div class="d-flex align-items-center justify-content-between mb-2">
+          <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
             <div class="cg-section-title mb-0"><i class="bi bi-piggy-bank"></i> Caixinhas</div>
-            <button type="button" class="cg-btn btn btn-outline-secondary btn-sm" @click="$store.bankModal.openManage()"><i class="bi bi-bank2"></i> Gerenciar bancos</button>
+            <div class="d-flex gap-2">
+              <button type="button" class="cg-btn btn btn-outline-secondary btn-sm" @click="$store.csvModal.openFor('caixinhas')"><i class="bi bi-upload"></i> Importar CSV</button>
+              <button type="button" class="cg-btn btn btn-outline-secondary btn-sm" @click="$store.bankModal.openManage()"><i class="bi bi-bank2"></i> Gerenciar bancos</button>
+            </div>
           </div>
 
           <template x-if="loading">
@@ -3402,6 +3405,10 @@
       <template x-if="$store.csvModal.step === 'upload'">
         <div>
           <p class="cg-muted small">Selecione um arquivo .csv com cabeçalho na primeira linha.</p>
+          <!-- Modelo com as colunas que este target entende, sem precisar
+               abrir um arquivo e ir campo por campo pra descobrir — baixa na
+               hora, direto do navegador (ver baixarTemplateCsv). -->
+          <button type="button" class="cg-btn btn btn-outline-secondary btn-sm mb-2" @click="$store.csvModal.baixarModelo()"><i class="bi bi-download"></i> Baixar modelo (.csv)</button>
           <input type="file" accept=".csv" class="form-control" @change="$store.csvModal.onFile($event)" />
         </div>
       </template>

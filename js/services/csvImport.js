@@ -36,9 +36,12 @@ export async function parseCsvFile(file) {
   });
 }
 
-export async function exportToCsv(rows, filename = 'exportacao.csv') {
-  const Papa = await loadPapa();
-  const csv = Papa.unparse(rows);
+// Dispara o download direto no navegador — sem servidor, sem link temporário
+// sobrevivendo além do necessário (revogado logo depois do clique). Mesmo
+// padrão de baixarComoJson em services/dataExport.js, só que pra CSV; usado
+// tanto por exportToCsv (dados de verdade) quanto por baixarTemplateCsv
+// (cabeçalho vazio).
+function baixarBlobCsv(csv, filename) {
   const blob = new Blob([`﻿${csv}`], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
@@ -46,6 +49,11 @@ export async function exportToCsv(rows, filename = 'exportacao.csv') {
   link.download = filename;
   link.click();
   URL.revokeObjectURL(url);
+}
+
+export async function exportToCsv(rows, filename = 'exportacao.csv') {
+  const Papa = await loadPapa();
+  baixarBlobCsv(Papa.unparse(rows), filename);
 }
 
 // Campos que o usuário pode mapear ao importar cada tipo de informação do app.
@@ -90,7 +98,29 @@ export const IMPORT_TARGETS = {
       { key: 'foto_url', label: 'Foto (URL)' },
     ],
   },
+  caixinhas: {
+    label: 'Caixinhas (reserva financeira)',
+    fields: [
+      { key: 'banco_nome', label: 'Banco', required: true },
+      { key: 'moeda', label: 'Moeda (BRL/USD/EUR/..., padrão BRL)' },
+      { key: 'meta', label: 'Meta (opcional)' },
+      { key: 'valor_inicial', label: 'Valor guardado inicial (opcional)' },
+      { key: 'icone', label: 'Ícone (Bootstrap Icons, ex: bi-piggy-bank)' },
+    ],
+  },
 };
+
+// Modelo pra quem quer montar a planilha do zero sabendo exatamente quais
+// colunas o Bõnotto entende, sem precisar abrir o modal e ler campo a campo
+// (pedido do usuário — não existia nenhum arquivo assim). Cabeçalho usa a
+// KEY de cada campo (não o label com dica de formato) — ao reimportar esse
+// mesmo arquivo preenchido, o match automático de coluna em onFile() (ver
+// csvImportModal.js) é exato, não depende de casar por substring.
+export async function baixarTemplateCsv(target) {
+  const Papa = await loadPapa();
+  const fields = IMPORT_TARGETS[target].fields.map((f) => f.key);
+  baixarBlobCsv(Papa.unparse({ fields, data: [] }), `bonotto-modelo-${target}.csv`);
+}
 
 // Aceita tanto "aaaa-mm-dd" (formato documentado nos labels acima, o mesmo
 // de <input type="date">) quanto "dd/mm/aaaa" (o formato que qualquer CSV
