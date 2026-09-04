@@ -1,4 +1,4 @@
-import { parseCsvFile, applyMapping, IMPORT_TARGETS } from '../services/csvImport.js';
+import { parseCsvFile, applyMapping, IMPORT_TARGETS, normalizarDataCsv } from '../services/csvImport.js';
 import { createTransaction } from '../services/transactions.js';
 import { createCategory } from '../services/categories.js';
 import { createCompany, updateCompany } from '../services/companies.js';
@@ -87,6 +87,14 @@ export function csvModalStore() {
             const pago = /^(pago|quitado|pg|paid)/i.test(row.status || '');
             const parcelaAtual = row.parcela_atual ? Number(row.parcela_atual) || null : null;
             const parcelaTotal = row.parcela_total ? Number(row.parcela_total) || null : null;
+            const dataVencimento = normalizarDataCsv(row.data_vencimento);
+            // "Pago em" usa a coluna própria (data_pagamento) quando o
+            // usuário mapeou uma — antes, toda linha marcada como paga
+            // gravava a mesma data do vencimento nos dois campos, sem jeito
+            // de importar uma data de pagamento de verdade. Sem essa coluna
+            // mapeada, mantém o comportamento antigo como fallback: paga sem
+            // data própria assume o vencimento (ou hoje, se nem isso vier).
+            const dataPagamento = normalizarDataCsv(row.data_pagamento) || (pago ? dataVencimento || todayIso() : null);
             await createTransaction({
               tipo: (row.tipo || 'saida').toLowerCase().startsWith('entr') ? 'entrada' : 'saida',
               titulo: row.titulo,
@@ -94,8 +102,8 @@ export function csvModalStore() {
               categoria_id: await this.resolveCategoria(row.categoria_nome),
               tipo_despesa: (row.tipo_despesa || 'variavel').toLowerCase().startsWith('fix') ? 'fixa' : 'variavel',
               valor: Number(String(row.valor).replace(',', '.')) || 0,
-              data_vencimento: row.data_vencimento || null,
-              data_pagamento: pago ? row.data_vencimento || todayIso() : null,
+              data_vencimento: dataVencimento,
+              data_pagamento: dataPagamento,
               responsavel_id: await this.resolveResponsavel(row.responsavel_nome),
               owner_id: store.profile.id,
               group_id: store.group?.group?.id ?? null,
@@ -125,7 +133,7 @@ export function csvModalStore() {
               room_id: room.id,
               category_id: categoria?.id || null,
               quantidade: Number(String(row.quantidade || 1).replace(',', '.')) || 1,
-              data_validade: row.data_validade || null,
+              data_validade: normalizarDataCsv(row.data_validade),
               icone: row.icone || null,
               foto_url: row.foto_url || null,
               owner_id: store.profile.id,

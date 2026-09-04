@@ -324,8 +324,36 @@
    Seletor composto (.cg-card.cg-tx-filho) de propósito — variante nova de
    .cg-card confiando só em ordem de arquivo já se perdeu pra uma declaração
    mais abaixo neste projeto mais de uma vez (ver CLAUDE.md). */
-.cg-table tbody tr.cg-tx-filho > td:first-child { padding-left: 30px; }
+.cg-table tbody tr.cg-tx-filho > td:first-child { position: relative; padding-left: 30px; }
 .cg-table tbody tr.cg-tx-filho { background: color-mix(in srgb, var(--color-surface-alt) 55%, transparent); }
+/* "Estilo raiz": guia vertical à esquerda dos filhos de um item expandido
+   (hoje só a fatura do cartão de crédito, mas serve pra qualquer linha
+   futura que use esta mesma classe) — sem ela, o único sinal de "isto é
+   filho" era um leve tom de fundo, difícil de perceber onde o grupo começa
+   e onde termina (relatado pelo usuário). Uma linha por `<tr>`, mas como as
+   linhas da tabela se tocam (border-spacing: 0), elas somam visualmente
+   numa única barra contínua — o próprio início/fim dela já mostra onde o
+   grupo de filhos começa e acaba, sem precisar marcar "primeiro"/"último"
+   linha por linha em JS.
+   :has(+ tr.cg-tx-filho) detecta se a PRÓXIMA linha também é filha: quando
+   não é (fim do grupo), a barra para na metade da altura e vira um gancho
+   arredondado — o "└" de uma árvore de arquivos — em vez de continuar reto,
+   deixando o fim do grupo inequívoco mesmo sem olhar a linha seguinte. */
+.cg-table tbody tr.cg-tx-filho > td:first-child::before {
+  content: '';
+  position: absolute;
+  left: 14px;
+  top: 0;
+  bottom: 0;
+  width: 10px;
+  border-left: 2px solid color-mix(in srgb, var(--color-primary) 35%, var(--color-border));
+  pointer-events: none;
+}
+.cg-table tbody tr.cg-tx-filho:not(:has(+ tr.cg-tx-filho)) > td:first-child::before {
+  bottom: 50%;
+  border-bottom: 2px solid color-mix(in srgb, var(--color-primary) 35%, var(--color-border));
+  border-bottom-left-radius: 6px;
+}
 .cg-card.cg-tx-filho {
   margin-left: var(--space-3);
   border-left: 3px solid color-mix(in srgb, var(--color-primary) 45%, var(--color-border));

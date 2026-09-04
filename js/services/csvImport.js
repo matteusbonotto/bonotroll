@@ -1,3 +1,5 @@
+import { parseDataBR } from '../utils/dateInput.js';
+
 // PapaParse é carregado sob demanda — só baixa esse script quando o usuário
 // realmente abre a tela de importação/exportação de CSV.
 async function loadPapa() {
@@ -59,7 +61,8 @@ export const IMPORT_TARGETS = {
       { key: 'responsavel_nome', label: 'Responsável (nome do membro)' },
       { key: 'tipo_despesa', label: 'Tipo (fixa/variavel)' },
       { key: 'valor', label: 'Valor' },
-      { key: 'data_vencimento', label: 'Vencimento (aaaa-mm-dd)' },
+      { key: 'data_vencimento', label: 'Vencimento (aaaa-mm-dd ou dd/mm/aaaa)' },
+      { key: 'data_pagamento', label: 'Pago em (aaaa-mm-dd ou dd/mm/aaaa, opcional)' },
       { key: 'status', label: 'Status (pago/pendente)' },
       { key: 'observacoes', label: 'Observações' },
       { key: 'parcela_atual', label: 'Parcela atual (nº)' },
@@ -82,12 +85,27 @@ export const IMPORT_TARGETS = {
       { key: 'comodo_nome', label: 'Cômodo', required: true },
       { key: 'subcategoria_nome', label: 'Subcategoria' },
       { key: 'quantidade', label: 'Quantidade' },
-      { key: 'data_validade', label: 'Validade (aaaa-mm-dd)' },
+      { key: 'data_validade', label: 'Validade (aaaa-mm-dd ou dd/mm/aaaa)' },
       { key: 'icone', label: 'Ícone (Bootstrap Icons, ex: bi-basket)' },
       { key: 'foto_url', label: 'Foto (URL)' },
     ],
   },
 };
+
+// Aceita tanto "aaaa-mm-dd" (formato documentado nos labels acima, o mesmo
+// de <input type="date">) quanto "dd/mm/aaaa" (o formato que qualquer CSV
+// exportado de Excel/Google Sheets em pt-BR usa) — sem isso, uma data
+// brasileira ia direto pro banco como string crua: ou o insert quebrava, ou
+// (pior, silencioso) o Postgres entendia dia e mês trocados. Reaproveita o
+// mesmo parser do campo de data digitável manual (parseDataBR). Formato
+// desconhecido ou vazio vira null — mesmo comportamento de "não veio nada"
+// que o resto do importador já usa pra data opcional.
+export function normalizarDataCsv(valor) {
+  const texto = (valor ?? '').toString().trim();
+  if (!texto) return null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(texto)) return texto;
+  return parseDataBR(texto);
+}
 
 // Aplica o de-para escolhido pelo usuário (target -> cabeçalho do CSV) sobre as linhas cruas.
 export function applyMapping(rows, mapping) {

@@ -218,7 +218,18 @@ export function appStore() {
     async refreshCartoes() {
       if (!this.profile) return;
       const groupId = this.group?.group?.id;
-      this.cartoes = await cartoesService.listCartoes({ ownerId: this.profile.id, groupId });
+      // Best-effort: isto roda logo depois de CRIAR um cartão (ver
+      // cartaoManager.js::salvar) só pra atualizar a lista reativa que
+      // alimenta o seletor de cartão. Se falhar (ex.: RLS/migração), o
+      // cartão já foi salvo com sucesso — deixar a exceção subir faria
+      // cartaoManager.js mostrar "não foi possível salvar o cartão" por
+      // cima de uma criação que na verdade deu certo, e o dropdown só
+      // ficaria desatualizado até o próximo refresh (F5/relogin).
+      try {
+        this.cartoes = await cartoesService.listCartoes({ ownerId: this.profile.id, groupId });
+      } catch (e) {
+        console.error('Não foi possível atualizar a lista de cartões.', e);
+      }
     },
 
     cartaoById(id) {
