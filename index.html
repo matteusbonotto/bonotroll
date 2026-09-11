@@ -164,7 +164,7 @@
 
   <!-- ============ APP AUTENTICADO ============ -->
   <template x-if="$store.app.ready && $store.app.profile">
-    <div class="cg-app-shell">
+    <div class="cg-app-shell" x-init="$store.onboarding.iniciarSeNecessario()">
 
       <!-- Sidebar (desktop) -->
       <aside class="cg-sidebar">
@@ -339,6 +339,12 @@
 
           <div class="cg-hero-balance mb-4" :style="corSelecionada ? { background: corSelecionada } : {}">
             <span class="cg-hero-balance__label">Saldo <span x-text="quemVer === 'grupo' ? 'do grupo' : quemVer === 'eu' ? 'atual' : ('de ' + (opcoesQuemVer.find(o => o.id === quemVer)?.nome || ''))"></span></span>
+            <span class="cg-help" x-data="cgHelp('Entradas pagas menos saídas pagas, olhando pra quem está selecionado acima. Lançamentos ainda não pagos não entram aqui — eles aparecem à parte, em \'Previsto\'.')" @mouseenter="aoPassarMouse()" @mouseleave="fechar()" @click.outside="fechar()">
+              <button type="button" class="cg-help__trigger" @click="aoClicar()" @keydown.escape.stop="fechar()" :aria-expanded="aberto ? 'true' : 'false'" :aria-describedby="id" aria-label="O que é o saldo">
+                <i class="bi bi-question-circle-fill" aria-hidden="true"></i>
+              </button>
+              <div class="cg-help__popover" x-show.important="aberto" x-cloak x-transition.opacity.duration.120ms :id="id" role="tooltip" x-text="texto"></div>
+            </span>
             <div class="cg-hero-balance__value" :title="cgFormat.formatCurrency(resumoSelecionado.saldo)" x-text="cgFormat.formatCurrencyCompact(resumoSelecionado.saldo)"></div>
             <!-- "Quanto ainda posso gastar" (docs/BONOTTO-2027-BLUEPRINT.md,
                  Conflito 2) — só aparece quando há algo a decidir (categoria
@@ -352,6 +358,12 @@
                 <template x-if="orcamentoAlerta?.estourado">
                   <span>Orçamento de <span x-text="orcamentoAlerta?.categoriaNome"></span> já passou do limite (<span x-text="orcamentoAlerta?.percentual"></span>%)</span>
                 </template>
+                <span class="cg-help" x-data="cgHelp('É o limite mensal que vocês definiram pra essa categoria em Perfil → Orçamentos, menos o que já foi gasto nela este mês. Quando estoura, o app avisa aqui, mas não bloqueia nenhum lançamento novo.')" @mouseenter="aoPassarMouse()" @mouseleave="fechar()" @click.outside="fechar()">
+                  <button type="button" class="cg-help__trigger" @click="aoClicar()" @keydown.escape.stop="fechar()" :aria-expanded="aberto ? 'true' : 'false'" :aria-describedby="id" aria-label="O que é o orçamento restante">
+                    <i class="bi bi-question-circle-fill" aria-hidden="true"></i>
+                  </button>
+                  <div class="cg-help__popover" x-show.important="aberto" x-cloak x-transition.opacity.duration.120ms :id="id" role="tooltip" x-text="texto"></div>
+                </span>
               </span>
             </div>
             <div class="cg-hero-balance__row">
@@ -2155,7 +2167,15 @@
             <div class="cg-card mb-3" x-show="caixinhas.length">
               <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
                 <div>
-                  <div class="cg-muted small text-uppercase">Total guardado (convertido pra BRL)</div>
+                  <div class="cg-muted small text-uppercase d-flex align-items-center">
+                    Total guardado (convertido pra BRL)
+                    <span class="cg-help" x-data="cgHelp('Cada caixinha é uma reserva separada, numa moeda à sua escolha (real, dólar, cripto etc.). A barrinha embaixo do nome mostra o progresso até a meta, quando você define uma. Este total soma tudo já convertido pra reais, na cotação de agora.')" @mouseenter="aoPassarMouse()" @mouseleave="fechar()" @click.outside="fechar()">
+                      <button type="button" class="cg-help__trigger" @click="aoClicar()" @keydown.escape.stop="fechar()" :aria-expanded="aberto ? 'true' : 'false'" :aria-describedby="id" aria-label="O que é uma caixinha">
+                        <i class="bi bi-question-circle-fill" aria-hidden="true"></i>
+                      </button>
+                      <div class="cg-help__popover" x-show.important="aberto" x-cloak x-transition.opacity.duration.120ms :id="id" role="tooltip" x-text="texto"></div>
+                    </span>
+                  </div>
                   <div class="h4 fw-bold mb-0" x-text="cgFormat.formatCurrency(somaGeral)"></div>
                   <div class="cg-muted small" x-show="caixinhas.some(c => c.moeda && c.moeda !== 'BRL' && !taxasPorMoeda[c.moeda])">Buscando cotação de moeda estrangeira… o total atualiza assim que chegar</div>
                 </div>
@@ -2471,7 +2491,15 @@
                    acima e este. -->
               <template x-if="saldosEntreMembros.length">
                 <div class="mb-3 pt-3 border-top">
-                  <div class="cg-muted small fw-semibold text-uppercase mb-2">Entre vocês</div>
+                  <div class="cg-muted small fw-semibold text-uppercase mb-2 d-flex align-items-center">
+                    Entre vocês
+                    <span class="cg-help" x-data="cgHelp('Quando uma despesa é dividida entre vocês dois, quem pagou fica \'credor\' de quem não pagou a própria parte ainda. Aqui aparece o saldo líquido — já descontando o que cada um deve pro outro nos dois sentidos.')" @mouseenter="aoPassarMouse()" @mouseleave="fechar()" @click.outside="fechar()">
+                      <button type="button" class="cg-help__trigger" @click="aoClicar()" @keydown.escape.stop="fechar()" :aria-expanded="aberto ? 'true' : 'false'" :aria-describedby="id" aria-label="O que significa 'entre vocês'">
+                        <i class="bi bi-question-circle-fill" aria-hidden="true"></i>
+                      </button>
+                      <div class="cg-help__popover" x-show.important="aberto" x-cloak x-transition.opacity.duration.120ms :id="id" role="tooltip" x-text="texto"></div>
+                    </span>
+                  </div>
                   <template x-for="(s, i) in saldosEntreMembros" :key="i">
                     <div class="cg-list-flat">
                       <div class="cg-icon-badge"><i class="bi bi-arrow-left-right"></i></div>
@@ -2541,6 +2569,15 @@
                    DESIGN-SYSTEM-2027.md §7) — antes eram 6 .cg-card empilhados,
                    cada um com a própria borda+sombra ("card dentro de card"). -->
               <div class="cg-card p-0">
+                <div class="cg-list-flat cg-list-flat--hoverable px-3" role="button" @click="$store.onboarding.abrir()">
+                  <div class="cg-icon-badge"><i class="bi bi-signpost-2"></i></div>
+                  <div class="flex-fill">
+                    <h2 class="h6 fw-bold mb-1">Rever tutorial</h2>
+                    <p class="cg-muted small mb-0">Reabre a explicação rápida do que é o Bõnotto e como usar as telas principais.</p>
+                  </div>
+                  <i class="bi bi-chevron-right cg-muted"></i>
+                </div>
+
                 <div class="cg-list-flat cg-list-flat--hoverable px-3" role="button" @click="$store.companyModal.openManage()">
                   <div class="cg-icon-badge"><i class="bi bi-buildings"></i></div>
                   <div class="flex-fill">
@@ -2691,6 +2728,48 @@
     </div>
   </template>
 
+  <!-- ============ TOUR DE ONBOARDING (TASK-037) ============
+       Aberto sozinho na primeira visita (ver x-init="$store.onboarding.
+       iniciarSeNecessario()" acima) e reaberto a qualquer momento por
+       "Rever tutorial" em Perfil → Preferências. Mesmo padrão de modal do
+       resto do app (.cg-modal-backdrop/.cg-modal) — Esc fecha e devolve o
+       foco de graça via setupOverlayBehavior (js/app.js), sem reimplementar
+       nada aqui (ver comentário de decisão em js/components/onboarding.js). -->
+  <div class="cg-modal-backdrop" x-show="$store.onboarding.aberto" x-cloak @click.self="$store.onboarding.pular()">
+    <div class="cg-modal cg-modal--sm cg-tour" x-show="$store.onboarding.aberto" x-transition role="dialog" aria-modal="true" :aria-label="$store.onboarding.passos[$store.onboarding.passoAtual].titulo">
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <span class="cg-muted small fw-semibold text-uppercase" x-text="'Passo ' + ($store.onboarding.passoAtual + 1) + ' de ' + $store.onboarding.passos.length"></span>
+        <button type="button" class="btn-close" @click="$store.onboarding.pular()" aria-label="Fechar tutorial"></button>
+      </div>
+
+      <div aria-live="polite">
+        <template x-for="(p, i) in $store.onboarding.passos" :key="i">
+          <div x-show="$store.onboarding.passoAtual === i">
+            <div class="cg-tour__icon"><i class="bi" :class="p.icone"></i></div>
+            <h2 class="h5 fw-bold text-center mb-2" x-text="p.titulo"></h2>
+            <p class="cg-muted text-center mb-0" x-text="p.texto"></p>
+          </div>
+        </template>
+      </div>
+
+      <div class="cg-tour__dots">
+        <template x-for="(p, i) in $store.onboarding.passos" :key="i">
+          <span class="cg-tour__dot" :class="{ 'is-active': $store.onboarding.passoAtual === i }"></span>
+        </template>
+      </div>
+
+      <div class="d-flex align-items-center justify-content-between mt-4">
+        <button type="button" class="btn btn-link btn-sm px-0" @click="$store.onboarding.pular()" x-show.important="!$store.onboarding.ultimoPasso">Pular</button>
+        <span x-show="$store.onboarding.ultimoPasso"></span>
+        <div class="d-flex gap-2">
+          <button type="button" class="cg-btn btn btn-outline-secondary btn-sm" @click="$store.onboarding.anterior()" x-show="$store.onboarding.passoAtual > 0">Voltar</button>
+          <button type="button" class="cg-btn btn btn-success btn-sm" @click="$store.onboarding.proximo()" x-show="!$store.onboarding.ultimoPasso">Próximo</button>
+          <button type="button" class="cg-btn btn btn-success btn-sm" @click="$store.onboarding.concluir()" x-show="$store.onboarding.ultimoPasso">Começar a usar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ============ MODAL: NOVA/EDITAR TRANSAÇÃO ============ -->
   <div class="cg-modal-backdrop" x-show="$store.txModal.open" x-cloak @click.self="$store.txModal.close()">
     <div class="cg-modal" x-show="$store.txModal.open" x-transition>
@@ -2771,7 +2850,15 @@
               </datalist>
             </div>
             <div class="col-4">
-              <label class="form-label">Tipo</label>
+              <label class="form-label d-flex align-items-center">
+                Tipo
+                <span class="cg-help cg-help--direita" x-data="cgHelp('Fixa: se repete todo mês com valor parecido (aluguel, assinatura). Variável: muda de mês pra mês (mercado, lazer). Marcar como fixa já liga a recorrência mensal automaticamente, mas dá pra desligar se quiser.')" @mouseenter="aoPassarMouse()" @mouseleave="fechar()" @click.outside="fechar()">
+                  <button type="button" class="cg-help__trigger" @click="aoClicar()" @keydown.escape.stop="fechar()" :aria-expanded="aberto ? 'true' : 'false'" :aria-describedby="id" aria-label="Diferença entre despesa fixa e variável">
+                    <i class="bi bi-question-circle-fill" aria-hidden="true"></i>
+                  </button>
+                  <div class="cg-help__popover" x-show.important="aberto" x-cloak x-transition.opacity.duration.120ms :id="id" role="tooltip" x-text="texto"></div>
+                </span>
+              </label>
               <select class="form-select form-select-sm" x-model="$store.txModal.form.tipo_despesa" @change="$store.txModal.onTipoDespesaChange()">
                 <option value="variavel">Variável</option>
                 <option value="fixa">Fixa</option>
@@ -2898,6 +2985,12 @@
             <div class="form-check form-switch mb-0">
               <input type="checkbox" role="switch" class="form-check-input" id="recorrente" x-model="$store.txModal.form.recorrente" />
               <label class="form-check-label small" for="recorrente">Recorrente</label>
+              <span class="cg-help" x-data="cgHelp('Liga esse lançamento a uma repetição automática (toda semana, todo mês ou todo ano) — o app cria o próximo sozinho na data certa, sem precisar cadastrar de novo.')" @mouseenter="aoPassarMouse()" @mouseleave="fechar()" @click.outside="fechar()">
+                <button type="button" class="cg-help__trigger" @click="aoClicar()" @keydown.escape.stop="fechar()" :aria-expanded="aberto ? 'true' : 'false'" :aria-describedby="id" aria-label="O que é recorrência">
+                  <i class="bi bi-question-circle-fill" aria-hidden="true"></i>
+                </button>
+                <div class="cg-help__popover" x-show.important="aberto" x-cloak x-transition.opacity.duration.120ms :id="id" role="tooltip" x-text="texto"></div>
+              </span>
             </div>
             <!-- Só faz sentido em saída (entrada não é compra no cartão) —
                  x-if, não x-show: o <div> carrega .form-check/.mb-0, e

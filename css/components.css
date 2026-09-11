@@ -1495,3 +1495,123 @@ body { font-size: var(--font-size-body); }
   .cg-card { padding: 16px; }
   .cg-section-title { font-size: 1.1rem; }
 }
+
+/* ---------- Ícone de ajuda contextual (TASK-038) — ver js/components/help.js
+   pro padrão "toggletip" (clique/toque + hover + foco, Esc fecha). Seletor
+   composto (.cg-help__trigger, não classe solta) de propósito, mesma
+   precaução do resto deste arquivo contra duplicata silenciosa de
+   especificidade (ver CLAUDE.md). ---------- */
+.cg-help {
+  position: relative;
+  display: inline-flex;
+  vertical-align: middle;
+  margin-left: 4px;
+  text-transform: none;
+  letter-spacing: normal;
+  font-weight: var(--font-weight-regular);
+}
+.cg-help__trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  /* currentColor de propósito: o mesmo ícone aparece tanto em cima de card
+     claro/escuro quanto em cima do fundo colorido do .cg-hero-balance —
+     herdar a cor do texto ao redor é mais simples e robusto que listar uma
+     exceção de cor por contexto. */
+  color: currentColor;
+  opacity: 0.62;
+  border-radius: 50%;
+  cursor: help;
+  font-size: 0.85rem;
+  line-height: 1;
+}
+.cg-help__trigger:hover,
+.cg-help__trigger[aria-expanded="true"] { opacity: 1; }
+.cg-help__trigger:focus-visible {
+  opacity: 1;
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+/* Alvo de toque real (--touch-target, tokens.css) maior que o desenho do
+   ícone (20px) — ::before expande a área clicável sem aumentar o ícone
+   visual, senão um "?" de 20px vira "quase acertei" toda hora no celular. */
+.cg-help__trigger::before {
+  content: '';
+  position: absolute;
+  inset: 50% auto auto 50%;
+  width: var(--touch-target);
+  height: var(--touch-target);
+  transform: translate(-50%, -50%);
+}
+/* "aberto" (js/components/help.js) é a ÚNICA fonte de verdade da
+   visibilidade — x-show.important no markup (ver CLAUDE.md, "x-show +
+   utility Bootstrap nunca esconde de verdade": aqui não sobra nenhuma
+   classe `.d-*`/`.m*-*`/`.p*-*` no MESMO elemento, mas o modificador entra
+   por segurança extra mesmo assim). Nenhuma regra de :hover/:focus-within
+   controla display aqui — ver o comentário grande em help.js pro bug real
+   que existia quando duas fontes (CSS hover + clique) mexiam na mesma coisa
+   ao mesmo tempo. */
+.cg-help__popover {
+  position: absolute;
+  z-index: 1070; /* acima até de .cg-modal-backdrop--stacked (1060, app.css) —
+                     o mesmo ícone também é usado DENTRO de modal empilhado. */
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: min(260px, calc(100vw - 32px));
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  padding: 10px 12px;
+  font-size: var(--font-size-body-sm);
+  text-align: left;
+  white-space: normal;
+  line-height: 1.4;
+}
+/* Quando o ícone já fica perto do rodapé do card/modal, abrir pra baixo
+   cortaria o texto — variante pra inverter o lado. */
+.cg-help--acima .cg-help__popover { top: auto; bottom: calc(100% + 8px); }
+/* Quando o ícone já fica perto da borda DIREITA do card/modal (ex.: coluna
+   estreita no fim de uma linha), centralizar (left:50% + translateX(-50%))
+   estoura a largura e corta texto — visto de verdade no campo "Tipo" do
+   modal de despesa em 375px (Playwright, screenshot). Variante ancora pela
+   direita do próprio ícone em vez de centralizar. */
+.cg-help--direita .cg-help__popover { left: auto; right: 0; transform: none; }
+
+/* ---------- Tour de onboarding (TASK-037) — ver js/components/onboarding.js
+   pra decisão de reaproveitar .cg-modal-backdrop/.cg-modal em vez de uma lib
+   de tour. ---------- */
+.cg-tour__icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--color-primary-soft);
+  color: var(--color-primary-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.75rem;
+  margin: 0 auto var(--space-4);
+}
+.cg-tour__dots {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+.cg-tour__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-border);
+  transition: background .15s, transform .15s;
+}
+.cg-tour__dot.is-active { background: var(--color-primary); transform: scale(1.3); }

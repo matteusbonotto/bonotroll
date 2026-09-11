@@ -24,6 +24,15 @@ test('"Entre vocês" mostra a dívida líquida entre os dois membros do grupo de
   }, membros);
   await page.waitForTimeout(200);
 
-  await expect(page.getByText('Entre vocês')).toBeVisible();
-  await expect(page.getByText('R$ 123,45')).toBeVisible({ timeout: 5000 });
+  // Escopado pro bloco "Entre vocês" em si (não só a seção de Grupo inteira,
+  // CLAUDE.md "sempre escopar por section[x-data^=...]") — TASK-038 (tooltip
+  // .cg-help) colocou um ícone de ajuda bem ao lado deste título, e o texto
+  // explicativo dele (escondido, mas ainda "texto" pro matcher do
+  // Playwright) também contém a frase "entre vocês" — getByText direto no
+  // título virava ambíguo entre o título de verdade e esse texto escondido
+  // dentro do mesmo bloco. O wrapper (div.mb-3.pt-3.border-top) é único
+  // nesta tela e só existe quando o x-if de saldosEntreMembros renderiza.
+  const secaoEntreVoces = page.locator('section[x-data^="groupView"] div.mb-3.pt-3.border-top');
+  await expect(secaoEntreVoces).toBeVisible();
+  await expect(secaoEntreVoces.getByText('R$ 123,45')).toBeVisible({ timeout: 5000 });
 });

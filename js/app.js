@@ -7,6 +7,8 @@ import { budgetModalStore } from './components/budgetManager.js';
 import { caixinhaModalStore } from './components/caixinhaManager.js';
 import { bankModalStore } from './components/bankManager.js';
 import { cartaoModalStore } from './components/cartaoManager.js';
+import { onboardingStore } from './components/onboarding.js';
+import { cgHelp } from './components/help.js';
 import { authView } from './components/auth.js';
 import { dashboardView } from './components/dashboard.js';
 import { transactionsView } from './components/transactionTable.js';
@@ -45,8 +47,10 @@ document.addEventListener('alpine:init', () => {
   Alpine.store('caixinhaModal', caixinhaModalStore());
   Alpine.store('bankModal', bankModalStore());
   Alpine.store('cartaoModal', cartaoModalStore());
+  Alpine.store('onboarding', onboardingStore());
 
   Alpine.data('authView', authView);
+  Alpine.data('cgHelp', cgHelp);
   Alpine.data('dashboardView', dashboardView);
   Alpine.data('transactionsView', transactionsView);
   Alpine.data('shoppingView', shoppingView);
