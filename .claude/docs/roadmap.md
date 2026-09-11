@@ -29,17 +29,16 @@ Estado real, não aspiracional. Fonte primária de detalhe: `docs/CHECKLIST-REBR
 
 Origem: feedback de um usuário de teste real (pessoa que nunca acompanhou a construção do app) mais o pedido do usuário do projeto de preparar o app pra virar produto (Stripe/SaaS/BaaS) e ganhar uma landing page de vendas. Ordem pensada pra "ir resolvendo aos poucos" sem travar num item grande demais — cada fase só começa depois da anterior ter algo verificável. IDs completos em `.claude/checklist/tasks.json`.
 
-**Fase 1 — Deixar o app compreensível sozinho (em andamento)**
-- `TASK-037` Tour guiado de onboarding (primeira visita, reaberto por Preferências).
-- `TASK-038` Tooltips de ajuda contextual nos campos/indicadores principais, linguagem conceitual pra público amplo (não técnica) — pedido explícito do usuário de teste, que achou as explicações atuais assumindo contexto demais de quem já conhece o app.
-- `TASK-039` Auditoria multi-especialista pré-lançamento (bugs, gaps, segurança, UX visual/funcional) — roda em paralelo à Fase 1, alimenta a Fase 2.
+**Fase 1 — Deixar o app compreensível sozinho (concluída, 2026-09-11)**
+- `TASK-037` Tour guiado de onboarding (primeira visita, reaberto por Preferências) — DONE, mergeado em `main`.
+- `TASK-038` Tooltips de ajuda contextual em 6 campos/indicadores principais, linguagem conceitual pra público amplo — DONE, mergeado em `main`.
+- `TASK-039` Auditoria multi-especialista pré-lançamento — DONE.
 
 **Fase 2 — Corrigir o que a auditoria encontrou**
-- `TASK-039` concluída em 2026-09-11 (achados completos no history do item, `.claude/checklist/tasks.json`). Resumo: **nenhum bug crítico ou risco de segurança encontrado** — RLS cobre as 19/19 tabelas de `schema.sql`, nenhum secret real exposto (só placeholder documentado), `mockDb.js` espelha exatamente as 19 tabelas do schema, os 4 serviços externos gratuitos (Frankfurter/CoinGecko/Open Food Facts/esm.sh) responderam 200 ao vivo, nenhuma regressão do bug `x-show`+utility de display nem de CSS duplicado (checado nas classes que já tiveram esse problema antes). Único achado novo, baixa severidade: `DEBT-005` (ver Technical Debt abaixo). O gap real pra "usuário novo sem contexto" não é bug, é a ausência de onboarding — já endereçado em `TASK-037`/`TASK-038` (Fase 1, em andamento nesta mesma rodada).
+- `TASK-039` concluída em 2026-09-11 (achados completos no history do item, `.claude/checklist/tasks.json`). Resumo: **nenhum bug crítico ou risco de segurança encontrado** — RLS cobre as 19/19 tabelas de `schema.sql`, nenhum secret real exposto (só placeholder documentado), `mockDb.js` espelha exatamente as 19 tabelas do schema, os 4 serviços externos gratuitos (Frankfurter/CoinGecko/Open Food Facts/esm.sh) responderam 200 ao vivo, nenhuma regressão do bug `x-show`+utility de display nem de CSS duplicado (checado nas classes que já tiveram esse problema antes). Único achado novo, baixa severidade: `DEBT-005` (ver Technical Debt abaixo). O gap real pra "usuário novo sem contexto" não era bug, era a ausência de onboarding — resolvido na Fase 1 acima.
 
-**Fase 3 — Vitrine de vendas**
-- `TASK-040` Landing page própria (branch `landing-page`, GitHub Pages), copy de vendas/marketing em PT-BR, referência estética cinematográfica (dark, tipografia grande, scroll-reveal) — pedido explícito do usuário.
-- Atenção arquitetural registrada em `TASK-040`: GitHub Pages hoje serve `main` (o app real); apontar Pages pra `landing-page` troca o que é servido na URL atual — decisão do usuário no GitHub, não algo a resolver sozinho aqui.
+**Fase 3 — Vitrine de vendas (concluída, 2026-09-11)**
+- `TASK-040` Landing page própria, copy de vendas/marketing em PT-BR, referência estética cinematográfica (dark, tipografia grande, scroll-reveal) — DONE. Decisão final de deploy: em vez de trocar a fonte do GitHub Pages pra uma branch separada (o que substituiria o app real na URL atual), a branch `landing-page` foi mergeada em `main` — `index.html` do app continua intocado na raiz, `landing.html`/`landing-assets/` passam a conviver no mesmo `main`, servidos pelo mesmo GitHub Pages em `/landing.html`, sem tirar o app do ar nem mexer em configuração do repositório.
 
 **Fase 4 — Monetização**
 - `FEAT-005` Preparação de Stripe/planos — agente `billing` já existe e pronto, mas a fase fica **BLOCKED** de propósito até o usuário decidir o modelo de plano/preço (o que é gratuito vs. pago). Nenhuma chave real é tocada antes disso.
