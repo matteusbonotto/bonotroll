@@ -25,6 +25,29 @@ Estado real, não aspiracional. Fonte primária de detalhe: `docs/CHECKLIST-REBR
 - README — já corrigido antes desta sessão (o próprio README documenta isso: "este README ficou desatualizado por um tempo dizendo o contrário").
 - `history.pushState` real pra navegação entre telas — **este documento estava desatualizado nesta linha específica** (dizia "genuinamente não iniciado" na seção Potential Improvements, abaixo). Na verdade foi implementado em 2026-08-21 (`setView` trocado de `history.replaceState` pra `pushState` + sync via `popstate`, `tests/e2e/navegacao-historico.spec.js`, ver `docs/CHECKLIST-REBRAND.md` Rodada 5). Corrigido aqui em 2026-08-22 durante a reorganização do `.claude/` — mesmo tipo de correção de causa raiz já aplicada 5x antes neste mesmo documento (ver Rodada 5 do checklist).
 
+## Rumo ao lançamento (SaaS/BaaS) — plano por fases, 2026-09-11
+
+Origem: feedback de um usuário de teste real (pessoa que nunca acompanhou a construção do app) mais o pedido do usuário do projeto de preparar o app pra virar produto (Stripe/SaaS/BaaS) e ganhar uma landing page de vendas. Ordem pensada pra "ir resolvendo aos poucos" sem travar num item grande demais — cada fase só começa depois da anterior ter algo verificável. IDs completos em `.claude/checklist/tasks.json`.
+
+**Fase 1 — Deixar o app compreensível sozinho (concluída, 2026-09-11)**
+- `TASK-037` Tour guiado de onboarding (primeira visita, reaberto por Preferências) — DONE, mergeado em `main`.
+- `TASK-038` Tooltips de ajuda contextual em 6 campos/indicadores principais, linguagem conceitual pra público amplo — DONE, mergeado em `main`.
+- `TASK-039` Auditoria multi-especialista pré-lançamento — DONE.
+
+**Fase 2 — Corrigir o que a auditoria encontrou**
+- `TASK-039` concluída em 2026-09-11 (achados completos no history do item, `.claude/checklist/tasks.json`). Resumo: **nenhum bug crítico ou risco de segurança encontrado** — RLS cobre as 19/19 tabelas de `schema.sql`, nenhum secret real exposto (só placeholder documentado), `mockDb.js` espelha exatamente as 19 tabelas do schema, os 4 serviços externos gratuitos (Frankfurter/CoinGecko/Open Food Facts/esm.sh) responderam 200 ao vivo, nenhuma regressão do bug `x-show`+utility de display nem de CSS duplicado (checado nas classes que já tiveram esse problema antes). Único achado novo, baixa severidade: `DEBT-005` (ver Technical Debt abaixo). O gap real pra "usuário novo sem contexto" não era bug, era a ausência de onboarding — resolvido na Fase 1 acima.
+
+**Fase 3 — Vitrine de vendas (concluída, 2026-09-11)**
+- `TASK-040` Landing page própria, copy de vendas/marketing em PT-BR, referência estética cinematográfica (dark, tipografia grande, scroll-reveal) — DONE. Decisão final de deploy: em vez de trocar a fonte do GitHub Pages pra uma branch separada (o que substituiria o app real na URL atual), a branch `landing-page` foi mergeada em `main` — `index.html` do app continua intocado na raiz, `landing.html`/`landing-assets/` passam a conviver no mesmo `main`, servidos pelo mesmo GitHub Pages em `/landing.html`, sem tirar o app do ar nem mexer em configuração do repositório.
+
+**Fase 4 — Monetização**
+- `FEAT-005` Preparação de Stripe/planos — agente `billing` já existe e pronto, mas a fase fica **BLOCKED** de propósito até o usuário decidir o modelo de plano/preço (o que é gratuito vs. pago). Nenhuma chave real é tocada antes disso.
+
+**Fase 5 — Ideias exploratórias do feedback (sem compromisso, dependem de decisão de produto ou de parceria externa)**
+- `IDEA-007` Foto do produto → adicionar direto à lista de compras num toque só (hoje já existe parcialmente via `FEAT-004`/`BUG-009` — falta decidir se o fluxo vira automático ou continua com revisão antes de confirmar).
+- `IDEA-006` Comparar preço por mercado num raio definido (ex. 5km) — viabilidade incerta, sem fonte de dado de preço-por-mercado aberta conhecida no Brasil.
+- `IDEA-008` Marketplace de parceiros que compram e entregam a partir da lista — depende de parceria de negócio real, não é tarefa de engenharia isolada.
+
 ## In Progress (2026-08-22)
 
 - **Cartão de crédito multi-banco** — bug de agrupamento (compra cai na fatura errada quando 2 pessoas têm fatura no mesmo mês) + gap de modelagem (sem entidade "cartão", sem suporte a múltiplos cartões por pessoa/banco). Decisão de arquitetura já tomada por 3 agentes independentes, ver `.claude/discussions/001-cartao-credito-multi-cartao.md`. Implementação em `TASK-023` (`.claude/checklist/tasks.json`).
@@ -44,6 +67,7 @@ Estado real, não aspiracional. Fonte primária de detalhe: `docs/CHECKLIST-REBR
 - **Padrão `x-show` + utility Bootstrap `!important`** — mitigado pontualmente (`x-show.important`) cada vez que reaparece, mas não existe lint/convenção automatizada que previna a próxima ocorrência antes dela acontecer.
 - **Cobertura de teste não é exaustiva** — 47 unit + 23 e2e é uma base real, mas toda lógica nova sensível a dinheiro/data deveria ganhar teste no mesmo PR/rodada, não depois (política, não métrica de cobertura formal).
 - ~~**Cartão de crédito com 2+ faturas no mesmo mês**~~ — virou caso real em 2026-08-22 (ver In Progress acima), não é mais dívida técnica arquivada, é trabalho ativo (`BUG-001`/`FEAT-001`).
+- **`profileView.js` importa `mockDb` diretamente** (`DEBT-005`, achado na auditoria de 2026-09-11) — só usa `mockDb.reset()` dentro de `resetarDemo()` ("Restaurar dados de demonstração"), não é acesso a dado de negócio nem duplica lógica, mas viola a letra da regra "nenhum componente importa `mockDb` direto". Baixa severidade, correção seria mover pra um helper em `services/`/`data/config.js`.
 
 ## Potential Improvements (sugestões, não compromissos)
 
