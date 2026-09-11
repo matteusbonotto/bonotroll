@@ -15,8 +15,10 @@ Reorganizar em cima disso — preenchendo só o que faltava (`memory/`, `discuss
 ├── README.md              este arquivo
 ├── prompt-agentssr.md      histórico: o prompt que originou a estrutura de agentes/comandos/docs (não apagar — regra de não-destruição)
 │
-├── agents/                 8 especialistas reais (subagentes do Claude Code, invocáveis via Task/Agent)
+├── agents/                 10 especialistas reais (subagentes do Claude Code, invocáveis via Task/Agent)
 │   architect · backend · database · frontend · product-manager · qa · security · ux-ui · code-reviewer
+│   marketing (copy de venda + landing page própria) · billing (Stripe/monetização SaaS) — adicionados em 2026-09-11
+│   junto com a fase de "escalonar" (auditoria pré-lançamento, landing page, preparação pra Stripe)
 │
 ├── commands/               espelham as skills audit/implement/plan/review/test (ver raiz do projeto pra invocação real via /audit etc.)
 │

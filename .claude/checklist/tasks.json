@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-09-03T00:00:00-03:00",
+  "updatedAt": "2026-09-11T00:00:00-03:00",
   "tasks": [
     {
       "id": "DONE-001",
@@ -1195,8 +1195,8 @@
     },
     {
       "id": "IDEA-006",
-      "title": "Reconhecer preços específicos do mercado escolhido",
-      "description": "Ideia exploratória, o próprio usuário sinalizou incerteza (\"não sei se isso é possível\"): escolher o mercado que pretende visitar e o app já sugerir os preços daquele mercado especificamente. Depende de uma fonte de dado de preço por mercado que provavelmente não existe de forma aberta/gratuita no Brasil — avaliar viabilidade antes de qualquer compromisso.",
+      "title": "Reconhecer preços específicos do mercado escolhido / comparar mercados num raio definido",
+      "description": "Ideia exploratória, o próprio usuário sinalizou incerteza (\"não sei se isso é possível\"): escolher o mercado que pretende visitar e o app já sugerir os preços daquele mercado especificamente. Depende de uma fonte de dado de preço por mercado que provavelmente não existe de forma aberta/gratuita no Brasil — avaliar viabilidade antes de qualquer compromisso. REFORÇADO por feedback de usuário de teste (2026-09-11), mesma ideia com formato concreto: mostrar opções de mercado num raio definido (ex. 5km) e comparar preço do item quando houver disponibilidade. Continua com o mesmo bloqueio de viabilidade — nenhuma fonte de preço-por-mercado brasileira aberta identificada até agora.",
       "category": "Backend",
       "priority": "LOW",
       "status": "BACKLOG",
@@ -1204,18 +1204,25 @@
       "tags": [
         "sugestao",
         "pedido-usuario",
+        "pedido-usuario-teste",
         "compras",
         "viabilidade-incerta"
       ],
       "dependencies": [],
       "createdAt": "2026-08-23T00:00:00-03:00",
-      "updatedAt": "2026-08-23T00:00:00-03:00",
+      "updatedAt": "2026-09-11T00:00:00-03:00",
       "history": [
         {
           "action": "CREATED",
           "to": "BACKLOG",
           "updatedBy": "claude",
           "timestamp": "2026-08-23T00:00:00-03:00"
+        },
+        {
+          "action": "NOTE",
+          "updatedBy": "claude",
+          "timestamp": "2026-09-11T00:00:00-03:00",
+          "note": "Mesma ideia reforçada por usuário de teste independente, com raio de 5km como exemplo concreto. Não duplicado — anexado aqui em vez de criar IDEA nova."
         }
       ]
     },
@@ -1685,6 +1692,271 @@
           "updatedBy": "claude",
           "timestamp": "2026-09-03T00:00:00-03:00",
           "note": "Deploy confirmado em producao (GitHub Pages, commit 2ac8461, CACHE_NAME v11). Verificado ao vivo via CDN (cache-bust) + Playwright direto contra a URL de producao: sem erro de console, marcas de cada feature (.cg-date-field, .cg-grid-view__actions, toggleAno, botao Importar CSV fixo) presentes e funcionais."
+        }
+      ]
+    },
+    {
+      "id": "TASK-036",
+      "title": "Revisão dos agentes/config de IA (.claude/) para a fase de escalonamento",
+      "description": "Pedido do usuário: revisar todos os agentes, remover duplicidade, garantir especialistas suficientes pra escalar rumo a lançamento/SaaS. Verificados os 8 agentes originais (architect/backend/database/frontend/product-manager/qa/security/ux-ui/code-reviewer) — escopos bem definidos, sem sobreposição real, nenhum removido. 2 gaps genuínos identificados e preenchidos: marketing (copy de venda + landing page própria) e billing (Stripe/monetização SaaS, preparação e futura implementação). README.md do .claude/ atualizado com o mapa novo.",
+      "category": "Docs",
+      "priority": "MEDIUM",
+      "status": "DONE",
+      "agent": "claude",
+      "tags": [
+        "meta",
+        "claude-code",
+        "escalonamento",
+        "pedido-usuario"
+      ],
+      "dependencies": [],
+      "relatedDocs": [
+        ".claude/README.md",
+        ".claude/agents/marketing.md",
+        ".claude/agents/billing.md"
+      ],
+      "createdAt": "2026-09-11T00:00:00-03:00",
+      "updatedAt": "2026-09-11T00:00:00-03:00",
+      "history": [
+        {
+          "action": "CREATED",
+          "to": "DONE",
+          "updatedBy": "claude",
+          "timestamp": "2026-09-11T00:00:00-03:00"
+        }
+      ]
+    },
+    {
+      "id": "TASK-037",
+      "title": "Onboarding: tour guiado explicando objetivo e funcionamento do app",
+      "description": "Feedback de usuário de teste (2026-09-11): quem não acompanhou a construção não entende o objetivo da ferramenta nem como ela funciona ao abrir pela primeira vez. Pedido explícito de tutorial + linguagem conceitual/simples, pensada pra público amplo (não pra quem já conhece o conceito). Escopo: tour guiado na primeira visita (localStorage, não repete sozinho), reaberto a qualquer momento por um item em Preferências/menu de ajuda, explicando o propósito das 3 telas principais (financeiro/compras/recursos) em linguagem de benefício, não técnica.",
+      "category": "Frontend",
+      "priority": "HIGH",
+      "status": "IN_PROGRESS",
+      "agent": "frontend",
+      "tags": [
+        "onboarding",
+        "tutorial",
+        "pedido-usuario-teste",
+        "lancamento"
+      ],
+      "dependencies": [],
+      "relatedDocs": [
+        ".claude/docs/roadmap.md"
+      ],
+      "createdAt": "2026-09-11T00:00:00-03:00",
+      "updatedAt": "2026-09-11T00:00:00-03:00",
+      "history": [
+        {
+          "action": "CREATED",
+          "to": "IN_PROGRESS",
+          "updatedBy": "claude",
+          "timestamp": "2026-09-11T00:00:00-03:00",
+          "note": "Delegado ao agente frontend numa branch de feature própria (nunca direto em main)."
+        }
+      ]
+    },
+    {
+      "id": "TASK-038",
+      "title": "Tooltips de ajuda contextual em campos/indicadores principais",
+      "description": "Feedback de usuário de teste (2026-09-11): ícones de ajuda nos principais campos/indicadores, que ao passar o mouse (ou tocar, no celular) expliquem brevemente o que aquele item representa e como influencia os resultados — linguagem conceitual e fácil, público amplo. Componente novo reutilizável (.cg-help ou equivalente), acessível (foco por teclado, Esc fecha, funciona em touch), respeitando os 3 estados de dark mode e sem reintroduzir o bug x-show+utility Bootstrap já documentado no CLAUDE.md.",
+      "category": "Frontend",
+      "priority": "HIGH",
+      "status": "IN_PROGRESS",
+      "agent": "frontend",
+      "tags": [
+        "onboarding",
+        "ajuda",
+        "acessibilidade",
+        "pedido-usuario-teste",
+        "lancamento"
+      ],
+      "dependencies": [],
+      "createdAt": "2026-09-11T00:00:00-03:00",
+      "updatedAt": "2026-09-11T00:00:00-03:00",
+      "history": [
+        {
+          "action": "CREATED",
+          "to": "IN_PROGRESS",
+          "updatedBy": "claude",
+          "timestamp": "2026-09-11T00:00:00-03:00",
+          "note": "Mesma branch/rodada de TASK-037 (onboarding), delegado ao agente frontend."
+        }
+      ]
+    },
+    {
+      "id": "TASK-039",
+      "title": "Auditoria multi-especialista pré-lançamento (bugs, gaps, segurança, UX/visual e funcional)",
+      "description": "Pedido explícito do usuário: usar os especialistas pra encontrar gaps, bugs, defeitos, melhorias visuais e funcionais antes do lançamento como SaaS/BaaS. Varredura coordenada (skill audit) cobrindo arquitetura, segurança (RLS/secrets/upload), UX/UI (consistência com docs/DESIGN-SYSTEM-2027.md) e QA (fluxos reais em ?demo=1). Resultado alimenta itens novos de BUG-*/DEBT-*/TASK-* neste mesmo arquivo, não corrige nada sozinho sem revisão.",
+      "category": "Testing",
+      "priority": "HIGH",
+      "status": "DONE",
+      "agent": "claude",
+      "tags": [
+        "auditoria",
+        "pre-lancamento",
+        "seguranca",
+        "ux",
+        "pedido-usuario"
+      ],
+      "dependencies": [],
+      "createdAt": "2026-09-11T00:00:00-03:00",
+      "updatedAt": "2026-09-11T00:00:00-03:00",
+      "history": [
+        {
+          "action": "CREATED",
+          "to": "IN_PROGRESS",
+          "updatedBy": "claude",
+          "timestamp": "2026-09-11T00:00:00-03:00"
+        },
+        {
+          "action": "STATUS_CHANGED",
+          "from": "IN_PROGRESS",
+          "to": "DONE",
+          "updatedBy": "claude",
+          "timestamp": "2026-09-11T00:00:00-03:00",
+          "note": "Varredura real via grep/leitura/git log (não suposição). Nenhum bug crítico ou risco de segurança encontrado: RLS ativo nas 19/19 tabelas de supabase/schema.sql (conferido uma a uma); nenhum secret real exposto (9 ocorrências de 'service_role' no repo são todas placeholder documentado, nunca chave real; .env não versionado); mockDb.js espelha exatamente as 19 tabelas do schema; nenhum x-html em index.html, nenhum innerHTML em js/; 0 ocorrência ativa do bug x-show+utility de display (checado com grep restrito a d-none/d-flex/d-block/d-grid/d-inline*); sem nova duplicação de CSS (.cg-section-title/.cg-card/.cg-modal/.cg-btn/.cg-main conferidos — a divisão em .cg-section-title entre app.css/components.css é intencional e documentada desde o BUG-015, sem sobreposição de propriedade); libs pesadas (Chart.js/Tesseract/pdf.js/html5-qrcode/PapaParse/supabase-js) todas via import dinâmico esm.sh, nada estático em index.html; Frankfurter/CoinGecko/Open Food Facts/esm.sh responderam HTTP 200 ao vivo; 95 casos unit (7 arquivos) + 37 casos e2e (30 arquivos), sem estagnação; UI nova desde a última auditoria visual (guia vertical de item filho em Transações, Importar CSV/Baixar modelo em Caixinhas) usa tokens corretamente. Único achado novo: DEBT-005 (profileView.js importa mockDb direto, baixa severidade). Gap real pra usuário novo não é bug, é onboarding — já endereçado em TASK-037/TASK-038."
+        }
+      ]
+    },
+    {
+      "id": "TASK-040",
+      "title": "Landing page de vendas (branch separada, GitHub Pages)",
+      "description": "Pedido explícito do usuário: landing page 100% profissional com efeitos/transições/animações, referência estética o site oficial da Rockstar pra GTA IV (clima cinematográfico escuro, tipografia grande de impacto, parallax/scroll-reveal), técnicas de venda e marketing aplicadas, copy PT-BR conceitual pra quem nunca viu o produto. Vive numa branch dedicada (landing-page), nunca em main, autocontida (HTML/CSS/JS próprios, sem depender de arquivo do app), pronta pra virar fonte do GitHub Pages. ATENÇÃO registrada: GitHub Pages hoje serve main (o app real) — apontar Pages pra esta branch troca o que é servido na URL atual; é decisão e ação do usuário lá no GitHub, não deste agente.",
+      "category": "Marketing",
+      "priority": "HIGH",
+      "status": "IN_PROGRESS",
+      "agent": "marketing",
+      "tags": [
+        "landing-page",
+        "marketing",
+        "lancamento",
+        "pedido-usuario"
+      ],
+      "dependencies": [],
+      "createdAt": "2026-09-11T00:00:00-03:00",
+      "updatedAt": "2026-09-11T00:00:00-03:00",
+      "history": [
+        {
+          "action": "CREATED",
+          "to": "IN_PROGRESS",
+          "updatedBy": "claude",
+          "timestamp": "2026-09-11T00:00:00-03:00",
+          "note": "Delegado ao novo agente marketing, branch landing-page dedicada."
+        }
+      ]
+    },
+    {
+      "id": "FEAT-005",
+      "title": "Preparação de monetização: modelo de planos + integração Stripe (SaaS/BaaS)",
+      "description": "Usuário sinalizou que em breve vai querer conectar Stripe e transformar o app num SaaS/BaaS. Agente billing criado com as regras inegociáveis (secret nunca no client, sem form de cartão próprio, estado de assinatura sempre a partir de webhook, gating reforçado no servidor). BLOQUEADO deliberadamente: falta decisão do usuário sobre plano/preço/o que é gratuito vs pago antes de desenhar schema (subscriptions) ou tocar em qualquer chave Stripe real, mesmo em modo teste.",
+      "category": "Backend",
+      "priority": "HIGH",
+      "status": "BLOCKED",
+      "agent": "billing",
+      "tags": [
+        "monetizacao",
+        "stripe",
+        "saas",
+        "pedido-usuario"
+      ],
+      "dependencies": [],
+      "relatedDocs": [
+        ".claude/agents/billing.md"
+      ],
+      "createdAt": "2026-09-11T00:00:00-03:00",
+      "updatedAt": "2026-09-11T00:00:00-03:00",
+      "history": [
+        {
+          "action": "CREATED",
+          "to": "BLOCKED",
+          "updatedBy": "claude",
+          "timestamp": "2026-09-11T00:00:00-03:00",
+          "note": "Aguardando decisão do usuário sobre modelo de planos/preço antes de qualquer implementação real."
+        }
+      ]
+    },
+    {
+      "id": "IDEA-007",
+      "title": "Foto do produto adiciona direto à lista de compras (fluxo de 1 toque)",
+      "description": "Feedback de usuário de teste (2026-09-11): tirar foto do produto e já adicioná-lo à lista de compras. PARCIALMENTE coberto por FEAT-004/BUG-009 (foto -> OCR -> busca em Open Food Facts -> preenche formulário com nome/imagem) — o que falta esclarecer é se o pedido é reduzir pra um fluxo de 1 toque sem revisão (foto vira item direto) ou se o formulário de confirmação atual já atende. Precisa de decisão de produto antes de qualquer mudança de fluxo (risco de adicionar item errado sem chance de corrigir se virar automático demais).",
+      "category": "Frontend",
+      "priority": "MEDIUM",
+      "status": "BACKLOG",
+      "agent": "product-manager",
+      "tags": [
+        "sugestao",
+        "pedido-usuario-teste",
+        "compras",
+        "ocr"
+      ],
+      "dependencies": [
+        "FEAT-004"
+      ],
+      "createdAt": "2026-09-11T00:00:00-03:00",
+      "updatedAt": "2026-09-11T00:00:00-03:00",
+      "history": [
+        {
+          "action": "CREATED",
+          "to": "BACKLOG",
+          "updatedBy": "claude",
+          "timestamp": "2026-09-11T00:00:00-03:00"
+        }
+      ]
+    },
+    {
+      "id": "IDEA-008",
+      "title": "Marketplace: parceiro faz a compra e entrega em casa a partir da lista",
+      "description": "Feedback de usuário de teste (2026-09-11): 'se tivesse parceiros, poderia até já fazer o pedido e eles entregarem — faz a lista, indica o mercado e alguém realiza a compra e entrega em casa'. O próprio usuário-fonte tratou como ideia (não compromisso). Depende de parceria de negócio real (mercado/serviço de entrega), não é só código — nenhum desenho técnico antes de existir ao menos um parceiro/API real cotado. Fora de escopo de qualquer rodada de implementação atual.",
+      "category": "Backend",
+      "priority": "LOW",
+      "status": "BACKLOG",
+      "agent": "product-manager",
+      "tags": [
+        "sugestao",
+        "pedido-usuario-teste",
+        "compras",
+        "parceria-negocio",
+        "viabilidade-incerta"
+      ],
+      "dependencies": [],
+      "createdAt": "2026-09-11T00:00:00-03:00",
+      "updatedAt": "2026-09-11T00:00:00-03:00",
+      "history": [
+        {
+          "action": "CREATED",
+          "to": "BACKLOG",
+          "updatedBy": "claude",
+          "timestamp": "2026-09-11T00:00:00-03:00"
+        }
+      ]
+    },
+    {
+      "id": "DEBT-005",
+      "title": "profileView.js importa mockDb diretamente (fronteira de services/ tecnicamente furada)",
+      "description": "Achado na auditoria pré-lançamento (TASK-039, 2026-09-11): js/components/profileView.js importa { mockDb } de '../data/mockDb.js' e usa mockDb.reset() dentro de resetarDemo() ('Restaurar dados de demonstração'). Não é acesso a dado de negócio nem duplica lógica (é um reset operacional do modo demo), mas viola a letra da regra 'nenhum componente importa mockDb direto' (CLAUDE.md/backend.md). Baixa severidade — correção seria expor um resetDemoData() em services/ ou data/config.js e o componente chamar isso em vez de mockDb direto.",
+      "category": "Architecture",
+      "priority": "LOW",
+      "status": "BACKLOG",
+      "agent": "architect",
+      "tags": [
+        "dívida-técnica",
+        "arquitetura",
+        "auditoria-pre-lancamento"
+      ],
+      "dependencies": [],
+      "relatedDocs": [
+        "js/components/profileView.js"
+      ],
+      "createdAt": "2026-09-11T00:00:00-03:00",
+      "updatedAt": "2026-09-11T00:00:00-03:00",
+      "history": [
+        {
+          "action": "CREATED",
+          "to": "BACKLOG",
+          "updatedBy": "claude",
+          "timestamp": "2026-09-11T00:00:00-03:00",
+          "note": "Achado via grep (import mockDb em js/components/) durante TASK-039, não corrigido nesta rodada (auditoria só diagnostica)."
         }
       ]
     }
