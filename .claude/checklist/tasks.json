@@ -1867,6 +1867,43 @@
           "updatedBy": "claude",
           "timestamp": "2026-09-11T21:30:00-03:00",
           "note": "Decisão de deploy (autorizada explicitamente pelo usuário): em vez de trocar a fonte do GitHub Pages pra branch landing-page (o que substituiria o app real na URL atual — risco já sinalizado antes), a branch landing-page foi mergeada em main. index.html do app continua intocado na raiz; landing.html + landing-assets/ passam a conviver no mesmo main, então o Pages (que já serve main) passa a servir a landing em /landing.html automaticamente, sem trocar nada da configuração do repositório nem tirar o app do ar. Commit de merge em main, push feito."
+        },
+        {
+          "action": "NOTE",
+          "updatedBy": "claude",
+          "timestamp": "2026-09-11T22:00:00-03:00",
+          "note": "Achado ao revisar antes do deploy: o formulário 'lista de espera' (landing-assets/landing.js) valida e-mail e mostra sucesso, mas NÃO salva em lugar nenhum ainda (placeholder de front-end, documentado no próprio código). Página está no ar (/landing.html) mas o USUÁRIO DECIDIU EXPLICITAMENTE NÃO DIVULGAR ainda — só vai divulgar depois de ter banco (backend real do formulário) e Stripe configurados. Ver TASK-041 (novo) e FEAT-005."
+        }
+      ]
+    },
+    {
+      "id": "TASK-041",
+      "title": "Conectar formulário de lista de espera da landing page a um backend real",
+      "description": "O formulário em landing.html (landing-assets/landing.js) só valida o formato do e-mail e simula sucesso — nenhum e-mail é salvo. Decisão do usuário (2026-09-11): não fazer isso agora ('não salve ainda nada') e não divulgar a landing enquanto não tiver banco + Stripe configurados. Quando for a hora: opção mais simples é uma tabela nova no Supabase real (ex. waitlist_emails: email, criado_em, RLS de insert liberado pra anon mas sem select/update/delete público) — mexe em produção, precisa de confirmação explícita antes de rodar contra o schema real (mesma regra de qualquer alteração de schema.sql).",
+      "category": "Backend",
+      "priority": "MEDIUM",
+      "status": "BLOCKED",
+      "agent": "billing",
+      "tags": [
+        "landing-page",
+        "waitlist",
+        "pedido-usuario"
+      ],
+      "dependencies": [
+        "TASK-040"
+      ],
+      "relatedDocs": [
+        "landing-assets/landing.js"
+      ],
+      "createdAt": "2026-09-11T00:00:00-03:00",
+      "updatedAt": "2026-09-11T00:00:00-03:00",
+      "history": [
+        {
+          "action": "CREATED",
+          "to": "BLOCKED",
+          "updatedBy": "claude",
+          "timestamp": "2026-09-11T22:00:00-03:00",
+          "note": "Usuário pediu explicitamente pra não implementar ainda ('não salve ainda nada') — só quando decidir divulgar a landing, junto com banco/Stripe."
         }
       ]
     },
@@ -1897,6 +1934,12 @@
           "updatedBy": "claude",
           "timestamp": "2026-09-11T00:00:00-03:00",
           "note": "Aguardando decisão do usuário sobre modelo de planos/preço antes de qualquer implementação real."
+        },
+        {
+          "action": "NOTE",
+          "updatedBy": "claude",
+          "timestamp": "2026-09-11T22:00:00-03:00",
+          "note": "Usuário confirmou (2026-09-11): só vai divulgar a landing page (TASK-040, já no ar em /landing.html) depois de ter banco + Stripe configurados. Ou seja, esta task também gateia o lançamento público, não só a monetização em si."
         }
       ]
     },
