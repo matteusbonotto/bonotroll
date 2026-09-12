@@ -3634,7 +3634,7 @@
        o espaço que sobra quando não tem nenhum) não pode bloquear cliques no
        que está embaixo — só o toast em si (pointer-events:auto) precisa
        receber clique, pro botão de fechar funcionar. -->
-  <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 2000; pointer-events: none;">
+  <div class="toast-container position-fixed end-0 p-3 cg-toast-container" :style="($store.onboarding.aberto && $store.onboarding.passo?.tipo === 'acao' && $store.onboarding.painelAltura) ? { top: ($store.onboarding.painelAltura + 20) + 'px' } : {}" style="z-index: 2000; pointer-events: none;">
     <template x-for="t in $store.app.toasts" :key="t.id">
       <div class="toast cg-toast show" style="pointer-events: auto;" :class="'cg-toast--' + t.type" role="status" aria-live="polite" x-transition>
         <div class="toast-body d-flex align-items-start gap-2">

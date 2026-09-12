@@ -1722,3 +1722,19 @@ body { font-size: var(--font-size-body); }
   color: var(--color-text-muted);
   line-height: 1.5;
 }
+
+/* ---------- Toast x painel do tour (achado numa revisão visual manual,
+   2026-09-11): .toast-container usava a utility "top-0" do Bootstrap — ela é
+   !important (CLAUDE.md, "Armadilhas já conhecidas"), então nenhuma regra
+   normal conseguiria mover o toast pra baixo enquanto essa classe estivesse
+   no elemento. Removida do HTML de propósito, substituída por esta classe
+   própria (só a posição padrão) — o deslocamento durante o tour vem por
+   `:style` inline em index.html, calculado a partir de
+   `$store.onboarding.painelAltura` (medida de verdade via ResizeObserver em
+   onboarding.js::_observarPainel, não um número fixo chutado — o conteúdo
+   varia de tamanho por passo e por largura de tela). Sem isso, o toast "N
+   lançamentos recorrentes foram gerados automaticamente" (dispara sozinho no
+   login, ver recurring.js) cobria o texto do passo de ação do tour, quase
+   sempre no primeiro login de alguém novo — exatamente o pior momento pra
+   isso acontecer. */
+.cg-toast-container { top: var(--space-3); }

@@ -94,12 +94,23 @@ export function onboardingStore() {
     pulado: estadoVazioPorArea(), // true quando a pessoa clica "Pular esta etapa" (não fez a ação, mas também não trava mais o avanço)
     rectAlvo: null, // { top, left, width, height } do elemento real destacado, em px de viewport — null = sem spotlight visível agora
     telaAoAbrir: null, // $store.app.view de antes de abrir — devolve pra lá ao fechar/concluir, nunca deixa a pessoa "presa" numa tela que só visitou por causa do tour
+    // Altura real do painel de instrução (.cg-tour-painel), em px — usada só
+    // pra empurrar .toast-container (index.html) pra baixo dele durante um
+    // passo de ação (achado numa revisão visual manual: o toast "N
+    // lançamentos recorrentes gerados" cobria o texto do passo). Medida de
+    // verdade via ResizeObserver (não um número fixo "generoso o bastante")
+    // porque o conteúdo varia por passo (o de Recursos é bem mais comprido
+    // que o de Compras) e por largura de tela (o mesmo texto quebra em mais
+    // linhas no celular) — um valor chutado ficaria errado pra alguma
+    // combinação mais cedo ou mais tarde.
+    painelAltura: 0,
 
     // Limpeza de passo (listener do evento de ação + listeners de
     // scroll/resize) — sempre uma função ou null, nunca acumula: toda troca
     // de passo chama a anterior antes de registrar a próxima.
     _pararEscutaAcao: null,
     _pararRecalculo: null,
+    _pararObservarPainel: null,
 
     // 1 boas-vindas + 3 ações reais (financeiro/compras/recursos) + 1
     // encerramento. "alvoSeletor" sempre escopado por section[x-data^="..."]
@@ -281,6 +292,8 @@ export function onboardingStore() {
       this._escutarAcao(p.area);
       this._focarAlvo();
       this._ligarRecalculoAutomatico();
+      await nextTick(); // o painel só existe no DOM depois deste tick (x-show acabou de virar true)
+      this._observarPainel();
     },
 
     async _prepararRecursos() {
@@ -366,11 +379,32 @@ export function onboardingStore() {
       };
     },
 
+    // Mede a altura real do painel de instrução (achado numa revisão visual
+    // manual: sem isso, .toast-container em index.html não tinha como saber
+    // até onde precisa descer pra não cobrir o painel — um número fixo
+    // "generoso o bastante" ficaria errado pro passo de Recursos, que é bem
+    // mais comprido, ou pra alguma largura de tela específica). ResizeObserver
+    // (não só uma medição única) porque o conteúdo pode mudar de altura sem
+    // trocar de passo: a mesma frase quebra em mais ou menos linhas se a
+    // pessoa girar o celular ou redimensionar a janela.
+    _observarPainel() {
+      const el = document.querySelector('.cg-tour-painel');
+      if (!el || typeof ResizeObserver === 'undefined') return;
+      const obs = new ResizeObserver(([entry]) => {
+        this.painelAltura = entry.contentRect.height;
+      });
+      obs.observe(el);
+      this._pararObservarPainel = () => obs.disconnect();
+    },
+
     _limparPasso() {
       this._pararEscutaAcao?.();
       this._pararEscutaAcao = null;
       this._pararRecalculo?.();
       this._pararRecalculo = null;
+      this._pararObservarPainel?.();
+      this._pararObservarPainel = null;
+      this.painelAltura = 0;
       this.rectAlvo = null;
     },
   };
