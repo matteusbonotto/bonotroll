@@ -213,6 +213,13 @@
             <button type="button" class="btn p-0 border-0 bg-transparent cg-touch" @click="$store.app.toggleTheme()" :aria-label="$store.app.isDarkNow() ? 'Mudar para modo claro' : 'Mudar para modo escuro'" :title="$store.app.isDarkNow() ? 'Modo claro' : 'Modo escuro'">
               <i class="bi fs-5" :class="$store.app.isDarkNow() ? 'bi-sun' : 'bi-moon-stars'"></i>
             </button>
+            <!-- Ponto de acesso global do FAQ (TASK-037/038) — ao lado do
+                 tema/notificações, sempre visível em qualquer tela, sem
+                 precisar entrar em Perfil (que também tem o mesmo atalho,
+                 ver Preferências abaixo). -->
+            <button type="button" class="btn p-0 border-0 bg-transparent cg-touch" @click="$store.faq.abrir()" aria-label="Perguntas frequentes" title="Perguntas frequentes">
+              <i class="bi bi-question-circle fs-5"></i>
+            </button>
             <div x-data="{ open: false }" class="position-relative" @click.outside="open = false">
               <button type="button" class="btn p-0 border-0 bg-transparent position-relative cg-touch" @click="open = !open; if (open) $store.app.refreshNotifications()" aria-label="Notificações">
                 <i class="bi bi-bell fs-5"></i>
@@ -397,7 +404,7 @@
           </div>
 
           <div class="cg-quick-actions mb-4">
-            <button type="button" class="cg-btn btn btn-danger" @click="$store.txModal.openNew('saida')"><i class="bi bi-dash-circle"></i> Nova despesa</button>
+            <button type="button" class="cg-btn btn btn-danger" data-tour-alvo="nova-transacao" @click="$store.txModal.openNew('saida')"><i class="bi bi-dash-circle"></i> Nova despesa</button>
             <button type="button" class="cg-btn btn btn-outline-danger" @click="$store.txModal.openNew('saida', 'fixa')"><i class="bi bi-pin-angle"></i> Despesa fixa</button>
             <button type="button" class="cg-btn btn btn-outline-success" @click="$store.txModal.openNew('entrada')"><i class="bi bi-plus-circle"></i> Nova entrada</button>
             <button type="button" class="cg-btn btn btn-outline-secondary" @click="$store.app.setView('compras')"><i class="bi bi-cart3"></i> Lista de compras</button>
@@ -1352,7 +1359,7 @@
             </div>
           </div>
 
-          <button type="button" class="cg-fab" @click="toggleItemForm()" aria-label="Adicionar item">
+          <button type="button" class="cg-fab" data-tour-alvo="novo-item-compra" @click="toggleItemForm()" aria-label="Adicionar item">
             <i class="bi bi-plus-lg"></i>
           </button>
 
@@ -1918,7 +1925,7 @@
               <div class="d-flex align-items-center justify-content-between mb-3">
                 <button type="button" class="cg-back" @click="voltarParaSubcategorias()" :aria-label="'Voltar para ' + salaAtual?.nome"><i class="bi bi-chevron-left" aria-hidden="true"></i> <span x-text="salaAtual?.nome"></span></button>
                 <div class="cg-section-title mb-0" x-text="nomeCategoriaAtiva"></div>
-                <button type="button" class="cg-btn btn btn-success btn-sm" @click="abrirNovoItem()"><i class="bi bi-plus-lg"></i> Item</button>
+                <button type="button" class="cg-btn btn btn-success btn-sm" data-tour-alvo="recursos-add-item" @click="abrirNovoItem()"><i class="bi bi-plus-lg"></i> Item</button>
               </div>
 
               <template x-if="!loading && !items.length">
@@ -2573,7 +2580,16 @@
                   <div class="cg-icon-badge"><i class="bi bi-signpost-2"></i></div>
                   <div class="flex-fill">
                     <h2 class="h6 fw-bold mb-1">Rever tutorial</h2>
-                    <p class="cg-muted small mb-0">Reabre a explicação rápida do que é o Bõnotto e como usar as telas principais.</p>
+                    <p class="cg-muted small mb-0">Refaz o passo a passo guiado — registra de novo um gasto, um item de compra e um item de casa, um de cada vez.</p>
+                  </div>
+                  <i class="bi bi-chevron-right cg-muted"></i>
+                </div>
+
+                <div class="cg-list-flat cg-list-flat--hoverable px-3" role="button" @click="$store.faq.abrir()">
+                  <div class="cg-icon-badge"><i class="bi bi-question-circle"></i></div>
+                  <div class="flex-fill">
+                    <h2 class="h6 fw-bold mb-1">Perguntas frequentes</h2>
+                    <p class="cg-muted small mb-0">Dúvidas rápidas sobre dados compartilhados, cartão de crédito, Caixinhas e mais — sem precisar refazer o tutorial.</p>
                   </div>
                   <i class="bi bi-chevron-right cg-muted"></i>
                 </div>
@@ -2728,15 +2744,24 @@
     </div>
   </template>
 
-  <!-- ============ TOUR DE ONBOARDING (TASK-037) ============
+  <!-- ============ TOUR DE ONBOARDING — PASSOS INFORMATIVOS (TASK-037/038)
+       ============
+       Só os passos tipo:'info' (boas-vindas e conclusão) usam este modal
+       cheio — os 3 passos tipo:'acao' (financeiro/compras/recursos) usam o
+       mecanismo de spotlight no fim do body (".cg-tour-spot-backdrop"),
+       porque esses precisam deixar a tela real por baixo visível e
+       clicável. Ver comentário grande no topo de js/components/
+       onboarding.js pra entender a reconstrução (rejeitada em teste real na
+       v1, que era só um tour de slides) e por que ainda faz sentido manter
+       ESTE modal cheio pros 2 passos que continuam só informativos.
        Aberto sozinho na primeira visita (ver x-init="$store.onboarding.
        iniciarSeNecessario()" acima) e reaberto a qualquer momento por
        "Rever tutorial" em Perfil → Preferências. Mesmo padrão de modal do
        resto do app (.cg-modal-backdrop/.cg-modal) — Esc fecha e devolve o
        foco de graça via setupOverlayBehavior (js/app.js), sem reimplementar
-       nada aqui (ver comentário de decisão em js/components/onboarding.js). -->
-  <div class="cg-modal-backdrop" x-show="$store.onboarding.aberto" x-cloak @click.self="$store.onboarding.pular()">
-    <div class="cg-modal cg-modal--sm cg-tour" x-show="$store.onboarding.aberto" x-transition role="dialog" aria-modal="true" :aria-label="$store.onboarding.passos[$store.onboarding.passoAtual].titulo">
+       nada aqui. -->
+  <div class="cg-modal-backdrop" x-show="$store.onboarding.aberto && $store.onboarding.passo.tipo === 'info'" x-cloak @click.self="$store.onboarding.pular()">
+    <div class="cg-modal cg-modal--sm cg-tour" x-show="$store.onboarding.aberto && $store.onboarding.passo.tipo === 'info'" x-transition role="dialog" aria-modal="true" :aria-label="$store.onboarding.passo.titulo">
       <div class="d-flex align-items-center justify-content-between mb-3">
         <span class="cg-muted small fw-semibold text-uppercase" x-text="'Passo ' + ($store.onboarding.passoAtual + 1) + ' de ' + $store.onboarding.passos.length"></span>
         <button type="button" class="btn-close" @click="$store.onboarding.pular()" aria-label="Fechar tutorial"></button>
@@ -2762,10 +2787,36 @@
         <button type="button" class="btn btn-link btn-sm px-0" @click="$store.onboarding.pular()" x-show.important="!$store.onboarding.ultimoPasso">Pular</button>
         <span x-show="$store.onboarding.ultimoPasso"></span>
         <div class="d-flex gap-2">
-          <button type="button" class="cg-btn btn btn-outline-secondary btn-sm" @click="$store.onboarding.anterior()" x-show="$store.onboarding.passoAtual > 0">Voltar</button>
-          <button type="button" class="cg-btn btn btn-success btn-sm" @click="$store.onboarding.proximo()" x-show="!$store.onboarding.ultimoPasso">Próximo</button>
+          <button type="button" class="cg-btn btn btn-outline-secondary btn-sm" @click="$store.onboarding.voltar()" x-show="$store.onboarding.passoAtual > 0">Voltar</button>
+          <button type="button" class="cg-btn btn btn-success btn-sm" @click="$store.onboarding.avancar()" x-show="!$store.onboarding.ultimoPasso">Próximo</button>
           <button type="button" class="cg-btn btn btn-success btn-sm" @click="$store.onboarding.concluir()" x-show="$store.onboarding.ultimoPasso">Começar a usar</button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ FAQ (TASK-037/038) ============
+       Sempre acessível (ícone "?" na topbar + item em Perfil →
+       Preferências), independente do tour — ver js/components/faq.js pro
+       conteúdo. Mesmo padrão de modal/Esc/foco do resto do app. Accordion
+       simples (um único "abertaId" de cada vez), sem lib nenhuma — mesmo
+       espírito de "nada de dependência nova só pra isso" do onboarding. -->
+  <div class="cg-modal-backdrop" x-show="$store.faq.aberto" x-cloak @click.self="$store.faq.fechar()">
+    <div class="cg-modal" x-show="$store.faq.aberto" x-transition role="dialog" aria-modal="true" aria-label="Perguntas frequentes">
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <h2 class="h6 fw-bold mb-0"><i class="bi bi-question-circle"></i> Perguntas frequentes</h2>
+        <button type="button" class="btn-close" @click="$store.faq.fechar()" aria-label="Fechar"></button>
+      </div>
+      <div class="cg-faq-list">
+        <template x-for="p in $store.faq.perguntas" :key="p.id">
+          <div class="cg-faq-item">
+            <button type="button" class="cg-faq-item__pergunta" @click="$store.faq.alternar(p.id)" :aria-expanded="$store.faq.abertaId === p.id" :aria-controls="'cg-faq-resposta-' + p.id">
+              <span x-text="p.pergunta"></span>
+              <i class="bi flex-shrink-0" :class="$store.faq.abertaId === p.id ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+            </button>
+            <p class="cg-faq-item__resposta" :id="'cg-faq-resposta-' + p.id" x-show.important="$store.faq.abertaId === p.id" x-text="p.resposta"></p>
+          </div>
+        </template>
       </div>
     </div>
   </div>
@@ -3594,6 +3645,85 @@
         </div>
       </div>
     </template>
+  </div>
+
+  <!-- ============ TOUR DE ONBOARDING — PASSO DE AÇÃO / SPOTLIGHT
+       (TASK-037/038) ============
+       Cobre os 3 passos tipo:'acao' (financeiro/compras/recursos) — ver
+       comentário grande no topo de js/components/onboarding.js pra
+       entender por que isto NÃO pode ser o modal cheio de sempre: a pessoa
+       precisa continuar enxergando e clicando na tela real por baixo (ex.:
+       abrir "Nova despesa" de verdade e preencher o formulário de verdade).
+
+       FICA DE PROPÓSITO NO FIM DO BODY — depois de TODO outro
+       .cg-modal-backdrop do arquivo (transação, item de compra, item de
+       recurso, CSV etc.). setupOverlayBehavior (js/app.js) resolve Esc
+       pegando o PRIMEIRO ".cg-modal-backdrop"/".cg-drawer-backdrop" visível
+       EM ORDEM DE DOCUMENTO — se este bloco viesse antes do modal real que
+       a pessoa abre clicando no botão destacado, apertar Esc DENTRO desse
+       formulário real fecharia o tour inteiro por baixo dele (o modal real
+       ficaria aberto, sem fundo, num estado quebrado) em vez de só fechar o
+       formulário. Com este bloco por último, o modal real (que abre por
+       cima do spotlight) é sempre encontrado primeiro por Esc, e só quando
+       NENHUM modal real está aberto é que Esc cai neste backdrop mesmo —
+       que então pula o tour inteiro (@click.self, mesmo padrão de sempre).
+
+       Esta div raiz (".cg-tour-spot-backdrop") é TRANSPARENTE e
+       pointer-events:none (ver css/components.css) — existe só pra
+       setupOverlayBehavior enxergar "tem overlay aberto" (trava scroll do
+       fundo, Esc, devolve foco) sem reimplementar nada disso aqui. Quem
+       realmente escurece a tela e recebe clique são os 4 ".cg-tour-dim"
+       (um retângulo pra cada lado do "buraco", nunca o alvo em si — a
+       pessoa consegue clicar no botão real, que NÃO tem nenhum elemento
+       nosso por cima dele) — um clique acidental no fundo escurecido é só
+       absorvido (sem handler nenhum, o que já impede o clique de "vazar"
+       pro que está por baixo), nunca fecha o tour inteiro sem querer; só
+       Esc/"Pular tudo"/X fazem isso, de propósito (ver onboarding.js). -->
+  <div class="cg-modal-backdrop cg-tour-spot-backdrop" x-show="$store.onboarding.aberto && $store.onboarding.passo.tipo === 'acao'" x-cloak @click.self="$store.onboarding.pular()">
+    <template x-if="$store.onboarding.spotlightStyles">
+      <div>
+        <div class="cg-tour-dim" :style="$store.onboarding.spotlightStyles.dims.top"></div>
+        <div class="cg-tour-dim" :style="$store.onboarding.spotlightStyles.dims.bottom"></div>
+        <div class="cg-tour-dim" :style="$store.onboarding.spotlightStyles.dims.left"></div>
+        <div class="cg-tour-dim" :style="$store.onboarding.spotlightStyles.dims.right"></div>
+        <div class="cg-tour-ring" :style="$store.onboarding.spotlightStyles.hole"></div>
+      </div>
+    </template>
+
+    <div class="cg-tour-painel" role="dialog" aria-modal="false" :aria-label="$store.onboarding.passo.titulo">
+      <div class="d-flex align-items-center justify-content-between mb-2">
+        <span class="cg-muted small fw-semibold text-uppercase" x-text="'Passo ' + ($store.onboarding.passoAtual + 1) + ' de ' + $store.onboarding.passos.length"></span>
+        <button type="button" class="btn-close" @click="$store.onboarding.pular()" aria-label="Pular o tutorial inteiro"></button>
+      </div>
+
+      <div class="d-flex align-items-start gap-2 mb-3" aria-live="polite">
+        <i class="bi fs-4 text-success flex-shrink-0" :class="$store.onboarding.passo.icone"></i>
+        <div class="min-w-0">
+          <h2 class="h6 fw-bold mb-1" x-text="$store.onboarding.passo.titulo"></h2>
+          <!-- x-show.important nos dois: ".mb-0" é utility do Bootstrap
+               (!important) no MESMO elemento do x-show — sem o modificador,
+               a folha de estilo sempre vence e os dois textos ficam visíveis
+               ao mesmo tempo (CLAUDE.md, "Armadilhas já conhecidas"). -->
+          <p class="cg-muted small mb-0" x-show.important="!$store.onboarding.passoResolvido" x-text="$store.onboarding.passo.texto"></p>
+          <p class="small mb-0 fw-semibold" style="color: var(--color-success);" x-show.important="$store.onboarding.passoResolvido" x-text="$store.onboarding.passo.textoResultado"></p>
+        </div>
+      </div>
+
+      <div class="cg-tour__dots mb-3">
+        <template x-for="(p, i) in $store.onboarding.passos" :key="i">
+          <span class="cg-tour__dot" :class="{ 'is-active': $store.onboarding.passoAtual === i }"></span>
+        </template>
+      </div>
+
+      <div class="d-flex align-items-center justify-content-between">
+        <button type="button" class="btn btn-link btn-sm px-0" @click="$store.onboarding.voltar()" x-show.important="$store.onboarding.passoAtual > 0">Voltar</button>
+        <span x-show="$store.onboarding.passoAtual === 0"></span>
+        <div class="d-flex gap-2">
+          <button type="button" class="cg-btn btn btn-outline-secondary btn-sm" @click="$store.onboarding.pularEtapa()" x-show.important="!$store.onboarding.passoResolvido">Pular esta etapa</button>
+          <button type="button" class="cg-btn btn btn-success btn-sm" @click="$store.onboarding.avancar()" x-show.important="$store.onboarding.passoResolvido">Continuar</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script type="module" src="./js/app.js"></script>

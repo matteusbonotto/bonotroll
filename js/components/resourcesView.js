@@ -379,6 +379,13 @@ export function resourcesView() {
             owner_id: store.profile.id,
             group_id: store.group?.group?.id ?? null,
           });
+          // TASK-037/038 (reconstrução do onboarding, 2026-09) — sinal
+          // dedicado pro passo-a-passo interativo (js/components/
+          // onboarding.js), só na CRIAÇÃO (não na edição de um item
+          // existente, nem em ajustar()/definirQuantidade(), que só mudam a
+          // quantidade — nenhum dos dois é a ação "cadastre um item novo"
+          // que o tour pede pra praticar).
+          window.dispatchEvent(new CustomEvent('cg:onboarding-acao', { detail: { area: 'recursos' } }));
         }
         this.itemModalAberto = false;
         await this.carregarItens();

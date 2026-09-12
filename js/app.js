@@ -8,6 +8,7 @@ import { caixinhaModalStore } from './components/caixinhaManager.js';
 import { bankModalStore } from './components/bankManager.js';
 import { cartaoModalStore } from './components/cartaoManager.js';
 import { onboardingStore } from './components/onboarding.js';
+import { faqStore } from './components/faq.js';
 import { cgHelp } from './components/help.js';
 import { authView } from './components/auth.js';
 import { dashboardView } from './components/dashboard.js';
@@ -48,6 +49,7 @@ document.addEventListener('alpine:init', () => {
   Alpine.store('bankModal', bankModalStore());
   Alpine.store('cartaoModal', cartaoModalStore());
   Alpine.store('onboarding', onboardingStore());
+  Alpine.store('faq', faqStore());
 
   Alpine.data('authView', authView);
   Alpine.data('cgHelp', cgHelp);

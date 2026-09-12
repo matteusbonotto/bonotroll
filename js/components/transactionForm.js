@@ -635,6 +635,18 @@ export function txModalStore() {
 
         this.open = false;
         window.dispatchEvent(new CustomEvent('cg:transactions-changed'));
+        // TASK-037/038 (reconstrução do onboarding, 2026-09) — sinal dedicado
+        // pro passo-a-passo interativo (js/components/onboarding.js) saber
+        // que uma transação foi CRIADA de verdade nesta sessão. Não
+        // reaproveita "cg:transactions-changed" acima porque esse também
+        // dispara em edição/exclusão — o tour confirmaria o passo "registre
+        // uma despesa" mesmo quando a pessoa só editou um lançamento do
+        // seed de demonstração, o que é exatamente o falso positivo que o
+        // usuário pediu pra evitar. `this.form.id` aqui ainda é o valor
+        // ORIGINAL (nunca reatribuído neste método) — null só na criação.
+        if (!this.form.id) {
+          window.dispatchEvent(new CustomEvent('cg:onboarding-acao', { detail: { area: 'financeiro' } }));
+        }
       } catch (e) {
         store.notify(e.message || 'Não foi possível salvar.', 'danger');
       } finally {

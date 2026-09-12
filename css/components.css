@@ -1615,3 +1615,110 @@ body { font-size: var(--font-size-body); }
   transition: background .15s, transform .15s;
 }
 .cg-tour__dot.is-active { background: var(--color-primary); transform: scale(1.3); }
+
+/* ---------- Passo de ação / spotlight (TASK-037/038, reconstrução do
+   onboarding) — ver comentário grande no bloco ".cg-tour-spot-backdrop" no
+   fim de index.html e no topo de js/components/onboarding.js. Seletor
+   composto (".cg-modal-backdrop.cg-tour-spot-backdrop", não só a classe
+   solta) de propósito — CLAUDE.md, "declaração de CSS duplicada, mesma
+   especificidade, a de baixo do arquivo ganha": aqui eu QUERO ganhar de
+   ".cg-modal-backdrop" (que já define background/z-index escuros),
+   independente de qual das duas regras carregar depois. ---------- */
+.cg-modal-backdrop.cg-tour-spot-backdrop {
+  background: transparent;
+  /* A pessoa PRECISA clicar no elemento real por baixo (ex.: o botão "Nova
+     despesa" destacado) — este elemento raiz nunca pode interceptar esse
+     clique. Só existe pra setupOverlayBehavior (js/app.js) enxergar "tem
+     overlay aberto" (trava scroll, Esc, devolve foco) de graça. Os filhos
+     abaixo reativam pointer-events explicitamente onde precisam. */
+  pointer-events: none;
+  /* Abaixo de QUALQUER modal real (.cg-modal-backdrop padrão, 1050) — se o
+     modal que a própria pessoa abriu (ex.: "Nova despesa") renderizasse
+     ATRÁS disto, ficaria inacessível. Acima da topbar/sidebar (1030-1040)
+     de propósito: navegar pra longe do passo atual durante o tour não é o
+     fluxo pretendido (ver "Pular esta etapa"/"Pular tudo" pra sair). */
+  z-index: 1045;
+}
+/* Os 4 retângulos que escurecem tudo MENOS o alvo destacado — geometria
+   calculada em js/utils/spotlight.js a partir do getBoundingClientRect()
+   real do elemento (ver onboarding.js::_recalcularSpotlight). Cada um
+   recebe top/left/width/height/right/bottom via :style inline (Alpine
+   aceita objeto direto em :style, já usado em outros pontos do app) —
+   nunca soma os 4 aqui em CSS estático, já que a posição do alvo muda a
+   cada tela/passo. */
+.cg-tour-dim {
+  position: fixed;
+  background: rgba(6, 14, 12, .62);
+  pointer-events: auto; /* absorve o clique acidental no fundo — nunca deixa "vazar" pro que está embaixo, nunca fecha o tour sozinho (só Esc/"Pular tudo"/X fazem isso) */
+  transition: top .18s ease, left .18s ease, width .18s ease, height .18s ease, right .18s ease, bottom .18s ease;
+}
+/* Moldura de destaque — exatamente em volta do "buraco" recortado pelos 4
+   ".cg-tour-dim" acima. Pulsa suavemente só pra chamar atenção (mesma ideia
+   de ".cg-due-row--overdue" em app.css, outro selo visual que já pulsa). */
+.cg-tour-ring {
+  position: fixed;
+  border: 2px solid var(--color-primary);
+  border-radius: var(--radius-md);
+  pointer-events: none; /* puramente decorativo — nunca intercepta o clique no alvo real por baixo */
+  transition: top .18s ease, left .18s ease, width .18s ease, height .18s ease;
+  animation: cg-tour-ring-pulso 1.8s ease-in-out infinite;
+}
+@keyframes cg-tour-ring-pulso {
+  0%, 100% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-primary) 35%, transparent); }
+  50% { box-shadow: 0 0 0 9px color-mix(in srgb, var(--color-primary) 12%, transparent); }
+}
+/* Painel de instrução — fixo num canto consistente da tela (não ancorado
+   pixel-a-pixel ao lado do alvo, que exigiria matemática de sobra de espaço
+   pra cada um dos 3 alvos/telas/tamanhos diferentes). SEMPRE no TOPO (não
+   embaixo) — BUG REAL encontrado testando com Playwright: o rodapé colide
+   de verdade com o ".cg-fab" (botão "+" de Compras, fixo no canto inferior
+   direito em QUALQUER largura, ver components.css) — um teste e2e (fluxo
+   completo do tour) falhou de verdade porque o painel ficava por cima do
+   próprio botão que o passo pedia pra clicar ("elemento intercepta pointer
+   events"). Topo evita esse E QUALQUER botão flutuante futuro que venha a
+   nascer ancorado embaixo — os 3 alvos reais (Nova despesa/+ de Compras/
+   Item de Recursos) sempre têm folga suficiente do topo da tela. */
+.cg-tour-painel {
+  position: fixed;
+  left: var(--space-3);
+  right: var(--space-3);
+  top: var(--space-3);
+  z-index: 1046; /* acima dos 4 .cg-tour-dim (1045, herdado do backdrop pai) */
+  pointer-events: auto;
+  background: var(--color-surface);
+  color: var(--color-text);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: var(--space-4);
+}
+@media (min-width: 768px) {
+  .cg-tour-painel { left: auto; right: var(--space-4); top: var(--space-4); width: 360px; }
+}
+
+/* ---------- FAQ (TASK-037/038) — accordion simples, um "abertaId" só (ver
+   js/components/faq.js), sem nenhuma lib de accordion (Bootstrap JS não é
+   usado neste projeto, só CSS/grid/utilities — ver CLAUDE.md). ---------- */
+.cg-faq-list { display: flex; flex-direction: column; gap: var(--space-2); }
+.cg-faq-item { border: 1px solid var(--color-border); border-radius: var(--radius-md); overflow: hidden; }
+.cg-faq-item__pergunta {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 0;
+  background: var(--color-surface-alt);
+  color: var(--color-text);
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-body-sm);
+  text-align: left;
+  cursor: pointer;
+}
+.cg-faq-item__resposta {
+  margin: 0;
+  padding: var(--space-3);
+  font-size: var(--font-size-body-sm);
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
