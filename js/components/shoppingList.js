@@ -272,6 +272,13 @@ export function shoppingView() {
         this.categoriaEscolhidaManualmente = false;
         await this.refreshItems();
         store.notify(`"${nomeAdicionado}" adicionado.`);
+        // TASK-037/038 (reconstrução do onboarding, 2026-09) — sinal dedicado
+        // pro passo-a-passo interativo (js/components/onboarding.js) saber
+        // que um item foi adicionado de verdade. Evento próprio (não
+        // "cg:shopping-changed", que é só pra OUTRAS telas avisarem esta de
+        // uma mudança externa, ver init() logo acima) pra não disparar um
+        // refreshItems() redundante nela mesma.
+        window.dispatchEvent(new CustomEvent('cg:onboarding-acao', { detail: { area: 'compras' } }));
         // O modal fica aberto de propósito pra colocar vários itens seguidos
         // (comentário em index.html) — mas sem devolver o foco pro campo de
         // nome, cada item novo exigia um toque extra só pra voltar a
