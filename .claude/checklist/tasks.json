@@ -2111,7 +2111,7 @@
       "description": "Melhoria pedida pelo usuário (2026-09-14): 'Histórico de lista de compras com visualização por mês e filtros'. Hoje o histórico de listas finalizadas existe (ver TASK-028) mas sem agrupamento por período nem filtro — precisa investigar a estrutura real de shopping_lists/shopping_list_items antes de desenhar (quantas listas finalizadas uma conta típica acumula, quais campos fazem sentido como filtro — mercado, categoria, status comprado/não-comprado).",
       "category": "Frontend",
       "priority": "MEDIUM",
-      "status": "IN_PROGRESS",
+      "status": "DONE",
       "agent": "frontend",
       "tags": [
         "compras",
@@ -2128,6 +2128,13 @@
           "updatedBy": "claude",
           "timestamp": "2026-09-14T00:00:00-03:00",
           "note": "Delegado ao agente frontend numa worktree isolada, em paralelo com TASK-042 (arquivos diferentes, baixo risco de colisão)."
+        },
+        {
+          "action": "STATUS_CHANGE",
+          "to": "DONE",
+          "updatedBy": "frontend",
+          "timestamp": "2026-09-14T00:00:00-03:00",
+          "note": "Investigado antes de desenhar: o histórico (abrirHistorico/verDetalheHistorico, js/components/shoppingList.js) já existia desde TASK-028 — uma lista FLAT de todas as shopping_lists com status='finalizada', sem agrupamento nem filtro nenhum, só clique -> detalhe (itens, só leitura). Não existia nível de mês/ano nenhum. Construído por cima do que já existia (extensão, não reescrita): (1) agrupamento por mês reaproveitando agruparPorAnoMes (js/utils/periodo.js — mesma função já usada em Transações, zero lógica de ordenação de período duplicada); (2) filtro por mercado (nome_mercado — só lojas que já apareceram numa compra finalizada, via <select>, nunca texto livre) e por intervalo de data (finalizado_em, mesmo padrão .cg-date-field de Transações); 'por valor gasto' descartado por falta de caso de uso real (o resumo já mostra o total já filtrado, um filtro de faixa de valor seria filtro por filtro, não por dado que a pessoa realmente quer recortar). Lógica pura nova em js/services/shoppingList.js (historicoMercados/filterHistoricoEntries/computeHistoricoSummary/groupHistoricoByMonth), testável isolada, nada calculado persistido. Seed demo (js/data/mockDb.js) ganhou 2 listas finalizadas a mais (demo-lista-3/4), espalhadas em meses diferentes — antes só existia 1 lista finalizada no seed, insuficiente pra ver agrupamento por mês de verdade em ?demo=1. Verificado com screenshot real (Playwright, porta isolada pra não colidir com outro worktree/agente rodando servidor na mesma porta 5500 — achado real desta sessão, documentado no relatório) nos 2 temas (claro/escuro) e em mobile (390px)/desktop: agrupamento, filtro por mercado, filtro por data, estado vazio ('Limpar filtros') e detalhe empilhado, todos corretos, sem erro de console novo, sem conflito x-show+utility Bootstrap (usado x-show.important onde havia classe d-flex). npm run test:unit: 107/107 (12 testes novos: historicoMercados/filterHistoricoEntries/computeHistoricoSummary/groupHistoricoByMonth). npm test: 47/47 e2e (rodado 2x — uma vez contra um servidor na porta 5500 que acabou sendo de OUTRO worktree por acidente, depois de novo numa porta isolada contra o código real editado, pra ter certeza)."
         }
       ]
     }
