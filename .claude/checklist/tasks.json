@@ -2217,6 +2217,37 @@
           "note": "backdrop-filter: none adicionado ao seletor composto .cg-modal-backdrop.cg-tour-spot-backdrop (css/components.css) — não afeta nenhum outro .cg-modal-backdrop do app (mais específico, só esse elemento). CACHE_NAME v17->v18. Verificado visualmente com screenshot real antes de publicar: botão nítido, resto escurecido mas legível, zero blur. 107/107 unit + 8/8 e2e do tour verdes. Deploy em main, push feito. NOTA DE PROCESSO: usuário relatou depois de eu já ter 'confirmado em produção' duas rodadas anteriores — o print mostrava título de aba ainda 'Bõnotto' (versão anterior ao rebrand), então parte do relato pode ser sessão desatualizada no navegador do usuário, mas o bug de blur em si era REAL e reproduzido localmente antes de eu aceitar a explicação de cache — não descartado como 'só cache' sem checar o código primeiro."
         }
       ]
+    },
+    {
+      "id": "BUG-018",
+      "title": "Guia de ação perde a instrução assim que o modal real abre por cima",
+      "description": "Feedback real do usuário (2026-09-14): 'quando eu seleciono o primeiro passo o tour não me orienta a seguir no modal... o modal é aberto, e não explica por exemplo os botões, o ver mais e demais itens... um usuário novo entra e segue o primeiro passo, e não sabe mais o que fazer, só continua por sua conta em risco.' Causa: o formulário real (z-index 1050) cobre o painel do guia (1046, de propósito) assim que a pessoa toca no botão destacado — a instrução desaparece da tela dentro do formulário.",
+      "category": "Frontend",
+      "priority": "HIGH",
+      "status": "DONE",
+      "agent": "claude",
+      "tags": [
+        "bug-producao",
+        "onboarding",
+        "pedido-usuario-teste"
+      ],
+      "dependencies": [
+        "TASK-042"
+      ],
+      "relatedBugs": [
+        "BUG-017"
+      ],
+      "createdAt": "2026-09-14T00:00:00-03:00",
+      "updatedAt": "2026-09-14T00:00:00-03:00",
+      "history": [
+        {
+          "action": "CREATED",
+          "to": "DONE",
+          "updatedBy": "claude",
+          "timestamp": "2026-09-14T00:00:00-03:00",
+          "note": "Getter novo (onboarding.js::instrucaoModalTransacao) devolve o texto do guia ativo quando o alvo é 'Nova despesa' (cobre financeiro/dividir-despesa/fixa/cartao); index.html mostra esse texto DENTRO do próprio modal, reaproveitando .cg-demo-banner (mesmo estilo do aviso de modo demonstração, sem CSS novo). Texto do guia 'financeiro' (o primeiro que todo usuário novo vê) enriquecido: agora explica que só Título+Valor bastam, que 'Mais opções' tem campos extras opcionais, e menciona o botão Salvar. Testado de ponta a ponta com Playwright: dica aparece dentro do modal, preenchimento+salvamento real funciona, guia detecta a ação e mostra o resultado normalmente depois. CACHE_NAME v18->v19. 107/107 unit + 50/50 e2e verdes, sem flake. Deploy em main, push feito."
+        }
+      ]
     }
   ]
 }
