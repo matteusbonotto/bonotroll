@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Bõnotto — landing page de vendas (branch landing-page)
+   BNTT — landing page de vendas (branch landing-page)
    Autocontida: nenhuma variável/regra daqui vem de css/tokens.css ou
    css/components.css do app — valores de marca (#126B5C etc.) foram
    copiados manualmente, não importados, pra não acoplar as duas branches.
@@ -364,17 +364,21 @@ button, input { font-family: inherit; }
   transform: translateY(-4px);
   border-color: rgba(94, 234, 176, 0.35);
 }
-.lp-card__icon {
+.lp-card__letter {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 46px; height: 46px;
+  width: 52px; height: 52px;
   border-radius: 12px;
   background: rgba(94, 234, 176, 0.12);
   color: var(--lp-accent);
   margin-bottom: 16px;
+  font-family: var(--lp-font-display);
+  font-weight: 400;
+  font-size: 1.7rem;
+  line-height: 1;
+  text-transform: uppercase;
 }
-.lp-card__icon svg { width: 24px; height: 24px; }
 .lp-card h3 {
   font-family: var(--lp-font-display);
   text-transform: uppercase;
@@ -536,11 +540,15 @@ button, input { font-family: inherit; }
   color: var(--lp-text-muted);
 }
 .lp-footer__links a:hover { color: var(--lp-accent); }
+.lp-footer__meta-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
 .lp-footer__meta {
   font-size: 0.8rem;
   color: var(--lp-text-dim);
 }
-.lp-footer__meta--muted { margin-top: -8px; }
 
 /* ==========================================================================
    Scroll-reveal (JS adiciona .is-visible via IntersectionObserver)

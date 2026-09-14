@@ -1,4 +1,4 @@
-// Bõnotto — landing page de vendas (branch landing-page)
+// BNTT — landing page de vendas (branch landing-page)
 // Vanilla JS puro, sem dependência de nenhum arquivo de js/ do app principal.
 (function () {
   'use strict';
