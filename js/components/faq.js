@@ -20,7 +20,7 @@ export function faqStore() {
     perguntas: [
       {
         id: 'o-que-e',
-        pergunta: 'O que é o Bõnotto e pra quem é?',
+        pergunta: 'O que é o BNTT e pra quem é?',
         resposta:
           'É o app doméstico de vocês dois pra três coisas que normalmente vivem espalhadas em apps separados: controle financeiro (o que entra, o que sai, quem deve o quê), lista de compras do mercado, e um inventário do que tem em casa (despensa, banheiro etc.). Foi feito sob medida pra duas pessoas — não é um produto pra qualquer família ou empresa usar.',
       },

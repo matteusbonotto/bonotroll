@@ -1,8 +1,8 @@
 {
-  "name": "bonotto",
+  "name": "bntt",
   "private": true,
   "type": "module",
-  "description": "Suíte de testes do Bõnotto (o app em si não tem build step — isto é só tooling de teste, ver docs/RAIO-X-2.0.md §5).",
+  "description": "Suíte de testes do BNTT (o app em si não tem build step — isto é só tooling de teste, ver docs/RAIO-X-2.0.md §5).",
   "scripts": {
     "test": "playwright test",
     "test:unit": "node --test --import ./tests/unit/_setup.js tests/unit/*.test.js"

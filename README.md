@@ -89,7 +89,11 @@ supabase/
   functions/                  Edge Functions: keepalive · notify-scan · notify-payment
   NOTIFICACOES.md              passo a passo do push real + keepalive
 assets/icons/                 favicon, ícone do manifest, ícone maskable e apple-touch-icon (PNG)
+<<<<<<< HEAD
 assets/logos/                 logo original (colorida/branco/preto/verde, sem texto — só o símbolo), fonte dos ícones acima
+=======
+assets/logos/                 logo BNTT original (colorida/branco/preto/verde), fonte dos ícones acima
+>>>>>>> worktree-agent-a4d8419c029b61a41
 ```
 
 ## Testes

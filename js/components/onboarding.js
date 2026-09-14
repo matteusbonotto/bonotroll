@@ -424,8 +424,8 @@ export function onboardingStore() {
           id: 'boas-vindas',
           tipo: 'info',
           icone: 'bi-house-heart-fill',
-          titulo: 'Bem-vindo(a) ao Bõnotto!',
-          texto: 'Aqui vocês dois controlam o dinheiro, a lista de compras e o que tem em casa — tudo num só lugar. No próximo passo você vai USAR a ferramenta de verdade, registrando um gasto real. Depois disso, você escolhe o que mais quer aprender.',
+          titulo: 'Bem-vindo(a) ao BNTT!',
+          texto: 'Aqui vocês dois colocam o dinheiro, a lista de compras e o que tem em casa sob controle — tudo num só lugar. No próximo passo você vai USAR a ferramenta de verdade, registrando um gasto real. Depois disso, você escolhe o que mais quer aprender.',
         },
         { ...financeiro, tipo: 'acao' },
         {

@@ -174,7 +174,7 @@
   color-scheme: light;
 }
 
-/* Alinha as cores contextuais do Bootstrap com a identidade do Bõnotto —
+/* Alinha as cores contextuais do Bootstrap com a identidade do BNTT —
    usando os MESMOS tokens acima, os componentes nativos do Bootstrap
    (inputs, tabelas, modais que não usamos, etc.) escurecem/clareiam junto
    com o resto do app quando data-bs-theme muda, de graça. */

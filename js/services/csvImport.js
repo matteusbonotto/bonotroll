@@ -111,7 +111,7 @@ export const IMPORT_TARGETS = {
 };
 
 // Modelo pra quem quer montar a planilha do zero sabendo exatamente quais
-// colunas o Bõnotto entende, sem precisar abrir o modal e ler campo a campo
+// colunas o BNTT entende, sem precisar abrir o modal e ler campo a campo
 // (pedido do usuário — não existia nenhum arquivo assim). Cabeçalho usa a
 // KEY de cada campo (não o label com dica de formato) — ao reimportar esse
 // mesmo arquivo preenchido, o match automático de coluna em onFile() (ver
