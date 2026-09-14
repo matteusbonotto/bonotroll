@@ -104,6 +104,10 @@ export function caixinhaModalStore() {
             groupId: store.group?.group?.id,
           });
           store.notify('Caixinha criada.');
+          // TASK-042 (Central de tutoriais, guia "Crie uma caixinha") —
+          // sinal dedicado só na CRIAÇÃO (nunca ao editar uma já existente),
+          // mesmo padrão dos outros guias de ação real.
+          window.dispatchEvent(new CustomEvent('cg:onboarding-acao', { detail: { area: 'caixinha' } }));
         }
         this.close();
         window.dispatchEvent(new CustomEvent('cg:caixinhas-changed'));
