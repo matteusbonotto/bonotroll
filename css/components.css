@@ -1626,6 +1626,19 @@ body { font-size: var(--font-size-body); }
    independente de qual das duas regras carregar depois. ---------- */
 .cg-modal-backdrop.cg-tour-spot-backdrop {
   background: transparent;
+  /* BUG REAL relatado em uso (2026-09-14, print do usuário): ".cg-modal-
+     backdrop" (app.css) tem "backdrop-filter: blur(6px)" — pensado pro caso
+     normal de modal (a tela toda por trás fica borrada de propósito, ninguém
+     precisa enxergar nem tocar nela). Esta regra composta já zerava
+     "background" (os 4 retângulos abaixo cuidam do escurecimento), mas
+     NUNCA zerava "backdrop-filter" — o blur da regra base continuava valendo
+     pra ELEMENTO INTEIRO (tela cheia), inclusive por cima do "buraco" onde o
+     botão real deveria ficar nítido e tocável. Resultado: tudo borrado,
+     alvo destacado incluso — exatamente o oposto do que o spotlight deveria
+     fazer ("escurecer mas dar pra ver" fora do alvo, alvo sempre nítido).
+     "none" aqui cancela o herdado, sem afetar nenhum outro ".cg-modal-
+     backdrop" do app (só este seletor composto, mais específico, é atingido). */
+  backdrop-filter: none;
   /* A pessoa PRECISA clicar no elemento real por baixo (ex.: o botão "Nova
      despesa" destacado) — este elemento raiz nunca pode interceptar esse
      clique. Só existe pra setupOverlayBehavior (js/app.js) enxergar "tem
