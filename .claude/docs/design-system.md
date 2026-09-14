@@ -1,4 +1,4 @@
-# Design System — Bõnotto (referência rápida)
+# Design System — BNTT (referência rápida)
 
 Diretriz completa e a evidência que a motivou: `docs/DESIGN-SYSTEM-2027.md` — leia lá antes de revisar qualquer tela. Este arquivo só lista os valores reais (`css/tokens.css`) pra consulta rápida.
 

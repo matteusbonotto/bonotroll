@@ -1,5 +1,5 @@
 ---
-description: Implementa uma tarefa no Bõnotto (planejada antes, ou direta se for simples), testa e reporta.
+description: Implementa uma tarefa no BNTT (planejada antes, ou direta se for simples), testa e reporta.
 ---
 
 Tarefa: $ARGUMENTS

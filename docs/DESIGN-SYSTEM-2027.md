@@ -20,11 +20,11 @@ Sua formulação é a correta e vou usá-la como critério de aceite pra qualque
 
 > **Complexidade no sistema, simplicidade para o usuário.**
 
-O Bõnotto vai continuar tendo split de pagador, cadência de recorrência, 7 moedas em Caixinhas, leitura de boleto/Pix, OCR — nenhuma dessas funcionalidades sai do produto (ver blueprint, §14 "Matriz de funcionalidades" — nada foi recomendado pra remoção). O que muda é que **nenhuma dessas complexidades pode aparecer todas de uma vez na tela**. Toda tela responde primeiro à pergunta "o que o usuário precisa decidir agora", e só depois — atrás de "mais opções", de um segundo nível de navegação, de um accordion — o resto.
+O BNTT vai continuar tendo split de pagador, cadência de recorrência, 7 moedas em Caixinhas, leitura de boleto/Pix, OCR — nenhuma dessas funcionalidades sai do produto (ver blueprint, §14 "Matriz de funcionalidades" — nada foi recomendado pra remoção). O que muda é que **nenhuma dessas complexidades pode aparecer todas de uma vez na tela**. Toda tela responde primeiro à pergunta "o que o usuário precisa decidir agora", e só depois — atrás de "mais opções", de um segundo nível de navegação, de um accordion — o resto.
 
 ## 3. Direção de identidade visual (não é cópia do Nubank)
 
-Absorvendo os princípios que você listou (Nubank, Inter, Mercado Pago, Revolut, Apple, Material) sem copiar nenhuma marca — a direção própria do Bõnotto:
+Absorvendo os princípios que você listou (Nubank, Inter, Mercado Pago, Revolut, Apple, Material) sem copiar nenhuma marca — a direção própria do BNTT:
 
 - **Paleta**: manter a base verde (`--color-primary`, hoje `#126B5C` — ver §12 pro histórico de valores e a consolidação de 2026-08-22) — já é uma escolha deliberada e não-genérica (o próprio RAIO-X nota que o app evita "excesso de verde bancário" na aplicação, então o tom já foi escolhido com cuidado). O que falta é **disciplina de uso**: cor primária só em ação principal e estado ativo de navegação — nunca em texto decorativo, nunca em mais de um elemento por tela competindo por atenção.
 - **Superfícies calmas, não decoradas**: `--color-bg`/`--color-surface`/`--color-surface-alt` já existem e já são neutros com viés sutil (não cinza puro) — mantém. O que precisa parar: sombra (`--shadow-md`) e borda aplicadas ao mesmo elemento simultaneamente "pra garantir que destaque" — escolher uma ou outra por elemento, nunca as duas.

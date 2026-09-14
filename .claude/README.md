@@ -1,4 +1,4 @@
-# `.claude/` — núcleo operacional do Bõnotto
+# `.claude/` — núcleo operacional do BNTT
 
 Isto é o que qualquer agente (ou sessão futura, sua ou de outra pessoa) precisa ler pra continuar o projeto sem redescobrir nada. Se você é um agente novo entrando nesta conversa: leia `CLAUDE.md` (raiz) primeiro, depois este arquivo, depois `.claude/checklist/tasks.json` pra saber o que está em andamento agora.
 

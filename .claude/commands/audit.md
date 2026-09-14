@@ -1,5 +1,5 @@
 ---
-description: Auditoria geral do estado real do Bõnotto — não altera o projeto, só diagnostica.
+description: Auditoria geral do estado real do BNTT — não altera o projeto, só diagnostica.
 ---
 
 Produza um diagnóstico do estado atual real do repositório, sem alterar nenhum arquivo. Cubra:

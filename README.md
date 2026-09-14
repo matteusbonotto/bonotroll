@@ -1,4 +1,6 @@
-# Bõnotto — Controle Financeiro + Compras + Inventário Doméstico
+# BNTT — Controle Financeiro Doméstico
+
+*(anteriormente "Bõnotto" — rebrand em 2026-09-14, ver `CLAUDE.md`)*
 
 PWA mobile-first (com visão mais ampla no desktop) que unifica controle financeiro pessoal e de grupo (com divisão de despesa entre pagadores), lista de compras, inventário doméstico ("Recursos") e reserva financeira ("Caixinhas", com moeda própria e conversão ao vivo). HTML/CSS/JS puro, sem build step — tudo via CDN (Bootstrap, Bootstrap Icons, Alpine.js, Chart.js, PapaParse, html5-qrcode, pdf.js, Tesseract.js) + Supabase como backend opcional.
 
@@ -87,7 +89,7 @@ supabase/
   functions/                  Edge Functions: keepalive · notify-scan · notify-payment
   NOTIFICACOES.md              passo a passo do push real + keepalive
 assets/icons/                 favicon, ícone do manifest, ícone maskable e apple-touch-icon (PNG)
-assets/logos/                 logo Bõnotto original (colorida/branco/preto/verde), fonte dos ícones acima
+assets/logos/                 logo original (colorida/branco/preto/verde, sem texto — só o símbolo), fonte dos ícones acima
 ```
 
 ## Testes

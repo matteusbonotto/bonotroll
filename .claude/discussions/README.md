@@ -1,4 +1,4 @@
-# Discussões entre agentes — Bõnotto
+# Discussões entre agentes — BNTT
 
 Registro de decisões com impacto real, quando 2+ agentes especialistas (`.claude/agents/`) analisam um problema de forma independente antes de implementar. Não criar um arquivo aqui para toda decisão pequena — só quando há real risco de divergência técnica ou quando o usuário pede explicitamente uma discussão multiagente.
 

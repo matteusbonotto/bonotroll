@@ -1,4 +1,4 @@
-# Regras de negócio — Bõnotto
+# Regras de negócio — BNTT
 
 Extraídas do código real (`js/services/`), não do escopo original. Se o comportamento do código mudar, este documento precisa mudar junto.
 
