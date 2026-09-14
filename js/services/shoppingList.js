@@ -4,6 +4,7 @@ import { getSupabase } from '../data/supabaseClient.js';
 import { comFallbackDeColuna } from '../utils/dbFallback.js';
 import { semAcento } from '../utils/format.js';
 import { somar } from '../utils/money.js';
+import { agruparPorAnoMes } from '../utils/periodo.js';
 
 // Calcula o subtotal de um item: por unidade (quantidade × preço unitário)
 // ou por peso (quantidade em kg/g × preço por kg/g).
@@ -200,4 +201,66 @@ export async function removeItem(id) {
   const supabase = await getSupabase();
   const { error } = await supabase.from('shopping_list_items').delete().eq('id', id);
   if (error) throw error;
+}
+
+// ---------- Histórico (TASK-043): filtro + agrupamento por mês ----------
+// Funções puras que operam sobre o formato [{ list, resumo }] que
+// abrirHistorico (js/components/shoppingList.js) já monta — resumo vindo de
+// computeListSummary, nunca recalculado aqui a partir de nada persistido
+// (mesma regra de "nada calculado é persistido" do resto do projeto).
+
+// Nomes de mercado distintos entre as listas finalizadas — alimenta o
+// <select> do filtro; só entra na lista quem de fato preencheu nome_mercado
+// (a lista, sem isso, é "nenhum filtro possível" e não deve aparecer como
+// opção vazia disfarçada de mercado real).
+export function historicoMercados(entries) {
+  const nomes = new Set();
+  for (const { list } of entries) {
+    if (list.nome_mercado) nomes.add(list.nome_mercado);
+  }
+  return [...nomes].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+}
+
+// Filtro por mercado (igualdade exata — vem de um <select> com as opções
+// de historicoMercados, nunca texto livre) e por intervalo de data
+// (finalizado_em, que é a data que a pessoa vê em cada linha do histórico).
+export function filterHistoricoEntries(entries, filtro = {}) {
+  const mercado = (filtro.mercado || '').trim();
+  const dataInicio = filtro.dataInicio || '';
+  const dataFim = filtro.dataFim || '';
+  if (!mercado && !dataInicio && !dataFim) return entries;
+  return entries.filter(({ list }) => {
+    if (mercado && (list.nome_mercado || '') !== mercado) return false;
+    const data = (list.finalizado_em || '').slice(0, 10);
+    if (dataInicio && data < dataInicio) return false;
+    if (dataFim && data > dataFim) return false;
+    return true;
+  });
+}
+
+// Resumo agregado de um conjunto de entradas do histórico (usado tanto pro
+// total geral já filtrado quanto pelo resumo de cada grupo de mês abaixo) —
+// mesma soma sem erro de float de computeListSummary, via somar().
+export function computeHistoricoSummary(entries) {
+  return {
+    totalListas: entries.length,
+    totalItens: entries.reduce((acc, e) => acc + e.resumo.totalItens, 0),
+    itensComprados: entries.reduce((acc, e) => acc + e.resumo.itensComprados, 0),
+    valorTotal: somar(...entries.map((e) => e.resumo.valorTotal)),
+  };
+}
+
+// Agrupa o histórico (já filtrado) por Ano > Mês, reaproveitando
+// agruparPorAnoMes (../utils/periodo.js — mesma função já usada em
+// Transações) em vez de duplicar a lógica de "mês/ano atual primeiro,
+// sem-data por último" do zero. labelMes fica a cargo de quem chama (mesmo
+// contrato de agruparPorAnoMes), pra este arquivo continuar sem
+// conhecimento nenhum de string de exibição.
+export function groupHistoricoByMonth(entries, { mesAtualIso, labelMes }) {
+  return agruparPorAnoMes(entries, {
+    mesAtualIso,
+    extrairData: (entry) => (entry.list.finalizado_em || '').slice(0, 10) || null,
+    computeResumo: (linhas) => computeHistoricoSummary(linhas),
+    labelMes,
+  });
 }

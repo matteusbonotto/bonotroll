@@ -8,6 +8,18 @@ import { resizeImage } from '../utils/image.js';
 
 const FILTRO_VAZIO = { categoriaId: '', status: '', prioridade: '', busca: '' };
 
+// Filtro do histórico (TASK-043) — separado de FILTRO_VAZIO acima, que é o
+// filtro da lista ATIVA (categoria/status/prioridade/busca por item); o
+// histórico filtra LISTAS finalizadas, não itens, por dimensões diferentes
+// (mercado, intervalo de data).
+const FILTRO_HISTORICO_VAZIO = { mercado: '', dataInicio: '', dataFim: '' };
+
+// Mesmo rótulo curto de mês já usado em Transações (js/components/
+// transactionTable.js) — duplicado aqui de propósito (não vale a pena um
+// import cross-tela só por um array de 12 strings; ver mesmo padrão já
+// repetido em js/services/transactions.js pra gráfico).
+const MESES_ABREV = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+
 // preco: um campo só na UI (o valor digitado), convertido pra
 // preco_unitario OU preco_por_kg conforme a unidade só na hora de salvar
 // (ver addItem/salvarEdicao) — mais simples que a pessoa pensar em "qual
@@ -83,6 +95,39 @@ export function shoppingView() {
     detalheAberto: false,
     detalheLista: null,
     detalheItens: [],
+
+    // Filtro (mercado + intervalo de data) + agrupamento por mês (TASK-043)
+    // — a lógica de verdade (filtrar/agrupar) mora em services/shoppingList
+    // (filterHistoricoEntries/groupHistoricoByMonth/computeHistoricoSummary),
+    // testável isolada; aqui só decide COMO exibir, mesmo padrão já usado em
+    // Transações (transactionTable.js).
+    filtroHistorico: { ...FILTRO_HISTORICO_VAZIO },
+    limparFiltroHistorico() {
+      this.filtroHistorico = { ...FILTRO_HISTORICO_VAZIO };
+    },
+    get filtroHistoricoAtivo() {
+      return Object.values(this.filtroHistorico).some((v) => v !== '');
+    },
+    get mercadosHistorico() {
+      return sl.historicoMercados(this.historicoListas);
+    },
+    get historicoFiltrado() {
+      return sl.filterHistoricoEntries(this.historicoListas, this.filtroHistorico);
+    },
+    get resumoHistoricoFiltrado() {
+      return sl.computeHistoricoSummary(this.historicoFiltrado);
+    },
+    labelMesHistorico(anoMes) {
+      if (anoMes === 'sem-data') return 'Sem data';
+      const [ano, mes] = anoMes.split('-');
+      return `${MESES_ABREV[Number(mes) - 1]}/${ano.slice(2)}`;
+    },
+    get historicoAgrupado() {
+      return sl.groupHistoricoByMonth(this.historicoFiltrado, {
+        mesAtualIso: todayIso().slice(0, 7),
+        labelMes: (anoMes) => this.labelMesHistorico(anoMes),
+      });
+    },
 
     // Modal de edição completa (nome/categoria/unidade/quantidade/
     // prioridade) — separado do editor de preço (abrirPreco), que é só
