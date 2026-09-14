@@ -4,7 +4,8 @@ Estado real, não aspiracional. Fonte primária de detalhe: `docs/CHECKLIST-REBR
 
 ## Completed
 
-- Rebrand completo pra "Bõnotto" (logo, favicon, manifest, apple-touch-icon, todas as telas) — nome histórico nesta linha de propósito, descreve o rebrand de 2026-08-20; ver entrada de 2026-09-14 mais abaixo pro rebrand seguinte, pra "BNTT".
+- Rebrand completo pra "Bõnotto" (logo, favicon, manifest, apple-touch-icon, todas as telas) — nome histórico nesta linha de propósito, descreve o rebrand de 2026-08-20.
+- **Rebrand completo pra "BNTT"** (2026-09-14, `TASK-044`) — app, landing page (4 pilares Balanço/Necessidades/Transações/Tranquilidade) e documentação interna viva; histórico/localStorage/nome do repositório intencionalmente preservados. Ver detalhe completo em `.claude/checklist/tasks.json`.
 - Multi-pagador em transações (`transaction_payers`), saldo "entre vocês" (Splitwise-like).
 - Bancos/Categorias/Empresas como entidades compartilhadas, sem duplicata (find-or-create), modal empilhado padronizado (lista → formulário por cima) nos 4 casos.
 - Modos de visualização de Transações (lista/grade × normal/compacta, combináveis livremente) + agrupamento independente.

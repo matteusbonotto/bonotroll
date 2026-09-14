@@ -2150,6 +2150,45 @@
           "note": "Investigado antes de desenhar: o histórico (abrirHistorico/verDetalheHistorico, js/components/shoppingList.js) já existia desde TASK-028 — uma lista FLAT de todas as shopping_lists com status='finalizada', sem agrupamento nem filtro nenhum, só clique -> detalhe (itens, só leitura). Não existia nível de mês/ano nenhum. Construído por cima do que já existia (extensão, não reescrita): (1) agrupamento por mês reaproveitando agruparPorAnoMes (js/utils/periodo.js — mesma função já usada em Transações, zero lógica de ordenação de período duplicada); (2) filtro por mercado (nome_mercado — só lojas que já apareceram numa compra finalizada, via <select>, nunca texto livre) e por intervalo de data (finalizado_em, mesmo padrão .cg-date-field de Transações); 'por valor gasto' descartado por falta de caso de uso real (o resumo já mostra o total já filtrado, um filtro de faixa de valor seria filtro por filtro, não por dado que a pessoa realmente quer recortar). Lógica pura nova em js/services/shoppingList.js (historicoMercados/filterHistoricoEntries/computeHistoricoSummary/groupHistoricoByMonth), testável isolada, nada calculado persistido. Seed demo (js/data/mockDb.js) ganhou 2 listas finalizadas a mais (demo-lista-3/4), espalhadas em meses diferentes — antes só existia 1 lista finalizada no seed, insuficiente pra ver agrupamento por mês de verdade em ?demo=1. Verificado com screenshot real (Playwright, porta isolada pra não colidir com outro worktree/agente rodando servidor na mesma porta 5500 — achado real desta sessão, documentado no relatório) nos 2 temas (claro/escuro) e em mobile (390px)/desktop: agrupamento, filtro por mercado, filtro por data, estado vazio ('Limpar filtros') e detalhe empilhado, todos corretos, sem erro de console novo, sem conflito x-show+utility Bootstrap (usado x-show.important onde havia classe d-flex). npm run test:unit: 107/107 (12 testes novos: historicoMercados/filterHistoricoEntries/computeHistoricoSummary/groupHistoricoByMonth). npm test: 47/47 e2e (rodado 2x — uma vez contra um servidor na porta 5500 que acabou sendo de OUTRO worktree por acidente, depois de novo numa porta isolada contra o código real editado, pra ter certeza)."
         }
       ]
+    },
+    {
+      "id": "TASK-044",
+      "title": "Rebrand completo do projeto: Bõnotto -> BNTT",
+      "description": "Pedido explícito e detalhado do usuário (2026-09-14): novo nome 'BNTT' (sigla de Balanço/Necessidades/Transações/Tranquilidade), posicionamento 'BNTT — Controle Financeiro Doméstico', slogan 'Seu dinheiro, sua casa, sob controle.', reposicionamento como central de controle financeiro doméstico (não só 'app de gastos'). Escopo: app, landing page, documentação interna, sem quebrar funcionalidade nem perder dado existente.",
+      "category": "Frontend",
+      "priority": "HIGH",
+      "status": "DONE",
+      "agent": "claude",
+      "tags": [
+        "rebrand",
+        "identidade",
+        "pedido-usuario",
+        "lancamento"
+      ],
+      "dependencies": [],
+      "relatedDocs": [
+        "CLAUDE.md",
+        "README.md",
+        "landing.html"
+      ],
+      "createdAt": "2026-09-14T00:00:00-03:00",
+      "updatedAt": "2026-09-14T00:00:00-03:00",
+      "history": [
+        {
+          "action": "CREATED",
+          "to": "IN_PROGRESS",
+          "updatedBy": "claude",
+          "timestamp": "2026-09-14T00:00:00-03:00",
+          "note": "Levantamento completo antes de alterar qualquer coisa: grep de 'Bõnotto'/'Bonotto'/'Bonotroll' em todo o repo, categorizado em 3 frentes paralelas (documentação interna feita diretamente; app e landing page delegados a agentes frontend/marketing em worktrees isoladas)."
+        },
+        {
+          "action": "STATUS_CHANGED",
+          "to": "DONE",
+          "updatedBy": "claude",
+          "timestamp": "2026-09-14T00:00:00-03:00",
+          "note": "CONCLUÍDO em 3 frentes + 1 correção final. (1) Documentação interna (feito diretamente, não delegado): CLAUDE.md ganhou seção 'Histórico de nome' (CasaGrana -> Bõnotto -> BNTT) e uma regra nova sobre localStorage nunca ser renomeado; README.md, .claude/agents/*.md (9), .claude/docs/*.md (5), .claude/commands/*.md (5), .claude/README.md, .claude/checklist/, .claude/discussions/README.md, docs/DESIGN-SYSTEM-2027.md atualizados — documentos HISTÓRICOS (.claude/memory/*, checklist/tasks.json, docs/BONOTTO-2027-BLUEPRINT.md, docs/CHECKLIST-REBRAND.md, docs/RAIO-X-*.md) deliberadamente NÃO tocados (registram fatos de quando o nome era outro). Achado real durante a revisão: um sed automático quase reescreveu uma linha do roadmap.md que descrevia o REBRAND ANTERIOR (2026-08-20, CasaGrana->Bõnotto) como se fosse este — corrigido manualmente antes de commitar, o exato tipo de 'replace cego' que o usuário pediu pra evitar. (2) App (agente frontend, worktree isolada): index.html (title/meta/PWA banner/loading/login/sidebar/topbar/drawer/Perfil), manifest.webmanifest, sw.js (CACHE_NAME bonotto-v16->bntt-v17, título de notificação push), faq.js, onboarding.js, package.json, README.md. Achado real do agente: '.cg-sidebar::before { content: \"B\\00f5notto\" }' em components.css — uma SEGUNDA declaração escondendo via display:none!important o HTML real e injetando o nome antigo via content CSS (armadilha 'CSS duplicado' do CLAUDE.md, nunca catalogada pra .cg-sidebar antes, mascarada por usar escape Unicode em vez de UTF-8 literal) — corrigido, verificado visualmente que sem essa correção a sidebar desktop continuaria mostrando o nome antigo mesmo com todo HTML/JS certo. Linha de atribuição nova no fim de Perfil -> Preferências. (3) Landing page (agente marketing, worktree isolada): landing.html/landing-assets/* — hero reescrito com o slogan exato em 3 linhas, seção 'A solução' reestruturada dos 4 pilares antigos (financeiro/compras/recursos/caixinhas) pros 4 pilares da sigla (Balanço/Necessidades/Transações/Tranquilidade) com os textos exatos fornecidos e uma letra de destaque grande no lugar do ícone SVG, metadados (title/description/OG/Twitter) atualizados, rodapé com 'BNTT © 2026 — Criado por Matheus Bonotto' + linha secundária com o apoio visual da sigla, disclaimer de pré-lançamento preservado (nenhum dado comercial inventado). (4) Achado próprio na revisão final (não pego pelos agentes): nomes de ARQUIVO BAIXADO ainda usavam 'bonotto-' (bonotto-transacoes.csv, bonotto-meus-dados-*.json, bonotto-modelo-*.csv) — diferente de localStorage (sem risco de perda de dado, string gerada na hora), então corrigido pra 'bntt-*', 2 testes e2e ajustados pro nome novo. TRAVAS RESPEITADAS EM TODA A RODADA: nenhuma chave de localStorage com prefixo bonotto_ renomeada (tema, modo de visualização, flag de onboarding, banco demo), nenhuma classe CSS cg- renomeada, nome do repositório GitHub/URL pública inalterados, nenhum dado/funcionalidade removido. Verificação final: busca global confirmando que só sobrou histórico/localStorage/nome de pessoa (Matheus Bonotto)/arquivo técnico intencional; 107/107 unit + 50/50 e2e (múltiplos flakes de infra compartilhada reconfirmados isolados, nenhuma regressão real); screenshot real nos dois temas (claro/escuro), mobile e desktop, do app (login/sidebar/home/Perfil) e da landing (hero/pilares/rodapé) — sem erro de console em nenhum cenário."
+        }
+      ]
     }
   ]
 }
