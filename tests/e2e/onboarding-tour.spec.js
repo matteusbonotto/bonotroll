@@ -41,7 +41,7 @@ test.describe('primeira visita (storageState vazio)', () => {
     // também é refletido (mesmo texto) no painel de spotlight escondido do
     // passo de ação, sempre presente no DOM — um getByText solto encontraria
     // os dois "Bem-vindo(a)..." (um deles escondido) e violaria strict mode.
-    await expect(backdrop.getByText('Bem-vindo(a) ao Bõnotto!')).toBeVisible();
+    await expect(backdrop.getByText('Bem-vindo(a) ao BNTT!')).toBeVisible();
 
     await page.getByRole('button', { name: 'Pular' }).click();
     await expect(backdrop).toBeHidden();

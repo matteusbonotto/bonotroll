@@ -1,7 +1,7 @@
 // @ts-check
 import { defineConfig, devices } from '@playwright/test';
 
-// Suíte E2E do Bõnotto. Roda sempre contra ?demo=1 (ver js/data/config.js) —
+// Suíte E2E do BNTT. Roda sempre contra ?demo=1 (ver js/data/config.js) —
 // nunca depende de trocar js/data/config.js pra placeholder, então as
 // credenciais reais que ficam commitadas nesse arquivo nunca são um risco
 // pra rodar os testes, e o teste nunca faz uma chamada de rede real ao

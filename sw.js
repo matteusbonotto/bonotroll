@@ -1,4 +1,4 @@
-// Service worker do Bõnotto: cacheia o "app shell" (HTML/CSS/JS/ícones) para o
+// Service worker do BNTT: cacheia o "app shell" (HTML/CSS/JS/ícones) para o
 // app abrir offline. Chamadas ao Supabase (rede) não passam por aqui — dados
 // offline ficam a cargo do modo demonstração (localStorage) e das telas que
 // avisam quando estão sem conexão.
@@ -9,7 +9,7 @@
 // terminar (skipWaiting() + controllerchange recarrega a página — ver
 // js/app.js e o comentário do evento "install" abaixo; não existe mais
 // banner manual desde a correção de auto-atualização de 2026-09-01).
-const CACHE_NAME = 'bonotto-v16';
+const CACHE_NAME = 'bntt-v17';
 
 const APP_SHELL = [
   './',
@@ -101,7 +101,7 @@ self.addEventListener('install', (event) => {
 // varreduras do mesmo dia pro mesmo item vencendo substituem uma à outra
 // em vez de abrir duas notificações).
 self.addEventListener('push', (event) => {
-  let payload = { title: 'Bõnotto', body: 'Você tem uma notificação nova.' };
+  let payload = { title: 'BNTT', body: 'Você tem uma notificação nova.' };
   try {
     if (event.data) payload = { ...payload, ...event.data.json() };
   } catch {
