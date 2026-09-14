@@ -2189,6 +2189,34 @@
           "note": "CONCLUÍDO em 3 frentes + 1 correção final. (1) Documentação interna (feito diretamente, não delegado): CLAUDE.md ganhou seção 'Histórico de nome' (CasaGrana -> Bõnotto -> BNTT) e uma regra nova sobre localStorage nunca ser renomeado; README.md, .claude/agents/*.md (9), .claude/docs/*.md (5), .claude/commands/*.md (5), .claude/README.md, .claude/checklist/, .claude/discussions/README.md, docs/DESIGN-SYSTEM-2027.md atualizados — documentos HISTÓRICOS (.claude/memory/*, checklist/tasks.json, docs/BONOTTO-2027-BLUEPRINT.md, docs/CHECKLIST-REBRAND.md, docs/RAIO-X-*.md) deliberadamente NÃO tocados (registram fatos de quando o nome era outro). Achado real durante a revisão: um sed automático quase reescreveu uma linha do roadmap.md que descrevia o REBRAND ANTERIOR (2026-08-20, CasaGrana->Bõnotto) como se fosse este — corrigido manualmente antes de commitar, o exato tipo de 'replace cego' que o usuário pediu pra evitar. (2) App (agente frontend, worktree isolada): index.html (title/meta/PWA banner/loading/login/sidebar/topbar/drawer/Perfil), manifest.webmanifest, sw.js (CACHE_NAME bonotto-v16->bntt-v17, título de notificação push), faq.js, onboarding.js, package.json, README.md. Achado real do agente: '.cg-sidebar::before { content: \"B\\00f5notto\" }' em components.css — uma SEGUNDA declaração escondendo via display:none!important o HTML real e injetando o nome antigo via content CSS (armadilha 'CSS duplicado' do CLAUDE.md, nunca catalogada pra .cg-sidebar antes, mascarada por usar escape Unicode em vez de UTF-8 literal) — corrigido, verificado visualmente que sem essa correção a sidebar desktop continuaria mostrando o nome antigo mesmo com todo HTML/JS certo. Linha de atribuição nova no fim de Perfil -> Preferências. (3) Landing page (agente marketing, worktree isolada): landing.html/landing-assets/* — hero reescrito com o slogan exato em 3 linhas, seção 'A solução' reestruturada dos 4 pilares antigos (financeiro/compras/recursos/caixinhas) pros 4 pilares da sigla (Balanço/Necessidades/Transações/Tranquilidade) com os textos exatos fornecidos e uma letra de destaque grande no lugar do ícone SVG, metadados (title/description/OG/Twitter) atualizados, rodapé com 'BNTT © 2026 — Criado por Matheus Bonotto' + linha secundária com o apoio visual da sigla, disclaimer de pré-lançamento preservado (nenhum dado comercial inventado). (4) Achado próprio na revisão final (não pego pelos agentes): nomes de ARQUIVO BAIXADO ainda usavam 'bonotto-' (bonotto-transacoes.csv, bonotto-meus-dados-*.json, bonotto-modelo-*.csv) — diferente de localStorage (sem risco de perda de dado, string gerada na hora), então corrigido pra 'bntt-*', 2 testes e2e ajustados pro nome novo. TRAVAS RESPEITADAS EM TODA A RODADA: nenhuma chave de localStorage com prefixo bonotto_ renomeada (tema, modo de visualização, flag de onboarding, banco demo), nenhuma classe CSS cg- renomeada, nome do repositório GitHub/URL pública inalterados, nenhum dado/funcionalidade removido. Verificação final: busca global confirmando que só sobrou histórico/localStorage/nome de pessoa (Matheus Bonotto)/arquivo técnico intencional; 107/107 unit + 50/50 e2e (múltiplos flakes de infra compartilhada reconfirmados isolados, nenhuma regressão real); screenshot real nos dois temas (claro/escuro), mobile e desktop, do app (login/sidebar/home/Perfil) e da landing (hero/pilares/rodapé) — sem erro de console em nenhum cenário."
         }
       ]
+    },
+    {
+      "id": "BUG-017",
+      "title": "Blur cobria o botão destacado (nítido esperado) no passo de ação do tour/guias",
+      "description": "Relatado com print real do usuário (2026-09-14), com bastante urgência: no passo de ação (spotlight) do tour/Central de tutoriais, TUDO aparecia borrado, inclusive o botão que deveria ficar nítido e clicável — o oposto do efeito pretendido ('era pra tudo ficar escuro, ainda sendo possível visualizar, mas o botão destacado ficar visível sem escurecer'). Causa raiz: .cg-modal-backdrop (app.css) tem backdrop-filter: blur(6px) — correto pro caso normal de modal, mas .cg-tour-spot-backdrop (o overlay do spotlight) reaproveita essa mesma classe base só pelo comportamento de Esc/scroll-lock (setupOverlayBehavior) e só zerava 'background' (os 4 retângulos de escurecimento cuidam disso), nunca 'backdrop-filter' — o blur herdado continuava valendo pro elemento inteiro (tela cheia), inclusive por cima do 'buraco' onde o alvo deveria ficar limpo. Bug introduzido desde a reconstrução do tour em TASK-037/038 (2026-09-11), presente em TODAS as rodadas seguintes (TASK-042 incluída) sem ser percebido.",
+      "category": "Frontend",
+      "priority": "CRITICAL",
+      "status": "DONE",
+      "agent": "claude",
+      "tags": [
+        "bug-producao",
+        "onboarding",
+        "css",
+        "pedido-usuario-teste"
+      ],
+      "dependencies": [],
+      "relatedBugs": [],
+      "createdAt": "2026-09-14T00:00:00-03:00",
+      "updatedAt": "2026-09-14T00:00:00-03:00",
+      "history": [
+        {
+          "action": "CREATED",
+          "to": "DONE",
+          "updatedBy": "claude",
+          "timestamp": "2026-09-14T00:00:00-03:00",
+          "note": "backdrop-filter: none adicionado ao seletor composto .cg-modal-backdrop.cg-tour-spot-backdrop (css/components.css) — não afeta nenhum outro .cg-modal-backdrop do app (mais específico, só esse elemento). CACHE_NAME v17->v18. Verificado visualmente com screenshot real antes de publicar: botão nítido, resto escurecido mas legível, zero blur. 107/107 unit + 8/8 e2e do tour verdes. Deploy em main, push feito. NOTA DE PROCESSO: usuário relatou depois de eu já ter 'confirmado em produção' duas rodadas anteriores — o print mostrava título de aba ainda 'Bõnotto' (versão anterior ao rebrand), então parte do relato pode ser sessão desatualizada no navegador do usuário, mas o bug de blur em si era REAL e reproduzido localmente antes de eu aceitar a explicação de cache — não descartado como 'só cache' sem checar o código primeiro."
+        }
+      ]
     }
   ]
 }
