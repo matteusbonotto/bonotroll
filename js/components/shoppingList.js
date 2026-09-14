@@ -373,6 +373,10 @@ export function shoppingView() {
       }
       try {
         this.list = await sl.startShopping(this.list.id);
+        // TASK-042 (Central de tutoriais, guia "Inicie uma compra") — sinal
+        // dedicado disparado no momento exato da mudança de status real
+        // (nunca por "a lista já existe" — o seed de demo sempre teria uma).
+        window.dispatchEvent(new CustomEvent('cg:onboarding-acao', { detail: { area: 'compra-status' } }));
       } catch (e) {
         this.$store.app.notify(e.message || 'Não foi possível iniciar a compra.', 'danger');
       }
@@ -418,6 +422,11 @@ export function shoppingView() {
 
       try {
         this.list = await sl.finishShopping(this.list.id);
+        // TASK-042 — mesmo guia "Inicie uma compra" também considera
+        // ENCERRAR uma compra já em andamento como a ação real cumprida
+        // (as duas direções mudam o status de verdade); só o "iniciar" tem
+        // texto dedicado no guia, mas o gatilho cobre as duas.
+        window.dispatchEvent(new CustomEvent('cg:onboarding-acao', { detail: { area: 'compra-status' } }));
 
         if (resumo.valorTotal > 0 && confirm('Lançar essa compra como uma despesa no controle financeiro?')) {
           const categoriaMercado = store.categories.find((c) => c.nome.toLowerCase() === 'mercado');

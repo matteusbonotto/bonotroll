@@ -213,6 +213,15 @@
             <button type="button" class="btn p-0 border-0 bg-transparent cg-touch" @click="$store.app.toggleTheme()" :aria-label="$store.app.isDarkNow() ? 'Mudar para modo claro' : 'Mudar para modo escuro'" :title="$store.app.isDarkNow() ? 'Modo claro' : 'Modo escuro'">
               <i class="bi fs-5" :class="$store.app.isDarkNow() ? 'bi-sun' : 'bi-moon-stars'"></i>
             </button>
+            <!-- Central de tutoriais (TASK-042) — ícone PRÓPRIO, separado do
+                 "?" de FAQ: são conteúdos diferentes ("me ensina a fazer
+                 isso" vs. dúvida pontual). Pedido explícito do usuário
+                 ("dar a opção para o usuário escolher oq ele quer
+                 aprender") — precisa estar fácil de achar, não só dentro de
+                 Perfil → Preferências (que também tem o mesmo atalho). -->
+            <button type="button" class="btn p-0 border-0 bg-transparent cg-touch" @click="$store.onboarding.abrirCentral()" aria-label="Central de tutoriais" title="Central de tutoriais">
+              <i class="bi bi-signpost-2 fs-5"></i>
+            </button>
             <!-- Ponto de acesso global do FAQ (TASK-037/038) — ao lado do
                  tema/notificações, sempre visível em qualquer tela, sem
                  precisar entrar em Perfil (que também tem o mesmo atalho,
@@ -1284,7 +1293,7 @@
                 <span class="cg-muted small text-truncate d-block" x-text="planejando ? 'Planejando' : emCompra ? 'Comprando agora' : pausada ? 'Pausada' : 'Finalizada'"></span>
               </div>
               <div class="cg-shopping-header__actions d-flex align-items-center gap-2 flex-shrink-0">
-                <button type="button" class="cg-shopping-toggle cg-shopping-toggle--compact" :class="emCompra ? 'cg-shopping-toggle--finish' : 'cg-shopping-toggle--start'" @click="toggleStart()" :aria-label="emCompra ? 'Encerrar Compra' : 'Iniciar Compra'">
+                <button type="button" class="cg-shopping-toggle cg-shopping-toggle--compact" data-tour-alvo="toggle-compra-status" :class="emCompra ? 'cg-shopping-toggle--finish' : 'cg-shopping-toggle--start'" @click="toggleStart()" :aria-label="emCompra ? 'Encerrar Compra' : 'Iniciar Compra'">
                   <i class="bi" :class="emCompra ? 'bi-flag-fill' : 'bi-play-fill'"></i>
                   <span class="cg-shopping-toggle__label" x-text="emCompra ? 'Encerrar Compra' : 'Iniciar Compra'"></span>
                 </button>
@@ -2244,7 +2253,7 @@
                     </div>
                   </div>
                 </template>
-                <button type="button" class="cg-room-tile cg-room-tile--add" @click="$store.caixinhaModal.openNew()">
+                <button type="button" class="cg-room-tile cg-room-tile--add" data-tour-alvo="nova-caixinha" @click="$store.caixinhaModal.openNew()">
                   <i class="bi bi-plus-lg"></i>
                   <span class="cg-room-tile__nome">Nova caixinha</span>
                 </button>
@@ -2288,7 +2297,7 @@
                 <!-- Equivalente ao tile tracejado "Nova caixinha" da grade —
                      sem isso, a lista não teria como criar uma caixinha nova
                      a não ser voltando pra grade. -->
-                <button type="button" class="cg-list-row cg-list-row--add d-flex align-items-center justify-content-center gap-2 p-2" @click="$store.caixinhaModal.openNew()">
+                <button type="button" class="cg-list-row cg-list-row--add d-flex align-items-center justify-content-center gap-2 p-2" data-tour-alvo="nova-caixinha" @click="$store.caixinhaModal.openNew()">
                   <i class="bi bi-plus-lg"></i> Nova caixinha
                 </button>
               </div>
@@ -2471,7 +2480,14 @@
                   <button type="button" class="btn btn-outline-secondary" @click="editandoNome = false" aria-label="Cancelar"><i class="bi bi-x"></i></button>
                 </div>
               </template>
-              <p class="cg-muted small">Código do grupo (compartilhe para convidar): <strong x-text="$store.app.group.group.codigo"></strong></p>
+              <p class="cg-muted small d-flex align-items-center gap-2 flex-wrap">
+                Código do grupo (compartilhe para convidar): <strong x-text="$store.app.group.group.codigo"></strong>
+                <!-- Guia "Convide seu par pro grupo" (TASK-042) — copiar o
+                     código já É a ação de convidar (quem entra de fato é a
+                     outra pessoa, em outro navegador/sessão, então não dá
+                     pra detectar isso a partir daqui). -->
+                <button type="button" class="btn btn-sm btn-outline-secondary py-0" data-tour-alvo="copiar-codigo-grupo" @click="copiarCodigo()"><i class="bi bi-clipboard"></i> Copiar código</button>
+              </p>
               <div class="d-flex flex-column gap-2 mb-3">
                 <template x-for="m in $store.app.group.members" :key="m.id">
                   <div class="d-flex align-items-center gap-2 border-bottom pb-2">
@@ -2576,11 +2592,11 @@
                    DESIGN-SYSTEM-2027.md §7) — antes eram 6 .cg-card empilhados,
                    cada um com a própria borda+sombra ("card dentro de card"). -->
               <div class="cg-card p-0">
-                <div class="cg-list-flat cg-list-flat--hoverable px-3" role="button" @click="$store.onboarding.abrir()">
+                <div class="cg-list-flat cg-list-flat--hoverable px-3" role="button" @click="$store.onboarding.abrirCentral()">
                   <div class="cg-icon-badge"><i class="bi bi-signpost-2"></i></div>
                   <div class="flex-fill">
-                    <h2 class="h6 fw-bold mb-1">Rever tutorial</h2>
-                    <p class="cg-muted small mb-0">Refaz o passo a passo guiado — registra de novo um gasto, um item de compra e um item de casa, um de cada vez.</p>
+                    <h2 class="h6 fw-bold mb-1">Central de tutoriais</h2>
+                    <p class="cg-muted small mb-0">Escolha o que quer aprender a fazer no app — um guia rápido pra cada ação, ou o tour de boas-vindas completo de novo.</p>
                   </div>
                   <i class="bi bi-chevron-right cg-muted"></i>
                 </div>
@@ -2744,22 +2760,23 @@
     </div>
   </template>
 
-  <!-- ============ TOUR DE ONBOARDING — PASSOS INFORMATIVOS (TASK-037/038)
-       ============
+  <!-- ============ TOUR DE ONBOARDING — PASSOS INFORMATIVOS (TASK-037/038,
+       simplificado em TASK-042) ============
        Só os passos tipo:'info' (boas-vindas e conclusão) usam este modal
-       cheio — os 3 passos tipo:'acao' (financeiro/compras/recursos) usam o
+       cheio — o passo do meio (tipo:'acao', hoje só "financeiro") usa o
        mecanismo de spotlight no fim do body (".cg-tour-spot-backdrop"),
-       porque esses precisam deixar a tela real por baixo visível e
-       clicável. Ver comentário grande no topo de js/components/
+       porque esse precisa deixar a tela real por baixo visível e clicável;
+       mesmo mecanismo usado por qualquer guia avulso da Central de
+       tutoriais. Ver comentário grande no topo de js/components/
        onboarding.js pra entender a reconstrução (rejeitada em teste real na
-       v1, que era só um tour de slides) e por que ainda faz sentido manter
-       ESTE modal cheio pros 2 passos que continuam só informativos.
+       v1, que era só um tour de slides) e a simplificação de TASK-042 (só 1
+       ação forçada + atalho pra Central, em vez de 3 ações em sequência).
        Aberto sozinho na primeira visita (ver x-init="$store.onboarding.
-       iniciarSeNecessario()" acima) e reaberto a qualquer momento por
-       "Rever tutorial" em Perfil → Preferências. Mesmo padrão de modal do
-       resto do app (.cg-modal-backdrop/.cg-modal) — Esc fecha e devolve o
-       foco de graça via setupOverlayBehavior (js/app.js), sem reimplementar
-       nada aqui. -->
+       iniciarSeNecessario()" acima) e reaberto a qualquer momento pela
+       Central de tutoriais (Perfil → Preferências ou ícone dedicado na
+       topbar). Mesmo padrão de modal do resto do app (.cg-modal-backdrop/
+       .cg-modal) — Esc fecha e devolve o foco de graça via
+       setupOverlayBehavior (js/app.js), sem reimplementar nada aqui. -->
   <div class="cg-modal-backdrop" x-show="$store.onboarding.aberto && $store.onboarding.passo.tipo === 'info'" x-cloak @click.self="$store.onboarding.pular()">
     <div class="cg-modal cg-modal--sm cg-tour" x-show="$store.onboarding.aberto && $store.onboarding.passo.tipo === 'info'" x-transition role="dialog" aria-modal="true" :aria-label="$store.onboarding.passo.titulo">
       <div class="d-flex align-items-center justify-content-between mb-3">
@@ -2773,6 +2790,16 @@
             <div class="cg-tour__icon"><i class="bi" :class="p.icone"></i></div>
             <h2 class="h5 fw-bold text-center mb-2" x-text="p.titulo"></h2>
             <p class="cg-muted text-center mb-0" x-text="p.texto"></p>
+            <!-- CTA opcional do passo (hoje só o de conclusão tem: atalho
+                 direto pra Central de tutoriais, TASK-042) — genérico por
+                 nome de método (não hardcoded "conclusao") pra um futuro
+                 passo informativo poder ganhar o próprio CTA sem mexer
+                 aqui. -->
+            <template x-if="p.cta">
+              <div class="text-center mt-3">
+                <button type="button" class="btn btn-link btn-sm" @click="$store.onboarding[p.cta.metodo]()" x-text="p.cta.label"></button>
+              </div>
+            </template>
           </div>
         </template>
       </div>
@@ -2815,6 +2842,48 @@
               <i class="bi flex-shrink-0" :class="$store.faq.abertaId === p.id ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
             </button>
             <p class="cg-faq-item__resposta" :id="'cg-faq-resposta-' + p.id" x-show.important="$store.faq.abertaId === p.id" x-text="p.resposta"></p>
+          </div>
+        </template>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ CENTRAL DE TUTORIAIS (TASK-042) ============
+       Catálogo de mini-guias escolhíveis — cada um ensina UMA ação real (ver
+       CATALOGO_GUIAS em js/components/onboarding.js), pelo MESMO mecanismo
+       de spotlight dos 3 guias originais (TASK-037/038): navega sozinho pra
+       tela certa, destaca o elemento real, só libera "Continuar" quando a
+       AÇÃO REAL acontece. Pedido explícito do usuário: "dar a opção para o
+       usuário escolher oq ele quer aprender a fazer no app" — pontos de
+       entrada: ícone dedicado na topbar + Perfil → Preferências. -->
+  <div class="cg-modal-backdrop" x-show="$store.onboarding.centralAberta" x-cloak @click.self="$store.onboarding.fecharCentral()">
+    <div class="cg-modal" x-show="$store.onboarding.centralAberta" x-transition role="dialog" aria-modal="true" aria-label="Central de tutoriais">
+      <div class="d-flex align-items-center justify-content-between mb-1">
+        <h2 class="h6 fw-bold mb-0"><i class="bi bi-signpost-2"></i> Central de tutoriais</h2>
+        <button type="button" class="btn-close" @click="$store.onboarding.fecharCentral()" aria-label="Fechar"></button>
+      </div>
+      <p class="cg-muted small mb-3">Escolha o que quer aprender a fazer no app agora — cada guia leva menos de 1 minuto e usa a ferramenta de verdade.</p>
+
+      <div class="cg-list-flat cg-list-flat--hoverable px-2 mb-3" role="button" @click="$store.onboarding.fecharCentral(); $store.onboarding.abrir()">
+        <div class="cg-icon-badge"><i class="bi bi-house-heart-fill"></i></div>
+        <div class="flex-fill">
+          <h2 class="h6 fw-bold mb-1">Tour de boas-vindas completo</h2>
+          <p class="cg-muted small mb-0">A introdução do zero — boas-vindas + o básico do financeiro.</p>
+        </div>
+        <i class="bi bi-chevron-right cg-muted"></i>
+      </div>
+
+      <div class="cg-muted small fw-semibold text-uppercase mb-2">Guias rápidos</div>
+      <div class="cg-card p-0">
+        <template x-for="g in $store.onboarding.catalogo" :key="g.id">
+          <div class="cg-list-flat cg-list-flat--hoverable px-3" role="button" @click="$store.onboarding.iniciarGuia(g.id)">
+            <div class="cg-icon-badge"><i class="bi" :class="g.icone"></i></div>
+            <div class="flex-fill">
+              <h2 class="h6 fw-bold mb-1" x-text="g.titulo"></h2>
+              <p class="cg-muted small mb-0" x-text="g.resumo"></p>
+              <p class="small text-danger mb-0" x-show.important="!$store.onboarding.disponivel(g)" x-text="g.requisitoTexto"></p>
+            </div>
+            <i class="bi bi-chevron-right cg-muted"></i>
           </div>
         </template>
       </div>
@@ -3648,12 +3717,14 @@
   </div>
 
   <!-- ============ TOUR DE ONBOARDING — PASSO DE AÇÃO / SPOTLIGHT
-       (TASK-037/038) ============
-       Cobre os 3 passos tipo:'acao' (financeiro/compras/recursos) — ver
-       comentário grande no topo de js/components/onboarding.js pra
-       entender por que isto NÃO pode ser o modal cheio de sempre: a pessoa
-       precisa continuar enxergando e clicando na tela real por baixo (ex.:
-       abrir "Nova despesa" de verdade e preencher o formulário de verdade).
+       (TASK-037/038, generalizado em TASK-042) ============
+       Cobre TODO passo tipo:'acao' — tanto o do meio do tour de boas-vindas
+       quanto qualquer guia avulso iniciado pela Central de tutoriais (ver
+       $store.onboarding.modoUnico abaixo, e o comentário grande no topo de
+       js/components/onboarding.js) — isto NÃO pode ser o modal cheio de
+       sempre porque a pessoa precisa continuar enxergando e clicando na
+       tela real por baixo (ex.: abrir "Nova despesa" de verdade e preencher
+       o formulário de verdade).
 
        FICA DE PROPÓSITO NO FIM DO BODY — depois de TODO outro
        .cg-modal-backdrop do arquivo (transação, item de compra, item de
@@ -3692,8 +3763,11 @@
 
     <div class="cg-tour-painel" role="dialog" aria-modal="false" :aria-label="$store.onboarding.passo.titulo">
       <div class="d-flex align-items-center justify-content-between mb-2">
-        <span class="cg-muted small fw-semibold text-uppercase" x-text="'Passo ' + ($store.onboarding.passoAtual + 1) + ' de ' + $store.onboarding.passos.length"></span>
-        <button type="button" class="btn-close" @click="$store.onboarding.pular()" aria-label="Pular o tutorial inteiro"></button>
+        <!-- "Guia rápido" num guia avulso da Central (sempre 1 passo só —
+             "Passo 1 de 1" não diria nada útil); "Passo X de Y" dentro do
+             tour de boas-vindas (que continua com mais de 1 passo). -->
+        <span class="cg-muted small fw-semibold text-uppercase" x-text="$store.onboarding.modoUnico ? 'Guia rápido' : ('Passo ' + ($store.onboarding.passoAtual + 1) + ' de ' + $store.onboarding.passos.length)"></span>
+        <button type="button" class="btn-close" @click="$store.onboarding.pular()" :aria-label="$store.onboarding.modoUnico ? 'Fechar o guia' : 'Pular o tutorial inteiro'"></button>
       </div>
 
       <div class="d-flex align-items-start gap-2 mb-3" aria-live="polite">
@@ -3709,7 +3783,7 @@
         </div>
       </div>
 
-      <div class="cg-tour__dots mb-3">
+      <div class="cg-tour__dots mb-3" x-show.important="!$store.onboarding.modoUnico">
         <template x-for="(p, i) in $store.onboarding.passos" :key="i">
           <span class="cg-tour__dot" :class="{ 'is-active': $store.onboarding.passoAtual === i }"></span>
         </template>
@@ -3719,7 +3793,7 @@
         <button type="button" class="btn btn-link btn-sm px-0" @click="$store.onboarding.voltar()" x-show.important="$store.onboarding.passoAtual > 0">Voltar</button>
         <span x-show="$store.onboarding.passoAtual === 0"></span>
         <div class="d-flex gap-2">
-          <button type="button" class="cg-btn btn btn-outline-secondary btn-sm" @click="$store.onboarding.pularEtapa()" x-show.important="!$store.onboarding.passoResolvido">Pular esta etapa</button>
+          <button type="button" class="cg-btn btn btn-outline-secondary btn-sm" @click="$store.onboarding.pularEtapa()" x-show.important="!$store.onboarding.passoResolvido" x-text="$store.onboarding.modoUnico ? 'Pular' : 'Pular esta etapa'"></button>
           <button type="button" class="cg-btn btn btn-success btn-sm" @click="$store.onboarding.avancar()" x-show.important="$store.onboarding.passoResolvido">Continuar</button>
         </div>
       </div>

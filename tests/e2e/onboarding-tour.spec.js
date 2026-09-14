@@ -2,16 +2,27 @@
 // slides só de leitura) foi testada e REJEITADA por um usuário real —
 // "quero um passo a passo para a pessoa fazer ao menos uma coisa de cada do
 // zero. e ver os resultados". O formato novo é um passo-a-passo interativo:
-// só boas-vindas/conclusão continuam sendo um modal de leitura; os 3 passos
-// do meio (financeiro/compras/recursos) navegam pra tela real, destacam o
-// elemento real com um spotlight, e só avançam quando a pessoa faz a ação
-// de verdade (ou escolhe pular). Ver js/components/onboarding.js pro
-// comentário grande da arquitetura.
+// só boas-vindas/conclusão continuam sendo um modal de leitura; um passo do
+// meio (tipo:'acao') navega pra tela real, destaca o elemento real com um
+// spotlight, e só avança quando a pessoa faz a ação de verdade (ou escolhe
+// pular). Ver js/components/onboarding.js pro comentário grande da
+// arquitetura.
 //
-// Chave de "já visto" mudou pra v2 (bonotto_onboarding_v2_seen) — quem já
-// tinha visto/dispensado a v1 nunca teve chance de ver este formato novo,
-// então faz sentido mostrar de novo uma vez. playwright.config.js pré-semeia
-// essa MESMA chave pro resto da suíte não ser interrompido por este modal.
+// TASK-042 (2026-09-14) — GENERALIZAÇÃO: outro feedback real de usuário
+// ("Só tem tutorial de criação de despesa... Tem q ter tutorial tour para
+// cada coisa... e dar a opção para o usuário escolher oq ele quer
+// aprender") trocou o tour ÚNICO de 3 ações forçadas (financeiro/compras/
+// recursos) por um CATÁLOGO de mini-guias escolhíveis (a "Central de
+// tutoriais") + um tour de 1ª visita SIMPLIFICADO (boas-vindas + só a ação
+// "financeiro", que é a mais fundamental, + um atalho de conclusão pra abrir
+// a Central). Os 3 guias originais continuam existindo — agora acessíveis
+// tanto avulsos pela Central quanto (só o "financeiro") dentro do tour.
+//
+// Chave de "já visto" continua v2 (bonotto_onboarding_v2_seen) — a mudança
+// desta rodada é só no CONTEÚDO por trás do mecanismo interativo (que já
+// existia), não no formato em si, então não fazia sentido mostrar de novo
+// pra quem já tinha visto a v2. playwright.config.js pré-semeia essa MESMA
+// chave pro resto da suíte não ser interrompido por este modal.
 import { test, expect } from '@playwright/test';
 
 test.describe('primeira visita (storageState vazio)', () => {
@@ -27,8 +38,8 @@ test.describe('primeira visita (storageState vazio)', () => {
     const backdrop = page.locator('.cg-modal-backdrop', { has: page.locator('.cg-tour') });
     await expect(backdrop).toBeVisible({ timeout: 5000 });
     // Escopado no backdrop, não em page.getByText: o título do passo ATUAL
-    // também é refletido (mesmo texto) no painel de spotlight escondido dos
-    // passos de ação, sempre presente no DOM — um getByText solto encontraria
+    // também é refletido (mesmo texto) no painel de spotlight escondido do
+    // passo de ação, sempre presente no DOM — um getByText solto encontraria
     // os dois "Bem-vindo(a)..." (um deles escondido) e violaria strict mode.
     await expect(backdrop.getByText('Bem-vindo(a) ao Bõnotto!')).toBeVisible();
 
@@ -45,7 +56,7 @@ test.describe('primeira visita (storageState vazio)', () => {
     await expect(backdrop).toBeHidden();
   });
 
-  test('fluxo completo: registra uma transação, um item de compra e um item de recurso de verdade através do tour', async ({ page }) => {
+  test('fluxo simplificado: registra uma transação de verdade e depois abre a Central de tutoriais pela conclusão', async ({ page }) => {
     await page.goto('/?demo=1');
     await page.getByText('Entrar como', { exact: false }).first().click();
 
@@ -53,7 +64,7 @@ test.describe('primeira visita (storageState vazio)', () => {
     await expect(infoBackdrop).toBeVisible({ timeout: 5000 });
     await page.getByRole('button', { name: 'Próximo' }).click();
 
-    // ---------- Passo "financeiro" ----------
+    // ---------- Único passo de ação do tour simplificado: "financeiro" ----------
     const spotBackdrop = page.locator('.cg-tour-spot-backdrop');
     await expect(spotBackdrop).toBeVisible();
     await expect(spotBackdrop.getByText('Registre um gasto de verdade')).toBeVisible();
@@ -83,62 +94,59 @@ test.describe('primeira visita (storageState vazio)', () => {
     await expect(page.getByRole('button', { name: 'Pular esta etapa' })).toBeHidden();
     await page.getByRole('button', { name: 'Continuar' }).click();
 
-    // ---------- Passo "compras" ----------
-    await expect(spotBackdrop.getByText('Adicione um item na lista')).toBeVisible();
-    const compras = page.locator('section[x-data^="shoppingView"]');
-    await expect(compras).toBeVisible();
-    const alvoCompra = page.locator('[data-tour-alvo="novo-item-compra"]');
-    await expect(alvoCompra).toBeVisible();
-    await alvoCompra.click();
-
-    const itemFormBackdrop = compras.locator('.cg-modal-backdrop[x-show="itemFormAberto"]');
-    await expect(itemFormBackdrop).toBeVisible();
-    await itemFormBackdrop.locator('input[placeholder="Ex: Arroz 5kg"]').fill('Leite do tour');
-    await itemFormBackdrop.getByRole('button', { name: 'Adicionar' }).click();
-
-    await expect(spotBackdrop.getByText('Viu? O item já apareceu na lista')).toBeVisible();
-    await page.getByRole('button', { name: 'Continuar' }).click();
-
-    // ---------- Passo "recursos" ----------
-    await expect(spotBackdrop.getByText('Cadastre algo que tem em casa')).toBeVisible();
-    const recursos = page.locator('section[x-data^="resourcesView"]');
-    await expect(recursos).toBeVisible();
-    // O tour já andou sozinho o drill-down cômodo -> subcategoria "Todas" —
-    // o alvo real (botão "Item") precisa já estar visível sem clique extra.
-    const alvoRecurso = page.locator('[data-tour-alvo="recursos-add-item"]');
-    await expect(alvoRecurso).toBeVisible({ timeout: 5000 });
-    await alvoRecurso.click();
-
-    const itemRecursoModal = recursos.locator('.cg-modal-backdrop[x-show="itemModalAberto"]');
-    await expect(itemRecursoModal).toBeVisible();
-    await itemRecursoModal.locator('input[placeholder="Ex: Arroz, Papel higiênico…"]').fill('Sabonete do tour');
-    await itemRecursoModal.getByRole('button', { name: 'Salvar' }).click();
-
-    await expect(spotBackdrop.getByText('Esse item já está guardado nesse cômodo')).toBeVisible();
-    await page.getByRole('button', { name: 'Continuar' }).click();
-
-    // ---------- Conclusão ----------
+    // ---------- Conclusão: agora convida pra Central, em vez de forçar
+    // compras/recursos também ----------
     await expect(infoBackdrop).toBeVisible();
-    await expect(infoBackdrop.getByText('Pronto pra usar de verdade!')).toBeVisible();
-    await page.getByRole('button', { name: 'Começar a usar' }).click();
+    await expect(infoBackdrop.getByText('Boa! Você já viu como funciona.')).toBeVisible();
+    await infoBackdrop.getByRole('button', { name: 'Abrir Central de tutoriais' }).click();
     await expect(infoBackdrop).toBeHidden();
     await expect(spotBackdrop).toBeHidden();
 
     const vistoNoStorage = await page.evaluate(() => localStorage.getItem('bonotto_onboarding_v2_seen'));
     expect(vistoNoStorage).toBe('1');
 
-    // As 3 ações realmente aconteceram — não é simulação: aparecem nas
-    // telas de verdade depois do tour fechado.
+    // A Central abriu de verdade, listando os guias (inclusive os 2 que não
+    // são mais forçados no tour, "compras"/"recursos" — continuam
+    // disponíveis ali).
+    const central = page.locator('.cg-modal-backdrop[x-show="$store.onboarding.centralAberta"]');
+    await expect(central).toBeVisible();
+    await expect(central.locator('.cg-list-flat', { hasText: 'Adicione um item na lista' })).toBeVisible();
+    await expect(central.locator('.cg-list-flat', { hasText: 'Cadastre algo que tem em casa' })).toBeVisible();
+
+    // A transação em si realmente aconteceu — não é simulação.
+    await central.locator('.btn-close').click();
     await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Transações' }).first().click();
-    // Escopado em transactionsView (não page.getByText solto): a Home
-    // (dashboardView) também renderiza os "últimos lançamentos" com o mesmo
-    // título — ela continua montada por baixo (x-show, não x-if, CLAUDE.md),
-    // então um getByText sem escopo de tela pega o elemento errado/escondido.
     const transacoes = page.locator('section[x-data^="transactionsView"]');
     await expect(transacoes.getByText('Cafézinho do tour').first()).toBeVisible();
   });
 
-  test('"Pular esta etapa" avança sem fazer a ação, e "Pular tudo" (Esc) encerra o tour inteiro', async ({ page }) => {
+  test('"Pular esta etapa" avança pra conclusão sem fazer a ação, e "Pular tudo" (Esc) encerra o tour inteiro', async ({ page }) => {
+    await page.goto('/?demo=1');
+    await page.getByText('Entrar como', { exact: false }).first().click();
+
+    const infoBackdrop = page.locator('.cg-modal-backdrop', { has: page.locator('.cg-tour') });
+    await expect(infoBackdrop).toBeVisible({ timeout: 5000 });
+    await page.getByRole('button', { name: 'Próximo' }).click();
+
+    const spotBackdrop = page.locator('.cg-tour-spot-backdrop');
+    await expect(spotBackdrop).toBeVisible();
+    await page.getByRole('button', { name: 'Pular esta etapa' }).click();
+
+    // Único passo de ação do tour pulado -> vai direto pra conclusão (não
+    // existe mais um 2º/3º passo de ação forçado).
+    await expect(spotBackdrop).toBeHidden();
+    await expect(infoBackdrop).toBeVisible();
+    await expect(infoBackdrop.getByText('Boa! Você já viu como funciona.')).toBeVisible();
+
+    // Esc no passo de conclusão (info) fecha o tour inteiro — mesmo
+    // mecanismo central de sempre (setupOverlayBehavior, js/app.js).
+    await page.keyboard.press('Escape');
+    await expect(infoBackdrop).toBeHidden();
+    const vistoNoStorage = await page.evaluate(() => localStorage.getItem('bonotto_onboarding_v2_seen'));
+    expect(vistoNoStorage).toBe('1');
+  });
+
+  test('Esc durante o passo de ação (spotlight) encerra o tour inteiro', async ({ page }) => {
     await page.goto('/?demo=1');
     await page.getByText('Entrar como', { exact: false }).first().click();
 
@@ -147,20 +155,14 @@ test.describe('primeira visita (storageState vazio)', () => {
 
     const spotBackdrop = page.locator('.cg-tour-spot-backdrop');
     await expect(spotBackdrop).toBeVisible();
-    await page.getByRole('button', { name: 'Pular esta etapa' }).click();
 
-    // Avançou pro passo de compras sem ter criado nenhuma transação.
-    await expect(spotBackdrop.getByText('Adicione um item na lista')).toBeVisible();
-
-    // Esc durante um passo de ação pula o tour INTEIRO (não só o passo) —
-    // mesmo mecanismo central de sempre (setupOverlayBehavior, js/app.js).
     await page.keyboard.press('Escape');
     await expect(spotBackdrop).toBeHidden();
     const vistoNoStorage = await page.evaluate(() => localStorage.getItem('bonotto_onboarding_v2_seen'));
     expect(vistoNoStorage).toBe('1');
   });
 
-  test('Esc dentro do formulário real (aberto por um passo de ação) fecha só o formulário, nunca o tour inteiro', async ({ page }) => {
+  test('Esc dentro do formulário real (aberto pelo passo de ação) fecha só o formulário, nunca o tour inteiro', async ({ page }) => {
     await page.goto('/?demo=1');
     await page.getByText('Entrar como', { exact: false }).first().click();
 
@@ -181,28 +183,106 @@ test.describe('primeira visita (storageState vazio)', () => {
   });
 });
 
-test('tour reabre a qualquer momento por "Rever tutorial" em Perfil, mesmo já tendo sido visto', async ({ page }) => {
-  // Usa o storageState padrão (já "visto", ver playwright.config.js) — o
-  // ponto aqui é justamente provar que dá pra reabrir de novo DEPOIS de já
-  // ter sido visto, sem depender da abertura automática de 1ª visita.
-  await page.goto('/?demo=1');
-  await page.getByText('Entrar como', { exact: false }).first().click();
+// ---------- Central de tutoriais (TASK-042) ----------
+// storageState padrão (já "visto", ver playwright.config.js) — não depende
+// da abertura automática de 1ª visita; testa os pontos de entrada manuais e
+// pelo menos um guia NOVO do catálogo (além dos 3 originais, já cobertos
+// acima/no tour).
+test.describe('Central de tutoriais', () => {
+  test('abre pelo ícone dedicado da topbar e também por Perfil → Preferências, listando os guias', async ({ page }) => {
+    await page.goto('/?demo=1');
+    await page.getByText('Entrar como', { exact: false }).first().click();
 
-  const infoBackdrop = page.locator('.cg-modal-backdrop', { has: page.locator('.cg-tour') });
-  await expect(infoBackdrop).toBeHidden();
+    const central = page.locator('.cg-modal-backdrop[x-show="$store.onboarding.centralAberta"]');
+    await expect(central).toBeHidden();
 
-  await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Perfil' }).first().click();
-  await page.locator('.cg-list-flat', { hasText: 'Rever tutorial' }).click();
+    await page.locator('.cg-topbar').getByRole('button', { name: 'Central de tutoriais' }).click();
+    await expect(central).toBeVisible({ timeout: 5000 });
+    await expect(central.locator('.cg-list-flat', { hasText: 'Tour de boas-vindas completo' })).toBeVisible();
+    await expect(central.locator('.cg-list-flat', { hasText: 'Registre um gasto de verdade' })).toBeVisible();
+    await expect(central.locator('.cg-list-flat', { hasText: 'Divida uma despesa com seu par' })).toBeVisible();
+    await expect(central.locator('.cg-list-flat', { hasText: 'Crie uma caixinha' })).toBeVisible();
+    await expect(central.locator('.cg-list-flat', { hasText: 'Convide seu par pro grupo' })).toBeVisible();
 
-  await expect(infoBackdrop).toBeVisible({ timeout: 5000 });
-  await expect(infoBackdrop.getByText('Bem-vindo(a) ao Bõnotto!')).toBeVisible();
+    // Fecha no X, reabre por Perfil → Preferências (2º ponto de entrada).
+    await central.locator('.btn-close').click();
+    await expect(central).toBeHidden();
 
-  // Esc fecha (setupOverlayBehavior, js/app.js) e devolve o foco — mesmo
-  // mecanismo central já usado pelos outros modais do app.
-  await page.keyboard.press('Escape');
-  await expect(infoBackdrop).toBeHidden();
+    await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Perfil' }).first().click();
+    await page.locator('.cg-list-flat', { hasText: 'Central de tutoriais' }).click();
+    await expect(central).toBeVisible();
 
-  // Devolveu a pessoa pra tela de onde ela abriu o tour (Perfil), não deixou
-  // "esquecida" em nenhuma tela intermediária.
-  await expect(page.locator('section[x-data^="profileView"]')).toBeVisible();
+    // Esc fecha (setupOverlayBehavior) — mesmo mecanismo de qualquer modal.
+    await page.keyboard.press('Escape');
+    await expect(central).toBeHidden();
+  });
+
+  test('guia avulso "Crie uma caixinha" (novo no catálogo): navega sozinho, cria de verdade e mostra o resultado', async ({ page }) => {
+    await page.goto('/?demo=1');
+    await page.getByText('Entrar como', { exact: false }).first().click();
+
+    await page.locator('.cg-topbar').getByRole('button', { name: 'Central de tutoriais' }).click();
+    const central = page.locator('.cg-modal-backdrop[x-show="$store.onboarding.centralAberta"]');
+    await expect(central).toBeVisible();
+    await central.locator('.cg-list-flat', { hasText: 'Crie uma caixinha' }).click();
+    await expect(central).toBeHidden();
+
+    const spotBackdrop = page.locator('.cg-tour-spot-backdrop');
+    await expect(spotBackdrop).toBeVisible();
+    // Guia avulso: "Guia rápido" no lugar de "Passo X de Y", sem dots.
+    await expect(spotBackdrop.getByText('Guia rápido')).toBeVisible();
+    await expect(spotBackdrop.getByText('Crie uma caixinha')).toBeVisible();
+
+    const caixinhas = page.locator('section[x-data^="caixinhasView"]');
+    await expect(caixinhas).toBeVisible();
+    const alvo = page.locator('[data-tour-alvo="nova-caixinha"]');
+    await expect(alvo).toBeVisible({ timeout: 5000 });
+    await alvo.click();
+
+    const caixinhaModal = page.locator('.cg-modal-backdrop[x-show="$store.caixinhaModal.open"]');
+    await expect(caixinhaModal).toBeVisible();
+    // Banco já vem de um <select> com bancos do seed — só precisa escolher
+    // um valor de verdade (o 1º banco cadastrado) e salvar.
+    await caixinhaModal.locator('select').first().selectOption({ index: 1 });
+    await caixinhaModal.getByRole('button', { name: /Criar caixinha|Salvar/ }).click();
+    await expect(caixinhaModal).toBeHidden();
+
+    await expect(spotBackdrop.getByText('Show! Sua caixinha já está criada.')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Pular' })).toBeHidden();
+    await page.getByRole('button', { name: 'Continuar' }).click();
+    await expect(spotBackdrop).toBeHidden();
+  });
+
+  test('guia avulso "Divida uma despesa com seu par": ação acontece DENTRO do formulário real, sem perder o guia', async ({ page }) => {
+    await page.goto('/?demo=1');
+    await page.getByText('Entrar como', { exact: false }).first().click();
+
+    await page.locator('.cg-topbar').getByRole('button', { name: 'Central de tutoriais' }).click();
+    const central = page.locator('.cg-modal-backdrop[x-show="$store.onboarding.centralAberta"]');
+    await central.locator('.cg-list-flat', { hasText: 'Divida uma despesa com seu par' }).click();
+
+    const spotBackdrop = page.locator('.cg-tour-spot-backdrop');
+    await expect(spotBackdrop).toBeVisible();
+    await expect(spotBackdrop.getByText('Divida uma despesa com seu par')).toBeVisible();
+
+    await page.locator('[data-tour-alvo="nova-transacao"]').click();
+    const txModal = page.locator('.cg-modal-backdrop[x-show="$store.txModal.open"]');
+    await expect(txModal).toBeVisible();
+
+    // O guia continua junto por baixo (só encoberto pelo modal real, que tem
+    // z-index maior — ver comentário grande em onboarding.js) enquanto a
+    // pessoa mexe no formulário de verdade.
+    await txModal.getByRole('button', { name: 'Mais opções' }).click();
+    await txModal.getByTitle('Dividir com mais alguém').click();
+    await txModal.locator('.cg-pill-option').first().click();
+    await expect(txModal.getByText(/Dividindo entre 2 pessoas/)).toBeVisible();
+
+    // Fecha o formulário real (a pessoa decide quando, o guia nunca fecha
+    // ele sozinho) — o painel reaparece já com o resultado.
+    await txModal.locator('.btn-close').click();
+    await expect(txModal).toBeHidden();
+    await expect(spotBackdrop.getByText('Boa! O valor já foi dividido')).toBeVisible();
+    await page.getByRole('button', { name: 'Continuar' }).click();
+    await expect(spotBackdrop).toBeHidden();
+  });
 });

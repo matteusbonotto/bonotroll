@@ -2081,7 +2081,7 @@
       "description": "Feedback do usuário (2026-09-14): 'Só tem tutorial de criação de despesa... Tem q ter tutorial tour para cada coisa... e dar a opção para o usuário escolher oq ele quer aprender a fazer no app.' O tour de onboarding (TASK-037/038) cobre só 3 ações fixas em sequência forçada (criar despesa/item de compra/item de recurso). Pedido: generalizar o mecanismo de spotlight já construído (js/components/onboarding.js, js/utils/spotlight.js) pra um catálogo de mini-guias independentes, cada um ensinando UMA ação específica, com um menu onde a pessoa escolhe qual quer aprender agora (em vez de um tour linear único). Escopo inicial sugerido (não exaustivo, arquitetura precisa ser extensível pra crescer depois sem reescrever o mecanismo): dividir despesa com o par, despesa fixa/recorrente, cartão de crédito e fatura, criar caixinha, adicionar item via código de barras/foto, iniciar e encerrar uma compra, convidar o par pro grupo — além das 3 ações já existentes, que continuam fazendo parte do catálogo. O tour de 1ª visita pode continuar simplificado (boas-vindas + abrir o catálogo), sem precisar forçar todas as ações em sequência.",
       "category": "Frontend",
       "priority": "HIGH",
-      "status": "IN_PROGRESS",
+      "status": "DONE",
       "agent": "frontend",
       "tags": [
         "onboarding",
@@ -2102,6 +2102,13 @@
           "updatedBy": "claude",
           "timestamp": "2026-09-14T00:00:00-03:00",
           "note": "Delegado ao agente frontend numa worktree isolada."
+        },
+        {
+          "action": "UPDATED",
+          "to": "DONE",
+          "updatedBy": "claude",
+          "timestamp": "2026-09-14T00:00:00-03:00",
+          "note": "Generalizado js/components/onboarding.js pra um CATALOGO_GUIAS orientado a dados (9 guias: financeiro/compras/recursos — os 3 originais, sem perder nenhum comportamento testado — + dividir-despesa/fixa/cartao/caixinha/convite/compra-status, todos novos). Nova 'Central de tutoriais' (modal, mesmo padrão .cg-modal-backdrop/.cg-modal do resto do app) lista todos com resumo de 1 linha; acessível por um ícone dedicado na topbar (separado do '?' de FAQ) e por Perfil → Preferências (item que antes era 'Rever tutorial'). Tour de 1ª visita simplificado: boas-vindas + só a ação 'financeiro' + conclusão com CTA 'Abrir Central de tutoriais' (antes forçava financeiro+compras+recursos em sequência). Decisão de design pros guias novos que abrem o formulário de transação (dividir-despesa/fixa/cartao): o alvo do spotlight é sempre o botão 'Nova despesa' (não um campo dentro do modal), porque o modal real (z-index 1050) cobre o painel do guia (1046) enquanto aberto — a pessoa faz a ação de verdade dentro do formulário (evento cg:onboarding-acao dedicado disparado em transactionForm.js::adicionarPagador()/onTipoDespesaChange()/onCartaoChange()), decide quando fechar o formulário sozinha (nunca fechado à força, evita perder um lançamento em rascunho), e o painel com o resultado reaparece assim que ela fecha. Outros gatilhos novos: caixinhaManager.js::salvar() (só create), shoppingList.js::toggleStart()/finalizar() (guia 'Inicie uma compra'), groupView.js::copiarCodigo() (novo botão 'Copiar código' em Grupo — usa navigator.clipboard best-effort, dispara o evento mesmo se o clipboard falhar, já que o clique em si é a ação real). Bug real pego pelos próprios testes: getter passo() podia devolver undefined (passos[] começa vazio até abrir()/iniciarGuia() rodar) e vários `:aria-label`/`:class` em index.html leem passo.titulo/icone fora de qualquer x-show — quebrava a página inteira com 'Cannot read properties of undefined' assim que o app montava. Corrigido com fallback no getter. Testes: 99/99 unit (node --test) e 50/50 e2e verdes (tests/e2e/onboarding-tour.spec.js reescrito — tour simplificado + Central + guias novos 'Crie uma caixinha' e 'Divida uma despesa com seu par' com asserts reais; resto da suíte intacto). Suíte e2e rodada contra um servidor http dedicado numa porta própria da worktree (porta 5500 padrão estava sendo compartilhada por outras sessões/worktrees concorrentes no mesmo host e servia código de OUTRO checkout — achado e confirmado durante a verificação, não um bug do app). Verificado visualmente (Playwright, screenshot real) em claro E escuro, desktop e mobile (375px): Central de tutoriais, spotlight do guia 'Divida uma despesa com seu par' com o modal real aberto por cima e o resultado depois de fechar, e o guia 'Crie uma caixinha' — bom contraste nos dois temas, nenhum elemento invisível."
         }
       ]
     },

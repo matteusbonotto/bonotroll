@@ -37,6 +37,27 @@ export function groupView() {
       return this.$store.app.profileById(id)?.nome || '—';
     },
 
+    // Botão "Copiar código" (TASK-042, guia "Convide seu par pro grupo") —
+    // best-effort: navigator.clipboard pode falhar (contexto sem HTTPS,
+    // permissão negada) sem que isso impeça a pessoa de simplesmente
+    // selecionar/copiar o texto na mão, então nunca trava nada além do
+    // próprio aviso. O evento dedicado dispara de qualquer jeito: o CLIQUE
+    // em si (com a intenção real de compartilhar) já é a ação que o guia
+    // ensina — quem realmente ENTRA no grupo é a outra pessoa, em outra
+    // sessão, o que nunca dá pra detectar a partir daqui.
+    async copiarCodigo() {
+      const store = this.$store.app;
+      const codigo = store.group?.group?.codigo;
+      if (!codigo) return;
+      try {
+        await navigator.clipboard.writeText(codigo);
+        store.notify('Código copiado! Agora é só mandar pro seu par.');
+      } catch {
+        store.notify('Não consegui copiar automaticamente — selecione e copie o código ali em cima.', 'danger');
+      }
+      window.dispatchEvent(new CustomEvent('cg:onboarding-acao', { detail: { area: 'convite' } }));
+    },
+
     async criar() {
       if (!this.nomeGrupo.trim()) return;
       const store = this.$store.app;

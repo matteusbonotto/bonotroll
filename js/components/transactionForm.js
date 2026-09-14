@@ -176,6 +176,12 @@ export function txModalStore() {
     // a recorrência automaticamente (a pessoa pode ter motivo pra manter).
     onTipoDespesaChange() {
       if (this.form.tipo_despesa === 'fixa' && !this.form.recorrente) this.ativarRecorrenciaPadrao();
+      // TASK-042 (Central de tutoriais, guia "Marque uma despesa como
+      // fixa") — sinal dedicado só ao VIRAR fixa (nunca ao voltar pra
+      // variável): é a ação real que esse guia ensina a pessoa a fazer.
+      if (this.form.tipo_despesa === 'fixa') {
+        window.dispatchEvent(new CustomEvent('cg:onboarding-acao', { detail: { area: 'fixa' } }));
+      }
     },
 
     // Mesma condição usada no save() pra decidir se o campo de vencimento
@@ -289,6 +295,10 @@ export function txModalStore() {
         Alpine.store('cartaoModal').openCreate((cartao) => {
           this.form.cartao_id = cartao.id;
           this.form.cartao_credito = true;
+          // TASK-042 (guia "Registre uma compra no cartão de crédito") —
+          // criar E já selecionar o cartão novo também conta como a ação
+          // real (a pessoa escolheu um cartão de verdade pra essa despesa).
+          window.dispatchEvent(new CustomEvent('cg:onboarding-acao', { detail: { area: 'cartao' } }));
         });
         return;
       }
@@ -297,6 +307,10 @@ export function txModalStore() {
         return;
       }
       this.form.cartao_credito = !!v;
+      // Só dispara pra um cartão de VERDADE (nunca o sentinela "cartão não
+      // informado" acima, nem ao limpar a seleção) — esse é o gatilho do
+      // guia "Registre uma compra no cartão de crédito" (TASK-042).
+      if (v) window.dispatchEvent(new CustomEvent('cg:onboarding-acao', { detail: { area: 'cartao' } }));
     },
 
     // ---------- Divisão entre pagadores ----------
@@ -328,6 +342,11 @@ export function txModalStore() {
       if (!memberId || this.participantesIds.includes(memberId)) return;
       const base = this.pagadores.length ? this.participantesIds : [this.form.responsavel_id].filter(Boolean);
       this.pagadores = splitEqually(this.form.valor, [...base, memberId]);
+      // TASK-042 (Central de tutoriais, guia "Divida uma despesa com seu
+      // par") — sinal dedicado disparado no momento exato em que a pessoa
+      // adiciona de verdade um 2º pagador (nunca por "já tem divisão" —
+      // dado do seed de demo sempre teria algo).
+      window.dispatchEvent(new CustomEvent('cg:onboarding-acao', { detail: { area: 'dividir-despesa' } }));
     },
 
     removerPagador(memberId) {

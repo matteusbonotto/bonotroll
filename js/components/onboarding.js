@@ -1,35 +1,53 @@
-// Passo-a-passo interativo de onboarding (TASK-037/038 — RECONSTRUÇÃO,
-// 2026-09-11) — substitui o tour de 5 slides só-de-leitura da rodada
-// anterior. Feedback real de usuário de teste sobre a v1:
+// Passo-a-passo interativo de onboarding + Central de tutoriais (TASK-042,
+// 2026-09-14) — GENERALIZAÇÃO do mecanismo de spotlight construído em
+// TASK-037/038 (reconstrução anterior, ver histórico abaixo). Feedback real
+// de usuário de teste que motivou ESTA rodada:
 //
-//   "e não é um tour... tem 5 passos, quero um passo a passo para a pessoa
-//   fazer ao menos uma coisa de cada do zero. e ver os resultados e
-//   entender como funciona e aprender como usar a ferramenta"
+//   "Só tem tutorial de criação de despesa... Tem q ter tutorial tour para
+//   cada coisa... e dar a opção para o usuário escolher oq ele quer
+//   aprender a fazer no app."
 //
-// Ou seja: a v1 (5 slides explicando cada tela) foi TESTADA e REJEITADA —
-// não bastava ler, a pessoa precisava REALMENTE fazer uma ação em cada uma
-// das 3 áreas principais (financeiro/compras/recursos) usando a interface
-// de verdade, ver o resultado real acontecer, e só então entender.
+// Ou seja: um tour ÚNICO forçando 3 ações em sequência (financeiro -> compras
+// -> recursos) não bastava — era preciso um CATÁLOGO de mini-guias
+// independentes (CATALOGO_GUIAS abaixo), cada um ensinando UMA ação
+// específica, com um menu pra pessoa ESCOLHER o que quer aprender agora (a
+// "Central de tutoriais" — Perfil → Preferências e um ícone dedicado na
+// topbar) em vez de uma sequência única forçada.
 //
-// FORMATO NOVO: 5 passos, mas só o 1º (boas-vindas) e o último (conclusão)
-// continuam sendo o modal cheio de sempre (tipo 'info', reaproveita
-// .cg-modal-backdrop/.cg-modal igual à v1 — ver decisão de não usar lib de
-// tour abaixo). Os 3 do meio (tipo 'acao') são um mecanismo NOVO: navegam
-// sozinhos pra tela certa, DESTACAM o elemento real que a pessoa precisa
-// clicar (spotlight: escurece o resto da tela, com um "buraco" recortado
-// em volta do alvo — ver js/utils/spotlight.js pra geometria pura) e
-// esperam a pessoa interagir DE VERDADE com a tela por baixo — nada de
-// simulação, screenshot ou formulário fake. Só quando a AÇÃO REAL acontece
-// (ver "Detecção de conclusão" abaixo) o passo libera "Continuar" e mostra
-// o resultado real que aconteceu.
+// HISTÓRICO (TASK-037/038, ainda válido pro mecanismo em si): a v1 (5 slides
+// só de leitura) foi TESTADA e REJEITADA — "não é um tour... quero um passo
+// a passo para a pessoa fazer ao menos uma coisa de cada do zero. e ver os
+// resultados". A reconstrução v2 trocou por um mecanismo que navega sozinho
+// pra tela certa, DESTACA o elemento real (spotlight: escurece o resto da
+// tela, com um "buraco" recortado em volta do alvo — ver js/utils/
+// spotlight.js pra geometria pura) e espera a pessoa interagir DE VERDADE
+// com a tela por baixo — nada de simulação, screenshot ou formulário fake.
+// Essa v2 continua sendo a base AQUI: o que mudou nesta rodada é só que o
+// mecanismo agora é ORIENTADO A DADOS (CATALOGO_GUIAS, uma lista) em vez de
+// hardcoded pros 3 passos fixos, e ganhou um segundo modo de uso (guia
+// avulso escolhido na Central, não só dentro de um tour de 5 passos).
 //
-// DECISÃO DE ARQUITETURA (herdada da v1, ainda válida): reaproveita
+// DECISÃO DE ARQUITETURA (herdada, ainda válida): reaproveita
 // .cg-modal-backdrop/.cg-modal em vez de importar uma lib de tour (ex.
 // driver.js/intro.js) — evita ter que sobrescrever o CSS inteiro de uma lib
 // externa pra bater com os tokens do design system (mais risco de conflito
 // de especificidade, ver CLAUDE.md "Armadilhas já conhecidas") E ganha de
 // graça o Esc-fecha-e-devolve-foco já centralizado em setupOverlayBehavior
 // (js/app.js) pra QUALQUER .cg-modal-backdrop visível.
+//
+// DOIS MODOS, MESMO MECANISMO — this.passos sempre é a fonte de verdade
+// (dots, "Passo X de Y", spotlight, gatilho de conclusão); só quem POPULA
+// esse array muda:
+//   - abrir(): tour de 1ª visita/"Tour de boas-vindas completo" — boas-vindas
+//     (info) + UMA ação real (financeiro, a mais fundamental) + conclusão
+//     (info, com atalho pra abrir a Central). Até 2026-09-14 forçava as 3
+//     ações fixas em sequência; simplificado porque a Central agora cobre o
+//     resto — ver comentário grande em abrir() mais abaixo pro raciocínio
+//     completo.
+//   - iniciarGuia(id): um guia AVULSO do catálogo, escolhido na Central —
+//     sequência de 1 passo só (sempre tipo:'acao', nunca precisa de
+//     boas-vindas/conclusão em volta). get modoUnico (abaixo) é o que o
+//     template usa pra evitar um "Passo 1 de 1" sem sentido nesse modo.
 //
 // PASSO DE AÇÃO NÃO PODE ser um modal cheio de verdade, porque a pessoa
 // PRECISA continuar enxergando e clicando na tela real por baixo (abrir o
@@ -38,24 +56,45 @@
 // sobre como isso ainda se encaixa em setupOverlayBehavior sem reimplementar
 // nada, inclusive o cuidado de ordem no DOM pra Esc nunca fechar o tour
 // inteiro por engano quando o FORMULÁRIO REAL (aberto por cima do spotlight)
-// é o que a pessoa queria fechar.
+// é o que a pessoa queria fechar. 4 dos guias novos (dividir-despesa/fixa/
+// cartao, todos com view:'home') apontam de propósito pro MESMO alvo de
+// sempre ("Nova despesa") em vez de um campo específico DENTRO do formulário
+// — abrir o formulário sozinho por baixo do spotlight faria o modal real
+// (z-index 1050) cobrir o painel do guia (z-index 1046, ver components.css),
+// deixando o texto/spotlight invisível atrás dele; com o alvo sendo só o
+// botão que ABRE o formulário, o comportamento é idêntico ao guia
+// "financeiro" já testado (o painel reaparece, já com o resultado, assim que
+// a pessoa fecha o formulário real por conta própria — Salvar, Cancelar, X
+// ou Esc, não importa qual).
 //
-// DETECÇÃO DE CONCLUSÃO — cada passo de ação escuta um evento
-// "cg:onboarding-acao" dedicado (detail: { area }), disparado só no momento
-// exato em que a ação de verdade acontece:
-//   - financeiro: transactionForm.js::save(), só no CREATE (nunca edição).
-//   - compras: shoppingList.js::addItem(), sempre que adiciona (não tem
-//     caminho de edição nessa função).
-//   - recursos: resourcesView.js::salvarItem(), só no CREATE.
-// Nunca detecta "concluído" por "a lista não está vazia" — o modo demo já
-// vem com dado de exemplo (seed), então qualquer lista SEMPRE teria itens;
-// um evento disparado no momento exato da ação é o único jeito confiável.
+// DETECÇÃO DE CONCLUSÃO — cada guia escuta um evento "cg:onboarding-acao"
+// dedicado (detail: { area }), disparado só no momento exato em que a ação
+// de verdade acontece. Nunca detecta "concluído" por "a lista não está
+// vazia" — o modo demo já vem com dado de exemplo (seed), então qualquer
+// lista/grupo/cartão SEMPRE teria algo; um evento disparado no momento exato
+// da ação é o único jeito confiável. Pontos de disparo, um por guia:
+//   - financeiro:      transactionForm.js::save(), só no CREATE.
+//   - compras:         shoppingList.js::addItem(), sempre que adiciona.
+//   - recursos:        resourcesView.js::salvarItem(), só no CREATE.
+//   - dividir-despesa: transactionForm.js::adicionarPagador().
+//   - fixa:            transactionForm.js::onTipoDespesaChange(), só ao
+//                       virar 'fixa' (nunca ao voltar pra variável).
+//   - cartao:           transactionForm.js::onCartaoChange(), só ao
+//                       selecionar um cartão de verdade (nunca o sentinela
+//                       "cartão não informado").
+//   - caixinha:         caixinhaManager.js::salvar(), só no CREATE.
+//   - convite:          groupView.js::copiarCodigo() (copiar o código já É
+//                       a ação de convidar — quem entra de fato é a outra
+//                       pessoa, em outro navegador, então não dá pra
+//                       detectar isso desta sessão).
+//   - compra-status:    shoppingList.js::toggleStart()/finalizar(), nas duas
+//                       direções (iniciar OU encerrar contam).
 //
 // PERFORMANCE (preocupação real levantada: "tá lento e travando") — o
 // spotlight recalcula a posição do alvo em scroll/resize, mas SEMPRE via
 // requestAnimationFrame (no máximo 1x por frame, nunca 1x por evento de
 // scroll cru, que dispara dezenas de vezes por segundo) e SEMPRE remove os
-// listeners ao trocar de passo/fechar o tour (_pararRecalculo) — nunca
+// listeners ao trocar de passo/fechar o guia (_pararRecalculo) — nunca
 // acumula um listener de scroll por passo visitado.
 import { computeSpotlightGeometry } from '../utils/spotlight.js';
 
@@ -72,34 +111,210 @@ function nextTick() {
   return new Promise((resolve) => Alpine.nextTick(resolve));
 }
 
-// v2 (não mais v1): a reconstrução muda tanto o formato que faz sentido
-// mostrar o tour novo de novo pra quem já tinha visto (e rejeitado) a v1 —
-// gente que já "dispensou" um tour-de-slides nunca teve a chance de ver
-// este. tests/e2e e playwright.config.js usam esta MESMA chave pra
+// v2 (não mais v1): a reconstrução de TASK-037/038 mudou tanto o formato que
+// fez sentido mostrar o tour novo de novo pra quem já tinha visto (e
+// rejeitado) a v1 — gente que já "dispensou" um tour-de-slides nunca teve a
+// chance de ver este formato. A generalização de TASK-042 reaproveita a
+// MESMA chave: quem já viu a v2 (passo a passo interativo) não precisa ver
+// de novo só porque o conteúdo por trás ganhou um catálogo maior — o that
+// importa aqui é "já entendeu que é interativo", não a lista exata de
+// passos. tests/e2e e playwright.config.js usam esta MESMA chave pra
 // pré-semear "já visto" e pular o tour nos testes que não são sobre ele.
 const CHAVE_VISTO = 'bonotto_onboarding_v2_seen';
 
-// Um objeto por área (não um array) — mais simples de indexar por
-// passo.area do que procurar num array toda hora.
-const AREAS = ['financeiro', 'compras', 'recursos'];
-function estadoVazioPorArea() {
-  return Object.fromEntries(AREAS.map((a) => [a, false]));
+// ---------- Helpers de "preparar" (plumbing de navegação ANTES de destacar
+// o alvo real) — funções livres, não métodos do store: só falam com OUTROS
+// componentes via Alpine.$data (o mesmo padrão já usado no app inteiro pra
+// alcançar o estado de uma seção a partir de fora dela), nunca com o estado
+// do onboarding em si. Nenhuma delas é a ação que a pessoa está aprendendo
+// a fazer no guia — são só o "andar sozinho até lá" que evitaria um passo
+// extra sem valor de aprendizado nenhum (ex.: teria que virar um guia
+// próprio só pra ensinar "entre num cômodo", o que não é o pedido). ----------
+
+// Recursos tem um drill-down de navegação (cômodo -> subcategoria) ANTES do
+// alvo real ("Item") existir na tela — ver comentário acima.
+async function prepararRecursos() {
+  const el = document.querySelector('section[x-data^="resourcesView"]');
+  const comp = el && Alpine.$data(el);
+  if (!comp) return;
+  // Só entra sozinho se a pessoa ainda não estiver dentro de um cômodo (ex.:
+  // reabrindo o guia já no meio de uma navegação em Recursos) — nesse caso
+  // usa a posição em que ela já está, nunca reseta o que ela já tinha
+  // escolhido.
+  if (!comp.activeRoomId && comp.rooms.length) {
+    await comp.selecionarRoom(comp.rooms[0].id);
+  }
+  if (comp.activeRoomId && !comp.activeCategoryId) {
+    await comp.selecionarCategoria('todas');
+  }
 }
+
+// Caixinhas tem um drill-down parecido (grade -> detalhe de UMA caixinha) —
+// se a pessoa tivesse ficado olhando o detalhe de uma caixinha antes de
+// abrir este guia, o tile "Nova caixinha" (na grade) não existiria na tela.
+// Mesma lógica de "só mexe se precisar": nunca reseta nada que não atrapalha
+// o alvo.
+function prepararCaixinhas() {
+  const el = document.querySelector('section[x-data^="caixinhasView"]');
+  const comp = el && Alpine.$data(el);
+  if (comp && comp.activeId) comp.voltar();
+}
+
+// ---------- Catálogo de guias (TASK-042) ----------
+// Cada entrada é um mini-tutorial INDEPENDENTE — a pessoa escolhe qual quer
+// fazer agora na Central de tutoriais, em vez de uma sequência forçada. Os 3
+// primeiros (financeiro/compras/recursos) são exatamente os mesmos de
+// TASK-037/038 (mesmo texto/seletor/gatilho de sempre — não reintroduzir
+// nenhum dos bugs já corrigidos neles), agora reaproveitados TANTO aqui
+// quanto dentro do tour simplificado de 1ª visita (ver abrir() abaixo) — um
+// objeto só, nunca duplicado em dois lugares.
+//
+// Campos de cada guia:
+//   id/area        — mesma string sempre (id é usado pra abrir/listar; area
+//                     é o que o evento "cg:onboarding-acao" carrega —
+//                     mantidos como duas chaves só pra não precisar tocar em
+//                     todo `dispatchEvent(...)` já existente nos outros
+//                     componentes, mas sempre com o MESMO valor).
+//   view            — tela ($store.app.view) pra onde navega sozinho.
+//   alvoSeletor     — seletor do elemento real a destacar, sempre escopado
+//                     por `section[x-data^="..."]` (CLAUDE.md: as 7 telas
+//                     ficam todas montadas ao mesmo tempo — um seletor sem
+//                     esse escopo arrisca pegar o elemento errado de uma
+//                     tela escondida).
+//   preparar        — opcional, async: plumbing de navegação automática (ver
+//                     prepararRecursos/prepararCaixinhas acima).
+//   requisito       — opcional: (storeApp) => boolean. Se falhar,
+//                     iniciarGuia() avisa por toast e NÃO abre — evita abrir
+//                     um guia apontando pra um elemento que não existe nesta
+//                     conta (ex.: "dividir despesa" sem ninguém mais no
+//                     grupo pra dividir com).
+//   requisitoTexto  — mensagem do toast acima.
+//   icone/titulo/texto/textoResultado — mesmo formato dos guias originais.
+//   resumo          — 1 linha, só usada na listagem da Central.
+const CATALOGO_GUIAS = [
+  {
+    id: 'financeiro',
+    area: 'financeiro',
+    view: 'home',
+    alvoSeletor: 'section[x-data^="dashboardView"] [data-tour-alvo="nova-transacao"]',
+    icone: 'bi-cash-coin',
+    titulo: 'Registre um gasto de verdade',
+    resumo: 'Cadastre uma despesa ou entrada — o básico do financeiro.',
+    texto: 'Toque em "Nova despesa" e cadastre algo rápido — um cafézinho de R$ 10 já serve pra testar. É só um exemplo: dá pra editar ou apagar depois, em Transações.',
+    textoResultado: 'Prontinho! Repare que o saldo do Início já mudou na hora, e esse lançamento também aparece em "Transações". Se a despesa for dividida com seu par, o "Entre vocês" mostra quem deve quanto.',
+  },
+  {
+    id: 'compras',
+    area: 'compras',
+    view: 'compras',
+    alvoSeletor: 'section[x-data^="shoppingView"] [data-tour-alvo="novo-item-compra"]',
+    icone: 'bi-cart3-fill',
+    titulo: 'Adicione um item na lista',
+    resumo: 'Coloque algo na lista de compras do mercado.',
+    texto: 'Toque no botão "+" e coloque algo que precisa comprar — pode ser qualquer coisa, tipo "Leite".',
+    textoResultado: 'Viu? O item já apareceu na lista e o total foi recalculado sozinho. Quando for ao mercado, é só marcar cada item como comprado — dá pra anotar o preço na hora, direto na lista.',
+  },
+  {
+    id: 'recursos',
+    area: 'recursos',
+    view: 'recursos',
+    alvoSeletor: 'section[x-data^="resourcesView"] [data-tour-alvo="recursos-add-item"]',
+    preparar: () => prepararRecursos(),
+    icone: 'bi-box-seam-fill',
+    titulo: 'Cadastre algo que tem em casa',
+    resumo: 'Guarde no inventário algo que já existe em algum cômodo.',
+    texto: 'Já te levamos pra dentro de um cômodo. Toque em "Item" e cadastre algo que exista aí de verdade — tipo "Sabonete" ou "Arroz".',
+    textoResultado: 'Esse item já está guardado nesse cômodo. Quando a quantidade chegar a zero ou a validade vencer, ele aparece sozinho em "Sugestões de compra" — com um atalho pra já mandar direto pra lista de compras.',
+  },
+  {
+    id: 'dividir-despesa',
+    area: 'dividir-despesa',
+    view: 'home',
+    alvoSeletor: 'section[x-data^="dashboardView"] [data-tour-alvo="nova-transacao"]',
+    requisito: (app) => (app.group?.members?.length || 0) >= 2,
+    requisitoTexto: 'Esse guia precisa de um grupo com você e seu par (tela Grupo) — convide seu par primeiro.',
+    icone: 'bi-people-fill',
+    titulo: 'Divida uma despesa com seu par',
+    resumo: 'Some quem mais participou de uma despesa, sem fazer conta de cabeça.',
+    texto: 'Toque em "Nova despesa" e, dentro do formulário, abra "Mais opções". Ao lado de "Responsável" tem um botão "+" — toque nele e escolha quem mais participou dessa despesa.',
+    textoResultado: 'Boa! O valor já foi dividido em partes iguais entre vocês — dá pra ajustar o valor ou o percentual de cada um na mão, se não for igual. O saldo de quem deve quanto pra quem aparece na tela "Grupo", em "Entre vocês".',
+  },
+  {
+    id: 'fixa',
+    area: 'fixa',
+    view: 'home',
+    alvoSeletor: 'section[x-data^="dashboardView"] [data-tour-alvo="nova-transacao"]',
+    icone: 'bi-pin-angle-fill',
+    titulo: 'Marque uma despesa como fixa',
+    resumo: 'Aluguel, assinatura — algo que se repete todo mês sozinho.',
+    texto: 'Toque em "Nova despesa" e abra "Mais opções". No campo "Tipo", escolha "Fixa".',
+    textoResultado: 'Pronto! Marcar como fixa já ligou a recorrência mensal sozinha — o próximo lançamento é criado automaticamente, sem precisar cadastrar de novo. Dá pra ajustar o dia certo logo abaixo, em "Recorrente".',
+  },
+  {
+    id: 'cartao',
+    area: 'cartao',
+    view: 'home',
+    alvoSeletor: 'section[x-data^="dashboardView"] [data-tour-alvo="nova-transacao"]',
+    icone: 'bi-credit-card-2-front-fill',
+    titulo: 'Registre uma compra no cartão de crédito',
+    resumo: 'Uma compra no crédito, somada automaticamente na fatura do mês.',
+    texto: 'Toque em "Nova despesa" e abra "Mais opções". Perto de "Recorrente" tem um campo pra escolher o cartão — selecione um cartão (ou crie um novo, se ainda não tiver nenhum).',
+    textoResultado: 'Show! Essa despesa já está dentro da fatura daquele cartão no mês — o app junta tudo sozinho e conta o valor uma vez só, sem duplicar no saldo.',
+  },
+  {
+    id: 'caixinha',
+    area: 'caixinha',
+    view: 'caixinhas',
+    alvoSeletor: 'section[x-data^="caixinhasView"] [data-tour-alvo="nova-caixinha"]',
+    preparar: () => prepararCaixinhas(),
+    icone: 'bi-piggy-bank',
+    titulo: 'Crie uma caixinha',
+    resumo: 'Uma reserva separada, com meta e moeda à sua escolha.',
+    texto: 'Toque em "Nova caixinha" e escolha um banco, uma moeda e, se quiser, uma meta de quanto pretende guardar.',
+    textoResultado: 'Show! Sua caixinha já está criada. Agora é só guardar (ou retirar) valores nela quando quiser — o saldo é sempre a soma do que entrou menos o que saiu.',
+  },
+  {
+    id: 'convite',
+    area: 'convite',
+    view: 'grupo',
+    alvoSeletor: 'section[x-data^="groupView"] [data-tour-alvo="copiar-codigo-grupo"]',
+    requisito: (app) => !!app.group,
+    requisitoTexto: 'Crie ou entre num grupo primeiro (tela Grupo) pra ter um código de convite.',
+    icone: 'bi-person-plus-fill',
+    titulo: 'Convide seu par pro grupo',
+    resumo: 'Compartilhe o código do grupo pra dividir contas com seu par.',
+    texto: 'Toque em "Copiar código" e mande esse código pra quem você quer que entre — a pessoa usa ele em "Entrar em um grupo".',
+    textoResultado: 'Código copiado! Quando a outra pessoa entrar com ele, vocês passam a compartilhar categorias e conseguem dividir despesas — o saldo "Entre vocês" aparece logo abaixo, nesta mesma tela.',
+  },
+  {
+    id: 'compra-status',
+    area: 'compra-status',
+    view: 'compras',
+    alvoSeletor: 'section[x-data^="shoppingView"] [data-tour-alvo="toggle-compra-status"]',
+    icone: 'bi-play-circle-fill',
+    titulo: 'Inicie uma compra',
+    resumo: 'Passe a lista pro modo "comprando" quando chegar no mercado.',
+    texto: 'Toque no botão pra começar a comprar — a lista entra no modo "comprando", pronta pra marcar cada item conforme você coloca no carrinho.',
+    textoResultado: 'Prontinho! O status da lista já mudou — repare no rótulo do botão, que trocou sozinho. Quando terminar, é só tocar de novo nele pra encerrar.',
+  },
+];
 
 export function onboardingStore() {
   return {
     aberto: false,
+    centralAberta: false, // Central de tutoriais (catálogo escolhível) — TASK-042
     passoAtual: 0,
-    concluido: estadoVazioPorArea(), // true assim que a AÇÃO REAL acontece nesta sessão do tour
-    pulado: estadoVazioPorArea(), // true quando a pessoa clica "Pular esta etapa" (não fez a ação, mas também não trava mais o avanço)
+    passos: [], // populado por abrir() (tour) ou iniciarGuia() (guia avulso) — nunca mutado direto fora dessas duas entradas
+    concluido: {}, // { [area]: true } assim que a AÇÃO REAL acontece nesta sessão do guia — chave criada sob demanda, nunca pré-semeada (não precisa mais de uma lista fixa de áreas, o catálogo pode crescer)
+    pulado: {}, // { [area]: true } quando a pessoa clica "Pular esta etapa" (não fez a ação, mas também não trava mais o avanço)
     rectAlvo: null, // { top, left, width, height } do elemento real destacado, em px de viewport — null = sem spotlight visível agora
-    telaAoAbrir: null, // $store.app.view de antes de abrir — devolve pra lá ao fechar/concluir, nunca deixa a pessoa "presa" numa tela que só visitou por causa do tour
+    telaAoAbrir: null, // $store.app.view de antes de abrir — devolve pra lá ao fechar/concluir, nunca deixa a pessoa "presa" numa tela que só visitou por causa do guia
     // Altura real do painel de instrução (.cg-tour-painel), em px — usada só
     // pra empurrar .toast-container (index.html) pra baixo dele durante um
     // passo de ação (achado numa revisão visual manual: o toast "N
     // lançamentos recorrentes gerados" cobria o texto do passo). Medida de
     // verdade via ResizeObserver (não um número fixo "generoso o bastante")
-    // porque o conteúdo varia por passo (o de Recursos é bem mais comprido
+    // porque o conteúdo varia por guia (o de Recursos é bem mais comprido
     // que o de Compras) e por largura de tela (o mesmo texto quebra em mais
     // linhas no celular) — um valor chutado ficaria errado pra alguma
     // combinação mais cedo ou mais tarde.
@@ -112,74 +327,36 @@ export function onboardingStore() {
     _pararRecalculo: null,
     _pararObservarPainel: null,
 
-    // 1 boas-vindas + 3 ações reais (financeiro/compras/recursos) + 1
-    // encerramento. "alvoSeletor" sempre escopado por section[x-data^="..."]
-    // (CLAUDE.md: as 7 telas ficam todas montadas ao mesmo tempo — um
-    // seletor sem esse escopo arrisca pegar o elemento errado de uma tela
-    // escondida, mesmo com um data-tour-alvo único, se algum dia se repetir
-    // o mesmo atributo em duas telas por engano).
-    passos: [
-      {
-        id: 'boas-vindas',
-        tipo: 'info',
-        icone: 'bi-house-heart-fill',
-        titulo: 'Bem-vindo(a) ao Bõnotto!',
-        texto: 'Aqui vocês dois controlam o dinheiro, a lista de compras e o que tem em casa — tudo num só lugar. Nos próximos passos você vai USAR a ferramenta de verdade: vamos te guiar pra registrar um gasto, um item de compra e um item de casa, um de cada vez, num teste rapidinho.',
-      },
-      {
-        id: 'financeiro',
-        tipo: 'acao',
-        area: 'financeiro',
-        view: 'home',
-        alvoSeletor: 'section[x-data^="dashboardView"] [data-tour-alvo="nova-transacao"]',
-        icone: 'bi-cash-coin',
-        titulo: 'Registre um gasto de verdade',
-        texto: 'Toque em "Nova despesa" e cadastre algo rápido — um cafézinho de R$ 10 já serve pra testar. É só um exemplo: dá pra editar ou apagar depois, em Transações.',
-        textoResultado: 'Prontinho! Repare que o saldo do Início já mudou na hora, e esse lançamento também aparece em "Transações". Se a despesa for dividida com seu par, o "Entre vocês" mostra quem deve quanto.',
-      },
-      {
-        id: 'compras',
-        tipo: 'acao',
-        area: 'compras',
-        view: 'compras',
-        alvoSeletor: 'section[x-data^="shoppingView"] [data-tour-alvo="novo-item-compra"]',
-        icone: 'bi-cart3-fill',
-        titulo: 'Adicione um item na lista',
-        texto: 'Toque no botão "+" e coloque algo que precisa comprar — pode ser qualquer coisa, tipo "Leite".',
-        textoResultado: 'Viu? O item já apareceu na lista e o total foi recalculado sozinho. Quando for ao mercado, é só marcar cada item como comprado — dá pra anotar o preço na hora, direto na lista.',
-      },
-      {
-        id: 'recursos',
-        tipo: 'acao',
-        area: 'recursos',
-        view: 'recursos',
-        alvoSeletor: 'section[x-data^="resourcesView"] [data-tour-alvo="recursos-add-item"]',
-        icone: 'bi-box-seam-fill',
-        titulo: 'Cadastre algo que tem em casa',
-        texto: 'Já te levamos pra dentro de um cômodo. Toque em "Item" e cadastre algo que exista aí de verdade — tipo "Sabonete" ou "Arroz".',
-        textoResultado: 'Esse item já está guardado nesse cômodo. Quando a quantidade chegar a zero ou a validade vencer, ele aparece sozinho em "Sugestões de compra" — com um atalho pra já mandar direto pra lista de compras.',
-      },
-      {
-        id: 'conclusao',
-        tipo: 'info',
-        icone: 'bi-check2-circle',
-        titulo: 'Pronto pra usar de verdade!',
-        texto: 'Você já fez o básico nas 3 áreas principais. Quiser rever isso depois, é só abrir Perfil e procurar "Rever tutorial" — e pra dúvida rápida, sem precisar refazer o passo a passo, tem um "Perguntas frequentes" logo ali do lado (e um "?" no topo da tela, em qualquer lugar do app).',
-      },
-    ],
+    catalogo: CATALOGO_GUIAS,
 
+    // Nunca `undefined` — index.html tem vários `:aria-label`/`:class`
+    // ligados a `$store.onboarding.passo.X` FORA de qualquer `x-show`/`x-if`
+    // (o próprio Alpine avalia esses bindings o tempo todo, independente de
+    // o elemento estar visível). Antes disto `passos` sempre nascia com um
+    // array fixo de 5 itens (nunca vazio); agora, com o catálogo dinâmico,
+    // `passos` começa `[]` até abrir()/iniciarGuia() rodar — sem este
+    // fallback, `passo` seria `undefined` nesse meio-tempo e QUALQUER
+    // `passo.titulo` etc. lançava "Cannot read properties of undefined",
+    // travando a página inteira (bug real pego pelo smoke test/console).
     get passo() {
-      return this.passos[this.passoAtual];
+      return this.passos[this.passoAtual] || { tipo: null, titulo: '', texto: '', textoResultado: '', icone: '' };
     },
     get ultimoPasso() {
       return this.passoAtual === this.passos.length - 1;
+    },
+    // Um guia avulso (aberto pela Central) é sempre uma sequência de 1 passo
+    // só — o template usa isto pra não mostrar "Passo 1 de 1"/dots sem
+    // sentido nenhum, só nesse modo (o tour de boas-vindas continua com 3
+    // passos reais, "modoUnico" fica false nele o tempo todo).
+    get modoUnico() {
+      return this.passos.length === 1;
     },
     // Um passo de ação "resolvido" tanto por ter feito a ação de verdade
     // quanto por ter escolhido pular ele — os dois liberam "Continuar" do
     // mesmo jeito, só o texto mostrado muda (resultado real vs. nada).
     get passoResolvido() {
       const p = this.passo;
-      return p.tipo === 'acao' && (this.concluido[p.area] || this.pulado[p.area]);
+      return !!p && p.tipo === 'acao' && (this.concluido[p.area] || this.pulado[p.area]);
     },
     // Style pronto pra `:style` (Alpine aceita objeto direto, já usado em
     // outros pontos do app) — números convertidos em px aqui, não espalhado
@@ -199,6 +376,12 @@ export function onboardingStore() {
       };
     },
 
+    // Usado tanto pela Central (mostrar um aviso no item indisponível) quanto
+    // por iniciarGuia() (bloquear de verdade + avisar por toast).
+    disponivel(guia) {
+      return !guia.requisito || guia.requisito(Alpine.store('app'));
+    },
+
     // Chamado uma vez, quando o app-shell autenticado monta (ver
     // x-init="$store.onboarding.iniciarSeNecessario()" em index.html) — não
     // faz nada se a pessoa já viu antes NESTE navegador. Isto não é
@@ -210,16 +393,87 @@ export function onboardingStore() {
       this.abrir();
     },
 
-    // Ponto de reabertura manual (Perfil → "Rever tutorial") — sempre
-    // reinicia do passo 1, mesmo que a pessoa já tenha visto/concluído
-    // antes, e sempre zera concluído/pulado (uma re-execução é uma sessão
-    // nova do tour, não continuação de uma anterior).
+    // Tour de 1ª visita / "Tour de boas-vindas completo" (item fixo no topo
+    // da Central) — boas-vindas (info) + UMA ação real (financeiro, a mais
+    // fundamental) + conclusão (info, com atalho pra abrir a Central).
+    //
+    // Até 2026-09-14 este tour forçava financeiro+compras+recursos em
+    // sequência única. Pedido explícito de usuário testando o app ("Tem q
+    // ter tutorial tour para cada coisa... e dar a opção para o usuário
+    // escolher oq ele quer aprender") trocou isso por um catálogo
+    // escolhível — não fazia mais sentido o tour de 1ª visita continuar
+    // forçando 3 ações quando a pessoa pode escolher exatamente essas
+    // mesmas 3 (e mais 6 outras) na Central, no momento em que ela quiser.
+    // O tour continua existindo (ninguém deveria cair de paraquedas na 1ª
+    // visita sem NENHUM caminho guiado — só um menu jogado na cara sem
+    // contexto seria pior, não melhor), só não força mais que UMA ação
+    // prática antes de deixar a pessoa escolher o resto sozinha.
     abrir() {
+      const financeiro = this.catalogo.find((g) => g.id === 'financeiro');
+      this.passos = [
+        {
+          id: 'boas-vindas',
+          tipo: 'info',
+          icone: 'bi-house-heart-fill',
+          titulo: 'Bem-vindo(a) ao Bõnotto!',
+          texto: 'Aqui vocês dois controlam o dinheiro, a lista de compras e o que tem em casa — tudo num só lugar. No próximo passo você vai USAR a ferramenta de verdade, registrando um gasto real. Depois disso, você escolhe o que mais quer aprender.',
+        },
+        { ...financeiro, tipo: 'acao' },
+        {
+          id: 'conclusao',
+          tipo: 'info',
+          icone: 'bi-signpost-2-fill',
+          titulo: 'Boa! Você já viu como funciona.',
+          texto: 'Tem bastante mais coisa pra explorar — dividir despesa com seu par, despesa fixa, cartão de crédito, caixinha, lista de compras, recursos de casa e mais. A Central de tutoriais tem um guia rápido pra cada uma dessas ações, pra você escolher o que quiser aprender agora.',
+          cta: { label: 'Abrir Central de tutoriais', metodo: 'abrirCentralDoTour' },
+        },
+      ];
       this.passoAtual = 0;
-      this.concluido = estadoVazioPorArea();
-      this.pulado = estadoVazioPorArea();
+      this.concluido = {};
+      this.pulado = {};
       this.rectAlvo = null;
       this.telaAoAbrir = Alpine.store('app').view;
+      this.aberto = true;
+      this._entrarNoPasso();
+    },
+
+    // ---------- Central de tutoriais (TASK-042) ----------
+    // Ponto de entrada do catálogo escolhível — Perfil → Preferências e um
+    // ícone dedicado na topbar (junto do "?" de FAQ, mas separado dele: são
+    // conteúdos diferentes — dúvida pontual vs. "me ensina a fazer isso").
+    abrirCentral() {
+      this.centralAberta = true;
+    },
+    fecharCentral() {
+      this.centralAberta = false;
+    },
+    // CTA do passo de conclusão do tour — encerra o tour normalmente
+    // (mesmo encerrar() de sempre, devolve a tela, marca "visto") e já abre
+    // a Central em seguida, sem a pessoa precisar procurar em Perfil.
+    abrirCentralDoTour() {
+      this.concluir();
+      this.abrirCentral();
+    },
+
+    // Um guia AVULSO do catálogo, escolhido na Central — sequência de 1
+    // passo só (sempre tipo:'acao'; não existe guia informativo isolado no
+    // catálogo, só dentro do tour). Mesmo mecanismo de spotlight de sempre,
+    // só "solto" (sem boas-vindas/conclusão em volta).
+    iniciarGuia(id) {
+      const guia = this.catalogo.find((g) => g.id === id);
+      if (!guia) return;
+      const appStore = Alpine.store('app');
+      if (!this.disponivel(guia)) {
+        appStore.notify(guia.requisitoTexto || 'Esse guia não está disponível agora.', 'danger');
+        return;
+      }
+      this.centralAberta = false;
+      this.passos = [{ ...guia, tipo: 'acao' }];
+      this.passoAtual = 0;
+      this.concluido = {};
+      this.pulado = {};
+      this.rectAlvo = null;
+      this.telaAoAbrir = appStore.view;
       this.aberto = true;
       this._entrarNoPasso();
     },
@@ -239,7 +493,10 @@ export function onboardingStore() {
     // "Pular esta etapa" — só nos passos de ação, só quando ainda não feita
     // de verdade. Marca como pulada (libera "Continuar" mostrando texto
     // normal, não o de resultado) e já avança — ninguém fica preso num
-    // passo que não quer fazer agora.
+    // passo que não quer fazer agora. Num guia avulso (modoUnico) isto já
+    // avança pro "último passo" (o único que existe), então encerra o guia
+    // inteiro — o próprio template troca o rótulo do botão pra "Pular" nesse
+    // caso, ver index.html.
     pularEtapa() {
       const p = this.passo;
       if (p.tipo === 'acao') this.pulado[p.area] = true;
@@ -247,29 +504,30 @@ export function onboardingStore() {
     },
 
     // "Pular tudo" / Esc / clique no X ou no backdrop escurecido fora do
-    // buraco — sempre encerra o tour inteiro (nunca só o passo atual, que é
-    // o que "Pular esta etapa" já faz). Mesma ideia da v1: rótulo do botão
-    // muda ("Pular" num passo informativo, "Começar a usar" no último), mas
-    // do ponto de vista de "não abrir sozinho de novo", pular e concluir são
-    // a mesma coisa.
+    // buraco — sempre encerra o tour/guia inteiro (nunca só o passo atual,
+    // que é o que "Pular esta etapa" já faz). Rótulo do botão muda ("Pular"
+    // num passo informativo, "Começar a usar" no último do tour), mas do
+    // ponto de vista de "não abrir sozinho de novo", pular e concluir são a
+    // mesma coisa.
     pular() { this.encerrar(); },
     concluir() { this.encerrar(); },
 
     encerrar() {
       this._limparPasso();
       this.aberto = false;
-      // Devolve a pessoa pra tela de onde ela abriu o tour — sem isso, quem
-      // terminava o passo de Recursos ficava "esquecido" lá, numa tela que
-      // só visitou por causa do guiado, não por escolha própria.
+      // Devolve a pessoa pra tela de onde ela abriu o tour/guia — sem isso,
+      // quem terminava um guia em Recursos ficava "esquecido" lá, numa tela
+      // que só visitou por causa do guiado, não por escolha própria.
       if (this.telaAoAbrir) Alpine.store('app').view = this.telaAoAbrir;
       localStorage.setItem(CHAVE_VISTO, '1');
     },
 
     // ---------- Mecânica interna de cada passo de ação ----------
 
-    // Ponto único de entrada em QUALQUER passo (chamado por abrir/avancar/
-    // voltar) — sempre limpa o passo anterior primeiro (nunca acumula
-    // listener), e só faz alguma coisa a mais se o passo novo for de ação.
+    // Ponto único de entrada em QUALQUER passo (chamado por abrir/
+    // iniciarGuia/avancar/voltar) — sempre limpa o passo anterior primeiro
+    // (nunca acumula listener), e só faz alguma coisa a mais se o passo
+    // novo for de ação.
     async _entrarNoPasso() {
       this._limparPasso();
       const p = this.passo;
@@ -280,13 +538,10 @@ export function onboardingStore() {
       appStore.navOpen = false; // fecha o menu hambúrguer (mobile) se estava aberto — nunca deixa ele por cima do spotlight
       await nextTick();
 
-      // Recursos tem um drill-down de navegação (cômodo -> subcategoria)
-      // ANTES do alvo real ("Item") existir na tela — isso é só "plumbing"
-      // de navegação, não a ação que a pessoa está aprendendo a fazer aqui
-      // (essa é "cadastrar um item"), então o tour anda essa parte sozinho
-      // em vez de transformar isso num passo próprio (ficaria comprido
-      // demais pro que o usuário pediu: "simplifique o quanto precisar").
-      if (p.area === 'recursos') await this._prepararRecursos();
+      // Plumbing de navegação específico do guia (ex.: Recursos precisa
+      // entrar num cômodo antes do alvo real existir) — nunca é a ação que a
+      // pessoa está aprendendo, ver comentário grande no topo do arquivo.
+      if (typeof p.preparar === 'function') await p.preparar();
       await nextTick();
 
       this._escutarAcao(p.area);
@@ -296,35 +551,22 @@ export function onboardingStore() {
       this._observarPainel();
     },
 
-    async _prepararRecursos() {
-      const el = document.querySelector('section[x-data^="resourcesView"]');
-      const comp = el && Alpine.$data(el);
-      if (!comp) return;
-      // Só entra sozinho se a pessoa ainda não estiver dentro de um cômodo
-      // (ex.: reabrindo o tour já no meio de uma navegação em Recursos) —
-      // nesse caso usa a posição em que ela já está, nunca reseta o que ela
-      // já tinha escolhido.
-      if (!comp.activeRoomId && comp.rooms.length) {
-        await comp.selecionarRoom(comp.rooms[0].id);
-      }
-      if (comp.activeRoomId && !comp.activeCategoryId) {
-        await comp.selecionarCategoria('todas');
-      }
-    },
-
     _escutarAcao(area) {
       const ouvinte = (evento) => {
         if (evento.detail?.area !== area) return;
         this.concluido[area] = true;
-        // BUG REAL encontrado testando com Playwright: Compras é a ÚNICA das
-        // 3 telas que mantém o modal de "Adicionar item" aberto DE PROPÓSITO
-        // depois de salvar (pra colocar vários itens seguidos sem reabrir a
-        // cada um — ver comentário em shoppingList.js::addItem()). Fora do
-        // tour isso é bom; DURANTE o passo guiado, o modal real (z-index
+        // BUG REAL encontrado testando com Playwright (TASK-037/038): Compras
+        // é a ÚNICA tela que mantém o modal de "Adicionar item" aberto DE
+        // PROPÓSITO depois de salvar (pra colocar vários itens seguidos sem
+        // reabrir a cada um — ver comentário em shoppingList.js::addItem()).
+        // Fora do tour isso é bom; DURANTE o guia, o modal real (z-index
         // maior que o nosso painel) ficava por CIMA do resultado/"Continuar",
-        // escondendo os dois. As outras duas telas (transação/recurso) já
-        // fecham sozinhas ao salvar — só esta precisa de um empurrão extra
-        // aqui, sem mudar o comportamento normal (fora do tour) da tela.
+        // escondendo os dois. As outras telas já fecham sozinhas ao salvar
+        // (ou, no caso de dividir-despesa/fixa/cartao, a ação acontece DENTRO
+        // do formulário e a pessoa decide quando fechar — ver comentário
+        // grande no topo do arquivo) — só Compras precisa desse empurrão
+        // extra aqui, sem mudar o comportamento normal (fora do guia) da
+        // tela.
         if (area === 'compras') {
           const el = document.querySelector('section[x-data^="shoppingView"]');
           const comp = el && Alpine.$data(el);
@@ -382,7 +624,7 @@ export function onboardingStore() {
     // Mede a altura real do painel de instrução (achado numa revisão visual
     // manual: sem isso, .toast-container em index.html não tinha como saber
     // até onde precisa descer pra não cobrir o painel — um número fixo
-    // "generoso o bastante" ficaria errado pro passo de Recursos, que é bem
+    // "generoso o bastante" ficaria errado pro guia de Recursos, que é bem
     // mais comprido, ou pra alguma largura de tela específica). ResizeObserver
     // (não só uma medição única) porque o conteúdo pode mudar de altura sem
     // trocar de passo: a mesma frase quebra em mais ou menos linhas se a
