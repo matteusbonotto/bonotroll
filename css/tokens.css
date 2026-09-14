@@ -44,8 +44,18 @@
      --color-text direto pra isso: --color-text INVERTE entre os temas (quase
      preto no claro, quase branco no escuro) e sem --color-on-ink acompanhando
      o texto do botão, o par fundo+texto vira claro-sobre-claro no escuro —
-     bug real visto em produção (botão "Nova despesa" quase invisível). */
-  --color-ink: var(--color-text);
+     bug real visto em produção (botão "Nova despesa" quase invisível,
+     reconfirmado em 2026-09-14 pelo tour de onboarding destacando o mesmo
+     botão isolado sobre fundo escuro). O comentário acima já diagnosticava
+     isso certo, mas a variável abaixo continuava `var(--color-text)` — o
+     próprio anti-padrão que o comentário alertava contra, nunca corrigido de
+     fato. Corrigido agora: valor FIXO (não usa var(--color-text) nem muda
+     por tema) — é assim que "tinta quase preta, sempre" funciona, com
+     --color-on-ink (branco) também fixo, sem override nenhum de tema pros
+     dois — ver blocos de dark mode mais abaixo, onde os overrides de
+     --color-on-ink foram removidos por serem a compensação de um sintoma,
+     não a correção da causa raiz. */
+  --color-ink: #182321;
   --color-on-ink: #FFFFFF;
 
   /* Escala de raio CONSOLIDADA (2026-08-20, segunda rodada) — a primeira
@@ -129,7 +139,6 @@
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
     --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
     --shadow-lg: 0 16px 36px rgba(0, 0, 0, 0.55);
-    --color-on-ink: #0E1512;
     color-scheme: dark;
   }
 }
@@ -146,7 +155,6 @@
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
   --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
   --shadow-lg: 0 16px 36px rgba(0, 0, 0, 0.55);
-  --color-on-ink: #0E1512;
   color-scheme: dark;
 }
 
