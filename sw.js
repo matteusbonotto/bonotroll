@@ -9,7 +9,7 @@
 // terminar (skipWaiting() + controllerchange recarrega a página — ver
 // js/app.js e o comentário do evento "install" abaixo; não existe mais
 // banner manual desde a correção de auto-atualização de 2026-09-01).
-const CACHE_NAME = 'bonotto-v15';
+const CACHE_NAME = 'bonotto-v16';
 
 const APP_SHELL = [
   './',
