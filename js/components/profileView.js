@@ -99,7 +99,7 @@ export function profileView() {
           groupId: store.group?.group?.id,
         });
         const dataIso = new Date().toISOString().slice(0, 10);
-        baixarComoJson(dados, `bonotto-meus-dados-${dataIso}.json`);
+        baixarComoJson(dados, `bntt-meus-dados-${dataIso}.json`);
         store.notify('Dados exportados.');
       } catch (e) {
         store.notify(e.message || 'Não foi possível exportar os dados.', 'danger');

@@ -119,7 +119,7 @@ export const IMPORT_TARGETS = {
 export async function baixarTemplateCsv(target) {
   const Papa = await loadPapa();
   const fields = IMPORT_TARGETS[target].fields.map((f) => f.key);
-  baixarBlobCsv(Papa.unparse({ fields, data: [] }), `bonotto-modelo-${target}.csv`);
+  baixarBlobCsv(Papa.unparse({ fields, data: [] }), `bntt-modelo-${target}.csv`);
 }
 
 // Aceita tanto "aaaa-mm-dd" (formato documentado nos labels acima, o mesmo

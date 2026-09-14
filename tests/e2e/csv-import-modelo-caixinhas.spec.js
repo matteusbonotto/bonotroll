@@ -21,7 +21,7 @@ test('botão "Baixar modelo" no import de CSV baixa um cabeçalho com as colunas
   await modal.getByRole('button', { name: 'Baixar modelo (.csv)' }).click();
   const download = await downloadPromise;
 
-  expect(download.suggestedFilename()).toBe('bonotto-modelo-transacoes.csv');
+  expect(download.suggestedFilename()).toBe('bntt-modelo-transacoes.csv');
   const conteudo = fs.readFileSync(await download.path(), 'utf-8');
   const cabecalho = conteudo.replace(/^﻿/, '').split('\r\n')[0].split(',');
   expect(cabecalho).toContain('titulo');

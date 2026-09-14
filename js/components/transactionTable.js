@@ -498,7 +498,7 @@ export function transactionsView() {
         vencimento: r.data_vencimento || '',
         status: STATUS_META[r._status].label,
       }));
-      exportToCsv(dados, 'bonotto-transacoes.csv');
+      exportToCsv(dados, 'bntt-transacoes.csv');
     },
   };
 }

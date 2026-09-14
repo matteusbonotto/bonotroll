@@ -13,7 +13,7 @@ test('Perfil → Exportar meus dados baixa um JSON com transações/categorias/c
   await page.locator('.cg-list-flat', { hasText: 'Exportar meus dados' }).click();
   const download = await downloadPromise;
 
-  expect(download.suggestedFilename()).toMatch(/^bonotto-meus-dados-\d{4}-\d{2}-\d{2}\.json$/);
+  expect(download.suggestedFilename()).toMatch(/^bntt-meus-dados-\d{4}-\d{2}-\d{2}\.json$/);
 
   const caminho = await download.path();
   const conteudo = JSON.parse(fs.readFileSync(caminho, 'utf-8'));
