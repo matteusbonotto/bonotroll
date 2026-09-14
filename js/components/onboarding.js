@@ -200,7 +200,7 @@ const CATALOGO_GUIAS = [
     icone: 'bi-cash-coin',
     titulo: 'Registre um gasto de verdade',
     resumo: 'Cadastre uma despesa ou entrada — o básico do financeiro.',
-    texto: 'Toque em "Nova despesa" e cadastre algo rápido — um cafézinho de R$ 10 já serve pra testar. É só um exemplo: dá pra editar ou apagar depois, em Transações.',
+    texto: 'Toque em "Nova despesa". No formulário que abrir, preencha pelo menos o Título e o Valor (o resto já vem preenchido ou é opcional) e toque em "Salvar", no fim. Tem mais campos aí — categoria, cartão, recorrência — dentro de "Mais opções": não precisa mexer agora, é só pra quando precisar. Isso é um teste: um cafezinho de R$ 10 já serve, dá pra editar ou apagar depois, em Transações.',
     textoResultado: 'Prontinho! Repare que o saldo do Início já mudou na hora, e esse lançamento também aparece em "Transações". Se a despesa for dividida com seu par, o "Entre vocês" mostra quem deve quanto.',
   },
   {
@@ -366,6 +366,28 @@ export function onboardingStore() {
     get passoResolvido() {
       const p = this.passo;
       return !!p && p.tipo === 'acao' && (this.concluido[p.area] || this.pulado[p.area]);
+    },
+
+    // BUG REAL relatado em uso (2026-09-14): o passo de ação destaca o botão
+    // "Nova despesa" e explica o que fazer, mas assim que a pessoa TOCA no
+    // botão, o formulário real abre por cima (z-index 1050, maior que o
+    // painel do guia, 1046, de propósito — ver comentário grande no topo
+    // deste arquivo) e a instrução some da tela. Quem nunca usou o app antes
+    // fica sem norte dentro do formulário: não sabe que "Mais opções" existe,
+    // não sabe que só Título+Valor bastam, etc. — "continua por sua conta em
+    // risco", nas palavras do usuário. Esta função devolve o TEXTO do guia
+    // ativo quando (e só quando) o alvo dele é o botão que abre ESTE modal
+    // (financeiro/dividir-despesa/fixa/cartao — os 4 guias que apontam pro
+    // mesmo "Nova despesa" compartilham o mesmo alvoSeletor) — index.html
+    // usa isto pra mostrar a MESMA instrução dentro do modal, reaproveitando
+    // .cg-demo-banner (mesmo estilo visual do aviso de modo demonstração,
+    // não um componente novo). null em qualquer outro caso (guia de outra
+    // área, ou tour fechado) — o modal continua 100% normal fora do tour.
+    get instrucaoModalTransacao() {
+      const p = this.passo;
+      if (!this.aberto || !p || p.tipo !== 'acao') return null;
+      if (!p.alvoSeletor?.includes('nova-transacao')) return null;
+      return p.texto;
     },
     // Style pronto pra `:style` (Alpine aceita objeto direto, já usado em
     // outros pontos do app) — números convertidos em px aqui, não espalhado

@@ -2962,6 +2962,16 @@
         <button type="button" class="btn-close" @click="$store.txModal.close()"></button>
       </div>
 
+      <!-- Instrução do guia ativo (Central de tutoriais), reaproveitada aqui
+           porque o modal real cobre o painel do guia por cima (z-index maior,
+           de propósito) — sem isto a pessoa perde a orientação assim que abre
+           o formulário. Ver $store.onboarding.instrucaoModalTransacao
+           (js/components/onboarding.js) pra quando isso aparece. -->
+      <div class="cg-demo-banner" x-show="$store.onboarding.instrucaoModalTransacao" x-cloak>
+        <i class="bi bi-signpost-2 fs-5"></i>
+        <span x-text="$store.onboarding.instrucaoModalTransacao"></span>
+      </div>
+
       <form @submit.prevent="$store.txModal.save()">
         <!-- Entrada rápida (docs/BONOTTO-2027-BLUEPRINT.md, Conflito 1) — só
              em lançamento novo (edição já vem com título/valor preenchidos).
