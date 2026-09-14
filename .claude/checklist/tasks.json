@@ -2044,6 +2044,92 @@
           "note": "Achado via grep (import mockDb em js/components/) durante TASK-039, não corrigido nesta rodada (auditoria só diagnostica)."
         }
       ]
+    },
+    {
+      "id": "BUG-016",
+      "title": "Botão \"Nova despesa\" quase invisível no modo escuro (--color-ink não fixo)",
+      "description": "Relatado com print real do usuário (2026-09-14): o passo de ação do tour de onboarding destacava um 'borrão branco' em vez do botão 'Nova despesa'. Causa raiz: --color-ink (tokens.css) era `var(--color-text)`, que INVERTE entre temas por design (escuro no claro, claro no escuro) — o próprio comentário em tokens.css já diagnosticava esse exato anti-padrão como bug conhecido ('nunca usar --color-text direto pra isso... bug real visto em produção'), mas a variável nunca foi de fato corrigida pra um valor fixo, só documentada — o bug persistia em produção desde antes desta sessão, só ficou dramaticamente visível quando o spotlight do tour isolou o botão sobre fundo escuro. --color-on-ink tinha um override de dark mode tentando compensar o sintoma sem corrigir a causa.",
+      "category": "Frontend",
+      "priority": "HIGH",
+      "status": "DONE",
+      "agent": "claude",
+      "tags": [
+        "bug-producao",
+        "dark-mode",
+        "contraste",
+        "tokens"
+      ],
+      "dependencies": [],
+      "relatedDocs": [
+        "css/tokens.css"
+      ],
+      "createdAt": "2026-09-14T00:00:00-03:00",
+      "updatedAt": "2026-09-14T00:00:00-03:00",
+      "history": [
+        {
+          "action": "CREATED",
+          "to": "DONE",
+          "updatedBy": "claude",
+          "timestamp": "2026-09-14T00:00:00-03:00",
+          "note": "--color-ink fixado em #182321 (nunca muda por tema); --color-on-ink fixado em #FFFFFF, removidos os overrides de dark mode que compensavam o sintoma. Único uso do token no código (.cg-quick-actions .btn-danger, components.css) — sem efeito colateral em outro lugar, confirmado por grep. Verificado visualmente nos dois temas via Playwright (mesmo bg/color computado em light e dark). 99/99 unit + 47/47 e2e verdes. Deploy em main, push feito."
+        }
+      ]
+    },
+    {
+      "id": "TASK-042",
+      "title": "Central de tutoriais: catálogo de guias escolhíveis (não só o tour fixo de 3 passos)",
+      "description": "Feedback do usuário (2026-09-14): 'Só tem tutorial de criação de despesa... Tem q ter tutorial tour para cada coisa... e dar a opção para o usuário escolher oq ele quer aprender a fazer no app.' O tour de onboarding (TASK-037/038) cobre só 3 ações fixas em sequência forçada (criar despesa/item de compra/item de recurso). Pedido: generalizar o mecanismo de spotlight já construído (js/components/onboarding.js, js/utils/spotlight.js) pra um catálogo de mini-guias independentes, cada um ensinando UMA ação específica, com um menu onde a pessoa escolhe qual quer aprender agora (em vez de um tour linear único). Escopo inicial sugerido (não exaustivo, arquitetura precisa ser extensível pra crescer depois sem reescrever o mecanismo): dividir despesa com o par, despesa fixa/recorrente, cartão de crédito e fatura, criar caixinha, adicionar item via código de barras/foto, iniciar e encerrar uma compra, convidar o par pro grupo — além das 3 ações já existentes, que continuam fazendo parte do catálogo. O tour de 1ª visita pode continuar simplificado (boas-vindas + abrir o catálogo), sem precisar forçar todas as ações em sequência.",
+      "category": "Frontend",
+      "priority": "HIGH",
+      "status": "IN_PROGRESS",
+      "agent": "frontend",
+      "tags": [
+        "onboarding",
+        "tutorial",
+        "pedido-usuario-teste",
+        "lancamento"
+      ],
+      "dependencies": [
+        "TASK-037",
+        "TASK-038"
+      ],
+      "createdAt": "2026-09-14T00:00:00-03:00",
+      "updatedAt": "2026-09-14T00:00:00-03:00",
+      "history": [
+        {
+          "action": "CREATED",
+          "to": "IN_PROGRESS",
+          "updatedBy": "claude",
+          "timestamp": "2026-09-14T00:00:00-03:00",
+          "note": "Delegado ao agente frontend numa worktree isolada."
+        }
+      ]
+    },
+    {
+      "id": "TASK-043",
+      "title": "Compras: histórico com visualização por mês e filtros",
+      "description": "Melhoria pedida pelo usuário (2026-09-14): 'Histórico de lista de compras com visualização por mês e filtros'. Hoje o histórico de listas finalizadas existe (ver TASK-028) mas sem agrupamento por período nem filtro — precisa investigar a estrutura real de shopping_lists/shopping_list_items antes de desenhar (quantas listas finalizadas uma conta típica acumula, quais campos fazem sentido como filtro — mercado, categoria, status comprado/não-comprado).",
+      "category": "Frontend",
+      "priority": "MEDIUM",
+      "status": "IN_PROGRESS",
+      "agent": "frontend",
+      "tags": [
+        "compras",
+        "historico",
+        "pedido-usuario-teste"
+      ],
+      "dependencies": [],
+      "createdAt": "2026-09-14T00:00:00-03:00",
+      "updatedAt": "2026-09-14T00:00:00-03:00",
+      "history": [
+        {
+          "action": "CREATED",
+          "to": "IN_PROGRESS",
+          "updatedBy": "claude",
+          "timestamp": "2026-09-14T00:00:00-03:00",
+          "note": "Delegado ao agente frontend numa worktree isolada, em paralelo com TASK-042 (arquivos diferentes, baixo risco de colisão)."
+        }
+      ]
     }
   ]
 }
