@@ -208,7 +208,16 @@ const CATALOGO_GUIAS = [
     area: 'compras',
     view: 'compras',
     alvoSeletor: 'section[x-data^="shoppingView"] [data-tour-alvo="novo-item-compra"]',
-    icone: 'bi-cart3-fill',
+    // "bi-cart3-fill" NÃO EXISTE no Bootstrap Icons 1.11.3 (achado numa
+    // revisão visual manual, 2026-09-14: ícone aparecia como quadrado vazio
+    // na Central de tutoriais — confirmado via computed style, content:
+    // none — e no próprio conjunto oficial de ícones, só existem
+    // cart/cart-fill/cart2/cart3/cart4/cart-check(-fill)/cart-dash(-fill)/
+    // cart-plus(-fill)/cart-x(-fill), nunca "cart3-fill"). Bug pré-existente
+    // desde TASK-037/038 (mesmo nome usado lá), só ficou óbvio agora que o
+    // ícone apareceu maior, na listagem da Central, em vez de pequeno
+    // dentro do painel do tour.
+    icone: 'bi-cart-fill',
     titulo: 'Adicione um item na lista',
     resumo: 'Coloque algo na lista de compras do mercado.',
     texto: 'Toque no botão "+" e coloque algo que precisa comprar — pode ser qualquer coisa, tipo "Leite".',
