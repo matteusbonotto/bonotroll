@@ -344,6 +344,19 @@ function seedDatabase(nomes = NOMES_GENERICOS_PADRAO) {
   const agora = new Date();
   const ha20Dias = new Date(agora.getTime() - 20 * 86400000).toISOString();
   const ha19Dias = new Date(agora.getTime() - 19 * 86400000).toISOString();
+  // Mais 2 listas finalizadas, espalhadas em meses ANTERIORES ao de
+  // demo-lista-2 (50 e 95 dias atrás — intervalo grande o bastante pra
+  // sempre cair num mês civil diferente do anterior) — sem isso o
+  // histórico (TASK-043, agrupamento por mês em shoppingList.js) só tinha 1
+  // mês pra mostrar no seed demo, e o agrupamento nunca aparecia de fato
+  // testável de olho nu. nome_mercado repete "Supermercado Bairro Novo" em
+  // 2 das 3 listas de propósito, pra o filtro por mercado ter algo real pra
+  // filtrar (não só 1 lista por mercado, o que tornaria o filtro um no-op
+  // disfarçado).
+  const ha50Dias = new Date(agora.getTime() - 50 * 86400000).toISOString();
+  const ha49Dias = new Date(agora.getTime() - 49 * 86400000).toISOString();
+  const ha95Dias = new Date(agora.getTime() - 95 * 86400000).toISOString();
+  const ha94Dias = new Date(agora.getTime() - 94 * 86400000).toISOString();
 
   const shoppingLists = [
     { id: 'demo-lista-1', owner_id: matheusId, group_id: groupId, nome: 'Compras da Semana', status: 'planejando', criado_em: agora.toISOString(), iniciado_em: null, finalizado_em: null, transacao_id: null, nome_mercado: null, limite_gasto: null },
@@ -354,6 +367,8 @@ function seedDatabase(nomes = NOMES_GENERICOS_PADRAO) {
     // status 'finalizada' explicitamente), então não interfere na lista do
     // dia a dia acima.
     { id: 'demo-lista-2', owner_id: matheusId, group_id: groupId, nome: 'Compras do Mês Passado', status: 'finalizada', criado_em: ha20Dias, iniciado_em: ha20Dias, finalizado_em: ha19Dias, transacao_id: null, nome_mercado: 'Supermercado Bairro Novo', limite_gasto: 400 },
+    { id: 'demo-lista-3', owner_id: matheusId, group_id: groupId, nome: 'Compras do Mercadinho', status: 'finalizada', criado_em: ha50Dias, iniciado_em: ha50Dias, finalizado_em: ha49Dias, transacao_id: null, nome_mercado: 'Empório Dona Rita', limite_gasto: null },
+    { id: 'demo-lista-4', owner_id: matheusId, group_id: groupId, nome: 'Compras do Mês Retrasado', status: 'finalizada', criado_em: ha95Dias, iniciado_em: ha95Dias, finalizado_em: ha94Dias, transacao_id: null, nome_mercado: 'Supermercado Bairro Novo', limite_gasto: 400 },
   ];
 
   const shoppingListItems = [
@@ -369,6 +384,13 @@ function seedDatabase(nomes = NOMES_GENERICOS_PADRAO) {
     { id: uid('item'), list_id: 'demo-lista-2', nome: 'Macarrão', categoria_id: 'cat-alimentos', unidade: 'un', quantidade: 2, prioridade: 3, preco_unitario: 6.50, preco_por_kg: null, subtotal: 13.00, comprado: true, codigo_barras: null, foto_url: null },
     { id: uid('item'), list_id: 'demo-lista-2', nome: 'Queijo Mussarela', categoria_id: 'cat-laticinios', unidade: 'kg', quantidade: 0.5, prioridade: 3, preco_unitario: null, preco_por_kg: 42.00, subtotal: 21.00, comprado: true, codigo_barras: null, foto_url: null },
     { id: uid('item'), list_id: 'demo-lista-2', nome: 'Pão Francês', categoria_id: 'cat-padaria', unidade: 'kg', quantidade: 1, prioridade: 4, preco_unitario: null, preco_por_kg: 18.00, subtotal: 18.00, comprado: true, codigo_barras: null, foto_url: null },
+    // Itens de demo-lista-3/4 (TASK-043) — só pra o resumo (total de itens/
+    // valor) do histórico agrupado por mês ter algo real pra somar; mesma
+    // fórmula de subtotal de sempre (quantidade × preço).
+    { id: uid('item'), list_id: 'demo-lista-3', nome: 'Ovos (dúzia)', categoria_id: 'cat-alimentos', unidade: 'un', quantidade: 1, prioridade: 3, preco_unitario: 14.90, preco_por_kg: null, subtotal: 14.90, comprado: true, codigo_barras: null, foto_url: null },
+    { id: uid('item'), list_id: 'demo-lista-3', nome: 'Café', categoria_id: 'cat-bebidas', unidade: 'un', quantidade: 1, prioridade: 3, preco_unitario: 22.50, preco_por_kg: null, subtotal: 22.50, comprado: true, codigo_barras: null, foto_url: null },
+    { id: uid('item'), list_id: 'demo-lista-4', nome: 'Papel Higiênico', categoria_id: 'cat-higiene', unidade: 'un', quantidade: 1, prioridade: 3, preco_unitario: 28.90, preco_por_kg: null, subtotal: 28.90, comprado: true, codigo_barras: null, foto_url: null },
+    { id: uid('item'), list_id: 'demo-lista-4', nome: 'Tomate', categoria_id: 'cat-hortifruti', unidade: 'kg', quantidade: 1.2, prioridade: 3, preco_unitario: null, preco_por_kg: 9.90, subtotal: 11.88, comprado: true, codigo_barras: null, foto_url: null },
   ];
 
   // Recursos (inventário doméstico) — mesma lista fixa de cômodos/
