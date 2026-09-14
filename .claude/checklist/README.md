@@ -1,6 +1,6 @@
-# Checklist Kanban — Bõnotto
+# Checklist Kanban — BNTT
 
-Painel operacional visual do projeto: Kanban compacto + KPIs + gráficos pequenos, lendo/escrevendo `tasks.json`. É uma ferramenta interna de gestão do trabalho (deste `.claude/`), **não faz parte do app Bõnotto** e não é publicada no GitHub Pages.
+Painel operacional visual do projeto: Kanban compacto + KPIs + gráficos pequenos, lendo/escrevendo `tasks.json`. É uma ferramenta interna de gestão do trabalho (deste `.claude/`), **não faz parte do app BNTT** e não é publicada no GitHub Pages.
 
 ## Como abrir
 
@@ -30,5 +30,5 @@ Também abre direto via `file://.claude/checklist/index.html`, mas nesse modo o 
 ## Limitações conhecidas (honestidade, não vergonha)
 
 - Responsivo por scroll horizontal das colunas no mobile — não tem um offcanvas de filtros dedicado (simplificação deliberada: é uma ferramenta interna de uso ocasional, não o app principal, que tem exigência de responsividade muito mais alta).
-- Sem teste automatizado (é fora do escopo de `npm test`/`npm run test:unit`, que cobrem só o app Bõnotto). Testado por leitura cuidadosa do código, não por execução real num navegador — se algo não funcionar como esperado, é o primeiro lugar a checar.
+- Sem teste automatizado (é fora do escopo de `npm test`/`npm run test:unit`, que cobrem só o app BNTT). Testado por leitura cuidadosa do código, não por execução real num navegador — se algo não funcionar como esperado, é o primeiro lugar a checar.
 - `nextId()` gera IDs únicos mas não numerados sequencialmente de forma bonita se você criar itens fora de ordem — não afeta funcionamento, só estética do ID.

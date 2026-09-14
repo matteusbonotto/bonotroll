@@ -1,5 +1,5 @@
 ---
-description: Code review multidisciplinar de uma mudança no Bõnotto (diff atual ou PR).
+description: Code review multidisciplinar de uma mudança no BNTT (diff atual ou PR).
 ---
 
 Alvo (opcional): $ARGUMENTS — se vazio, revisa o diff não commitado (`git diff`) e os commits ainda não mergeados em `main` na branch atual.

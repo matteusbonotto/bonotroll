@@ -1,4 +1,4 @@
-# Arquitetura — Bõnotto
+# Arquitetura — BNTT
 
 Versão viva e curta. Diagnóstico completo em `docs/RAIO-X-DO-PROJETO.md` e `docs/RAIO-X-2.0.md`.
 

@@ -1,5 +1,5 @@
 ---
-description: Planeja uma mudança no Bõnotto antes de implementar (sem escrever/editar código).
+description: Planeja uma mudança no BNTT antes de implementar (sem escrever/editar código).
 ---
 
 Antes de qualquer edição, produza um plano cobrindo:

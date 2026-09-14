@@ -1,10 +1,10 @@
-# Roadmap — Bõnotto
+# Roadmap — BNTT
 
 Estado real, não aspiracional. Fonte primária de detalhe: `docs/CHECKLIST-REBRAND.md` (binário `[x]`/`[ ]`, sem meio-termo) e `docs/BONOTTO-2027-BLUEPRINT.md`. Atualizar esta seção sempre que um item mudar de coluna de verdade — nunca deixar desatualizado.
 
 ## Completed
 
-- Rebrand completo (Bõnotto: logo, favicon, manifest, apple-touch-icon, todas as telas).
+- Rebrand completo pra "Bõnotto" (logo, favicon, manifest, apple-touch-icon, todas as telas) — nome histórico nesta linha de propósito, descreve o rebrand de 2026-08-20; ver entrada de 2026-09-14 mais abaixo pro rebrand seguinte, pra "BNTT".
 - Multi-pagador em transações (`transaction_payers`), saldo "entre vocês" (Splitwise-like).
 - Bancos/Categorias/Empresas como entidades compartilhadas, sem duplicata (find-or-create), modal empilhado padronizado (lista → formulário por cima) nos 4 casos.
 - Modos de visualização de Transações (lista/grade × normal/compacta, combináveis livremente) + agrupamento independente.

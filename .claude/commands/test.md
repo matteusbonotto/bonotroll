@@ -1,5 +1,5 @@
 ---
-description: Roda a verificação completa do Bõnotto (testes automatizados + checagem manual do fluxo) e corrige o que achar, se autorizado pelo contexto.
+description: Roda a verificação completa do BNTT (testes automatizados + checagem manual do fluxo) e corrige o que achar, se autorizado pelo contexto.
 ---
 
 Escopo (opcional): $ARGUMENTS — se vazio, verificação completa do app; se preenchido, foco na área/tela citada.

@@ -1,6 +1,8 @@
-# CLAUDE.md — Bõnotto
+# CLAUDE.md — BNTT
 
 Contexto principal do repositório para o Claude Code. Leia isto primeiro; os documentos vivos em `.claude/docs/` e `docs/` aprofundam cada assunto.
+
+**Histórico de nome**: o produto já passou por 2 rebrands — "CasaGrana" (nome original) → "Bõnotto" (2026-08-20, ver `docs/CHECKLIST-REBRAND.md`) → "**BNTT**" (2026-09-14, este). Documentos históricos (`docs/BONOTTO-2027-BLUEPRINT.md`, `docs/CHECKLIST-REBRAND.md`, `.claude/memory/`, `.claude/discussions/`, nomes de arquivo, commits antigos) continuam mencionando "Bõnotto"/"CasaGrana" de propósito — são registro do que aconteceu quando esses eram os nomes vigentes, não erro a corrigir. O nome do repositório GitHub (`bonotroll`) e a URL pública também não mudam (decisão explícita: não quebrar link nenhum já compartilhado).
 
 ## Idioma
 
@@ -8,13 +10,15 @@ Responder **sempre em português do Brasil** (PT-BR), em qualquer conversa sobre
 
 ## Project Overview
 
-**Bõnotto** é um PWA doméstico para duas pessoas (Matheus e Beatriz) que unifica três domínios que normalmente vivem em apps separados:
+**BNTT — Controle Financeiro Doméstico** ("Seu dinheiro, sua casa, sob controle.") é um PWA doméstico para duas pessoas (Matheus e Beatriz) que unifica três domínios que normalmente vivem em apps separados:
 
 1. **Controle financeiro pessoal e do grupo** — entradas/saídas, despesa fixa/variável, recorrência com cadência, parcelamento, divisão de despesa entre múltiplos pagadores, saldo "entre vocês".
 2. **Lista de compras** — máquina de estados (planejar → comprar → pausar → encerrar), preço por unidade/peso, sugestão de categoria, leitura de código de barras/foto/PDF.
 3. **Recursos** — inventário doméstico em 3 níveis (cômodo → subcategoria → item), com sugestão automática de compra quando algo acaba ou vence.
 
 Mais dois módulos que amarram os três: **Caixinhas** (reserva financeira por banco, multi-moeda com conversão ao vivo) e **Notificações** (central no app + push real via Edge Functions).
+
+A sigla BNTT nomeia os 4 pilares do posicionamento (usado sobretudo na landing page, `landing.html`): **B**alanço (item 1 acima) · **N**ecessidades (item 2) · **T**ransações (parte do item 1 — cartão, parcelamento, recorrência) · **T**ranquilidade (a proposta de valor de ter tudo num lugar só). Apoio visual secundário do slogan, quando fizer sentido: "Balanço. Necessidades. Transações. Tranquilidade."
 
 É software sob medida para 2 usuários reais, não um produto comercial — mas construído com disciplina de produto real (RLS de verdade, services/ como fronteira, testes automatizados) porque *poderia* virar um no futuro.
 
@@ -57,13 +61,14 @@ tests/e2e/*.spec.js         — Playwright, sempre contra ?demo=1 (não precisa 
 
 ## Convenções que já existem — reutilizar, não reinventar
 
-- **Prefixo `cg-`** em toda classe CSS própria (herdado do nome antigo do projeto, "CasaGrana" — decisão deliberada, não renomear).
+- **Prefixo `cg-`** em toda classe CSS própria (herdado do nome original do projeto, "CasaGrana" — decisão deliberada, sobreviveu ao rebrand pra "Bõnotto" e agora pra "BNTT", nunca renomear).
 - **`services/` é a única fronteira** entre UI e dado. Toda função nova de acesso a dado entra ali, nunca direto num componente.
 - **Nada calculado é persistido** — status de pagamento, saldo de caixinha, total de lista de compras: tudo derivado ao vivo do dado bruto a cada render.
 - **Padrão "best-effort"** para ação secundária (ex.: gerar notificação nunca pode travar salvar uma transação) — sempre `try/catch` isolado ao redor da parte não-crítica.
 - **Find-or-create sem duplicata** — bancos/categorias/empresas são entidades compartilhadas (nome único por owner/grupo), nunca texto livre duplicado. Ver `findOrCreateBank`/`findCompanyByName` como referência de padrão.
 - **Import dinâmico para tudo pesado** (`await import('https://esm.sh/...')`) — nenhuma lib grande paga custo de carregamento se a sessão não usar aquela feature.
 - **`?demo=1`** ativa o modo demo (localStorage) sem precisar de conta Supabase — é como todo teste e toda verificação visual deste projeto deve rodar.
+- **Chaves de `localStorage` com prefixo `bonotto_`** (tema, modo de visualização por tela, flag de onboarding visto, banco demo — grep por `bonotto_` em `js/` pra ver a lista completa) **nunca são renomeadas**, mesmo pós-rebrand — são o estado já salvo no navegador de quem já usa o app; renomear a chave reseta essa preferência silenciosamente. Mesma lógica do prefixo `cg-` acima.
 
 ## Armadilhas já conhecidas (não redescobrir)
 

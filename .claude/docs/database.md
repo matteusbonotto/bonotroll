@@ -1,4 +1,4 @@
-# Banco de dados — Bõnotto
+# Banco de dados — BNTT
 
 Fonte de verdade: `supabase/schema.sql` (idempotente — sempre `create table if not exists`, `drop policy if exists` antes de recriar). Este documento é o mapa rápido, não substitui ler o schema real antes de mudar algo.
 
