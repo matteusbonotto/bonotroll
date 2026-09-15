@@ -404,36 +404,195 @@ test.describe('Central de tutoriais', () => {
     await expect(balloon).toBeHidden();
   });
 
-  test('guia avulso "Divida uma despesa com seu par": ação acontece DENTRO do formulário real, sem perder o guia', async ({ page }) => {
+  test('guia avulso "Divida uma despesa com seu par": detalhado (reaproveita título/valor/mais-opções do financeiro + passo próprio de dividir), ação DENTRO do formulário real', async ({ page }) => {
     await page.goto('/?demo=1');
     await page.getByText('Entrar como', { exact: false }).first().click();
 
     await page.locator('.cg-topbar').getByRole('button', { name: 'Central de tutoriais' }).click();
     const central = page.locator('.cg-modal-backdrop[x-show="$store.onboarding.centralAberta"]');
     await central.locator('.cg-list-flat', { hasText: 'Divida uma despesa com seu par' }).click();
-
-    const spotBackdrop = page.locator('.cg-tour-spot-backdrop');
-    await expect(spotBackdrop).toBeVisible();
-    await expect(spotBackdrop.getByText('Divida uma despesa com seu par')).toBeVisible();
+    await expect(central).toBeHidden();
 
     await page.locator('[data-tour-alvo="nova-transacao"]').click();
     const txModal = page.locator('.cg-modal-backdrop[x-show="$store.txModal.open"]');
     await expect(txModal).toBeVisible();
 
+    const balloon = page.locator('.cg-tour-balloon');
+    const titulo = balloon.locator('.cg-tour-balloon__titulo');
+    const proximo = balloon.getByRole('button', { name: 'Próximo' });
+
+    await expect(titulo).toHaveText('Título');
+    await txModal.locator('input[placeholder="Ex: Aluguel, Mercado, Salário…"]').fill('Mercado dividido');
+    await proximo.click();
+    await expect(titulo).toHaveText('Valor');
+    await txModal.locator('input[type="number"]').first().fill('40');
+    await proximo.click();
+    await expect(titulo).toHaveText('Mais opções');
+    await proximo.click();
+    await expect(titulo).toHaveText('Dividir com seu par');
+
     // O guia continua junto por baixo (só encoberto pelo modal real, que tem
     // z-index maior — ver comentário grande em onboarding.js) enquanto a
-    // pessoa mexe no formulário de verdade.
-    await txModal.getByRole('button', { name: 'Mais opções' }).click();
+    // pessoa mexe no formulário de verdade — a AÇÃO em si (adicionar um
+    // pagador) é o que libera "Continuar" aqui, não um clique no balão.
     await txModal.getByTitle('Dividir com mais alguém').click();
     await txModal.locator('.cg-pill-option').first().click();
     await expect(txModal.getByText(/Dividindo entre 2 pessoas/)).toBeVisible();
+    await expect(balloon.getByText('Boa! O valor já foi dividido', { exact: false })).toBeVisible();
+    await proximo.click();
+    await expect(titulo).toHaveText('Salvar');
 
-    // Fecha o formulário real (a pessoa decide quando, o guia nunca fecha
-    // ele sozinho) — o painel reaparece já com o resultado.
-    await txModal.locator('.btn-close').click();
+    await txModal.getByRole('button', { name: 'Salvar' }).click();
     await expect(txModal).toBeHidden();
-    await expect(spotBackdrop.getByText('Boa! O valor já foi dividido')).toBeVisible();
-    await page.getByRole('button', { name: 'Continuar' }).click();
-    await expect(spotBackdrop).toBeHidden();
+    await expect(balloon.getByText('Prontinho!', { exact: false })).toBeVisible();
+    await balloon.getByRole('button', { name: 'Concluir' }).click();
+    await expect(balloon).toBeHidden();
+  });
+
+  test('guia avulso "Marque uma despesa como fixa": detalhado, ação real no campo Tipo', async ({ page }) => {
+    await page.goto('/?demo=1');
+    await page.getByText('Entrar como', { exact: false }).first().click();
+    await page.locator('.cg-topbar').getByRole('button', { name: 'Central de tutoriais' }).click();
+    const central = page.locator('.cg-modal-backdrop[x-show="$store.onboarding.centralAberta"]');
+    await central.locator('.cg-list-flat', { hasText: 'Marque uma despesa como fixa' }).click();
+    await expect(central).toBeHidden();
+
+    await page.locator('[data-tour-alvo="nova-transacao"]').click();
+    const txModal = page.locator('.cg-modal-backdrop[x-show="$store.txModal.open"]');
+    await expect(txModal).toBeVisible();
+
+    const balloon = page.locator('.cg-tour-balloon');
+    const titulo = balloon.locator('.cg-tour-balloon__titulo');
+    const proximo = balloon.getByRole('button', { name: 'Próximo' });
+
+    await expect(titulo).toHaveText('Título');
+    await txModal.locator('input[placeholder="Ex: Aluguel, Mercado, Salário…"]').fill('Aluguel');
+    await proximo.click();
+    await txModal.locator('input[type="number"]').first().fill('1500');
+    await proximo.click();
+    await expect(titulo).toHaveText('Mais opções');
+    await proximo.click();
+    await expect(titulo).toHaveText('Marque como fixa');
+
+    await txModal.locator('[data-tour-alvo="campo-tipo-despesa"] select').selectOption('fixa');
+    await expect(balloon.getByText('Pronto! Marcar como fixa', { exact: false })).toBeVisible();
+    await proximo.click();
+    await expect(titulo).toHaveText('Salvar');
+    await txModal.getByRole('button', { name: 'Salvar' }).click();
+    await expect(txModal).toBeHidden();
+    await balloon.getByRole('button', { name: 'Concluir' }).click();
+    await expect(balloon).toBeHidden();
+  });
+
+  test('guia avulso "Crie um grupo": sem grupo ainda, cria de verdade e sugere o guia de convite em seguida', async ({ page }) => {
+    await page.goto('/?demo=1');
+    await page.getByText('Entrar como', { exact: false }).first().click();
+    // Demo já nasce com um grupo (Matheus+Beatriz) — zera só pra testar o
+    // estado real "ainda sem grupo" que este guia foi feito pra cobrir.
+    // Espera o carregamento inicial de verdade terminar antes de zerar —
+    // sem isto, a própria busca de grupo disparada pelo login (ainda em
+    // andamento bem aqui) resolve alguns instantes depois e sobrescreve o
+    // null de volta pro grupo real.
+    await page.waitForFunction(() => !!Alpine.store('app')?.group);
+    await page.evaluate(() => { Alpine.store('app').group = null; });
+
+    await page.locator('.cg-topbar').getByRole('button', { name: 'Central de tutoriais' }).click();
+    const central = page.locator('.cg-modal-backdrop[x-show="$store.onboarding.centralAberta"]');
+    const item = central.locator('.cg-list-flat').filter({ has: page.locator('h2', { hasText: 'Crie um grupo' }) });
+    await expect(item).toBeVisible();
+    await item.click();
+    await expect(central).toBeHidden();
+
+    const balloon = page.locator('.cg-tour-balloon');
+    const titulo = balloon.locator('.cg-tour-balloon__titulo');
+    await expect(titulo).toHaveText('Nome do grupo');
+    await page.locator('[data-tour-alvo="campo-nome-grupo"] input').fill('Grupo do tour');
+    await balloon.getByRole('button', { name: 'Próximo' }).click();
+    await expect(titulo).toHaveText('Criar');
+
+    await page.locator('[data-tour-alvo="campo-criar-grupo"]').click();
+    // O texto de resultado só aparece depois do evento "criar-grupo" de
+    // verdade (js/components/groupView.js::criar()) — prova que o create
+    // no mockDb aconteceu de verdade, não é simulação.
+    await expect(balloon.getByText('Seu grupo já existe!', { exact: false })).toBeVisible();
+    await balloon.getByRole('button', { name: 'Concluir' }).click();
+    await expect(balloon).toBeHidden();
+  });
+});
+
+// ---------- Viewport de celular (2026-09-15) ----------
+// Feedback real testando no celular: "o balão tá em cima [cobrindo] o
+// botão", "não passa pro próximo" — a suíte inteira até aqui só roda em
+// viewport de desktop (1280×720, bem mais folga vertical), então nunca
+// pegaria isso. Duas causas achadas e corrigidas em onboarding.js/
+// spotlight.js: 1) a posição do alvo era medida ENQUANTO o modal real
+// ainda estava no meio da própria transição CSS de abertura, ficando presa
+// errada; 2) a decisão de lado (embaixo/em cima) usava uma altura de balão
+// CHUTADA em vez da real, então podia escolher um lado onde não cabia de
+// verdade. Este describe roda os mesmos guias já cobertos acima, só que
+// num viewport de celular de verdade (390×844), garantindo em cada passo
+// que o botão "Próximo"/gated fica DENTRO da área visível — não só que
+// existe no DOM.
+test.describe('viewport de celular (regressão: balão não pode cobrir/esconder o botão)', () => {
+  test.use({ viewport: { width: 390, height: 844 } });
+
+  async function tituloEProximoSempreVisiveis(page, balloon, maxSteps) {
+    const titulo = balloon.locator('.cg-tour-balloon__titulo');
+    const vw = 390, vh = 844;
+    for (let i = 0; i < maxSteps; i++) {
+      await expect(balloon).toBeVisible({ timeout: 5000 });
+      const box = await balloon.boundingBox();
+      expect(box, `balão fora da tela no passo "${await titulo.textContent()}"`).toBeTruthy();
+      expect(box.x).toBeGreaterThanOrEqual(0);
+      expect(box.y).toBeGreaterThanOrEqual(0);
+      expect(box.x + box.width).toBeLessThanOrEqual(vw + 1);
+      expect(box.y + box.height).toBeLessThanOrEqual(vh + 1);
+
+      const proximo = balloon.getByRole('button', { name: 'Próximo' });
+      if (!(await proximo.isVisible().catch(() => false))) break;
+      await proximo.click();
+    }
+  }
+
+  test('guia "Cadastre algo que tem em casa" (Recursos): balão sempre dentro da tela do começo ao fim', async ({ page }) => {
+    await page.goto('/?demo=1');
+    await page.getByText('Entrar como', { exact: false }).first().click();
+    // Sempre pelo fluxo real de navegação (Central → guia), nunca acionando
+    // o guia direto pela store: isso pularia a espera natural que dá tempo
+    // do carregamento assíncrono de Recursos (cômodos/categorias) terminar
+    // antes do guia precisar deles.
+    await page.locator('.cg-topbar').getByRole('button', { name: 'Central de tutoriais' }).click();
+    const central = page.locator('.cg-modal-backdrop[x-show="$store.onboarding.centralAberta"]');
+    await expect(central).toBeVisible({ timeout: 5000 });
+    await central.locator('.cg-list-flat', { hasText: 'Cadastre algo que tem em casa' }).click();
+    await expect(central).toBeHidden();
+
+    const spotBackdrop = page.locator('.cg-tour-spot-backdrop');
+    await expect(spotBackdrop).toBeVisible({ timeout: 5000 });
+    const alvo = page.locator('[data-tour-alvo="recursos-add-item"]');
+    await expect(alvo).toBeVisible({ timeout: 5000 });
+    await alvo.click();
+
+    const balloon = page.locator('.cg-tour-balloon');
+    await tituloEProximoSempreVisiveis(page, balloon, 6);
+  });
+
+  test('guia "Registre um gasto de verdade" (financeiro): balão sempre dentro da tela em todos os 17 passos, inclusive logo após o modal abrir (transição CSS)', async ({ page }) => {
+    await page.goto('/?demo=1');
+    await page.getByText('Entrar como', { exact: false }).first().click();
+    await page.locator('.cg-topbar').getByRole('button', { name: 'Central de tutoriais' }).click();
+    const central = page.locator('.cg-modal-backdrop[x-show="$store.onboarding.centralAberta"]');
+    await central.locator('.cg-list-flat', { hasText: 'Registre um gasto de verdade' }).click();
+
+    const spotBackdrop = page.locator('.cg-tour-spot-backdrop');
+    await expect(spotBackdrop).toBeVisible({ timeout: 5000 });
+    await page.locator('[data-tour-alvo="nova-transacao"]').click();
+
+    const balloon = page.locator('.cg-tour-balloon');
+    const titulo = balloon.locator('.cg-tour-balloon__titulo');
+    await expect(titulo).toHaveText('Entrada');
+    // Nenhum waitForTimeout aqui de propósito — é EXATAMENTE a janela onde
+    // a posição ficava presa no meio da transição do modal antes do fix.
+    await tituloEProximoSempreVisiveis(page, balloon, 17);
   });
 });

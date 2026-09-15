@@ -68,6 +68,10 @@ export function groupView() {
         await store.refreshCategories();
         store.notify('Grupo criado! Compartilhe o código com quem vai participar.');
         this.nomeGrupo = '';
+        // Guia "Crie um grupo" (js/components/onboarding.js, PASSOS_CRIAR_
+        // GRUPO) — sinal dedicado só na CRIAÇÃO (entrar() é uma ação
+        // diferente, sem guia próprio ainda).
+        window.dispatchEvent(new CustomEvent('cg:onboarding-acao', { detail: { area: 'criar-grupo' } }));
       } catch (e) {
         store.notify(e.message || 'Erro ao criar grupo.', 'danger');
       } finally {

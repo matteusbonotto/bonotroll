@@ -596,6 +596,114 @@ const PASSOS_CAIXINHA = [
   },
 ];
 
+// Guias "Divida uma despesa"/"Marque como fixa"/"Registre no cartão" —
+// mesma ideia dos detalhados acima, mas focados: em vez de repetir os 17
+// passos inteiros do financeiro, reaproveitam por REFERÊNCIA (mesmo
+// objeto, nunca copiado/mutado — seguro porque nenhum código deste arquivo
+// escreve em cima de um passo, só em this.concluido/this.pulado, chaveado
+// por área) os 5 passos genéricos que já existem em PASSOS_FINANCEIRO
+// (abrir/título/valor/mais-opções/salvar) e só definem o passo do MEIO —
+// o campo específico que cada guia existe pra ensinar. Índices fixos
+// (0/3/5/6/16) — se PASSOS_FINANCEIRO mudar de formato, ajustar aqui junto.
+const PASSOS_DIVIDIR_DESPESA = [
+  PASSOS_FINANCEIRO[0],
+  PASSOS_FINANCEIRO[3],
+  PASSOS_FINANCEIRO[5],
+  PASSOS_FINANCEIRO[6],
+  {
+    id: 'campo-responsavel-dividir',
+    tipo: 'acao',
+    dentroModal: true,
+    area: 'dividir-despesa',
+    view: 'home',
+    // "Mais opções" (passo anterior, reaproveitado) só EXPLICA o botão —
+    // quem abre de verdade é sempre o passo seguinte (mesmo padrão do
+    // financeiro: lá é campo-empresa; aqui, este). Sem isto o alvo abaixo
+    // fica escondido dentro da seção ainda fechada (BUG REAL pego
+    // escrevendo o teste: rectAlvo saía {0,0,0,0}, balão sem alvo nenhum).
+    preparar: () => prepararMostrarMaisOpcoes(),
+    alvoSeletor: '[data-tour-alvo="campo-responsavel"]',
+    icone: 'bi-people-fill',
+    titulo: 'Dividir com seu par',
+    texto: 'Toque no "+" ao lado de Responsável e escolha quem mais participou dessa despesa.',
+    textoResultado: 'Boa! O valor já foi dividido em partes iguais entre vocês — dá pra ajustar o percentual de cada um na mão, se não for igual. O saldo de quem deve quanto pra quem aparece em "Grupo", em "Entre vocês".',
+  },
+  PASSOS_FINANCEIRO[16],
+];
+
+const PASSOS_FIXA = [
+  PASSOS_FINANCEIRO[0],
+  PASSOS_FINANCEIRO[3],
+  PASSOS_FINANCEIRO[5],
+  PASSOS_FINANCEIRO[6],
+  {
+    id: 'campo-tipo-despesa-fixa',
+    tipo: 'acao',
+    dentroModal: true,
+    area: 'fixa',
+    view: 'home',
+    preparar: () => prepararMostrarMaisOpcoes(), // ver comentário igual em PASSOS_DIVIDIR_DESPESA
+    alvoSeletor: '[data-tour-alvo="campo-tipo-despesa"]',
+    icone: 'bi-pin-angle-fill',
+    titulo: 'Marque como fixa',
+    texto: 'No campo "Tipo", escolha "Fixa".',
+    textoResultado: 'Pronto! Marcar como fixa já ligou a recorrência mensal sozinha — o próximo lançamento é criado automaticamente, sem precisar cadastrar de novo. Dá pra ajustar o dia certo logo abaixo, em "Recorrente".',
+  },
+  PASSOS_FINANCEIRO[16],
+];
+
+const PASSOS_CARTAO = [
+  PASSOS_FINANCEIRO[0],
+  PASSOS_FINANCEIRO[3],
+  PASSOS_FINANCEIRO[5],
+  PASSOS_FINANCEIRO[6],
+  {
+    id: 'campo-cartao-guia',
+    tipo: 'acao',
+    dentroModal: true,
+    area: 'cartao',
+    view: 'home',
+    preparar: () => prepararMostrarMaisOpcoes(), // ver comentário igual em PASSOS_DIVIDIR_DESPESA
+    alvoSeletor: '[data-tour-alvo="campo-cartao"]',
+    icone: 'bi-credit-card-2-front-fill',
+    titulo: 'Escolha o cartão',
+    texto: 'Selecione um cartão (ou crie um novo, se ainda não tiver nenhum).',
+    textoResultado: 'Show! Essa despesa já está dentro da fatura daquele cartão no mês — o app junta tudo sozinho e conta o valor uma vez só, sem duplicar no saldo.',
+  },
+  PASSOS_FINANCEIRO[16],
+];
+
+// Guia "Crie um grupo" — não abre modal nenhum (o formulário já vive direto
+// na tela Grupo, ver index.html "Criar um grupo"), por isso não tem passo
+// "abrir"/naoPular como os outros: o 1º passo já é o campo de verdade.
+// Pré-requisito de "Divida uma despesa com seu par" (2+ membros no grupo)
+// continua vindo de dado real (app.group.members), nunca de "já viu este
+// guia" — pedido explícito de usuário: "só libera o tour de dividir
+// despesa se adicionar alguém de verdade".
+const PASSOS_CRIAR_GRUPO = [
+  {
+    id: 'campo-nome-grupo',
+    tipo: 'campo',
+    view: 'grupo',
+    alvoSeletor: '[data-tour-alvo="campo-nome-grupo"]',
+    icone: 'bi-house-add',
+    titulo: 'Nome do grupo',
+    texto: 'Um nome curto, tipo "Família" ou os nomes de vocês dois.',
+  },
+  {
+    id: 'campo-criar-grupo',
+    tipo: 'acao',
+    dentroModal: true,
+    area: 'criar-grupo',
+    view: 'grupo',
+    alvoSeletor: '[data-tour-alvo="campo-criar-grupo"]',
+    icone: 'bi-check-circle-fill',
+    titulo: 'Criar',
+    texto: 'Toque em "Criar" pra concluir.',
+    textoResultado: 'Seu grupo já existe! Agora abra o guia "Convide seu par pro grupo", na Central, pra chamar alguém — assim que a pessoa entrar de verdade, o guia "Divida uma despesa com seu par" libera sozinho.',
+  },
+];
+
 const CATALOGO_GUIAS = [
   {
     id: 'financeiro',
@@ -637,36 +745,30 @@ const CATALOGO_GUIAS = [
     id: 'dividir-despesa',
     area: 'dividir-despesa',
     view: 'home',
-    alvoSeletor: 'section[x-data^="dashboardView"] [data-tour-alvo="nova-transacao"]',
     requisito: (app) => (app.group?.members?.length || 0) >= 2,
-    requisitoTexto: 'Esse guia precisa de um grupo com você e seu par (tela Grupo) — convide seu par primeiro.',
+    requisitoTexto: 'Esse guia precisa de um grupo com você e seu par (tela Grupo) — crie um grupo e convide seu par primeiro.',
     icone: 'bi-people-fill',
     titulo: 'Divida uma despesa com seu par',
     resumo: 'Some quem mais participou de uma despesa, sem fazer conta de cabeça.',
-    texto: 'Toque em "Nova despesa" e, dentro do formulário, abra "Mais opções". Ao lado de "Responsável" tem um botão "+" — toque nele e escolha quem mais participou dessa despesa.',
-    textoResultado: 'Boa! O valor já foi dividido em partes iguais entre vocês — dá pra ajustar o valor ou o percentual de cada um na mão, se não for igual. O saldo de quem deve quanto pra quem aparece na tela "Grupo", em "Entre vocês".',
+    passos: PASSOS_DIVIDIR_DESPESA,
   },
   {
     id: 'fixa',
     area: 'fixa',
     view: 'home',
-    alvoSeletor: 'section[x-data^="dashboardView"] [data-tour-alvo="nova-transacao"]',
     icone: 'bi-pin-angle-fill',
     titulo: 'Marque uma despesa como fixa',
     resumo: 'Aluguel, assinatura — algo que se repete todo mês sozinho.',
-    texto: 'Toque em "Nova despesa" e abra "Mais opções". No campo "Tipo", escolha "Fixa".',
-    textoResultado: 'Pronto! Marcar como fixa já ligou a recorrência mensal sozinha — o próximo lançamento é criado automaticamente, sem precisar cadastrar de novo. Dá pra ajustar o dia certo logo abaixo, em "Recorrente".',
+    passos: PASSOS_FIXA,
   },
   {
     id: 'cartao',
     area: 'cartao',
     view: 'home',
-    alvoSeletor: 'section[x-data^="dashboardView"] [data-tour-alvo="nova-transacao"]',
     icone: 'bi-credit-card-2-front-fill',
     titulo: 'Registre uma compra no cartão de crédito',
     resumo: 'Uma compra no crédito, somada automaticamente na fatura do mês.',
-    texto: 'Toque em "Nova despesa" e abra "Mais opções". Perto de "Recorrente" tem um campo pra escolher o cartão — selecione um cartão (ou crie um novo, se ainda não tiver nenhum).',
-    textoResultado: 'Show! Essa despesa já está dentro da fatura daquele cartão no mês — o app junta tudo sozinho e conta o valor uma vez só, sem duplicar no saldo.',
+    passos: PASSOS_CARTAO,
   },
   {
     id: 'caixinha',
@@ -676,6 +778,17 @@ const CATALOGO_GUIAS = [
     titulo: 'Crie uma caixinha',
     resumo: 'Uma reserva separada, com meta e moeda à sua escolha.',
     passos: PASSOS_CAIXINHA,
+  },
+  {
+    id: 'criar-grupo',
+    area: 'criar-grupo',
+    view: 'grupo',
+    requisito: (app) => !app.group,
+    requisitoTexto: 'Você já faz parte de um grupo — veja o código dele na tela Grupo.',
+    icone: 'bi-house-add',
+    titulo: 'Crie um grupo',
+    resumo: 'O primeiro passo pra dividir contas com seu par.',
+    passos: PASSOS_CRIAR_GRUPO,
   },
   {
     id: 'convite',
@@ -723,6 +836,16 @@ export function onboardingStore() {
     // linhas no celular) — um valor chutado ficaria errado pra alguma
     // combinação mais cedo ou mais tarde.
     painelAltura: 0,
+    // Altura real do BALÃO de campo (.cg-tour-balloon), em px — mesma ideia
+    // de painelAltura acima, só que aqui também alimenta a PRÓPRIA
+    // geometria do balão (ver balloonStyles/computeBalloonGeometry): decidir
+    // se ele cabe embaixo ou em cima do alvo precisa da altura de verdade,
+    // não de um chute — ver comentário grande em js/utils/spotlight.js pro
+    // bug real que isso corrigiu (balão cobrindo o próprio botão no
+    // celular). 0 até a 1ª medição (ResizeObserver dispara ~1 frame depois
+    // do balão entrar no DOM); a função usa uma estimativa só nesse
+    // meio-tempo bem curto.
+    balloonAltura: 0,
 
     // Limpeza de passo (listener do evento de ação + listeners de
     // scroll/resize) — sempre uma função ou null, nunca acumula: toda troca
@@ -730,7 +853,9 @@ export function onboardingStore() {
     _pararEscutaAcao: null,
     _pararRecalculo: null,
     _pararObservarPainel: null,
+    _pararObservarBalao: null,
     _pararEscutaFechamento: null,
+    _correcaoAtraso: null, // setTimeout pendente pra recalcular a posição depois que a transição CSS do modal real termina — ver _focarAlvo
 
     catalogo: CATALOGO_GUIAS,
 
@@ -821,7 +946,14 @@ export function onboardingStore() {
     // computeBalloonGeometry (js/utils/spotlight.js).
     get balloonStyles() {
       if (!this.rectAlvo) return null;
-      const g = computeBalloonGeometry(this.rectAlvo, { width: window.innerWidth, height: window.innerHeight });
+      // visualViewport.height encolhe de verdade quando o teclado do
+      // celular abre (window.innerHeight nem sempre muda) — usar ele aqui
+      // faz o balão saber que sobrou MENOS espaço visível embaixo do alvo
+      // nesse caso, e escolher o lado certo em vez de nascer atrás do
+      // teclado.
+      const vv = window.visualViewport;
+      const viewport = vv ? { width: vv.width, height: vv.height } : { width: window.innerWidth, height: window.innerHeight };
+      const g = computeBalloonGeometry(this.rectAlvo, viewport, { balloonHeight: this.balloonAltura || 190 });
       const px = (n) => `${n}px`;
       const balloon = { left: px(g.balloon.left), maxWidth: px(g.balloon.maxWidth) };
       if (g.placement === 'bottom') balloon.top = px(g.balloon.top);
@@ -1023,8 +1155,9 @@ export function onboardingStore() {
       // (abrir/salvar sempre têm alvo garantido).
       if (p.tipo === 'campo' && !this.rectAlvo) { this.avancar(); return; }
       this._ligarRecalculoAutomatico();
-      await nextTick(); // o painel só existe no DOM depois deste tick (x-show acabou de virar true)
+      await nextTick(); // painel/balão só existem no DOM depois deste tick (x-show acabou de virar true)
       this._observarPainel();
+      this._observarBalao();
     },
 
     _escutarFechamentoModal() {
@@ -1088,6 +1221,19 @@ export function onboardingStore() {
       const el = p.tipo === 'acao' || p.tipo === 'campo' ? document.querySelector(p.alvoSeletor) : null;
       if (el) el.scrollIntoView({ block: 'center' });
       this._recalcularSpotlight();
+      // BUG REAL relatado em uso no celular (2026-09-15): quando este passo
+      // é o 1º de um guia que acabou de abrir um modal real (ex.: "Nova
+      // despesa"), o modal ainda está NO MEIO da própria transição CSS de
+      // entrada (Alpine `x-transition`, ~150ms) no instante em que
+      // _recalcularSpotlight roda logo acima — a posição medida é a do
+      // MEIO da animação, não a final. Como o recálculo automático só
+      // dispara em scroll/resize (nunca sozinho quando uma transição
+      // termina), o balão ficava preso naquela posição errada até a pessoa
+      // rolar a tela — às vezes cobrindo o próprio botão que devia mostrar.
+      // Esta 2ª medida, um pouco depois, corrige sozinha sem precisar saber
+      // a duração exata da transição de cada modal.
+      clearTimeout(this._correcaoAtraso);
+      this._correcaoAtraso = setTimeout(() => this._recalcularSpotlight(), 220);
     },
 
     _recalcularSpotlight() {
@@ -1140,6 +1286,19 @@ export function onboardingStore() {
       this._pararObservarPainel = () => obs.disconnect();
     },
 
+    // Mesma ideia de _observarPainel, pro balão de campo — ver comentário
+    // grande em js/utils/spotlight.js (computeBalloonGeometry) pro bug real
+    // que motivou medir a altura de VERDADE em vez de estimar.
+    _observarBalao() {
+      const el = document.querySelector('.cg-tour-balloon');
+      if (!el || typeof ResizeObserver === 'undefined') return;
+      const obs = new ResizeObserver(([entry]) => {
+        this.balloonAltura = entry.contentRect.height;
+      });
+      obs.observe(el);
+      this._pararObservarBalao = () => obs.disconnect();
+    },
+
     _limparPasso() {
       this._pararEscutaAcao?.();
       this._pararEscutaAcao = null;
@@ -1149,7 +1308,12 @@ export function onboardingStore() {
       this._pararRecalculo = null;
       this._pararObservarPainel?.();
       this._pararObservarPainel = null;
+      this._pararObservarBalao?.();
+      this._pararObservarBalao = null;
+      clearTimeout(this._correcaoAtraso);
+      this._correcaoAtraso = null;
       this.painelAltura = 0;
+      this.balloonAltura = 0;
       this.rectAlvo = null;
     },
   };

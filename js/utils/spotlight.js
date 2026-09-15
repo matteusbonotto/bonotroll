@@ -44,7 +44,24 @@ export function computeSpotlightGeometry(rect, padding = 8) {
 // `viewport` é { width, height } — passado por quem chama (window.innerWidth/
 // innerHeight) porque esta função continua pura/sem DOM, testável com objetos
 // simples como computeSpotlightGeometry.
-export function computeBalloonGeometry(rect, viewport, padding = 6) {
+//
+// `opts.balloonHeight` — BUG REAL relatado em uso no celular (2026-09-15):
+// "um elemento não aparece porque o balão tá em cima [cobrindo o botão]".
+// Duas causas achadas testando em viewport de celular: 1) a decisão
+// embaixo/em-cima usava um "~130px" CHUTADO pra altura do balão — errado
+// pra qualquer guia com texto mais comprido (ex. "Comprovante"), que é
+// mais alto que isso e podia ficar posicionado onde não cabia de verdade;
+// 2) mesmo escolhendo o lado certo, nada limitava o balão a ficar DENTRO
+// da tela — perto do rodapé (ou com o teclado do celular reduzindo a
+// altura visível), o balão nascia parcialmente fora, com "Próximo"
+// inalcançável. `balloonHeight` é a altura REAL medida do balão (ver
+// ResizeObserver em onboarding.js::_observarBalao) — sem essa medida ainda
+// (1º frame), cai numa estimativa generosa. Com ela, a decisão de lado E o
+// clamp final usam o número real, nunca mais um chute.
+export function computeBalloonGeometry(rect, viewport, opts = {}) {
+  const padding = opts.padding ?? 6;
+  const balloonHeight = opts.balloonHeight ?? 190;
+
   const ring = {
     top: Math.max(0, rect.top - padding),
     left: Math.max(0, rect.left - padding),
@@ -58,19 +75,32 @@ export function computeBalloonGeometry(rect, viewport, padding = 6) {
 
   const spaceBelow = viewport.height - (ring.top + ring.height);
   const spaceAbove = ring.top;
+  const precisa = balloonHeight + gap;
   // Prefere embaixo (mais natural de ler, "próximo campo vem depois"); só
-  // inverte pra cima quando embaixo realmente não sobra espaço nenhum pro
-  // balão (~130px, altura aproximada de um balão de 2-3 linhas + botões) E
-  // em cima sobra mais.
-  const placement = spaceBelow >= 130 || spaceBelow >= spaceAbove ? 'bottom' : 'top';
+  // inverte pra cima quando embaixo realmente não tem como caber o balão
+  // (na altura de verdade) E em cima cabe melhor.
+  let placement;
+  if (spaceBelow >= precisa) placement = 'bottom';
+  else if (spaceAbove >= precisa) placement = 'top';
+  else placement = spaceBelow >= spaceAbove ? 'bottom' : 'top';
 
   let left = ring.left;
   if (left + maxWidth > viewport.width - gutter) left = viewport.width - gutter - maxWidth;
   if (left < gutter) left = gutter;
 
   const balloon = { left, maxWidth };
-  if (placement === 'bottom') balloon.top = ring.top + ring.height + gap;
-  else balloon.bottom = viewport.height - ring.top + gap;
+  if (placement === 'bottom') {
+    const ideal = ring.top + ring.height + gap;
+    // Clamp: nunca deixa o balão vazar pra fora da tela por baixo — garante
+    // que "Próximo"/"Pular" continuem alcançáveis mesmo com o alvo perto do
+    // rodapé ou o teclado do celular cobrindo parte da tela.
+    const maxTop = viewport.height - gutter - balloonHeight;
+    balloon.top = Math.min(ideal, Math.max(gutter, maxTop));
+  } else {
+    const ideal = viewport.height - ring.top + gap;
+    const maxBottom = viewport.height - gutter - balloonHeight;
+    balloon.bottom = Math.min(ideal, Math.max(gutter, maxBottom));
+  }
 
   return { ring, placement, balloon };
 }

@@ -54,3 +54,28 @@ test('computeBalloonGeometry: nunca deixa o balão vazar pra fora da largura da 
   assert.ok(g.balloon.left + g.balloon.maxWidth <= 400 - 12 + 0.001);
   assert.ok(g.balloon.left >= 12);
 });
+
+// BUG REAL relatado em uso no celular (2026-09-15): a decisão de lado usava
+// uma altura de balão CHUTADA (~130px) — errada pra qualquer guia com texto
+// mais comprido, o que podia colocar o balão embaixo mesmo sem caber de
+// verdade, cobrindo o próprio botão "Próximo". `balloonHeight` (altura
+// medida de verdade, ver ResizeObserver em onboarding.js) corrige os dois
+// problemas: a decisão de lado E o clamp final.
+test('computeBalloonGeometry: usa a altura REAL do balão (não uma estimativa) pra decidir o lado', () => {
+  // Só 104px de sobra embaixo — não cabe um balão de 220px (medido de
+  // verdade), mesmo que a estimativa antiga (~130px) achasse que cabia
+  // ("bottom" venceria por espaço bruto, 104 > 0, sem considerar a altura
+  // real). Em cima sobra de sobra (494px) — o lado certo.
+  const g = computeBalloonGeometry({ top: 500, left: 50, width: 120, height: 40 }, { width: 400, height: 650 }, { balloonHeight: 220 });
+  assert.equal(g.placement, 'top');
+});
+
+test('computeBalloonGeometry: clamp nunca deixa o balão vazar pra fora da altura da tela (alvo perto do rodapé, ou teclado do celular reduzindo a área visível)', () => {
+  const g = computeBalloonGeometry({ top: 750, left: 50, width: 120, height: 40 }, { width: 400, height: 800 }, { balloonHeight: 220 });
+  if (g.placement === 'bottom') {
+    assert.ok(g.balloon.top + 220 <= 800 - 12 + 0.001);
+  } else {
+    assert.ok(g.balloon.bottom >= 12 - 0.001);
+    assert.ok(800 - g.balloon.bottom - 220 >= 12 - 0.001);
+  }
+});
