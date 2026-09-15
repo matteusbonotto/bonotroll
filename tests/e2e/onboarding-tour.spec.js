@@ -278,7 +278,7 @@ test.describe('Central de tutoriais', () => {
     await expect(central).toBeHidden();
   });
 
-  test('guia avulso "Crie uma caixinha" (novo no catálogo): navega sozinho, cria de verdade e mostra o resultado', async ({ page }) => {
+  test('guia avulso "Crie uma caixinha": detalhado (balão por campo, ver PASSOS_CAIXINHA), navega sozinho, cria de verdade e mostra o resultado', async ({ page }) => {
     await page.goto('/?demo=1');
     await page.getByText('Entrar como', { exact: false }).first().click();
 
@@ -290,9 +290,7 @@ test.describe('Central de tutoriais', () => {
 
     const spotBackdrop = page.locator('.cg-tour-spot-backdrop');
     await expect(spotBackdrop).toBeVisible();
-    // Guia avulso: "Guia rápido" no lugar de "Passo X de Y", sem dots.
-    await expect(spotBackdrop.getByText('Guia rápido')).toBeVisible();
-    await expect(spotBackdrop.getByText('Crie uma caixinha')).toBeVisible();
+    await expect(spotBackdrop.getByText('Vamos criar uma reserva')).toBeVisible();
 
     const caixinhas = page.locator('section[x-data^="caixinhasView"]');
     await expect(caixinhas).toBeVisible();
@@ -302,16 +300,108 @@ test.describe('Central de tutoriais', () => {
 
     const caixinhaModal = page.locator('.cg-modal-backdrop[x-show="$store.caixinhaModal.open"]');
     await expect(caixinhaModal).toBeVisible();
+    // Abrir o modal avança sozinho pro balão do 1º campo.
+    await expect(spotBackdrop).toBeHidden();
+
+    const balloon = page.locator('.cg-tour-balloon');
+    const titulo = balloon.locator('.cg-tour-balloon__titulo');
+    const proximo = balloon.getByRole('button', { name: 'Próximo' });
+
+    await expect(titulo).toHaveText('Banco');
     // Banco já vem de um <select> com bancos do seed — só precisa escolher
-    // um valor de verdade (o 1º banco cadastrado) e salvar.
+    // um valor de verdade (o 1º banco cadastrado).
     await caixinhaModal.locator('select').first().selectOption({ index: 1 });
+    await proximo.click();
+    await expect(titulo).toHaveText('Moeda e meta');
+    await proximo.click();
+    // "Responsável" só existe com grupo formado — pula sozinho se não
+    // existir; qualquer um dos dois títulos abaixo é aceitável aqui.
+    await expect(titulo).toHaveText(/Responsável|Criar caixinha/);
+    if ((await titulo.textContent()) === 'Responsável') await proximo.click();
+    await expect(titulo).toHaveText('Criar caixinha');
+
     await caixinhaModal.getByRole('button', { name: /Criar caixinha|Salvar/ }).click();
     await expect(caixinhaModal).toBeHidden();
 
-    await expect(spotBackdrop.getByText('Show! Sua caixinha já está criada.')).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Pular' })).toBeHidden();
-    await page.getByRole('button', { name: 'Continuar' }).click();
-    await expect(spotBackdrop).toBeHidden();
+    await expect(balloon.getByText('Show! Sua caixinha já está criada.')).toBeVisible();
+    await balloon.getByRole('button', { name: 'Concluir' }).click();
+    await expect(balloon).toBeHidden();
+  });
+
+  test('guia avulso "Adicione um item na lista": detalhado (balão por campo, ver PASSOS_COMPRAS), adiciona de verdade sem fechar o formulário sozinho antes da hora', async ({ page }) => {
+    await page.goto('/?demo=1');
+    await page.getByText('Entrar como', { exact: false }).first().click();
+
+    await page.locator('.cg-topbar').getByRole('button', { name: 'Central de tutoriais' }).click();
+    const central = page.locator('.cg-modal-backdrop[x-show="$store.onboarding.centralAberta"]');
+    await central.locator('.cg-list-flat', { hasText: 'Adicione um item na lista' }).click();
+    await expect(central).toBeHidden();
+
+    const spotBackdrop = page.locator('.cg-tour-spot-backdrop');
+    await expect(spotBackdrop).toBeVisible();
+    await page.locator('[data-tour-alvo="novo-item-compra"]').click();
+
+    const balloon = page.locator('.cg-tour-balloon');
+    const titulo = balloon.locator('.cg-tour-balloon__titulo');
+    const proximo = balloon.getByRole('button', { name: 'Próximo' });
+
+    await expect(titulo).toHaveText('Nome');
+    await page.locator('[data-tour-alvo="campo-nome-compra"] input[type="text"]').fill('Leite do tour');
+    for (const t of ['Categoria', 'Unidade e quantidade', 'Preço e validade', 'Prioridade']) {
+      await proximo.click();
+      await expect(titulo).toHaveText(t);
+    }
+    await proximo.click();
+    await expect(titulo).toHaveText('Adicionar');
+
+    // Compras mantém o formulário aberto de propósito depois de salvar (pra
+    // colocar vários itens seguidos) — o guia precisa fechar ele mesmo
+    // assim, sem terminar o guia antes de mostrar o resultado (bug real
+    // encontrado escrevendo este guia: o fechamento programático colidia
+    // com a detecção de "a pessoa desistiu" — ver _escutarAcao/
+    // _pararEscutaFechamento em onboarding.js).
+    await page.locator('[data-tour-alvo="campo-adicionar-compra"]').click();
+    await expect(page.locator('section[x-data^="shoppingView"] .cg-modal-backdrop', { has: page.locator('[data-tour-alvo="campo-nome-compra"]') })).toBeHidden();
+    await expect(balloon.getByText('Viu? O item já apareceu na lista', { exact: false })).toBeVisible();
+    await balloon.getByRole('button', { name: 'Concluir' }).click();
+    await expect(balloon).toBeHidden();
+
+    await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Lista de compras' }).first().click();
+    await expect(page.getByText('Leite do tour').first()).toBeVisible();
+  });
+
+  test('guia avulso "Cadastre algo que tem em casa": detalhado (balão por campo, ver PASSOS_RECURSOS), navega pro cômodo sozinho e cria de verdade', async ({ page }) => {
+    await page.goto('/?demo=1');
+    await page.getByText('Entrar como', { exact: false }).first().click();
+
+    await page.locator('.cg-topbar').getByRole('button', { name: 'Central de tutoriais' }).click();
+    const central = page.locator('.cg-modal-backdrop[x-show="$store.onboarding.centralAberta"]');
+    await central.locator('.cg-list-flat', { hasText: 'Cadastre algo que tem em casa' }).click();
+    await expect(central).toBeHidden();
+
+    const spotBackdrop = page.locator('.cg-tour-spot-backdrop');
+    await expect(spotBackdrop).toBeVisible({ timeout: 5000 });
+    const alvo = page.locator('[data-tour-alvo="recursos-add-item"]');
+    await expect(alvo).toBeVisible({ timeout: 5000 });
+    await alvo.click();
+
+    const balloon = page.locator('.cg-tour-balloon');
+    const titulo = balloon.locator('.cg-tour-balloon__titulo');
+    const proximo = balloon.getByRole('button', { name: 'Próximo' });
+
+    await expect(titulo).toHaveText('Nome');
+    await page.locator('[data-tour-alvo="campo-nome-recurso"] input[type="text"]').fill('Sabonete do tour');
+    for (const t of ['Subcategoria', 'Quantidade', 'Validade']) {
+      await proximo.click();
+      await expect(titulo).toHaveText(t);
+    }
+    await proximo.click();
+    await expect(titulo).toHaveText('Salvar');
+
+    await page.locator('[data-tour-alvo="campo-salvar-recurso"]').click();
+    await expect(balloon.getByText('já está guardado nesse cômodo', { exact: false })).toBeVisible();
+    await balloon.getByRole('button', { name: 'Concluir' }).click();
+    await expect(balloon).toBeHidden();
   });
 
   test('guia avulso "Divida uma despesa com seu par": ação acontece DENTRO do formulário real, sem perder o guia', async ({ page }) => {

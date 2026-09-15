@@ -336,6 +336,11 @@ export function resourcesView() {
       this.itemForm = { ...ITEM_FORM_VAZIO(), categoria_id: categoriaPreSelecionada };
       this.scannerErro = '';
       this.itemModalAberto = true;
+      // Guia detalhado "Cadastre algo que tem em casa" (js/components/
+      // onboarding.js, PASSOS_RECURSOS) — sinal de que o formulário abriu
+      // de verdade, pro 1º passo avançar sozinho. Dispara sempre, mesmo
+      // fora do guia — só quem estiver escutando liga.
+      window.dispatchEvent(new CustomEvent('cg:onboarding-acao', { detail: { area: 'recursos-abrir' } }));
     },
     abrirEditarItem(item) {
       this.itemForm = {
@@ -352,6 +357,10 @@ export function resourcesView() {
     async fecharModalItem() {
       await this.fecharScanner();
       this.itemModalAberto = false;
+      // Best-effort pro guia (onboarding.js): fechar o formulário de
+      // verdade no meio de um passo com balão encerra o guia sozinho, em
+      // vez de deixar o balão apontando pra um campo que sumiu.
+      window.dispatchEvent(new CustomEvent('cg:onboarding-modal-fechado'));
     },
 
     async salvarItem() {

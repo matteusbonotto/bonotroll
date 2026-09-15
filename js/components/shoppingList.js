@@ -82,10 +82,21 @@ export function shoppingView() {
     itemFormAberto: false,
     toggleItemForm() {
       this.itemFormAberto = !this.itemFormAberto;
-      if (this.itemFormAberto) this.$nextTick(() => this.$refs.inputNovoItem?.focus());
+      if (this.itemFormAberto) {
+        this.$nextTick(() => this.$refs.inputNovoItem?.focus());
+        // Guia detalhado "Adicione um item na lista" (js/components/
+        // onboarding.js, PASSOS_COMPRAS) — sinal de que o formulário abriu
+        // de verdade, pro 1º passo avançar sozinho. Dispara sempre, mesmo
+        // fora do guia — só quem estiver escutando liga.
+        window.dispatchEvent(new CustomEvent('cg:onboarding-acao', { detail: { area: 'compras-abrir' } }));
+      }
     },
     fecharItemForm() {
       this.itemFormAberto = false;
+      // Best-effort pro guia (onboarding.js): fechar o formulário de
+      // verdade no meio de um passo com balão encerra o guia sozinho, em
+      // vez de deixar o balão apontando pra um campo que sumiu.
+      window.dispatchEvent(new CustomEvent('cg:onboarding-modal-fechado'));
     },
 
     // ---------- Histórico de compras finalizadas ----------

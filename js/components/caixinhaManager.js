@@ -48,6 +48,11 @@ export function caixinhaModalStore() {
       // já em "+ Novo banco…" mas nenhum jeito óbvio de continuar dali
       // (selecionar de novo a mesma opção não dispara @change).
       if (this.bancoId === '__novo__') this.onBancoChange();
+      // Guia detalhado "Crie uma caixinha" (js/components/onboarding.js,
+      // PASSOS_CAIXINHA) — sinal de que o formulário abriu de verdade, pro
+      // 1º passo avançar sozinho. Dispara sempre, mesmo fora do guia — só
+      // quem estiver escutando liga.
+      window.dispatchEvent(new CustomEvent('cg:onboarding-acao', { detail: { area: 'caixinha-abrir' } }));
     },
     openEdit(c) {
       this.edit(c);
@@ -56,6 +61,10 @@ export function caixinhaModalStore() {
     close() {
       this.open = false;
       this.resetForm();
+      // Best-effort pro guia (onboarding.js): fechar o formulário de
+      // verdade no meio de um passo com balão encerra o guia sozinho, em
+      // vez de deixar o balão apontando pra um campo que sumiu.
+      window.dispatchEvent(new CustomEvent('cg:onboarding-modal-fechado'));
     },
 
     edit(c) {

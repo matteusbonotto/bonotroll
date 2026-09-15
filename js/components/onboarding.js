@@ -390,6 +390,212 @@ const PASSOS_FINANCEIRO = [
   },
 ];
 
+// Guia detalhado "Adicione um item na lista" — mesma ideia do financeiro
+// acima (feedback do usuário foi "faça o mesmo com lista de compras,
+// caixinha, recursos, tudo"), só mais curto porque o formulário tem bem
+// menos campos. itemFormAberto/novoItem/addItem/fecharItemForm são estado
+// LOCAL do componente shoppingView (não um store global como txModal) —
+// mesmo assim funciona igual: o alvo real só precisa existir no DOM, não
+// importa em qual x-data ele mora.
+const PASSOS_COMPRAS = [
+  {
+    id: 'abrir',
+    tipo: 'acao',
+    area: 'compras-abrir',
+    autoAvancar: true,
+    naoPular: true,
+    view: 'compras',
+    alvoSeletor: 'section[x-data^="shoppingView"] [data-tour-alvo="novo-item-compra"]',
+    icone: 'bi-cart-fill',
+    titulo: 'Vamos colocar algo na lista',
+    texto: 'Toque no "+" pra adicionar um item.',
+  },
+  {
+    id: 'campo-nome',
+    tipo: 'campo',
+    view: 'compras',
+    alvoSeletor: '[data-tour-alvo="campo-nome-compra"]',
+    icone: 'bi-pencil-square',
+    titulo: 'Nome',
+    texto: 'Ex: "Leite". Os ícones ao lado leem código de barras ou foto e preenchem sozinho.',
+  },
+  {
+    id: 'campo-categoria',
+    tipo: 'campo',
+    view: 'compras',
+    alvoSeletor: '[data-tour-alvo="campo-categoria-compra"]',
+    icone: 'bi-tags-fill',
+    titulo: 'Categoria',
+    texto: 'Sugerida sozinha pelo nome — troque se quiser.',
+  },
+  {
+    id: 'campo-unidade-quantidade',
+    tipo: 'campo',
+    view: 'compras',
+    alvoSeletor: '[data-tour-alvo="campo-unidade-compra"]',
+    icone: 'bi-rulers',
+    titulo: 'Unidade e quantidade',
+    texto: 'Un., Kg, Litro... e quanto você precisa.',
+  },
+  {
+    id: 'campo-preco-validade',
+    tipo: 'campo',
+    view: 'compras',
+    alvoSeletor: '[data-tour-alvo="campo-preco-compra"]',
+    icone: 'bi-cash',
+    titulo: 'Preço e validade',
+    texto: 'Os dois são opcionais — preenche se souber.',
+  },
+  {
+    id: 'campo-prioridade',
+    tipo: 'campo',
+    view: 'compras',
+    alvoSeletor: '[data-tour-alvo="campo-prioridade-compra"]',
+    icone: 'bi-star-fill',
+    titulo: 'Prioridade',
+    texto: 'Marque com as estrelas pra destacar o que é mais urgente.',
+  },
+  {
+    id: 'campo-adicionar',
+    tipo: 'acao',
+    dentroModal: true,
+    area: 'compras',
+    view: 'compras',
+    alvoSeletor: '[data-tour-alvo="campo-adicionar-compra"]',
+    icone: 'bi-check-circle-fill',
+    titulo: 'Adicionar',
+    texto: 'Toque em "Adicionar" pra concluir.',
+    textoResultado: 'Viu? O item já apareceu na lista e o total foi recalculado sozinho. Quando for ao mercado, é só marcar cada item como comprado.',
+  },
+];
+
+// Guia detalhado "Cadastre algo que tem em casa" — o alvo real ("Item") só
+// existe depois de entrar num cômodo/subcategoria, por isso o passo 1
+// continua usando `preparar: prepararRecursos()` (mesmo helper de sempre,
+// ver topo do arquivo) antes de destacar o botão.
+const PASSOS_RECURSOS = [
+  {
+    id: 'abrir',
+    tipo: 'acao',
+    area: 'recursos-abrir',
+    autoAvancar: true,
+    naoPular: true,
+    view: 'recursos',
+    preparar: () => prepararRecursos(),
+    alvoSeletor: 'section[x-data^="resourcesView"] [data-tour-alvo="recursos-add-item"]',
+    icone: 'bi-box-seam-fill',
+    titulo: 'Vamos cadastrar algo que você tem',
+    texto: 'Já te levamos pra dentro de um cômodo. Toque em "Item".',
+  },
+  {
+    id: 'campo-nome',
+    tipo: 'campo',
+    view: 'recursos',
+    alvoSeletor: '[data-tour-alvo="campo-nome-recurso"]',
+    icone: 'bi-pencil-square',
+    titulo: 'Nome',
+    texto: 'Ex: "Sabonete" ou "Arroz". Os ícones leem código de barras ou foto e preenchem sozinho.',
+  },
+  {
+    id: 'campo-subcategoria',
+    tipo: 'campo',
+    view: 'recursos',
+    alvoSeletor: '[data-tour-alvo="campo-subcategoria-recurso"]',
+    icone: 'bi-tags-fill',
+    titulo: 'Subcategoria',
+    texto: 'Opcional, só pra organizar melhor dentro do cômodo.',
+  },
+  {
+    id: 'campo-quantidade',
+    tipo: 'campo',
+    view: 'recursos',
+    alvoSeletor: '[data-tour-alvo="campo-quantidade-recurso"]',
+    icone: 'bi-123',
+    titulo: 'Quantidade',
+    texto: 'Quanto você tem agora, aí em casa.',
+  },
+  {
+    id: 'campo-validade',
+    tipo: 'campo',
+    view: 'recursos',
+    alvoSeletor: '[data-tour-alvo="campo-validade-recurso"]',
+    icone: 'bi-calendar3',
+    titulo: 'Validade',
+    texto: 'Opcional — avisa sozinho quando estiver perto de vencer.',
+  },
+  {
+    id: 'campo-salvar',
+    tipo: 'acao',
+    dentroModal: true,
+    area: 'recursos',
+    view: 'recursos',
+    alvoSeletor: '[data-tour-alvo="campo-salvar-recurso"]',
+    icone: 'bi-check-circle-fill',
+    titulo: 'Salvar',
+    texto: 'Toque em "Salvar" pra guardar.',
+    textoResultado: 'Esse item já está guardado nesse cômodo. Quando a quantidade chegar a zero ou a validade vencer, ele aparece sozinho em "Sugestões de compra".',
+  },
+];
+
+// Guia detalhado "Crie uma caixinha" — "Responsável" só existe com um grupo
+// formado (x-show="$store.app.group" no modal real); se não existir, o
+// passo pula sozinho pro próximo (ver o guard em _entrarNoPasso acima),
+// nunca trava a pessoa sem nenhum controle visível.
+const PASSOS_CAIXINHA = [
+  {
+    id: 'abrir',
+    tipo: 'acao',
+    area: 'caixinha-abrir',
+    autoAvancar: true,
+    naoPular: true,
+    view: 'caixinhas',
+    preparar: () => prepararCaixinhas(),
+    alvoSeletor: 'section[x-data^="caixinhasView"] [data-tour-alvo="nova-caixinha"]',
+    icone: 'bi-piggy-bank',
+    titulo: 'Vamos criar uma reserva',
+    texto: 'Toque em "Nova caixinha".',
+  },
+  {
+    id: 'campo-banco',
+    tipo: 'campo',
+    view: 'caixinhas',
+    alvoSeletor: '[data-tour-alvo="campo-banco-caixinha"]',
+    icone: 'bi-bank',
+    titulo: 'Banco',
+    texto: 'Onde essa reserva vai ficar guardada.',
+  },
+  {
+    id: 'campo-moeda-meta',
+    tipo: 'campo',
+    view: 'caixinhas',
+    alvoSeletor: '[data-tour-alvo="campo-moeda-caixinha"]',
+    icone: 'bi-currency-exchange',
+    titulo: 'Moeda e meta',
+    texto: 'Escolha a moeda e, se quiser, uma meta de quanto pretende guardar.',
+  },
+  {
+    id: 'campo-responsavel',
+    tipo: 'campo',
+    view: 'caixinhas',
+    alvoSeletor: '[data-tour-alvo="campo-responsavel-caixinha"]',
+    icone: 'bi-people-fill',
+    titulo: 'Responsável',
+    texto: 'Quem é responsável por essa caixinha.',
+  },
+  {
+    id: 'campo-criar',
+    tipo: 'acao',
+    dentroModal: true,
+    area: 'caixinha',
+    view: 'caixinhas',
+    alvoSeletor: '[data-tour-alvo="campo-criar-caixinha"]',
+    icone: 'bi-check-circle-fill',
+    titulo: 'Criar caixinha',
+    texto: 'Toque em "Criar caixinha" pra concluir.',
+    textoResultado: 'Show! Sua caixinha já está criada. Agora é só guardar (ou retirar) valores nela quando quiser.',
+  },
+];
+
 const CATALOGO_GUIAS = [
   {
     id: 'financeiro',
@@ -404,7 +610,6 @@ const CATALOGO_GUIAS = [
     id: 'compras',
     area: 'compras',
     view: 'compras',
-    alvoSeletor: 'section[x-data^="shoppingView"] [data-tour-alvo="novo-item-compra"]',
     // "bi-cart3-fill" NÃO EXISTE no Bootstrap Icons 1.11.3 (achado numa
     // revisão visual manual, 2026-09-14: ícone aparecia como quadrado vazio
     // na Central de tutoriais — confirmado via computed style, content:
@@ -417,20 +622,16 @@ const CATALOGO_GUIAS = [
     icone: 'bi-cart-fill',
     titulo: 'Adicione um item na lista',
     resumo: 'Coloque algo na lista de compras do mercado.',
-    texto: 'Toque no botão "+" e coloque algo que precisa comprar — pode ser qualquer coisa, tipo "Leite".',
-    textoResultado: 'Viu? O item já apareceu na lista e o total foi recalculado sozinho. Quando for ao mercado, é só marcar cada item como comprado — dá pra anotar o preço na hora, direto na lista.',
+    passos: PASSOS_COMPRAS,
   },
   {
     id: 'recursos',
     area: 'recursos',
     view: 'recursos',
-    alvoSeletor: 'section[x-data^="resourcesView"] [data-tour-alvo="recursos-add-item"]',
-    preparar: () => prepararRecursos(),
     icone: 'bi-box-seam-fill',
     titulo: 'Cadastre algo que tem em casa',
     resumo: 'Guarde no inventário algo que já existe em algum cômodo.',
-    texto: 'Já te levamos pra dentro de um cômodo. Toque em "Item" e cadastre algo que exista aí de verdade — tipo "Sabonete" ou "Arroz".',
-    textoResultado: 'Esse item já está guardado nesse cômodo. Quando a quantidade chegar a zero ou a validade vencer, ele aparece sozinho em "Sugestões de compra" — com um atalho pra já mandar direto pra lista de compras.',
+    passos: PASSOS_RECURSOS,
   },
   {
     id: 'dividir-despesa',
@@ -471,13 +672,10 @@ const CATALOGO_GUIAS = [
     id: 'caixinha',
     area: 'caixinha',
     view: 'caixinhas',
-    alvoSeletor: 'section[x-data^="caixinhasView"] [data-tour-alvo="nova-caixinha"]',
-    preparar: () => prepararCaixinhas(),
     icone: 'bi-piggy-bank',
     titulo: 'Crie uma caixinha',
     resumo: 'Uma reserva separada, com meta e moeda à sua escolha.',
-    texto: 'Toque em "Nova caixinha" e escolha um banco, uma moeda e, se quiser, uma meta de quanto pretende guardar.',
-    textoResultado: 'Show! Sua caixinha já está criada. Agora é só guardar (ou retirar) valores nela quando quiser — o saldo é sempre a soma do que entrou menos o que saiu.',
+    passos: PASSOS_CAIXINHA,
   },
   {
     id: 'convite',
@@ -816,6 +1014,14 @@ export function onboardingStore() {
       // quando este listener está de fato registrado).
       if (p.tipo === 'campo' || p.dentroModal) this._escutarFechamentoModal();
       this._focarAlvo();
+      // Campo opcional cujo alvo não existe nesta conta/estado agora (ex.:
+      // "Responsável" da caixinha só existe com grupo formado) — o balão
+      // inteiro (incluindo Próximo/Pular tudo) só renderiza com um rectAlvo
+      // real (ver mostraBalao/balloonStyles), então ficar aqui deixaria a
+      // pessoa travada sem NENHUM controle visível. Pula sozinho pro
+      // próximo passo em vez disso. Nunca acontece num passo "acao"
+      // (abrir/salvar sempre têm alvo garantido).
+      if (p.tipo === 'campo' && !this.rectAlvo) { this.avancar(); return; }
       this._ligarRecalculoAutomatico();
       await nextTick(); // o painel só existe no DOM depois deste tick (x-show acabou de virar true)
       this._observarPainel();
@@ -831,6 +1037,17 @@ export function onboardingStore() {
       const ouvinte = (evento) => {
         if (evento.detail?.area !== area) return;
         this.concluido[area] = true;
+        // BUG REAL pego testando os guias detalhados novos (compras/
+        // caixinha, 2026-09-15): a ação de verdade já aconteceu aqui — um
+        // fechamento do modal a partir de agora é ESPERADO (a tela de
+        // Compras fecha o form sozinha de propósito logo abaixo; salvar()
+        // de Caixinha chama close() por conta própria), nunca "a pessoa
+        // desistiu no meio". Sem isto, _escutarFechamentoModal (ainda
+        // registrado) via "cg:onboarding-modal-fechado" encerrava o guia
+        // ANTES do balão de resultado aparecer — nenhuma chance de mostrar
+        // "Prontinho!"/"Continuar".
+        this._pararEscutaFechamento?.();
+        this._pararEscutaFechamento = null;
         // Passo tipo "abrir o modal" (ex.: PASSOS_FINANCEIRO[0]) conclui no
         // instante em que o modal abre — o painel de instrução (spotlight
         // de tela cheia) fica escondido atrás dele (z-index menor, de

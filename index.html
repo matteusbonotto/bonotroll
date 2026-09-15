@@ -1383,7 +1383,7 @@
                 <button type="button" class="btn-close" @click="fecharItemForm()" aria-label="Fechar"></button>
               </div>
               <form @submit.prevent="addItem()">
-                <div class="mb-3">
+                <div class="mb-3" data-tour-alvo="campo-nome-compra">
                   <label class="form-label small">Nome</label>
                   <div class="d-flex gap-2">
                     <input type="text" class="form-control" x-ref="inputNovoItem" x-model="novoItem.nome" @input="onNomeInput()" placeholder="Ex: Arroz 5kg" required />
@@ -1404,14 +1404,14 @@
                     <span class="cg-muted small">Foto identificada automaticamente</span>
                   </div>
                 </div>
-                <div class="mb-3">
+                <div class="mb-3" data-tour-alvo="campo-categoria-compra">
                   <label class="form-label small">Categoria <span class="cg-muted" x-show="novoItem.categoria_id && !categoriaEscolhidaManualmente">(sugerida)</span></label>
                   <select class="form-select" x-model="novoItem.categoria_id" @change="onCategoriaManual()">
                     <option value="">Sem categoria</option>
                     <template x-for="c in $store.app.categories" :key="c.id"><option :value="c.id" x-text="c.nome"></option></template>
                   </select>
                 </div>
-                <div class="row g-2 mb-3">
+                <div class="row g-2 mb-3" data-tour-alvo="campo-unidade-compra">
                   <div class="col-6">
                     <label class="form-label small">Unidade</label>
                     <select class="form-select" x-model="novoItem.unidade">
@@ -1431,7 +1431,7 @@
                     </div>
                   </div>
                 </div>
-                <div class="row g-2 mb-3">
+                <div class="row g-2 mb-3" data-tour-alvo="campo-preco-compra">
                   <div class="col-6">
                     <label class="form-label small" x-text="'Preço' + (novoItem.unidade === 'un' ? ' (un.)' : ' (por ' + novoItem.unidade + ')')"></label>
                     <div class="input-group">
@@ -1448,7 +1448,7 @@
                     </div>
                   </div>
                 </div>
-                <div class="mb-3">
+                <div class="mb-3" data-tour-alvo="campo-prioridade-compra">
                   <label class="form-label small d-block">Prioridade</label>
                   <div class="cg-star-picker">
                     <template x-for="n in [1,2,3,4,5]" :key="n">
@@ -1460,7 +1460,7 @@
                 </div>
                 <div class="d-flex gap-2">
                   <button type="button" class="cg-btn btn btn-outline-secondary flex-fill" @click="fecharItemForm()">Fechar</button>
-                  <button type="submit" class="cg-btn btn btn-success flex-fill" :disabled="salvandoItem"><i class="bi bi-plus-lg"></i> Adicionar</button>
+                  <button type="submit" class="cg-btn btn btn-success flex-fill" data-tour-alvo="campo-adicionar-compra" :disabled="salvandoItem"><i class="bi bi-plus-lg"></i> Adicionar</button>
                 </div>
               </form>
             </div>
@@ -2100,7 +2100,7 @@
                 <span x-text="itemForm.id ? 'Editar item' : 'Adicionar item'"></span>
                 <span class="cg-muted fw-normal" x-text="'— ' + (salaAtual?.nome || '')"></span>
               </h2>
-              <div class="mb-3">
+              <div class="mb-3" data-tour-alvo="campo-nome-recurso">
                 <label class="form-label small">Nome</label>
                 <div class="d-flex gap-2">
                   <input type="text" class="form-control" x-model="itemForm.nome" placeholder="Ex: Arroz, Papel higiênico…" required />
@@ -2121,7 +2121,7 @@
                   <span class="cg-muted small">Foto identificada automaticamente</span>
                 </div>
               </div>
-              <div class="mb-3">
+              <div class="mb-3" data-tour-alvo="campo-subcategoria-recurso">
                 <label class="form-label small">Subcategoria (opcional)</label>
                 <select class="form-select" x-model="itemForm.categoria_id">
                   <option value="">Sem subcategoria</option>
@@ -2129,7 +2129,7 @@
                 </select>
               </div>
               <div class="row g-2 mb-3">
-                <div class="col-6">
+                <div class="col-6" data-tour-alvo="campo-quantidade-recurso">
                   <label class="form-label small">Quantidade</label>
                   <div class="cg-num-stepper">
                     <button type="button" class="cg-num-stepper__btn" data-repeat @click="itemForm.quantidade = Math.max(0, (Number(itemForm.quantidade) || 0) - 1)" aria-label="Diminuir"><i class="bi bi-dash"></i></button>
@@ -2137,7 +2137,7 @@
                     <button type="button" class="cg-num-stepper__btn" data-repeat @click="itemForm.quantidade = (Number(itemForm.quantidade) || 0) + 1" aria-label="Aumentar"><i class="bi bi-plus"></i></button>
                   </div>
                 </div>
-                <div class="col-6">
+                <div class="col-6" data-tour-alvo="campo-validade-recurso">
                   <label class="form-label small">Validade (opcional)</label>
                   <div class="cg-date-field">
                     <input type="text" inputmode="numeric" autocomplete="off" class="form-control" placeholder="dd/mm/aaaa" x-datamask="itemForm.data_validade" />
@@ -2151,7 +2151,7 @@
                   <button type="button" class="btn btn-outline-danger" @click="removeItem(itemForm.id)" title="Excluir"><i class="bi bi-trash"></i></button>
                 </template>
                 <button type="button" class="cg-btn btn btn-outline-secondary flex-fill" @click="fecharModalItem()">Cancelar</button>
-                <button type="button" class="cg-btn btn btn-success flex-fill" :disabled="salvandoItem" @click="salvarItem()">Salvar</button>
+                <button type="button" class="cg-btn btn btn-success flex-fill" data-tour-alvo="campo-salvar-recurso" :disabled="salvandoItem" @click="salvarItem()">Salvar</button>
               </div>
             </div>
           </div>
@@ -3483,7 +3483,7 @@
         <button type="button" class="btn-close" @click="$store.caixinhaModal.close()" aria-label="Fechar"></button>
       </div>
 
-      <div class="mb-3">
+      <div class="mb-3" data-tour-alvo="campo-banco-caixinha">
         <label class="form-label small">Banco</label>
         <select class="form-select" x-model="$store.caixinhaModal.bancoId" @change="$store.caixinhaModal.onBancoChange()">
           <option value="" disabled>Escolha um banco…</option>
@@ -3493,7 +3493,7 @@
           <option value="__novo__">+ Novo banco…</option>
         </select>
       </div>
-      <div class="row g-2 mb-3">
+      <div class="row g-2 mb-3" data-tour-alvo="campo-moeda-caixinha">
         <div class="col-6">
           <label class="form-label small">Moeda</label>
           <select class="form-select" x-model="$store.caixinhaModal.moeda">
@@ -3507,7 +3507,7 @@
           <input type="number" min="0" step="0.01" class="form-control" x-model="$store.caixinhaModal.meta" :placeholder="cgFormat.moedaInfo($store.caixinhaModal.moeda).simbolo" />
         </div>
       </div>
-      <div class="mb-3" x-show="$store.app.group">
+      <div class="mb-3" data-tour-alvo="campo-responsavel-caixinha" x-show="$store.app.group">
         <label class="form-label small">Responsável</label>
         <select class="form-select" x-model="$store.caixinhaModal.responsavelId">
           <template x-for="m in $store.caixinhaModal.membros" :key="m.id">
@@ -3520,7 +3520,7 @@
           <button type="button" class="btn btn-outline-danger" @click="$store.caixinhaModal.excluir()" title="Excluir"><i class="bi bi-trash"></i></button>
         </template>
         <button type="button" class="cg-btn btn btn-outline-secondary flex-fill" @click="$store.caixinhaModal.close()">Cancelar</button>
-        <button type="button" class="cg-btn btn btn-success flex-fill" :disabled="$store.caixinhaModal.saving || !$store.caixinhaModal.bancoId || $store.caixinhaModal.bancoId === '__novo__'" @click="$store.caixinhaModal.salvar()">
+        <button type="button" class="cg-btn btn btn-success flex-fill" data-tour-alvo="campo-criar-caixinha" :disabled="$store.caixinhaModal.saving || !$store.caixinhaModal.bancoId || $store.caixinhaModal.bancoId === '__novo__'" @click="$store.caixinhaModal.salvar()">
           <span x-text="$store.caixinhaModal.editingId ? 'Salvar' : 'Criar caixinha'"></span>
         </button>
       </div>
