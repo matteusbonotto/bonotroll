@@ -46,8 +46,13 @@
 //     completo.
 //   - iniciarGuia(id): um guia AVULSO do catálogo, escolhido na Central —
 //     sequência de 1 passo só (sempre tipo:'acao', nunca precisa de
-//     boas-vindas/conclusão em volta). get modoUnico (abaixo) é o que o
-//     template usa pra evitar um "Passo 1 de 1" sem sentido nesse modo.
+//     boas-vindas/conclusão em volta) PRA QUASE TODOS os guias. get
+//     modoUnico (abaixo) é o que o template usa pra evitar um "Passo 1 de 1"
+//     sem sentido nesse modo. Exceção: 'financeiro' tem um campo `passos`
+//     próprio no catálogo (PASSOS_FINANCEIRO, mais abaixo) — um guia
+//     DETALHADO de 17 passos curtos, um balão por campo do formulário real,
+//     em vez de 1 parágrafo comprido só. iniciarGuia() usa `guia.passos`
+//     quando existe; abrir() (tour de boas-vindas) faz o mesmo via spread.
 //
 // PASSO DE AÇÃO NÃO PODE ser um modal cheio de verdade, porque a pessoa
 // PRECISA continuar enxergando e clicando na tela real por baixo (abrir o
@@ -96,7 +101,7 @@
 // scroll cru, que dispara dezenas de vezes por segundo) e SEMPRE remove os
 // listeners ao trocar de passo/fechar o guia (_pararRecalculo) — nunca
 // acumula um listener de scroll por passo visitado.
-import { computeSpotlightGeometry } from '../utils/spotlight.js';
+import { computeSpotlightGeometry, computeBalloonGeometry } from '../utils/spotlight.js';
 
 // `Alpine.nextTick(callback)` é a API global (documentada), diferente da
 // mágica `this.$nextTick()` que só existe dentro de componentes registrados
@@ -160,6 +165,17 @@ function prepararCaixinhas() {
   if (comp && comp.activeId) comp.voltar();
 }
 
+// Guia detalhado "Registre um gasto de verdade" (ver PASSOS_FINANCEIRO
+// abaixo) — a partir do passo "Empresa/Serviço" os alvos vivem dentro de
+// "Mais opções" (x-show="$store.txModal.showMore"), que começa fechado.
+// txModal é um store global (não um componente por seção, diferente de
+// Recursos/Caixinhas acima), então dá pra tocar direto nele sem precisar de
+// Alpine.$data + querySelector de elemento.
+function prepararMostrarMaisOpcoes() {
+  const tx = Alpine.store('txModal');
+  if (tx && !tx.showMore) tx.showMore = true;
+}
+
 // ---------- Catálogo de guias (TASK-042) ----------
 // Cada entrada é um mini-tutorial INDEPENDENTE — a pessoa escolhe qual quer
 // fazer agora na Central de tutoriais, em vez de uma sequência forçada. Os 3
@@ -191,17 +207,198 @@ function prepararCaixinhas() {
 //   requisitoTexto  — mensagem do toast acima.
 //   icone/titulo/texto/textoResultado — mesmo formato dos guias originais.
 //   resumo          — 1 linha, só usada na listagem da Central.
+// Guia detalhado "Registre um gasto de verdade" (pedido explícito de
+// usuário testando o tour, 2026-09-15: a versão anterior era 1 passo só com
+// um parágrafo comprido explicando o formulário inteiro de uma vez —
+// "muito texto pode tirar o interesse do usuário... os textos quebrando em
+// balões por etapa dá a sensação mais de diálogo"). Cada campo do
+// formulário vira um passo curto (1-2 frases) com um balão apontando pro
+// campo real, dentro do modal JÁ ABERTO — ver "tipo: 'campo'" no getter
+// `passoResolvido`/render em index.html (".cg-tour-balloon"), diferente do
+// spotlight de tela cheia usado pros passos "acao" de fora de um modal
+// (botão "Nova despesa" que abre o formulário, "Salvar" que fecha ele).
+//
+// Só os dois passos de ponta (abrir/salvar) são "acao" de verdade (esperam
+// a pessoa interagir DE VERDADE, mesma filosofia do resto do onboarding —
+// ver comentário grande no topo do arquivo): os 15 do meio são só
+// explicação curta + "Próximo", sem gatilho — forçar detecção de "preencheu
+// certo" em cada um dos 15 campos seria I) muito mais plumbing por pouco
+// ganho de aprendizado e II) o oposto do pedido ("pouco texto", fluido).
+// `dentroModal: true` no passo "Salvar" (o único 'acao' que precisa do
+// balão em vez do spotlight de tela cheia, porque o alvo dele também vive
+// dentro do modal real).
+const PASSOS_FINANCEIRO = [
+  {
+    id: 'abrir',
+    tipo: 'acao',
+    area: 'financeiro-abrir',
+    autoAvancar: true, // avança sozinho ao abrir o modal — ver dispatch em transactionForm.js::openNew()
+    naoPular: true, // pular aqui deixaria os 16 passos seguintes apontando pra dentro de um modal que nunca abriu
+    view: 'home',
+    alvoSeletor: 'section[x-data^="dashboardView"] [data-tour-alvo="nova-transacao"]',
+    icone: 'bi-cash-coin',
+    titulo: 'Vamos registrar um gasto de teste',
+    texto: 'Toque em "Nova despesa" pra começar.',
+  },
+  {
+    id: 'campo-entrada',
+    tipo: 'campo',
+    view: 'home',
+    alvoSeletor: '[data-tour-alvo="campo-tipo-entrada"]',
+    icone: 'bi-plus-circle-fill',
+    titulo: 'Entrada',
+    texto: 'Dinheiro que entra — salário, presente, venda.',
+  },
+  {
+    id: 'campo-saida',
+    tipo: 'campo',
+    view: 'home',
+    alvoSeletor: '[data-tour-alvo="campo-tipo-saida"]',
+    icone: 'bi-dash-circle-fill',
+    titulo: 'Saída',
+    texto: 'Dinheiro que sai — uma compra, conta, boleto. Vamos seguir com uma saída.',
+  },
+  {
+    id: 'campo-titulo',
+    tipo: 'campo',
+    view: 'home',
+    alvoSeletor: '[data-tour-alvo="campo-titulo"]',
+    icone: 'bi-card-text',
+    titulo: 'Título',
+    texto: 'Dê um nome curto. Ex: "Mercado" ou "Aluguel".',
+  },
+  {
+    id: 'campo-categoria',
+    tipo: 'campo',
+    view: 'home',
+    alvoSeletor: '[data-tour-alvo="campo-categoria"]',
+    icone: 'bi-tags-fill',
+    titulo: 'Categoria',
+    texto: 'Organiza o gasto por tipo. Opcional.',
+  },
+  {
+    id: 'campo-valor',
+    tipo: 'campo',
+    view: 'home',
+    alvoSeletor: '[data-tour-alvo="campo-valor"]',
+    icone: 'bi-cash',
+    titulo: 'Valor',
+    texto: 'O quanto custou. Um cafezinho de R$ 10 já serve pra testar.',
+  },
+  {
+    id: 'campo-mais-opcoes',
+    tipo: 'campo',
+    view: 'home',
+    alvoSeletor: '[data-tour-alvo="campo-mais-opcoes"]',
+    icone: 'bi-chevron-down',
+    titulo: 'Mais opções',
+    texto: 'Aqui tem campos extras — tudo opcional, só usa quando precisar.',
+  },
+  {
+    id: 'campo-empresa',
+    tipo: 'campo',
+    view: 'home',
+    preparar: () => prepararMostrarMaisOpcoes(),
+    alvoSeletor: '[data-tour-alvo="campo-empresa"]',
+    icone: 'bi-shop',
+    titulo: 'Empresa ou serviço',
+    texto: 'Quem você pagou — Nubank, iFood, o mercado. Ajuda a identificar o gasto depois.',
+  },
+  {
+    id: 'campo-tipo-despesa',
+    tipo: 'campo',
+    view: 'home',
+    alvoSeletor: '[data-tour-alvo="campo-tipo-despesa"]',
+    icone: 'bi-pin-angle-fill',
+    titulo: 'Fixa ou variável',
+    texto: 'Fixa repete todo mês (aluguel). Variável muda sempre (mercado).',
+  },
+  {
+    id: 'campo-responsavel',
+    tipo: 'campo',
+    view: 'home',
+    alvoSeletor: '[data-tour-alvo="campo-responsavel"]',
+    icone: 'bi-people-fill',
+    titulo: 'Responsável',
+    texto: 'Quem pagou. O "+" ao lado divide essa despesa com seu par.',
+  },
+  {
+    id: 'campo-datas',
+    tipo: 'campo',
+    view: 'home',
+    alvoSeletor: '[data-tour-alvo="campo-datas"]',
+    icone: 'bi-calendar3',
+    titulo: 'Datas',
+    texto: 'Cadastro já vem com hoje. Vencimento é opcional, pra conta com prazo.',
+  },
+  {
+    id: 'campo-pago-recorrente',
+    tipo: 'campo',
+    view: 'home',
+    alvoSeletor: '[data-tour-alvo="campo-pago-recorrente"]',
+    icone: 'bi-arrow-repeat',
+    titulo: 'Pago e Recorrente',
+    texto: '"Pago" marca como já quitado. "Recorrente" repete esse lançamento sozinho todo mês.',
+  },
+  {
+    id: 'campo-cartao',
+    tipo: 'campo',
+    view: 'home',
+    alvoSeletor: '[data-tour-alvo="campo-cartao"]',
+    icone: 'bi-credit-card-2-front-fill',
+    titulo: 'Cartão de crédito',
+    texto: 'Comprou no crédito? Escolha o cartão — entra direto na fatura do mês.',
+  },
+  {
+    id: 'campo-parcelas',
+    tipo: 'campo',
+    view: 'home',
+    alvoSeletor: '[data-tour-alvo="campo-parcelas"]',
+    icone: 'bi-collection',
+    titulo: 'Parcelas',
+    texto: 'Comprou parcelado? Parcela atual / total. Ex: 1 / 3.',
+  },
+  {
+    id: 'campo-comprovante',
+    tipo: 'campo',
+    view: 'home',
+    alvoSeletor: '[data-tour-alvo="campo-comprovante"]',
+    icone: 'bi-upc-scan',
+    titulo: 'Comprovante',
+    texto: 'Foto, arquivo, PDF ou código de barras/QR — qualquer um preenche o formulário sozinho.',
+  },
+  {
+    id: 'campo-observacoes',
+    tipo: 'campo',
+    view: 'home',
+    alvoSeletor: '[data-tour-alvo="campo-observacoes"]',
+    icone: 'bi-chat-left-text',
+    titulo: 'Observações',
+    texto: 'Um espaço livre pra qualquer anotação extra. Opcional.',
+  },
+  {
+    id: 'campo-salvar',
+    tipo: 'acao',
+    dentroModal: true,
+    area: 'financeiro',
+    view: 'home',
+    alvoSeletor: '[data-tour-alvo="campo-salvar"]',
+    icone: 'bi-check-circle-fill',
+    titulo: 'Salvar',
+    texto: 'Toque em "Salvar" pra concluir. Dá pra editar ou apagar depois, em Transações.',
+    textoResultado: 'Prontinho! O saldo do Início já mudou na hora, e esse lançamento aparece em "Transações".',
+  },
+];
+
 const CATALOGO_GUIAS = [
   {
     id: 'financeiro',
     area: 'financeiro',
     view: 'home',
-    alvoSeletor: 'section[x-data^="dashboardView"] [data-tour-alvo="nova-transacao"]',
     icone: 'bi-cash-coin',
     titulo: 'Registre um gasto de verdade',
     resumo: 'Cadastre uma despesa ou entrada — o básico do financeiro.',
-    texto: 'Toque em "Nova despesa". No formulário que abrir, preencha pelo menos o Título e o Valor (o resto já vem preenchido ou é opcional) e toque em "Salvar", no fim. Tem mais campos aí — categoria, cartão, recorrência — dentro de "Mais opções": não precisa mexer agora, é só pra quando precisar. Isso é um teste: um cafezinho de R$ 10 já serve, dá pra editar ou apagar depois, em Transações.',
-    textoResultado: 'Prontinho! Repare que o saldo do Início já mudou na hora, e esse lançamento também aparece em "Transações". Se a despesa for dividida com seu par, o "Entre vocês" mostra quem deve quanto.',
+    passos: PASSOS_FINANCEIRO,
   },
   {
     id: 'compras',
@@ -335,6 +532,7 @@ export function onboardingStore() {
     _pararEscutaAcao: null,
     _pararRecalculo: null,
     _pararObservarPainel: null,
+    _pararEscutaFechamento: null,
 
     catalogo: CATALOGO_GUIAS,
 
@@ -362,10 +560,23 @@ export function onboardingStore() {
     },
     // Um passo de ação "resolvido" tanto por ter feito a ação de verdade
     // quanto por ter escolhido pular ele — os dois liberam "Continuar" do
-    // mesmo jeito, só o texto mostrado muda (resultado real vs. nada).
+    // mesmo jeito, só o texto mostrado muda (resultado real vs. nada). Um
+    // passo "campo" (guia detalhado, ver PASSOS_FINANCEIRO) nunca tem nada
+    // pra detectar — é só explicação curta — então já nasce "resolvido":
+    // o balão mostra direto o botão "Próximo", nunca "Pular esta etapa".
     get passoResolvido() {
       const p = this.passo;
-      return !!p && p.tipo === 'acao' && (this.concluido[p.area] || this.pulado[p.area]);
+      if (!p) return false;
+      if (p.tipo === 'campo') return true;
+      return p.tipo === 'acao' && (this.concluido[p.area] || this.pulado[p.area]);
+    },
+    // Passo "acao" cujo alvo vive DENTRO de um modal real já aberto (ex.:
+    // botão "Salvar" do formulário de Nova despesa) — mesma renderização em
+    // balão do tipo "campo" (index.html, ".cg-tour-balloon"), só que gated
+    // (passoResolvido só vira true com a ação de verdade, não é automático).
+    get mostraBalao() {
+      const p = this.passo;
+      return !!p && (p.tipo === 'campo' || (p.tipo === 'acao' && p.dentroModal));
     },
 
     // BUG REAL relatado em uso (2026-09-14): o passo de ação destaca o botão
@@ -404,6 +615,23 @@ export function onboardingStore() {
           left: { top: px(g.dims.left.top), left: '0', width: px(g.dims.left.width), height: px(g.dims.left.height) },
           right: { top: px(g.dims.right.top), left: px(g.dims.right.left), right: '0', height: px(g.dims.right.height) },
         },
+      };
+    },
+    // Style pronto pra `:style` do balão de campo (ver `mostraBalao` acima)
+    // — moldura fina em volta do alvo real + posição do balão (embaixo/em
+    // cima, sempre dentro da largura da tela), calculados por
+    // computeBalloonGeometry (js/utils/spotlight.js).
+    get balloonStyles() {
+      if (!this.rectAlvo) return null;
+      const g = computeBalloonGeometry(this.rectAlvo, { width: window.innerWidth, height: window.innerHeight });
+      const px = (n) => `${n}px`;
+      const balloon = { left: px(g.balloon.left), maxWidth: px(g.balloon.maxWidth) };
+      if (g.placement === 'bottom') balloon.top = px(g.balloon.top);
+      else balloon.bottom = px(g.balloon.bottom);
+      return {
+        placement: g.placement,
+        ring: { top: px(g.ring.top), left: px(g.ring.left), width: px(g.ring.width), height: px(g.ring.height) },
+        balloon,
       };
     },
 
@@ -449,7 +677,7 @@ export function onboardingStore() {
           titulo: 'Bem-vindo(a) ao BNTT!',
           texto: 'Aqui vocês dois colocam o dinheiro, a lista de compras e o que tem em casa sob controle — tudo num só lugar. No próximo passo você vai USAR a ferramenta de verdade, registrando um gasto real. Depois disso, você escolhe o que mais quer aprender.',
         },
-        { ...financeiro, tipo: 'acao' },
+        ...financeiro.passos,
         {
           id: 'conclusao',
           tipo: 'info',
@@ -499,7 +727,7 @@ export function onboardingStore() {
         return;
       }
       this.centralAberta = false;
-      this.passos = [{ ...guia, tipo: 'acao' }];
+      this.passos = guia.passos || [{ ...guia, tipo: 'acao' }];
       this.passoAtual = 0;
       this.concluido = {};
       this.pulado = {};
@@ -530,6 +758,7 @@ export function onboardingStore() {
     // caso, ver index.html.
     pularEtapa() {
       const p = this.passo;
+      if (p.naoPular) return; // ex.: "abrir o modal" — pular deixaria os passos seguintes apontando pra dentro de um modal que nunca abriu
       if (p.tipo === 'acao') this.pulado[p.area] = true;
       this.avancar();
     },
@@ -558,34 +787,58 @@ export function onboardingStore() {
     // Ponto único de entrada em QUALQUER passo (chamado por abrir/
     // iniciarGuia/avancar/voltar) — sempre limpa o passo anterior primeiro
     // (nunca acumula listener), e só faz alguma coisa a mais se o passo
-    // novo for de ação.
+    // novo tiver um alvo real (tipo 'acao' ou 'campo' — 'info' não tem
+    // alvoSeletor nenhum, ver PASSOS_FINANCEIRO/CATALOGO_GUIAS).
     async _entrarNoPasso() {
       this._limparPasso();
       const p = this.passo;
-      if (p.tipo !== 'acao') return;
+      if (p.tipo !== 'acao' && p.tipo !== 'campo') return;
 
       const appStore = Alpine.store('app');
       appStore.view = p.view;
-      appStore.navOpen = false; // fecha o menu hambúrguer (mobile) se estava aberto — nunca deixa ele por cima do spotlight
+      appStore.navOpen = false; // fecha o menu hambúrguer (mobile) se estava aberto — nunca deixa ele por cima do spotlight/balão
       await nextTick();
 
       // Plumbing de navegação específico do guia (ex.: Recursos precisa
-      // entrar num cômodo antes do alvo real existir) — nunca é a ação que a
-      // pessoa está aprendendo, ver comentário grande no topo do arquivo.
+      // entrar num cômodo antes do alvo real existir; o guia financeiro
+      // detalhado precisa abrir "Mais opções" antes do alvo de Empresa
+      // existir) — nunca é a ação que a pessoa está aprendendo, ver
+      // comentário grande no topo do arquivo.
       if (typeof p.preparar === 'function') await p.preparar();
       await nextTick();
 
-      this._escutarAcao(p.area);
+      if (p.tipo === 'acao') this._escutarAcao(p.area, p.autoAvancar);
+      // Passo com alvo dentro de um modal real (campo, ou acao com
+      // dentroModal) — se a pessoa fechar o modal de verdade (Cancelar/X/
+      // Esc) no meio do guia, o balão ficaria apontando pra um campo que
+      // sumiu. Ver close() em transactionForm.js (dispara
+      // "cg:onboarding-modal-fechado" sempre, best-effort — só importa aqui
+      // quando este listener está de fato registrado).
+      if (p.tipo === 'campo' || p.dentroModal) this._escutarFechamentoModal();
       this._focarAlvo();
       this._ligarRecalculoAutomatico();
       await nextTick(); // o painel só existe no DOM depois deste tick (x-show acabou de virar true)
       this._observarPainel();
     },
 
-    _escutarAcao(area) {
+    _escutarFechamentoModal() {
+      const ouvinte = () => this.encerrar();
+      window.addEventListener('cg:onboarding-modal-fechado', ouvinte, { once: true });
+      this._pararEscutaFechamento = () => window.removeEventListener('cg:onboarding-modal-fechado', ouvinte);
+    },
+
+    _escutarAcao(area, autoAvancar) {
       const ouvinte = (evento) => {
         if (evento.detail?.area !== area) return;
         this.concluido[area] = true;
+        // Passo tipo "abrir o modal" (ex.: PASSOS_FINANCEIRO[0]) conclui no
+        // instante em que o modal abre — o painel de instrução (spotlight
+        // de tela cheia) fica escondido atrás dele (z-index menor, de
+        // propósito) assim que isso acontece, então o botão "Continuar"
+        // ficaria inacessível se a pessoa precisasse clicar nele. Avança
+        // sozinho pro balão do próximo campo em vez de esperar um clique
+        // num botão que ninguém consegue ver.
+        if (autoAvancar) { this.avancar(); return; }
         // BUG REAL encontrado testando com Playwright (TASK-037/038): Compras
         // é a ÚNICA tela que mantém o modal de "Adicionar item" aberto DE
         // PROPÓSITO depois de salvar (pra colocar vários itens seguidos sem
@@ -615,14 +868,14 @@ export function onboardingStore() {
     // ter que "adivinhar" quando o scroll suave já chegou.
     _focarAlvo() {
       const p = this.passo;
-      const el = p.tipo === 'acao' ? document.querySelector(p.alvoSeletor) : null;
+      const el = p.tipo === 'acao' || p.tipo === 'campo' ? document.querySelector(p.alvoSeletor) : null;
       if (el) el.scrollIntoView({ block: 'center' });
       this._recalcularSpotlight();
     },
 
     _recalcularSpotlight() {
       const p = this.passo;
-      const el = p && p.tipo === 'acao' ? document.querySelector(p.alvoSeletor) : null;
+      const el = p && (p.tipo === 'acao' || p.tipo === 'campo') ? document.querySelector(p.alvoSeletor) : null;
       if (!el) { this.rectAlvo = null; return; }
       const r = el.getBoundingClientRect();
       this.rectAlvo = { top: r.top, left: r.left, width: r.width, height: r.height };
@@ -673,6 +926,8 @@ export function onboardingStore() {
     _limparPasso() {
       this._pararEscutaAcao?.();
       this._pararEscutaAcao = null;
+      this._pararEscutaFechamento?.();
+      this._pararEscutaFechamento = null;
       this._pararRecalculo?.();
       this._pararRecalculo = null;
       this._pararObservarPainel?.();

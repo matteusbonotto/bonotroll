@@ -1708,6 +1708,46 @@ body { font-size: var(--font-size-body); }
   .cg-tour-painel { left: auto; right: var(--space-4); top: var(--space-4); width: 360px; }
 }
 
+/* Balão de campo (guia detalhado "Registre um gasto de verdade",
+   js/components/onboarding.js — PASSOS_FINANCEIRO, tipo 'campo'/'acao'
+   dentroModal) — ancora um textinho curto perto do campo real, DENTRO de um
+   modal já aberto. Diferente do spotlight acima (".cg-tour-ring" já
+   existente é reaproveitado pra moldura, só com z-index maior aqui — ver
+   ".cg-tour-ring--campo"): sem os 4 retângulos de escurecer (o modal real já
+   tem o próprio backdrop) e SEMPRE acima do modal (1050) e até do
+   ".cg-help__popover" (1070), pra nunca ficar escondido atrás de nada. */
+.cg-tour-ring--campo {
+  z-index: 1071;
+}
+.cg-tour-balloon {
+  position: fixed;
+  z-index: 1071;
+  pointer-events: auto; /* só o balão em si recebe clique (Próximo/Voltar/X) — o resto da tela continua 100% usável por baixo */
+  background: var(--color-surface);
+  color: var(--color-text);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  padding: var(--space-3);
+  width: max-content;
+  max-width: min(280px, calc(100vw - 24px));
+  transition: top .15s ease, bottom .15s ease, left .15s ease;
+}
+/* Setinha de balão de diálogo, sempre perto da borda esquerda (mesma lógica
+   de ".cg-help--direita" acima: centralizar exigiria saber a posição exata
+   do alvo dentro do balão, que já é clampado pra nunca vazar da tela — um
+   ponto fixo é simples e continua legível em qualquer largura). */
+.cg-tour-balloon::before {
+  content: '';
+  position: absolute;
+  left: 22px;
+  width: 12px;
+  height: 12px;
+  background: var(--color-surface);
+  transform: rotate(45deg);
+}
+.cg-tour-balloon--bottom::before { top: -6px; }
+.cg-tour-balloon--top::before { bottom: -6px; }
+
 /* ---------- FAQ (TASK-037/038) — accordion simples, um "abertaId" só (ver
    js/components/faq.js), sem nenhuma lib de accordion (Bootstrap JS não é
    usado neste projeto, só CSS/grid/utilities — ver CLAUDE.md). ---------- */

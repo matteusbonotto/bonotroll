@@ -2982,18 +2982,18 @@
 
         <div class="btn-group w-100 mb-3" role="group">
           <input type="radio" class="btn-check" value="saida" x-model="$store.txModal.form.tipo" id="tipoSaida" />
-          <label class="btn btn-outline-danger cg-touch" for="tipoSaida"><i class="bi bi-dash-circle"></i> Saída</label>
+          <label class="btn btn-outline-danger cg-touch" for="tipoSaida" data-tour-alvo="campo-tipo-saida"><i class="bi bi-dash-circle"></i> Saída</label>
           <input type="radio" class="btn-check" value="entrada" x-model="$store.txModal.form.tipo" id="tipoEntrada" />
-          <label class="btn btn-outline-success cg-touch" for="tipoEntrada"><i class="bi bi-plus-circle"></i> Entrada</label>
+          <label class="btn btn-outline-success cg-touch" for="tipoEntrada" data-tour-alvo="campo-tipo-entrada"><i class="bi bi-plus-circle"></i> Entrada</label>
         </div>
 
-        <div class="mb-3">
+        <div class="mb-3" data-tour-alvo="campo-titulo">
           <label class="form-label">Título</label>
           <input type="text" class="form-control" x-model="$store.txModal.form.titulo" @input="$store.txModal.onTituloInput()" placeholder="Ex: Aluguel, Mercado, Salário…" required />
         </div>
 
         <div class="row g-2 mb-3">
-          <div class="col-7">
+          <div class="col-7" data-tour-alvo="campo-categoria">
             <label class="form-label">Categoria</label>
             <select class="form-select" x-model="$store.txModal.form.categoria_id" @change="$store.txModal.onCategoriaChange()">
               <option value="">Sem categoria</option>
@@ -3001,13 +3001,13 @@
               <option value="__nova__">+ Nova categoria…</option>
             </select>
           </div>
-          <div class="col-5">
+          <div class="col-5" data-tour-alvo="campo-valor">
             <label class="form-label">Valor (R$)</label>
             <input type="number" min="0" step="0.01" class="form-control" x-model="$store.txModal.form.valor" required />
           </div>
         </div>
 
-        <button type="button" class="btn btn-link p-0 mb-3" @click="$store.txModal.showMore = !$store.txModal.showMore">
+        <button type="button" class="btn btn-link p-0 mb-3" data-tour-alvo="campo-mais-opcoes" @click="$store.txModal.showMore = !$store.txModal.showMore">
           <i class="bi" :class="$store.txModal.showMore ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
           <span x-text="$store.txModal.showMore ? 'Menos opções' : 'Mais opções'"></span>
         </button>
@@ -3020,7 +3020,7 @@
         <div x-show="$store.txModal.showMore" x-cloak>
           <div class="cg-muted small fw-semibold text-uppercase mb-2">Detalhes</div>
           <div class="row g-2 mb-2">
-            <div class="col-8">
+            <div class="col-8" data-tour-alvo="campo-empresa">
               <label class="form-label">Empresa / Serviço</label>
               <div class="d-flex align-items-center gap-2">
                 <span class="cg-avatar cg-avatar--sm flex-shrink-0" style="background: var(--color-surface-alt);" x-show="$store.txModal.empresaLogoPreview">
@@ -3043,7 +3043,7 @@
                 <template x-for="c in $store.app.companies" :key="c.id"><option :value="c.nome"></option></template>
               </datalist>
             </div>
-            <div class="col-4">
+            <div class="col-4" data-tour-alvo="campo-tipo-despesa">
               <label class="form-label d-flex align-items-center">
                 Tipo
                 <span class="cg-help cg-help--direita" x-data="cgHelp('Fixa: se repete todo mês com valor parecido (aluguel, assinatura). Variável: muda de mês pra mês (mercado, lazer). Marcar como fixa já liga a recorrência mensal automaticamente, mas dá pra desligar se quiser.')" @mouseenter="aoPassarMouse()" @mouseleave="fechar()" @click.outside="fechar()">
@@ -3066,7 +3066,7 @@
                quem mais entra na divisão. x-data aqui em cima pra ficar
                acessível nos dois estados (só responsável, ou já dividindo). -->
           <div class="cg-muted small fw-semibold text-uppercase mb-2 pt-2 border-top">Quem paga</div>
-          <div class="mb-2" x-data="{ open: false }" @click.outside="open = false">
+          <div class="mb-2" data-tour-alvo="campo-responsavel" x-data="{ open: false }" @click.outside="open = false">
             <div class="d-flex align-items-end gap-2" x-show.important="!$store.txModal.pagadores.length">
               <div class="flex-fill">
                 <label class="form-label">Responsável</label>
@@ -3141,7 +3141,7 @@
           </div>
 
           <div class="cg-muted small fw-semibold text-uppercase mb-2 pt-2 border-top">Quando</div>
-          <div class="row g-2 mb-2">
+          <div class="row g-2 mb-2" data-tour-alvo="campo-datas">
             <div :class="$store.txModal.usaCadenciaParaVencimento ? 'col-12' : 'col-6'">
               <label class="form-label">Cadastro</label>
               <div class="cg-date-field">
@@ -3172,19 +3172,21 @@
                cadência da recorrência) continua abaixo, e só quando
                realmente precisa aparecer. -->
           <div class="d-flex flex-wrap align-items-center gap-3 mb-2">
-            <div class="form-check form-switch mb-0">
-              <input type="checkbox" role="switch" class="form-check-input" id="marcarPago" :checked="!!$store.txModal.form.data_pagamento" @change="$store.txModal.onPagoChange($event.target.checked)" />
-              <label class="form-check-label small" for="marcarPago">Pago</label>
-            </div>
-            <div class="form-check form-switch mb-0">
-              <input type="checkbox" role="switch" class="form-check-input" id="recorrente" x-model="$store.txModal.form.recorrente" />
-              <label class="form-check-label small" for="recorrente">Recorrente</label>
-              <span class="cg-help" x-data="cgHelp('Liga esse lançamento a uma repetição automática (toda semana, todo mês ou todo ano) — o app cria o próximo sozinho na data certa, sem precisar cadastrar de novo.')" @mouseenter="aoPassarMouse()" @mouseleave="fechar()" @click.outside="fechar()">
-                <button type="button" class="cg-help__trigger" @click="aoClicar()" @keydown.escape.stop="fechar()" :aria-expanded="aberto ? 'true' : 'false'" :aria-describedby="id" aria-label="O que é recorrência">
-                  <i class="bi bi-question-circle-fill" aria-hidden="true"></i>
-                </button>
-                <div class="cg-help__popover" x-show.important="aberto" x-cloak x-transition.opacity.duration.120ms :id="id" role="tooltip" x-text="texto"></div>
-              </span>
+            <div class="d-flex align-items-center gap-3" data-tour-alvo="campo-pago-recorrente">
+              <div class="form-check form-switch mb-0">
+                <input type="checkbox" role="switch" class="form-check-input" id="marcarPago" :checked="!!$store.txModal.form.data_pagamento" @change="$store.txModal.onPagoChange($event.target.checked)" />
+                <label class="form-check-label small" for="marcarPago">Pago</label>
+              </div>
+              <div class="form-check form-switch mb-0">
+                <input type="checkbox" role="switch" class="form-check-input" id="recorrente" x-model="$store.txModal.form.recorrente" />
+                <label class="form-check-label small" for="recorrente">Recorrente</label>
+                <span class="cg-help" x-data="cgHelp('Liga esse lançamento a uma repetição automática (toda semana, todo mês ou todo ano) — o app cria o próximo sozinho na data certa, sem precisar cadastrar de novo.')" @mouseenter="aoPassarMouse()" @mouseleave="fechar()" @click.outside="fechar()">
+                  <button type="button" class="cg-help__trigger" @click="aoClicar()" @keydown.escape.stop="fechar()" :aria-expanded="aberto ? 'true' : 'false'" :aria-describedby="id" aria-label="O que é recorrência">
+                    <i class="bi bi-question-circle-fill" aria-hidden="true"></i>
+                  </button>
+                  <div class="cg-help__popover" x-show.important="aberto" x-cloak x-transition.opacity.duration.120ms :id="id" role="tooltip" x-text="texto"></div>
+                </span>
+              </div>
             </div>
             <!-- Só faz sentido em saída (entrada não é compra no cartão) —
                  x-if, não x-show: o <div> carrega .form-check/.mb-0, e
@@ -3196,7 +3198,7 @@
                  sentinela de "cartão de crédito, mas não sei qual cartão"
                  (dado antigo) — mantém a marcação sem gravar cartao_id. -->
             <template x-if="$store.txModal.form.tipo === 'saida'">
-              <div class="d-flex align-items-center gap-2">
+              <div class="d-flex align-items-center gap-2" data-tour-alvo="campo-cartao">
                 <select id="cartaoCredito" class="form-select form-select-sm" style="max-width: 230px;" x-model="$store.txModal.form.cartao_id" @change="$store.txModal.onCartaoChange()" title="Esta despesa já está inclusa na fatura do cartão do mês — o valor conta uma vez só, dentro da fatura">
                   <option value="">Não é compra no cartão</option>
                   <option value="__legado__">Cartão de crédito (cartão não informado)</option>
@@ -3207,7 +3209,7 @@
                 </select>
               </div>
             </template>
-            <div class="d-flex align-items-center gap-1 ms-auto">
+            <div class="d-flex align-items-center gap-1 ms-auto" data-tour-alvo="campo-parcelas">
               <input type="number" min="1" class="form-control form-control-sm" placeholder="Parc." style="width: 80px;" x-model="$store.txModal.form.parcela_atual" title="Parcela atual (opcional)" />
               <span class="cg-muted small">/</span>
               <input type="number" min="1" class="form-control form-control-sm" placeholder="Total" style="width: 80px;" x-model="$store.txModal.form.parcela_total" title="Total de parcelas (opcional)" />
@@ -3273,7 +3275,7 @@
                  linha só em qualquer largura, do jeito que rótulo "Importar
                  PDF"/"Enviar arquivo" por extenso nunca conseguia (sempre
                  quebrava pra 2 linhas, mesmo no modal de 600px). -->
-            <div class="d-flex align-items-center gap-2 flex-nowrap">
+            <div class="d-flex align-items-center gap-2 flex-nowrap" data-tour-alvo="campo-comprovante">
               <label class="cg-btn-icon btn btn-outline-secondary mb-0 flex-shrink-0" style="cursor:pointer;" title="Tirar foto do comprovante" aria-label="Tirar foto do comprovante">
                 <span x-show="!$store.txModal.uploadingComprovante && !$store.txModal.lendoComprovante"><i class="bi bi-camera"></i></span>
                 <span x-show="$store.txModal.uploadingComprovante || $store.txModal.lendoComprovante" class="spinner-border spinner-border-sm"></span>
@@ -3303,7 +3305,7 @@
             </p>
           </div>
 
-          <div class="mb-2">
+          <div class="mb-2" data-tour-alvo="campo-observacoes">
             <label class="form-label">Observações</label>
             <textarea class="form-control" rows="2" x-model="$store.txModal.form.observacoes" placeholder="Opcional"></textarea>
           </div>
@@ -3314,7 +3316,7 @@
             <button type="button" class="cg-btn btn btn-outline-danger" @click="$store.txModal.remove()" aria-label="Excluir lançamento"><i class="bi bi-trash"></i></button>
           </template>
           <button type="button" class="cg-btn btn btn-outline-secondary flex-fill" @click="$store.txModal.close()">Cancelar</button>
-          <button type="submit" class="cg-btn btn btn-success flex-fill" :disabled="$store.txModal.saving">
+          <button type="submit" class="cg-btn btn btn-success flex-fill" data-tour-alvo="campo-salvar" :disabled="$store.txModal.saving">
             <span x-show="!$store.txModal.saving">Salvar</span>
             <span x-show="$store.txModal.saving"><span class="spinner-border spinner-border-sm"></span></span>
           </button>
@@ -3824,7 +3826,7 @@
        absorvido (sem handler nenhum, o que já impede o clique de "vazar"
        pro que está por baixo), nunca fecha o tour inteiro sem querer; só
        Esc/"Pular tudo"/X fazem isso, de propósito (ver onboarding.js). -->
-  <div class="cg-modal-backdrop cg-tour-spot-backdrop" x-show="$store.onboarding.aberto && $store.onboarding.passo.tipo === 'acao'" x-cloak @click.self="$store.onboarding.pular()">
+  <div class="cg-modal-backdrop cg-tour-spot-backdrop" x-show="$store.onboarding.aberto && $store.onboarding.passo.tipo === 'acao' && !$store.onboarding.passo.dentroModal" x-cloak @click.self="$store.onboarding.pular()">
     <template x-if="$store.onboarding.spotlightStyles">
       <div>
         <div class="cg-tour-dim" :style="$store.onboarding.spotlightStyles.dims.top"></div>
@@ -3857,7 +3859,7 @@
         </div>
       </div>
 
-      <div class="cg-tour__dots mb-3" x-show.important="!$store.onboarding.modoUnico">
+      <div class="cg-tour__dots mb-3" x-show.important="!$store.onboarding.modoUnico && $store.onboarding.passos.length <= 6">
         <template x-for="(p, i) in $store.onboarding.passos" :key="i">
           <span class="cg-tour__dot" :class="{ 'is-active': $store.onboarding.passoAtual === i }"></span>
         </template>
@@ -3867,12 +3869,47 @@
         <button type="button" class="btn btn-link btn-sm px-0" @click="$store.onboarding.voltar()" x-show.important="$store.onboarding.passoAtual > 0">Voltar</button>
         <span x-show="$store.onboarding.passoAtual === 0"></span>
         <div class="d-flex gap-2">
-          <button type="button" class="cg-btn btn btn-outline-secondary btn-sm" @click="$store.onboarding.pularEtapa()" x-show.important="!$store.onboarding.passoResolvido" x-text="$store.onboarding.modoUnico ? 'Pular' : 'Pular esta etapa'"></button>
+          <button type="button" class="cg-btn btn btn-outline-secondary btn-sm" @click="$store.onboarding.pularEtapa()" x-show.important="!$store.onboarding.passoResolvido && !$store.onboarding.passo.naoPular" x-text="$store.onboarding.modoUnico ? 'Pular' : 'Pular esta etapa'"></button>
           <button type="button" class="cg-btn btn btn-success btn-sm" @click="$store.onboarding.avancar()" x-show.important="$store.onboarding.passoResolvido">Continuar</button>
         </div>
       </div>
     </div>
   </div>
+
+  <!-- ============ Balão de campo (guia detalhado "Registre um gasto de
+       verdade", js/components/onboarding.js — PASSOS_FINANCEIRO) — passo
+       "campo" (explicação curta, sem gatilho) ou "acao" com dentroModal
+       (ex.: o passo "Salvar", que É gated na ação real). Alvo sempre DENTRO
+       de um modal já aberto (o formulário de Nova despesa) — por isso nunca
+       reaproveita ".cg-tour-spot-backdrop" acima (esse é só pra alvos FORA
+       de qualquer modal, com dark-backdrop de tela cheia): aqui só uma
+       moldura fina + um balãozinho, sempre por CIMA do modal real (ver
+       z-index 1071 em components.css), sem bloquear nada por baixo — a
+       pessoa continua podendo preencher o formulário de verdade enquanto lê
+       o balão. -->
+  <template x-if="$store.onboarding.aberto && $store.onboarding.mostraBalao && $store.onboarding.balloonStyles">
+    <div>
+      <div class="cg-tour-ring cg-tour-ring--campo" :style="$store.onboarding.balloonStyles.ring"></div>
+      <div class="cg-tour-balloon" :class="'cg-tour-balloon--' + $store.onboarding.balloonStyles.placement" :style="$store.onboarding.balloonStyles.balloon" role="dialog" aria-modal="false" :aria-label="$store.onboarding.passo.titulo">
+        <div class="d-flex align-items-start justify-content-between gap-2 mb-1">
+          <span class="d-flex align-items-center gap-1 fw-semibold small">
+            <i class="bi text-success" :class="$store.onboarding.passo.icone"></i>
+            <span class="cg-tour-balloon__titulo" x-text="$store.onboarding.passo.titulo"></span>
+          </span>
+          <button type="button" class="btn-close" style="font-size:.6rem;" @click="$store.onboarding.pular()" aria-label="Pular o tutorial inteiro"></button>
+        </div>
+        <p class="small mb-2" x-show.important="$store.onboarding.passo.tipo === 'campo' || !$store.onboarding.passoResolvido" x-text="$store.onboarding.passo.texto"></p>
+        <p class="small mb-2 fw-semibold" style="color: var(--color-success);" x-show.important="$store.onboarding.passo.tipo === 'acao' && $store.onboarding.passoResolvido" x-text="$store.onboarding.passo.textoResultado"></p>
+        <div class="d-flex align-items-center justify-content-between">
+          <span class="cg-muted small" x-text="($store.onboarding.passoAtual + 1) + '/' + $store.onboarding.passos.length"></span>
+          <div class="d-flex gap-2">
+            <button type="button" class="cg-btn btn btn-outline-secondary btn-sm" @click="$store.onboarding.pularEtapa()" x-show.important="$store.onboarding.passo.tipo === 'acao' && !$store.onboarding.passoResolvido">Pular</button>
+            <button type="button" class="cg-btn btn btn-success btn-sm" @click="$store.onboarding.avancar()" x-show.important="$store.onboarding.passoResolvido" x-text="$store.onboarding.ultimoPasso ? 'Concluir' : 'Próximo'"></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
 
   <script type="module" src="./js/app.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>

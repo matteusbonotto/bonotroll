@@ -3,7 +3,7 @@
 // e por isso a única testável aqui sem simular um navegador inteiro.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { computeSpotlightGeometry } from '../../js/utils/spotlight.js';
+import { computeSpotlightGeometry, computeBalloonGeometry } from '../../js/utils/spotlight.js';
 
 test('computeSpotlightGeometry: aplica o respiro (padding) em volta do retângulo real', () => {
   const g = computeSpotlightGeometry({ top: 100, left: 50, width: 120, height: 40 }, 8);
@@ -35,4 +35,22 @@ test('computeSpotlightGeometry: padding default é 8px quando não informado', (
   const g = computeSpotlightGeometry({ top: 50, left: 50, width: 10, height: 10 });
   assert.equal(g.hole.top, 42);
   assert.equal(g.hole.left, 42);
+});
+
+test('computeBalloonGeometry: fica embaixo do alvo quando sobra espaço', () => {
+  const g = computeBalloonGeometry({ top: 100, left: 50, width: 120, height: 40 }, { width: 400, height: 800 });
+  assert.equal(g.placement, 'bottom');
+  assert.equal(g.balloon.top, g.ring.top + g.ring.height + 10);
+});
+
+test('computeBalloonGeometry: inverte pra cima quando não sobra espaço embaixo', () => {
+  const g = computeBalloonGeometry({ top: 700, left: 50, width: 120, height: 40 }, { width: 400, height: 780 });
+  assert.equal(g.placement, 'top');
+  assert.equal(g.balloon.bottom, 780 - g.ring.top + 10);
+});
+
+test('computeBalloonGeometry: nunca deixa o balão vazar pra fora da largura da tela', () => {
+  const g = computeBalloonGeometry({ top: 100, left: 350, width: 40, height: 30 }, { width: 400, height: 800 });
+  assert.ok(g.balloon.left + g.balloon.maxWidth <= 400 - 12 + 0.001);
+  assert.ok(g.balloon.left >= 12);
 });

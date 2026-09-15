@@ -23,6 +23,20 @@
 // existia), não no formato em si, então não fazia sentido mostrar de novo
 // pra quem já tinha visto a v2. playwright.config.js pré-semeia essa MESMA
 // chave pro resto da suíte não ser interrompido por este modal.
+//
+// 2026-09-15 — guia "financeiro" virou um passo a passo DETALHADO (17
+// passos curtos, um balão por campo do formulário — ver PASSOS_FINANCEIRO
+// em js/components/onboarding.js): feedback real testando o tour ("muito
+// texto pode tirar o interesse... balões por etapa dá sensação de diálogo").
+// Só os passos de ponta (abrir o modal / Salvar) continuam "acao" de
+// verdade; os 15 do meio são só explicação curta + "Próximo", com o balão
+// ancorado no campo real DENTRO do modal já aberto (".cg-tour-balloon", não
+// mais ".cg-tour-spot-backdrop" — esse continua existindo só pro alvo de
+// FORA de um modal, o botão "Nova despesa"). Isso muda o comportamento de
+// "fechar o modal no meio" pro guia financeiro especificamente: como os
+// passos do meio dependem do modal continuar aberto, fechá-lo de verdade
+// (Cancelar/X/Esc) agora encerra o guia inteiro em vez de deixá-lo esperando
+// num campo que sumiu — ver _escutarFechamentoModal em onboarding.js.
 import { test, expect } from '@playwright/test';
 
 test.describe('primeira visita (storageState vazio)', () => {
@@ -56,7 +70,7 @@ test.describe('primeira visita (storageState vazio)', () => {
     await expect(backdrop).toBeHidden();
   });
 
-  test('fluxo simplificado: registra uma transação de verdade e depois abre a Central de tutoriais pela conclusão', async ({ page }) => {
+  test('fluxo detalhado: passo a passo por todo o formulário, registra uma transação de verdade e depois abre a Central pela conclusão', async ({ page }) => {
     await page.goto('/?demo=1');
     await page.getByText('Entrar como', { exact: false }).first().click();
 
@@ -64,43 +78,77 @@ test.describe('primeira visita (storageState vazio)', () => {
     await expect(infoBackdrop).toBeVisible({ timeout: 5000 });
     await page.getByRole('button', { name: 'Próximo' }).click();
 
-    // ---------- Único passo de ação do tour simplificado: "financeiro" ----------
+    // ---------- Passo 1/17: abrir o formulário de verdade ----------
     const spotBackdrop = page.locator('.cg-tour-spot-backdrop');
     await expect(spotBackdrop).toBeVisible();
-    await expect(spotBackdrop.getByText('Registre um gasto de verdade')).toBeVisible();
-    // A tela real por baixo precisa ter navegado sozinha pro Início, e o
-    // botão real (não uma simulação) precisa estar destacável/clicável.
+    await expect(spotBackdrop.getByText('Vamos registrar um gasto de teste')).toBeVisible();
+    // Não dá pra pular este passo — os 16 seguintes dependem do modal aberto.
+    await expect(page.getByRole('button', { name: 'Pular esta etapa' })).toBeHidden();
+
     const home = page.locator('section[x-data^="dashboardView"]');
     await expect(home).toBeVisible();
     const alvoTransacao = page.locator('[data-tour-alvo="nova-transacao"]');
-    await expect(alvoTransacao).toBeVisible();
-
-    // "Pular esta etapa" some assim que a ação é feita — antes disso, deve
-    // estar visível (a pessoa não fez a ação ainda).
-    await expect(page.getByRole('button', { name: 'Pular esta etapa' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Continuar' })).toBeHidden();
-
     await alvoTransacao.click();
+
     const txModal = page.locator('.cg-modal-backdrop[x-show="$store.txModal.open"]');
     await expect(txModal).toBeVisible();
+    // Abrir o modal avança sozinho pro balão do campo seguinte — o painel de
+    // tela cheia fica pra trás (escondido atrás do modal real de propósito).
+    await expect(spotBackdrop).toBeHidden();
+
+    const balloon = page.locator('.cg-tour-balloon');
+    const titulo = balloon.locator('.cg-tour-balloon__titulo');
+    const proximo = balloon.getByRole('button', { name: 'Próximo' });
+
+    // ---------- Passos 2-3: Entrada/Saída (mesmo alvo, textos diferentes) ----------
+    await expect(titulo).toHaveText('Entrada');
+    await proximo.click();
+    await expect(titulo).toHaveText('Saída');
+    await proximo.click();
+
+    // ---------- Passos 4/6: Título e Valor — preenche de verdade no formulário real ----------
+    await expect(titulo).toHaveText('Título');
     await txModal.locator('input[placeholder="Ex: Aluguel, Mercado, Salário…"]').fill('Cafézinho do tour');
+    await proximo.click();
+    await expect(titulo).toHaveText('Categoria');
+    await proximo.click();
+    await expect(titulo).toHaveText('Valor');
     await txModal.locator('input[type="number"]').first().fill('10');
+    await proximo.click();
+
+    // ---------- Passo 7: "Mais opções" ainda fechado; avançar abre sozinho ----------
+    await expect(titulo).toHaveText('Mais opções');
+    await expect(txModal.getByText('Empresa / Serviço')).toBeHidden();
+    await proximo.click();
+    await expect(titulo).toHaveText('Empresa ou serviço');
+    await expect(txModal.getByText('Empresa / Serviço')).toBeVisible();
+
+    // ---------- Passos 9-16: resto dos campos, só "Próximo" ----------
+    for (const t of ['Fixa ou variável', 'Responsável', 'Datas', 'Pago e Recorrente', 'Cartão de crédito', 'Parcelas', 'Comprovante', 'Observações']) {
+      await proximo.click();
+      await expect(titulo).toHaveText(t);
+    }
+
+    // ---------- Passo 17: Salvar de verdade (o único gated do meio pro fim) ----------
+    await proximo.click();
+    await expect(titulo).toHaveText('Salvar');
+    // Gated: "Próximo" só libera com a ação real — e continua rotulado
+    // "Próximo" (não "Concluir") mesmo depois de salvar, porque no tour de
+    // boas-vindas ainda falta o passo de conclusão (não é o último passo do
+    // ARRAY inteiro, só o último do guia financeiro dentro dele).
+    await expect(proximo).toBeHidden();
     await txModal.getByRole('button', { name: 'Salvar' }).click();
     await expect(txModal).toBeHidden();
 
-    // Ação real detectada: o passo mostra o resultado e libera "Continuar"
-    // (sem precisar de "Pular esta etapa" mais).
-    await expect(spotBackdrop.getByText('Prontinho! Repare que o saldo')).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Pular esta etapa' })).toBeHidden();
-    await page.getByRole('button', { name: 'Continuar' }).click();
+    await expect(balloon.getByText('Prontinho!', { exact: false })).toBeVisible();
+    await proximo.click();
+    await expect(balloon).toBeHidden();
 
-    // ---------- Conclusão: agora convida pra Central, em vez de forçar
-    // compras/recursos também ----------
+    // ---------- Conclusão: convida pra Central, em vez de forçar compras/recursos também ----------
     await expect(infoBackdrop).toBeVisible();
     await expect(infoBackdrop.getByText('Boa! Você já viu como funciona.')).toBeVisible();
     await infoBackdrop.getByRole('button', { name: 'Abrir Central de tutoriais' }).click();
     await expect(infoBackdrop).toBeHidden();
-    await expect(spotBackdrop).toBeHidden();
 
     const vistoNoStorage = await page.evaluate(() => localStorage.getItem('bonotto_onboarding_v2_seen'));
     expect(vistoNoStorage).toBe('1');
@@ -120,7 +168,7 @@ test.describe('primeira visita (storageState vazio)', () => {
     await expect(transacoes.getByText('Cafézinho do tour').first()).toBeVisible();
   });
 
-  test('"Pular esta etapa" avança pra conclusão sem fazer a ação, e "Pular tudo" (Esc) encerra o tour inteiro', async ({ page }) => {
+  test('não dá pra pular o 1º passo (abrir o modal), mas dá pra pular "Próximo" campo a campo até o fim, e "Pular tudo" (X) encerra o guia a qualquer momento', async ({ page }) => {
     await page.goto('/?demo=1');
     await page.getByText('Entrar como', { exact: false }).first().click();
 
@@ -130,18 +178,24 @@ test.describe('primeira visita (storageState vazio)', () => {
 
     const spotBackdrop = page.locator('.cg-tour-spot-backdrop');
     await expect(spotBackdrop).toBeVisible();
-    await page.getByRole('button', { name: 'Pular esta etapa' }).click();
+    // Os 16 passos seguintes dependem do formulário estar aberto — não tem
+    // como pular só este 1º passo sem quebrar o resto do guia.
+    await expect(page.getByRole('button', { name: 'Pular esta etapa' })).toBeHidden();
 
-    // Único passo de ação do tour pulado -> vai direto pra conclusão (não
-    // existe mais um 2º/3º passo de ação forçado).
-    await expect(spotBackdrop).toBeHidden();
-    await expect(infoBackdrop).toBeVisible();
-    await expect(infoBackdrop.getByText('Boa! Você já viu como funciona.')).toBeVisible();
+    await page.locator('[data-tour-alvo="nova-transacao"]').click();
+    const txModal = page.locator('.cg-modal-backdrop[x-show="$store.txModal.open"]');
+    await expect(txModal).toBeVisible();
 
-    // Esc no passo de conclusão (info) fecha o tour inteiro — mesmo
-    // mecanismo central de sempre (setupOverlayBehavior, js/app.js).
-    await page.keyboard.press('Escape');
-    await expect(infoBackdrop).toBeHidden();
+    const balloon = page.locator('.cg-tour-balloon');
+    await expect(balloon.locator('.cg-tour-balloon__titulo')).toHaveText('Entrada');
+
+    // "Pular tudo" (X do balão) encerra o guia inteiro a qualquer momento —
+    // aqui, no meio do passo a passo — devolve o modal real intacto (o guia
+    // só se fecha, nunca fecha o formulário por baixo dele).
+    await balloon.locator('.btn-close').click();
+    await expect(balloon).toBeHidden();
+    await expect(txModal).toBeVisible();
+
     const vistoNoStorage = await page.evaluate(() => localStorage.getItem('bonotto_onboarding_v2_seen'));
     expect(vistoNoStorage).toBe('1');
   });
@@ -162,7 +216,7 @@ test.describe('primeira visita (storageState vazio)', () => {
     expect(vistoNoStorage).toBe('1');
   });
 
-  test('Esc dentro do formulário real (aberto pelo passo de ação) fecha só o formulário, nunca o tour inteiro', async ({ page }) => {
+  test('Esc dentro do formulário real, no meio do guia detalhado, fecha o formulário E encerra o guia (os passos seguintes dependem do modal aberto)', async ({ page }) => {
     await page.goto('/?demo=1');
     await page.getByText('Entrar como', { exact: false }).first().click();
 
@@ -175,11 +229,18 @@ test.describe('primeira visita (storageState vazio)', () => {
 
     const txModal = page.locator('.cg-modal-backdrop[x-show="$store.txModal.open"]');
     await expect(txModal).toBeVisible();
+    const balloon = page.locator('.cg-tour-balloon');
+    await expect(balloon).toBeVisible();
+
     await page.keyboard.press('Escape');
     await expect(txModal).toBeHidden();
-    // O tour continua exatamente no mesmo passo, não fechou por baixo.
-    await expect(spotBackdrop).toBeVisible();
-    await expect(spotBackdrop.getByText('Registre um gasto de verdade')).toBeVisible();
+    // Diferente do guia "dividir-despesa" (abaixo, ação DENTRO de um
+    // formulário que a pessoa decide quando fechar): aqui os 15 passos
+    // seguintes apontam pra campos dentro deste modal específico — fechá-lo
+    // de verdade no meio do guia detalhado encerra o guia inteiro, em vez de
+    // deixar o balão apontando pra um campo que sumiu.
+    await expect(balloon).toBeHidden();
+    await expect(spotBackdrop).toBeHidden();
   });
 });
 

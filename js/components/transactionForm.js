@@ -156,6 +156,13 @@ export function txModalStore() {
       // "Despesa fixa" já nasce recorrente mensal — despesa fixa que não se
       // repete seria só uma despesa variável de nome errado.
       if (tipoDespesa === 'fixa') this.ativarRecorrenciaPadrao();
+      // Guia detalhado "Registre um gasto de verdade" (js/components/
+      // onboarding.js, PASSOS_FINANCEIRO) — sinal de que o modal abriu de
+      // verdade, pro 1º passo do guia avançar sozinho pro balão do próximo
+      // campo (o painel dele fica escondido atrás do modal real assim que
+      // ele abre — sem isso a pessoa ficaria com um "Continuar" inacessível).
+      // Dispara sempre, mesmo fora do guia — só quem estiver escutando liga.
+      window.dispatchEvent(new CustomEvent('cg:onboarding-acao', { detail: { area: 'financeiro-abrir' } }));
     },
 
     // Liga a recorrência com um default sensato (mensal, dia de hoje) sem
@@ -544,6 +551,14 @@ export function txModalStore() {
 
     close() {
       this.open = false;
+      // Best-effort pro guia detalhado (onboarding.js): se a pessoa fechar o
+      // modal de verdade (Cancelar/X/Esc) no meio de um passo com balão
+      // apontando pra um campo daqui, o guia se encerra sozinho em vez de
+      // ficar com o balão apontando pra um campo que sumiu. Dispara sempre,
+      // mesmo fora do guia — só quem estiver escutando liga (ver
+      // _escutarFechamentoModal em onboarding.js). Nunca dispara num save()
+      // bem-sucedido (que fecha o modal direto, sem passar por close()).
+      window.dispatchEvent(new CustomEvent('cg:onboarding-modal-fechado'));
     },
 
     async save() {
