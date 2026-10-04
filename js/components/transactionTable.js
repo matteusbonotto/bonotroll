@@ -1,7 +1,7 @@
 import { listTransactions, updateTransaction, markAsPaid, markAsUnpaid, listPayersFor, groupCartaoCredito } from '../services/transactions.js';
 import { notifyPayment } from '../services/notifications.js';
 import { STATUS_META, statusMeta, computeStatus } from '../utils/status.js';
-import { exportToCsv } from '../services/csvImport.js';
+import { exportToCsv, valorParaPlanilha, dataParaPlanilha } from '../services/csvImport.js';
 import * as format from '../utils/format.js';
 import { todayIso } from '../utils/format.js';
 import { agruparPorAnoMes } from '../utils/periodo.js';
@@ -487,16 +487,23 @@ export function transactionsView() {
     // esconder as compras que estão dentro da fatura só perderia dado — a
     // dedução de duplicidade existe pra métrica, não pra backup.
     exportar() {
+      // Mesmas colunas que o importador entende (migração de planilha,
+      // 2026-10-04): exportar e reimportar o próprio arquivo fecha o ciclo.
+      // Valor "1234,50" e data dd/mm/aaaa, como o Excel pt-BR espera.
       const dados = this._ordenar(this.rows).map((r) => ({
-        movimentacao: r.tipo === 'entrada' ? 'Entrada' : 'Saída',
+        tipo: r.tipo === 'entrada' ? 'entrada' : 'saida',
         titulo: r.titulo,
         empresa_servico: r.empresa_servico || '',
-        categoria: this.categoryFor(r.categoria_id)?.nome || '',
-        responsavel: this.responsavelFor(r.responsavel_id)?.nome || '',
-        tipo_despesa: r.tipo_despesa === 'fixa' ? 'Fixa' : 'Variável',
-        valor: r.valor,
-        vencimento: r.data_vencimento || '',
-        status: STATUS_META[r._status].label,
+        categoria_nome: this.categoryFor(r.categoria_id)?.nome || '',
+        responsavel_nome: this.responsavelFor(r.responsavel_id)?.nome || '',
+        tipo_despesa: r.tipo_despesa === 'fixa' ? 'fixa' : 'variavel',
+        valor: valorParaPlanilha(r.valor),
+        data_vencimento: dataParaPlanilha(r.data_vencimento),
+        data_pagamento: dataParaPlanilha(r.data_pagamento),
+        status: r.data_pagamento ? 'pago' : 'pendente',
+        observacoes: r.observacoes || '',
+        parcela_atual: r.parcela_atual ?? '',
+        parcela_total: r.parcela_total ?? '',
       }));
       exportToCsv(dados, 'bntt-transacoes.csv');
     },

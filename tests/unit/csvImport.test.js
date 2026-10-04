@@ -46,3 +46,26 @@ test('parseValorBR entende os formatos de planilha pt-BR e nunca zera em silênc
   assert.throws(() => parseValorBR('abc'), /não entendido/);
   assert.throws(() => parseValorBR('1,2,3'), /não entendido/);
 });
+
+test('migração de planilha: sinônimos de coluna, movimentação, formatos de exportação e validação (2026-10-04)', async () => {
+  const m = await import('../../js/services/csvImport.js');
+  const campos = m.IMPORT_TARGETS.transacoes.fields;
+  const mapa = m.sugerirMapeamento(campos, ['Data', 'Descrição', 'Valor (R$)', 'Categoria', 'D/C', 'Obs']);
+  assert.equal(mapa.data_vencimento, 'Data');
+  assert.equal(mapa.titulo, 'Descrição');
+  assert.equal(mapa.valor, 'Valor (R$)');
+  assert.equal(mapa.categoria_nome, 'Categoria');
+  assert.equal(mapa.tipo, 'D/C');
+  assert.equal(mapa.observacoes, 'Obs');
+  for (const e of ['Entrada', 'crédito', 'C', 'Receita']) assert.equal(m.normalizarMovimentacao(e), 'entrada', e);
+  for (const s of ['Saída', 'débito', 'D', '']) assert.equal(m.normalizarMovimentacao(s), 'saida', s);
+  assert.equal(m.valorParaPlanilha(1234.5), '1234,50');
+  assert.equal(m.dataParaPlanilha('2026-10-05'), '05/10/2026');
+  const v = m.validarLinhas('transacoes', [
+    { tipo: 'saida', titulo: 'Luz', valor: '189,90', data_vencimento: '10/10/2026' },
+    { tipo: 'saida', titulo: '', valor: 'abc', data_vencimento: '99/99/2026' },
+  ]);
+  assert.equal(v.ok, 1);
+  assert.equal(v.erros[0].linha, 3);
+  assert.equal(v.erros[0].problemas.length, 3);
+});

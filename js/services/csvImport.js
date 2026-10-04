@@ -24,8 +24,14 @@ async function lerArquivoComoTexto(file) {
 }
 
 export async function parseCsvFile(file) {
+  return parseTextoPlanilha(await lerArquivoComoTexto(file));
+}
+
+// Texto de planilha: arquivo .csv (vírgula ou ponto e vírgula) ou linhas
+// COPIADAS do Excel/Google Planilhas e coladas no app (tabulação). O Papa
+// detecta o separador sozinho. (Migração de planilha, 2026-10-04.)
+export async function parseTextoPlanilha(texto) {
   const Papa = await loadPapa();
-  const texto = await lerArquivoComoTexto(file);
   return new Promise((resolve, reject) => {
     Papa.parse(texto, {
       header: true,
@@ -51,9 +57,98 @@ function baixarBlobCsv(csv, filename) {
   URL.revokeObjectURL(url);
 }
 
+// Separador ";" (padrão do Excel em pt-BR — com "," ele abre tudo numa
+// coluna só). O importador aceita os dois.
 export async function exportToCsv(rows, filename = 'exportacao.csv') {
   const Papa = await loadPapa();
-  baixarBlobCsv(Papa.unparse(rows), filename);
+  baixarBlobCsv(Papa.unparse(rows, { delimiter: ';' }), filename);
+}
+
+// Número no formato brasileiro para planilha: 1234.5 -> "1234,50".
+export function valorParaPlanilha(n) {
+  const v = Number(n);
+  return Number.isFinite(v) ? v.toFixed(2).replace('.', ',') : '';
+}
+
+// Data ISO -> dd/mm/aaaa (o que o Excel pt-BR entende como data).
+export function dataParaPlanilha(iso) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || '');
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : '';
+}
+
+// Nomes de coluna comuns em planilhas pessoais e extratos -> campo do BNTT.
+const SINONIMOS = {
+  tipo: ['movimentacao', 'movimento', 'tipo', 'entrada/saida', 'debito/credito', 'd/c', 'natureza', 'operacao'],
+  titulo: ['titulo', 'descricao', 'historico', 'lancamento', 'nome', 'item', 'detalhe'],
+  empresa_servico: ['empresa', 'empresa_servico', 'loja', 'estabelecimento', 'fornecedor', 'favorecido', 'servico'],
+  categoria_nome: ['categoria', 'categoria_nome', 'grupo', 'classificacao'],
+  responsavel_nome: ['responsavel', 'responsavel_nome', 'quem', 'pessoa', 'pagador'],
+  tipo_despesa: ['tipo_despesa', 'tipo de despesa', 'fixa/variavel', 'fixa ou variavel', 'recorrencia'],
+  valor: ['valor', 'valor (r$)', 'valor r$', 'quantia', 'montante', 'total', 'preco'],
+  data_vencimento: ['data_vencimento', 'vencimento', 'data', 'data de vencimento', 'dt', 'dia'],
+  data_pagamento: ['data_pagamento', 'pago em', 'data do pagamento', 'data pagamento', 'pagamento'],
+  status: ['status', 'situacao', 'pago?', 'pago'],
+  observacoes: ['observacoes', 'observacao', 'obs', 'notas', 'nota', 'comentario'],
+  nome: ['nome', 'item', 'produto', 'descricao'],
+  quantidade: ['quantidade', 'qtd', 'qtde', 'quant'],
+  comodo_nome: ['comodo', 'comodo_nome', 'local', 'ambiente'],
+  banco_nome: ['banco', 'banco_nome', 'instituicao'],
+};
+
+function normalizarCabecalho(h) {
+  return (h || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+}
+
+// Sugere a coluna do arquivo para cada campo: nome exato do campo, depois
+// sinônimos conhecidos, depois o pedaço do nome (comportamento antigo).
+export function sugerirMapeamento(fields, headers) {
+  const mapping = {};
+  const usados = new Set();
+  const livre = (h) => h && !usados.has(h);
+  for (const f of fields) {
+    const exato = headers.find((h) => normalizarCabecalho(h) === f.key.toLowerCase());
+    if (livre(exato)) { mapping[f.key] = exato; usados.add(exato); }
+  }
+  for (const f of fields) {
+    if (mapping[f.key]) continue;
+    const sin = SINONIMOS[f.key] || [];
+    const achado = headers.find((h) => livre(h) && sin.includes(normalizarCabecalho(h)));
+    if (achado) { mapping[f.key] = achado; usados.add(achado); }
+  }
+  for (const f of fields) {
+    if (mapping[f.key]) continue;
+    const chave = f.key.split('_')[0].toLowerCase();
+    const achado = headers.find((h) => livre(h) && normalizarCabecalho(h).includes(chave));
+    if (achado) { mapping[f.key] = achado; usados.add(achado); }
+  }
+  return mapping;
+}
+
+// "Entrada"/"Crédito"/"C"/"Receita"/"+" -> entrada; o resto -> saída.
+export function normalizarMovimentacao(valor) {
+  const t = normalizarCabecalho(valor);
+  return /^(entr|cred|receit|\+|c$)/.test(t) ? 'entrada' : 'saida';
+}
+
+// Confere as linhas ANTES de importar (o que vai dar certo e o que não).
+export function validarLinhas(target, rows) {
+  const fields = IMPORT_TARGETS[target].fields;
+  const camposValor = new Set(['valor', 'quantidade', 'meta', 'valor_inicial']);
+  const camposData = new Set(['data_vencimento', 'data_pagamento', 'data_validade']);
+  const erros = [];
+  rows.forEach((row, i) => {
+    const problemas = [];
+    for (const f of fields) {
+      const v = (row[f.key] ?? '').toString().trim();
+      if (f.required && !v) problemas.push(`"${f.label}" vazio`);
+      if (v && camposValor.has(f.key)) {
+        try { parseValorBR(v); } catch { problemas.push(`valor "${v}" não entendido`); }
+      }
+      if (v && camposData.has(f.key) && !normalizarDataCsv(v)) problemas.push(`data "${v}" não entendida`);
+    }
+    if (problemas.length) erros.push({ linha: i + 2, problemas });
+  });
+  return { ok: rows.length - erros.length, erros };
 }
 
 // Campos que o usuário pode mapear ao importar cada tipo de informação do app.
@@ -119,7 +214,10 @@ export const IMPORT_TARGETS = {
 export async function baixarTemplateCsv(target) {
   const Papa = await loadPapa();
   const fields = IMPORT_TARGETS[target].fields.map((f) => f.key);
-  baixarBlobCsv(Papa.unparse({ fields, data: [] }), `bntt-modelo-${target}.csv`);
+  // Duas linhas de exemplo (revisão com personas: modelo só com cabeçalho
+  // não ensina o formato). Colunas sem exemplo ficam vazias.
+  const exemplos = (EXEMPLOS_MODELO[target] || []).map((ex) => fields.map((k) => ex[k] ?? ''));
+  baixarBlobCsv(Papa.unparse({ fields, data: exemplos }, { delimiter: ';' }), `bntt-modelo-${target}.csv`);
 }
 
 // Aceita tanto "aaaa-mm-dd" (formato documentado nos labels acima, o mesmo
@@ -136,6 +234,25 @@ export function normalizarDataCsv(valor) {
   if (/^\d{4}-\d{2}-\d{2}$/.test(texto)) return texto;
   return parseDataBR(texto);
 }
+
+const EXEMPLOS_MODELO = {
+  transacoes: [
+    { tipo: 'saida', titulo: 'Conta de luz', empresa_servico: 'Enel', categoria_nome: 'Casa', tipo_despesa: 'fixa', valor: '189,90', data_vencimento: '10/10/2026', status: 'pendente' },
+    { tipo: 'entrada', titulo: 'Salário', categoria_nome: 'Salário', tipo_despesa: 'fixa', valor: '4.500,00', data_vencimento: '05/10/2026', data_pagamento: '05/10/2026', status: 'pago' },
+  ],
+  compras: [
+    { nome: 'Arroz 5kg', categoria_nome: 'Mercado', unidade: 'un', quantidade: '1' },
+    { nome: 'Tomate', categoria_nome: 'Hortifruti', unidade: 'kg', quantidade: '1,5' },
+  ],
+  recursos: [
+    { nome: 'Detergente', comodo_nome: 'Cozinha', subcategoria_nome: 'Limpeza', quantidade: '3', data_validade: '31/12/2026' },
+    { nome: 'Pasta de dente', comodo_nome: 'Banheiro', subcategoria_nome: 'Higiene', quantidade: '2' },
+  ],
+  caixinhas: [
+    { banco_nome: 'Nubank', moeda: 'BRL', meta: '10.000,00', valor_inicial: '1.500,00' },
+    { banco_nome: 'Wise', moeda: 'USD', meta: '2.000,00', valor_inicial: '300,00' },
+  ],
+};
 
 // Valor monetário de planilha (bug crítico achado na revisão de 2026-10-04:
 // "1.234,56" e "R$ 10,00" viravam R$ 0,00 sem aviso). Entende:

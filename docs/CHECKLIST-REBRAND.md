@@ -144,5 +144,7 @@ O checklist acima (8 itens) foi todo concluído. Depois disso vieram mais pedido
 - [x] Contraste do "(pagas)" no card de saldo.
 - [x] Banner do modo demonstração sem "README/Supabase".
 - [x] Nome BNTT some do topo em tela estreita para não cortar o avatar.
-- [ ] Exportar = importar (mesmas colunas, `;`, "1234,56", dd/mm/aaaa, .xlsx) e assistente de importação para quem vem de planilha — próxima entrega.
+- [x] Exportar = importar: mesmas colunas do importador, `;` (Excel pt-BR), valor "1234,50", data dd/mm/aaaa, mais pago em, observações e parcelas — reimportar o próprio backup funciona.
+- [x] Importar da planilha: colar linhas copiadas do Excel/Google Planilhas; colunas reconhecidas por nomes comuns (Data, Descrição, Histórico, Valor, D/C, Débito/Crédito, Obs…); "Crédito/C/Receita" vira entrada; validação linha a linha antes de importar ("N prontas · M com problema" e o motivo de cada linha); modelo com 2 linhas de exemplo; botão "Escolher arquivo" em português.
+- [ ] Ler .xlsx direto: adiado — a biblioteca gratuita (SheetJS 0.18.5 no npm) tem vulnerabilidade conhecida ao abrir arquivo malicioso; colar e CSV cobrem o caso.
 - [ ] Tabela de Transações densa com totais e atalhos de teclado — próxima entrega.

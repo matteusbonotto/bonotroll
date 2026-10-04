@@ -3824,12 +3824,18 @@
 
       <template x-if="$store.csvModal.step === 'upload'">
         <div>
-          <p class="cg-muted small">Selecione um arquivo .csv com cabeçalho na primeira linha.</p>
+          <p class="cg-muted small">Traga os dados da sua planilha (Excel ou Google Planilhas). A primeira linha precisa ter os nomes das colunas.</p>
           <!-- Modelo com as colunas que este target entende, sem precisar
                abrir um arquivo e ir campo por campo pra descobrir — baixa na
                hora, direto do navegador (ver baixarTemplateCsv). -->
           <button type="button" class="cg-btn btn btn-outline-secondary btn-sm mb-2" @click="$store.csvModal.baixarModelo()"><i class="bi bi-download"></i> Baixar modelo (.csv)</button>
-          <input type="file" accept=".csv" class="form-control" @change="$store.csvModal.onFile($event)" />
+          <label class="cg-btn btn btn-primary w-100 mb-3" style="cursor:pointer;">
+            <i class="bi bi-file-earmark-arrow-up"></i> Escolher arquivo .csv
+            <input type="file" accept=".csv,text/csv,text/plain" class="d-none" @change="$store.csvModal.onFile($event)" />
+          </label>
+          <label class="form-label small fw-semibold" for="cg-csv-colar">Ou copie as linhas da planilha (com o cabeçalho) e cole aqui:</label>
+          <textarea id="cg-csv-colar" class="form-control mb-2" rows="4" x-model="$store.csvModal.textoColado" placeholder="Data	Descrição	Valor&#10;05/10/2026	Mercado	152,30"></textarea>
+          <button type="button" class="cg-btn btn btn-outline-secondary w-100" :disabled="!$store.csvModal.textoColado.trim()" @click="$store.csvModal.usarTextoColado()">Usar o que colei</button>
         </div>
       </template>
 
@@ -3862,7 +3868,16 @@
 
       <template x-if="$store.csvModal.step === 'preview'">
         <div>
-          <p class="cg-muted small" x-text="$store.csvModal.rawRows.length + ' linha(s) serão importadas.'"></p>
+          <div class="alert py-2 small mb-2" :class="$store.csvModal.validacao.erros.length ? 'alert-warning' : 'alert-success'" role="status">
+            <strong x-text="$store.csvModal.validacao.ok + ' linha(s) prontas'"></strong>
+            <span x-show="$store.csvModal.validacao.erros.length" x-text="' · ' + $store.csvModal.validacao.erros.length + ' com problema (não serão importadas)'"></span>
+          </div>
+          <ul class="small text-danger mb-2 ps-3" x-show="$store.csvModal.validacao.erros.length">
+            <template x-for="e in $store.csvModal.validacao.erros.slice(0, 5)" :key="e.linha">
+              <li x-text="'Linha ' + e.linha + ': ' + e.problemas.join(', ')"></li>
+            </template>
+            <li x-show="$store.csvModal.validacao.erros.length > 5" x-text="'… e mais ' + ($store.csvModal.validacao.erros.length - 5)"></li>
+          </ul>
           <div class="cg-scroll-x mb-3" style="max-height:260px; overflow-y:auto;">
             <table class="table table-sm">
               <thead><tr><template x-for="f in $store.csvModal.fields()" :key="f.key"><th x-text="f.label"></th></template></tr></thead>

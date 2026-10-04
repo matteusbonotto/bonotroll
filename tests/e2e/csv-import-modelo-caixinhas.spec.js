@@ -23,7 +23,7 @@ test('botão "Baixar modelo" no import de CSV baixa um cabeçalho com as colunas
 
   expect(download.suggestedFilename()).toBe('bntt-modelo-transacoes.csv');
   const conteudo = fs.readFileSync(await download.path(), 'utf-8');
-  const cabecalho = conteudo.replace(/^﻿/, '').split('\r\n')[0].split(',');
+  const cabecalho = conteudo.replace(/^﻿/, '').split('\r\n')[0].split(';'); // ';' desde 2026-10-04 (Excel pt-BR)
   expect(cabecalho).toContain('titulo');
   expect(cabecalho).toContain('valor');
   expect(cabecalho).toContain('data_vencimento');

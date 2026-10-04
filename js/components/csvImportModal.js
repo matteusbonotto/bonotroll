@@ -1,4 +1,4 @@
-import { parseCsvFile, applyMapping, IMPORT_TARGETS, normalizarDataCsv, baixarTemplateCsv, parseValorBR } from '../services/csvImport.js';
+import { parseCsvFile, parseTextoPlanilha, applyMapping, IMPORT_TARGETS, normalizarDataCsv, baixarTemplateCsv, parseValorBR, sugerirMapeamento, validarLinhas, normalizarMovimentacao } from '../services/csvImport.js';
 import { createTransaction } from '../services/transactions.js';
 import { createCategory } from '../services/categories.js';
 import { createCompany, updateCompany } from '../services/companies.js';
@@ -19,6 +19,8 @@ export function csvModalStore() {
     rawRows: [],
     mapping: {},
     result: { ok: 0, pulados: 0, erros: [] },
+    validacao: { ok: 0, erros: [] },
+    textoColado: '',
     IMPORT_TARGETS,
 
     openFor(target, listId = null) {
@@ -28,6 +30,8 @@ export function csvModalStore() {
       this.headers = [];
       this.rawRows = [];
       this.mapping = {};
+      this.textoColado = '';
+      this.validacao = { ok: 0, erros: [] };
       this.result = { ok: 0, pulados: 0, erros: [] };
       // Cache de cômodos/subcategorias/itens já resolvidos NESTE import (ver
       // resolveComodo/resolveSubcategoria/itemDuplicado) — zerado a cada
@@ -50,28 +54,26 @@ export function csvModalStore() {
     async onFile(event) {
       const file = event.target.files?.[0];
       if (!file) return;
-      const { headers, rows } = await parseCsvFile(file);
+      this._carregar(await parseCsvFile(file));
+    },
+
+    // Linhas copiadas do Excel/Google Planilhas (com o cabeçalho) e coladas.
+    async usarTextoColado() {
+      if (!this.textoColado.trim()) return;
+      this._carregar(await parseTextoPlanilha(this.textoColado));
+    },
+
+    // Sugestão de colunas com sinônimos de planilha ("Descrição", "Histórico",
+    // "Data", "D/C"…) — ver sugerirMapeamento em services/csvImport.js.
+    _carregar({ headers, rows }) {
       this.headers = headers;
       this.rawRows = rows;
-      this.mapping = {};
-      for (const f of this.fields()) {
-        // Match exato primeiro (ex: cabeçalho "tipo_despesa" tem que ganhar
-        // do campo "tipo_despesa" antes de "tipo" tentar um match por
-        // substring — senão "tipo" e "tipo_despesa" colidiam no mesmo
-        // cabeçalho "tipo" e um dos dois ficava sem coluna nenhuma).
-        const exact = headers.find((h) => h.toLowerCase() === f.key.toLowerCase());
-        if (exact) {
-          this.mapping[f.key] = exact;
-          continue;
-        }
-        const chave = f.key.split('_')[0].toLowerCase();
-        const match = headers.find((h) => h.toLowerCase().includes(chave));
-        if (match) this.mapping[f.key] = match;
-      }
+      this.mapping = sugerirMapeamento(this.fields(), headers);
       this.step = 'map';
     },
 
     avancarPreview() {
+      this.validacao = validarLinhas(this.target, applyMapping(this.rawRows, this.mapping));
       this.step = 'preview';
     },
 
@@ -101,7 +103,7 @@ export function csvModalStore() {
             // data própria assume o vencimento (ou hoje, se nem isso vier).
             const dataPagamento = normalizarDataCsv(row.data_pagamento) || (pago ? dataVencimento || todayIso() : null);
             await createTransaction({
-              tipo: (row.tipo || 'saida').toLowerCase().startsWith('entr') ? 'entrada' : 'saida',
+              tipo: normalizarMovimentacao(row.tipo || 'saida'),
               titulo: row.titulo,
               empresa_servico: row.empresa_servico || null,
               categoria_id: await this.resolveCategoria(row.categoria_nome),
