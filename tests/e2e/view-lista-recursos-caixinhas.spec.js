@@ -14,7 +14,7 @@ test('alternar pra Lista em Recursos e em Caixinhas mantém os mesmos dados vis�
   await page.getByText('Entrar como', { exact: false }).first().click();
 
   // ---------- Recursos: grid de itens (cômodo -> "Todas"/subcategoria) ----------
-  await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Recursos' }).first().click();
+  await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Inventário' }).first().click();
   await page.waitForTimeout(400);
 
   const secaoRecursos = page.locator('section[x-data^="resourcesView"]');
@@ -60,7 +60,7 @@ test('alternar pra Lista em Recursos e em Caixinhas mantém os mesmos dados vis�
 test('digitar quantidade em Recursos persiste depois de recarregar a página', async ({ page }) => {
   await page.goto('/?demo=1');
   await page.getByText('Entrar como', { exact: false }).first().click();
-  await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Recursos' }).first().click();
+  await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Inventário' }).first().click();
   await page.waitForTimeout(400);
 
   const secao = page.locator('section[x-data^="resourcesView"]');

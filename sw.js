@@ -63,6 +63,7 @@ const APP_SHELL = [
   './js/components/onboarding.js',
   './js/components/help.js',
   './js/components/faq.js',
+  './js/components/camera.js',
   './js/utils/spotlight.js',
   './js/utils/dbFallback.js',
   './js/utils/image.js',

@@ -26,6 +26,9 @@ const MESES_ABREV = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'se
 // dos dois campos preencher" dependendo da unidade escolhida.
 const NOVO_ITEM_VAZIO = () => ({ nome: '', categoria_id: '', unidade: 'un', quantidade: 1, prioridade: 3, preco: '', data_validade: '', codigo_barras: '', foto_url: null });
 
+// Lista aberta por último (prefixo bonotto_, ver CLAUDE.md) — sobrevive a recarregar a página.
+const CHAVE_LISTA_ABERTA = 'bonotto_compras_lista_aberta';
+
 export function shoppingView() {
   return {
     list: null,
@@ -199,9 +202,17 @@ export function shoppingView() {
       localStorage.setItem('bonotto_view_compras', mode);
     },
 
+    // Várias listas (2026-10-04): a tela abre em "Minhas listas"; entrar
+    // numa lista mostra a mesma tela de sempre (planejar → comprar → encerrar).
+    listasAbertas: [], // [{ list, totalItens, valorTotal }]
+    novaListaAberta: false,
+    novaListaNome: '',
+    sugestoesNomeLista: ['Mercado', 'Internet', 'Farmácia', 'Feira', 'Casa'],
+
     init() {
       this.load();
       window.addEventListener('cg:shopping-changed', () => this.refreshItems());
+      window.addEventListener('cg:compras-abrir-lista', () => this.garantirListaAberta());
     },
 
     async load() {
@@ -209,13 +220,95 @@ export function shoppingView() {
       if (!store.profile) return;
       this.loading = true;
       try {
-        this.list = await sl.getOrCreateActiveList({ ownerId: store.profile.id, groupId: store.group?.group?.id });
-        this.items = await sl.listItems(this.list.id);
+        await this.carregarListas();
+        // Recarregou a página no meio do mercado? Volta para a lista que estava aberta.
+        let lembrada = null;
+        try { lembrada = localStorage.getItem(CHAVE_LISTA_ABERTA); } catch { /* sem armazenamento */ }
+        const aberta = lembrada && this.listasAbertas.find((l) => l.list.id === lembrada);
+        if (aberta) await this.abrirLista(aberta.list);
       } catch (e) {
-        store.notify(e.message || 'Não consegui carregar a lista de compras.', 'danger');
+        store.notify(e.message || 'Não consegui carregar as listas de compras.', 'danger');
       } finally {
         this.loading = false;
       }
+    },
+
+    async carregarListas() {
+      const store = this.$store.app;
+      const todas = await sl.listLists({ ownerId: store.profile.id, groupId: store.group?.group?.id });
+      const abertas = sl.ordenarListasAbertas(todas);
+      this.listasAbertas = await Promise.all(
+        abertas.map(async (list) => {
+          const resumo = sl.computeListSummary(await sl.listItems(list.id).catch(() => []));
+          return { list, totalItens: resumo.totalItens, valorTotal: resumo.valorTotal };
+        }),
+      );
+    },
+
+    async abrirLista(lista) {
+      this.list = lista;
+      try { localStorage.setItem(CHAVE_LISTA_ABERTA, lista.id); } catch { /* sem armazenamento */ }
+      this.items = await sl.listItems(lista.id).catch(() => []);
+    },
+
+    async voltarParaListas() {
+      this.list = null;
+      try { localStorage.removeItem(CHAVE_LISTA_ABERTA); } catch { /* sem armazenamento */ }
+      this.items = [];
+      await this.carregarListas().catch(() => {});
+    },
+
+    abrirNovaLista() {
+      this.novaListaNome = '';
+      this.novaListaAberta = true;
+    },
+
+    async criarLista() {
+      const store = this.$store.app;
+      const nome = this.novaListaNome.trim();
+      if (!nome) return;
+      try {
+        const anterior = this.listasAbertas.find((l) => l.list.limite_gasto)?.list.limite_gasto ?? null;
+        const nova = await sl.createList({ ownerId: store.profile.id, groupId: store.group?.group?.id, nome, limiteGasto: anterior });
+        this.novaListaAberta = false;
+        await this.abrirLista(nova);
+      } catch (e) {
+        store.notify(e.message || 'Não consegui criar a lista.', 'danger');
+      }
+    },
+
+    async renomearLista() {
+      if (!this.list) return;
+      const nome = prompt('Novo nome da lista:', this.list.nome || '');
+      if (nome === null || !nome.trim()) return;
+      try {
+        this.list = await sl.renameList(this.list.id, nome);
+      } catch (e) {
+        this.$store.app.notify(e.message || 'Não consegui renomear a lista.', 'danger');
+      }
+    },
+
+    async excluirLista() {
+      if (!this.list) return;
+      const qtd = this.items.length;
+      if (!confirm(`Excluir a lista "${this.list.nome}"${qtd ? ` e os ${qtd} itens dela` : ''}? Essa ação não pode ser desfeita.`)) return;
+      try {
+        await sl.deleteList(this.list.id);
+        this.$store.app.notify('Lista excluída.');
+        await this.voltarParaListas();
+      } catch (e) {
+        this.$store.app.notify(e.message || 'Não consegui excluir a lista.', 'danger');
+      }
+    },
+
+    // Guia de Compras (onboarding): precisa de uma lista aberta pra apontar o "+".
+    async garantirListaAberta() {
+      if (this.list) return;
+      if (!this.listasAbertas.length) await this.carregarListas().catch(() => {});
+      if (this.listasAbertas.length) return this.abrirLista(this.listasAbertas[0].list);
+      const store = this.$store.app;
+      const nova = await sl.createList({ ownerId: store.profile.id, groupId: store.group?.group?.id, nome: 'Mercado' });
+      return this.abrirLista(nova);
     },
 
     async refreshItems() {
@@ -517,11 +610,19 @@ export function shoppingView() {
       }
     },
 
+    // Depois de encerrar: a compra vai para o histórico e a MESMA lista
+    // (nome e limite) volta vazia para a grade — "Mercado" continua lá para
+    // a próxima ida ao mercado. Depois volta para "Minhas listas".
     async novaLista() {
       const store = this.$store.app;
       try {
-        this.list = await sl.createList({ ownerId: store.profile.id, groupId: store.group?.group?.id, nome: 'Lista de Compras' });
-        this.items = [];
+        await sl.createList({
+          ownerId: store.profile.id,
+          groupId: store.group?.group?.id,
+          nome: this.list?.nome || 'Lista de Compras',
+          limiteGasto: this.list?.limite_gasto ?? null,
+        });
+        await this.voltarParaListas();
       } catch (e) {
         store.notify(e.message || 'Não foi possível criar uma nova lista.', 'danger');
       }

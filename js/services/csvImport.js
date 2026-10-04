@@ -87,7 +87,7 @@ export const IMPORT_TARGETS = {
     ],
   },
   recursos: {
-    label: 'Itens de Recursos (inventário doméstico)',
+    label: 'Itens do Inventário (doméstico)',
     fields: [
       { key: 'nome', label: 'Nome do item', required: true },
       { key: 'comodo_nome', label: 'Cômodo', required: true },

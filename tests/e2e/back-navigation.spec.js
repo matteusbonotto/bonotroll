@@ -7,10 +7,10 @@ import { test, expect } from '@playwright/test';
 test('.cg-back em Recursos volta cômodo → grade e subcategoria → cômodo', async ({ page }) => {
   await page.goto('/?demo=1');
   await page.getByText('Entrar como', { exact: false }).first().click();
-  await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Recursos' }).first().click();
+  await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Inventário' }).first().click();
   await page.waitForTimeout(400);
 
-  const primeiroComodo = page.locator('.cg-room-tile').first();
+  const primeiroComodo = page.locator('section[x-data^="resourcesView"] .cg-room-tile').first();
   await expect(primeiroComodo).toBeVisible({ timeout: 5000 });
   await primeiroComodo.click();
 
@@ -19,5 +19,5 @@ test('.cg-back em Recursos volta cômodo → grade e subcategoria → cômodo', 
   await expect(voltarComodos.locator('i.bi-chevron-left')).toBeVisible();
 
   await voltarComodos.click();
-  await expect(page.locator('.cg-room-tile').first()).toBeVisible({ timeout: 5000 });
+  await expect(page.locator('section[x-data^="resourcesView"] .cg-room-tile').first()).toBeVisible({ timeout: 5000 });
 });

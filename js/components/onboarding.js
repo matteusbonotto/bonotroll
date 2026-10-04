@@ -405,6 +405,7 @@ const PASSOS_COMPRAS = [
     autoAvancar: true,
     naoPular: true,
     view: 'compras',
+    preparar: () => window.dispatchEvent(new CustomEvent('cg:compras-abrir-lista')),
     alvoSeletor: 'section[x-data^="shoppingView"] [data-tour-alvo="novo-item-compra"]',
     icone: 'bi-cart-fill',
     titulo: 'Vamos colocar algo na lista',
@@ -1013,7 +1014,7 @@ export function onboardingStore() {
           tipo: 'info',
           icone: 'bi-signpost-2-fill',
           titulo: 'Boa! Você já viu como funciona.',
-          texto: 'Tem bastante mais coisa pra explorar — dividir despesa com seu par, despesa fixa, cartão de crédito, caixinha, lista de compras, recursos de casa e mais. A Central de tutoriais tem um guia rápido pra cada uma dessas ações, pra você escolher o que quiser aprender agora.',
+          texto: 'Tem bastante mais coisa pra explorar — dividir despesa com seu par, despesa fixa, cartão de crédito, caixinha, lista de compras, inventário da casa e mais. A Central de tutoriais tem um guia rápido pra cada uma dessas ações, pra você escolher o que quiser aprender agora.',
           cta: { label: 'Abrir Central de tutoriais', metodo: 'abrirCentralDoTour' },
         },
       ];

@@ -21,16 +21,45 @@
 // Ver js/components/shoppingList.js::onFotoItem, resourcesView.js::onFotoNomeItem,
 // transactionForm.js::onComprovanteChange — os 3 pontos que chamam
 // recognizeText() agora passam a imagem por aqui primeiro.
+// Lê só as dimensões (o cabeçalho) sem decodificar os pixels da foto.
+function dimensoes(file) {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => { resolve({ w: img.naturalWidth, h: img.naturalHeight }); URL.revokeObjectURL(url); };
+    img.onerror = () => { resolve(null); URL.revokeObjectURL(url); };
+    img.src = url;
+  });
+}
+
+// CORREÇÃO 2026-10-04 (Galaxy S21, "erro de memória" de novo): reduzir para
+// 2000 px não bastava porque `createImageBitmap(file)` decodificava a foto
+// INTEIRA (12–64 MP) antes de reduzir. Aqui a redução acontece na própria
+// decodificação (`resizeWidth/resizeHeight`), sem o buffer gigante.
+export async function decodificarReduzido(file, maxDim) {
+  const d = await dimensoes(file);
+  if (d && Math.max(d.w, d.h) > maxDim) {
+    const escala = maxDim / Math.max(d.w, d.h);
+    const opcoes = { resizeWidth: Math.round(d.w * escala), resizeHeight: Math.round(d.h * escala), resizeQuality: 'high' };
+    const reduzido = await createImageBitmap(file, opcoes).catch(() => null);
+    if (reduzido) return reduzido;
+  }
+  return createImageBitmap(file).catch(() => null);
+}
+
 export async function resizeImage(file, maxDim = 512, qualidade = 0.85) {
   if (!file.type?.startsWith('image/') || file.type === 'image/svg+xml') return file;
 
-  const bitmap = await createImageBitmap(file).catch(() => null);
+  // Tamanho ORIGINAL (só o cabeçalho): decide se precisa reduzir antes de
+  // decodificar — a decodificação já sai reduzida e não serve para isso.
+  const original = await dimensoes(file);
+  if (original && Math.max(original.w, original.h) <= maxDim) return file; // já pequena, nada a fazer
+
+  const bitmap = await decodificarReduzido(file, maxDim);
   if (!bitmap) return file; // formato não suportado pelo decoder — segue com o arquivo original
 
   const maior = Math.max(bitmap.width, bitmap.height);
-  if (maior <= maxDim) { bitmap.close?.(); return file; } // já pequena, nada a fazer
-
-  const escala = maxDim / maior;
+  const escala = Math.min(1, maxDim / maior);
   const w = Math.round(bitmap.width * escala);
   const h = Math.round(bitmap.height * escala);
 

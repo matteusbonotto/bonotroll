@@ -17,6 +17,8 @@ test('digitar uma data completa no campo mascarado salva e persiste (recarregand
   await page.waitForTimeout(400);
 
   const secao = page.locator('section[x-data^="shoppingView"]');
+  // Várias listas (2026-10-04): a tela abre em "Minhas listas"; entra na primeira.
+  await page.locator('section[x-data^="shoppingView"] .cg-lista-tile').first().click();
   await secao.locator('.cg-fab').click();
 
   const modal = page.locator('.cg-modal-backdrop', { has: page.getByRole('heading', { name: 'Adicionar item' }) });
@@ -66,6 +68,8 @@ test('escolher uma data no seletor nativo (botão de calendário) atualiza o cam
   await page.waitForTimeout(400);
 
   const secao = page.locator('section[x-data^="shoppingView"]');
+  // Várias listas (2026-10-04): a tela abre em "Minhas listas"; entra na primeira.
+  await page.locator('section[x-data^="shoppingView"] .cg-lista-tile').first().click();
   await secao.locator('.cg-fab').click();
 
   const modal = page.locator('.cg-modal-backdrop', { has: page.getByRole('heading', { name: 'Adicionar item' }) });

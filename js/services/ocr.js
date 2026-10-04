@@ -1,3 +1,4 @@
+import { decodificarReduzido } from '../utils/image.js';
 // Tesseract.js é carregado sob demanda — só baixa (é pesado, ~2MB com o
 // modelo de idioma) quando o usuário realmente tenta ler uma foto. Roda
 // 100% no navegador, sem custo e sem chave de API (mas menos preciso que
@@ -35,7 +36,9 @@ async function getWorker() {
 // OCR — nunca a imagem original (upload/comprovante continuam intactos).
 async function prepararParaOcr(file) {
   try {
-    const bitmap = await createImageBitmap(file);
+    // Nunca a foto crua: no máximo 2000 px (ver image.js::decodificarReduzido).
+    const bitmap = await decodificarReduzido(file, 2000);
+    if (!bitmap) return file;
     const canvas = document.createElement('canvas');
     canvas.width = bitmap.width;
     canvas.height = bitmap.height;

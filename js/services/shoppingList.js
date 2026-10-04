@@ -87,6 +87,29 @@ export const finishShopping = (id) => updateList(id, { status: 'finalizada', fin
 export const linkListToTransaction = (id, transacaoId) => updateList(id, { transacao_id: transacaoId });
 export const setNomeMercado = (id, nomeMercado) => updateList(id, { nome_mercado: nomeMercado || null });
 export const setLimiteGasto = (id, limiteGasto) => updateList(id, { limite_gasto: limiteGasto || null });
+export const renameList = (id, nome) => updateList(id, { nome: (nome || '').trim() || 'Lista de Compras' });
+
+// Várias listas ao mesmo tempo (pedido do usuário, 2026-10-04: "uma para
+// mercado, uma para compras na internet..."). Os itens saem junto pelo
+// `on delete cascade` de shopping_list_items.list_id.
+export async function deleteList(id) {
+  if (isDemoMode()) {
+    const itens = await mockDb.list('shopping_list_items', (i) => i.list_id === id);
+    for (const item of itens) await mockDb.remove('shopping_list_items', item.id);
+    return mockDb.remove('shopping_lists', id);
+  }
+  const supabase = await getSupabase();
+  const { error } = await supabase.from('shopping_lists').delete().eq('id', id);
+  if (error) throw error;
+}
+
+// Listas em aberto (não finalizadas), a que está em compra primeiro.
+export function ordenarListasAbertas(lists) {
+  const peso = { comprando: 0, pausada: 1, planejando: 2 };
+  return lists
+    .filter((l) => l.status !== 'finalizada')
+    .sort((a, b) => (peso[a.status] ?? 3) - (peso[b.status] ?? 3) || (b.criado_em || '').localeCompare(a.criado_em || ''));
+}
 
 // 4 níveis (pedido explícito: "padrão verde, próximo amarelo, atingiu
 // laranja, passou vermelho pulsante") conforme o total da lista se

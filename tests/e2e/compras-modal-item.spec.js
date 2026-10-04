@@ -13,6 +13,9 @@ test('Adicionar item em Compras abre como modal, adiciona e fecha', async ({ pag
   const modal = page.locator('.cg-modal-backdrop', { has: page.getByRole('heading', { name: 'Adicionar item' }) });
   await expect(modal).toBeHidden();
 
+  // Várias listas (2026-10-04): a tela abre em "Minhas listas"; entra na primeira.
+
+  await page.locator('section[x-data^="shoppingView"] .cg-lista-tile').first().click();
   await page.locator('.cg-fab').click();
   await expect(modal).toBeVisible();
 

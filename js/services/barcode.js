@@ -218,6 +218,60 @@ export function parsePixQrPayload(texto) {
   };
 }
 
+// QR code de nota fiscal (NFC-e/NF-e), 2026-10-04 — bug relatado em uso: "o
+// QR code funcionou, mas não trouxe informações úteis". O QR é um link da
+// SEFAZ com a CHAVE DE ACESSO (44 dígitos) no parâmetro `p`. A chave carrega,
+// sem precisar de internet: estado, ano/mês, CNPJ da loja, modelo, série e
+// número. Na emissão offline (contingência) o `p` traz também o valor total.
+// Os ITENS só existem no site da SEFAZ (varia por estado e bloqueia CORS),
+// então ficam no link para a pessoa abrir.
+const UF_POR_CODIGO = {
+  11: 'RO', 12: 'AC', 13: 'AM', 14: 'RR', 15: 'PA', 16: 'AP', 17: 'TO', 21: 'MA', 22: 'PI', 23: 'CE',
+  24: 'RN', 25: 'PB', 26: 'PE', 27: 'AL', 28: 'SE', 29: 'BA', 31: 'MG', 32: 'ES', 33: 'RJ', 35: 'SP',
+  41: 'PR', 42: 'SC', 43: 'RS', 50: 'MS', 51: 'MT', 52: 'GO', 53: 'DF',
+};
+
+export function parseNfceQr(texto) {
+  const limpo = (texto || '').trim();
+  const param = limpo.match(/[?&]p=([^&#\s]+)/i);
+  const partes = param ? decodeURIComponent(param[1]).split('|') : [];
+  const chave = (partes[0] || limpo).replace(/\D/g, '').match(/\d{44}/)?.[0];
+  if (!chave) return null;
+  const modelo = chave.slice(20, 22);
+  if (modelo !== '65' && modelo !== '55') return null;
+  const ano = 2000 + Number(chave.slice(2, 4));
+  const mes = Number(chave.slice(4, 6));
+  // Offline: chave|versao|ambiente|dia|valor|... — o valor é o 5º campo.
+  const valorBruto = partes.length >= 5 ? Number(String(partes[4]).replace(',', '.')) : NaN;
+  return {
+    chave,
+    uf: UF_POR_CODIGO[Number(chave.slice(0, 2))] || null,
+    anoMes: mes >= 1 && mes <= 12 ? `${String(mes).padStart(2, '0')}/${ano}` : null,
+    cnpj: chave.slice(6, 20),
+    modelo: modelo === '65' ? 'NFC-e' : 'NF-e',
+    numero: String(Number(chave.slice(25, 34))),
+    valor: Number.isFinite(valorBruto) && valorBruto > 0 ? valorBruto : null,
+    url: /^https?:\/\//i.test(limpo) ? limpo : null,
+  };
+}
+
+// Nome da loja pelo CNPJ (BrasilAPI, pública e gratuita). Melhor-esforço:
+// sem internet ou com erro, a nota continua guardada sem o nome.
+export async function buscarEmpresaPorCnpj(cnpj) {
+  try {
+    const controle = new AbortController();
+    const tempo = setTimeout(() => controle.abort(), 6000);
+    const r = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cnpj}`, { signal: controle.signal });
+    clearTimeout(tempo);
+    if (!r.ok) return null;
+    const d = await r.json();
+    const nome = (d.nome_fantasia || d.razao_social || '').trim();
+    return nome ? nome.replace(/\s+/g, ' ') : null;
+  } catch {
+    return null;
+  }
+}
+
 // Ponto de entrada único pra depois de um scan: decide se o texto lido é um
 // boleto, um Pix, ou "outro" (link de nota fiscal/NFC-e, ou qualquer coisa
 // não reconhecida) — nesse último caso só guarda o texto bruto, sem tentar
@@ -234,5 +288,7 @@ export function interpretScannedCode(texto) {
     const pix = parsePixQrPayload(limpo);
     if (pix) return { tipo: 'pix', codigo: limpo, valor: pix.valor, vencimento: null, nomeRecebedor: pix.nomeRecebedor };
   }
+  const nota = parseNfceQr(limpo);
+  if (nota) return { tipo: 'nfce', codigo: limpo, valor: nota.valor, vencimento: null, nomeRecebedor: null, nota };
   return { tipo: 'outro', codigo: limpo, valor: null, vencimento: null, nomeRecebedor: null };
 }

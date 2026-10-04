@@ -70,7 +70,7 @@ export function faqStore() {
         id: 'notificacoes',
         pergunta: 'Onde vejo e gerencio minhas notificações?',
         resposta:
-          'O sino no topo de qualquer tela mostra os avisos mais recentes (despesa a vencer/vencida, item de Recursos acabando ou vencendo, pagamento registrado por alguém do grupo) — clique nele pra abrir a lista e marcar como lida. Pra receber esses avisos mesmo com o app fechado (notificação push de verdade), ative em Perfil → Preferências → "Notificações push" (precisa de um navegador compatível).',
+          'O sino no topo de qualquer tela mostra os avisos mais recentes (despesa a vencer/vencida, item do Inventário acabando ou vencendo, pagamento registrado por alguém do grupo) — clique nele pra abrir a lista e marcar como lida. Pra receber esses avisos mesmo com o app fechado (notificação push de verdade), ative em Perfil → Preferências → "Notificações push" (precisa de um navegador compatível).',
       },
     ],
 

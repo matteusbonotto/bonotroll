@@ -73,7 +73,7 @@ export function resourcesView() {
         this.rooms = await res.ensureDefaultRooms(store.profile.id, groupId);
         await this.carregarSugestoes();
       } catch (e) {
-        store.notify(e.message || 'Não consegui carregar Recursos.', 'danger');
+        store.notify(e.message || 'Não consegui carregar o Inventário.', 'danger');
       } finally {
         this.loading = false;
       }
@@ -559,7 +559,7 @@ export function resourcesView() {
         const lista = await getOrCreateActiveList({ ownerId: store.profile.id, groupId: store.group?.group?.id });
         await addShoppingItem(lista.id, { nome: item.nome, categoria_id: '', unidade: 'un', quantidade: 1 });
         window.dispatchEvent(new CustomEvent('cg:shopping-changed'));
-        store.notify(`"${item.nome}" adicionado à lista de compras.`);
+        store.notify(`"${item.nome}" adicionado à lista "${lista.nome}".`);
       } catch (e) {
         store.notify(e.message || 'Não foi possível adicionar à lista de compras.', 'danger');
       }

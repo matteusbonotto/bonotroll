@@ -9,6 +9,7 @@ import { bankModalStore } from './components/bankManager.js';
 import { cartaoModalStore } from './components/cartaoManager.js';
 import { onboardingStore } from './components/onboarding.js';
 import { faqStore } from './components/faq.js';
+import { cameraStore, eventoDeArquivo } from './components/camera.js';
 import { cgHelp } from './components/help.js';
 import { authView } from './components/auth.js';
 import { dashboardView } from './components/dashboard.js';
@@ -50,6 +51,8 @@ document.addEventListener('alpine:init', () => {
   Alpine.store('cartaoModal', cartaoModalStore());
   Alpine.store('onboarding', onboardingStore());
   Alpine.store('faq', faqStore());
+  Alpine.store('camera', cameraStore());
+  window.cgEventoDeArquivo = eventoDeArquivo;
 
   Alpine.data('authView', authView);
   Alpine.data('cgHelp', cgHelp);

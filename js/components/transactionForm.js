@@ -2,7 +2,7 @@ import { createTransaction, updateTransaction, deleteTransaction, uploadComprova
 import { createCompany, updateCompany, uploadCompanyLogo } from '../services/companies.js';
 import { notifyPayment } from '../services/notifications.js';
 import { recognizeText, parseReceiptText } from '../services/ocr.js';
-import { startBarcodeScanner, stopBarcodeScanner, interpretScannedCode, mensagemErroCamera } from '../services/barcode.js';
+import { startBarcodeScanner, stopBarcodeScanner, interpretScannedCode, buscarEmpresaPorCnpj, mensagemErroCamera } from '../services/barcode.js';
 import { extractTextFromPdf } from '../services/pdf.js';
 import { todayIso, parseCurrencyInput } from '../utils/format.js';
 import { resizeImage } from '../utils/image.js';
@@ -538,6 +538,17 @@ export function txModalStore() {
       if (lido.vencimento && !this.form.data_vencimento) { this.form.data_vencimento = lido.vencimento; preencheu = true; }
       if (lido.nomeRecebedor && !this.form.empresa_servico.trim()) { this.form.empresa_servico = lido.nomeRecebedor; preencheu = true; }
 
+      if (lido.tipo === 'nfce') {
+        const nota = lido.nota;
+        const loja = await buscarEmpresaPorCnpj(nota.cnpj);
+        if (loja && !this.form.empresa_servico.trim()) this.form.empresa_servico = loja;
+        if (!this.form.titulo.trim()) this.form.titulo = loja ? `Compra em ${loja}` : `Compra (${nota.modelo} nº ${nota.numero})`;
+        const partes = [loja || `CNPJ ${nota.cnpj}`, nota.anoMes, nota.uf].filter(Boolean).join(' · ');
+        store.notify(
+          `Nota fiscal lida: ${partes}.${nota.valor ? '' : ' O valor e os itens ficam no site da SEFAZ — use "Abrir nota" para conferir.'}`,
+        );
+        return;
+      }
       if (lido.tipo === 'boleto' && preencheu) store.notify('Valor e vencimento lidos do boleto — confira antes de salvar.');
       else if (lido.tipo === 'pix' && preencheu) store.notify('Dados lidos do Pix — confira antes de salvar.');
       else if (lido.tipo === 'boleto' || lido.tipo === 'pix') store.notify('Código lido, mas não consegui extrair valor/vencimento — preencha manualmente.', 'danger');

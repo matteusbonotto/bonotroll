@@ -95,7 +95,7 @@ export function dashboardView() {
       try {
         this.recursosAllItems = await listAllResourceItems({ ownerId: store.profile.id, groupId: store.group?.group?.id });
       } catch (e) {
-        store.notify(e.message || 'Não consegui carregar as sugestões de Recursos.', 'danger');
+        store.notify(e.message || 'Não consegui carregar as sugestões do Inventário.', 'danger');
       }
     },
 

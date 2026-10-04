@@ -111,3 +111,11 @@ O checklist acima (8 itens) foi todo concluído. Depois disso vieram mais pedido
 - Tudo commitado até aqui está em `git log` na branch `bonotto-2027-blueprint`.
 - Rodar `npm run test:unit && npm test` pra confirmar que nada quebrou antes de continuar.
 - Servidor local: `python -m http.server 5500`, acessar `http://localhost:5500/?demo=1`.
+
+## Rodada 2026-10-04 — Fase 1 (uso diário)
+
+- [x] Câmera no Galaxy S21 ("erro de memória"): câmera dentro do app (getUserMedia, captura em ~1920 px) no lugar do `capture="environment"` — o Android não mata mais a aba ao abrir o app de câmera; decodificação já reduzida (`decodificarReduzido`) em `resizeImage` e no OCR, sem decodificar a foto de 12–64 MP inteira. Galeria continua como alternativa.
+- [x] QR code de nota fiscal (NFC-e/NF-e) traz informação útil: estado, mês/ano, CNPJ, número e (na emissão offline) o valor; nome da loja pelo CNPJ (BrasilAPI); título "Compra em <loja>"; botão "Abrir nota" para os itens no site da SEFAZ (os itens não ficam no QR).
+- [x] Todas as importações por foto (item de Compras, item do Inventário, comprovante) usam a câmera do app.
+- [x] "Recursos" virou "Inventário" em todo texto visível (identificadores e chaves salvas mantidos, ver CLAUDE.md).
+- [x] Várias listas de compras: "Minhas listas" (cartões com status, itens e total), "Nova lista" com sugestões (Mercado, Internet, Farmácia, Feira, Casa), renomear/excluir, entrar na lista para comprar; ao encerrar, a mesma lista volta vazia e a compra vai para o histórico; a lista aberta é lembrada ao recarregar a página.

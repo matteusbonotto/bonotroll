@@ -182,7 +182,7 @@
           <i class="bi bi-cart3"></i> Lista de compras
         </a>
         <a href="#" class="cg-sidebar__item" :class="{ 'is-active': $store.app.view === 'recursos' }" @click.prevent="$store.app.setView('recursos')">
-          <i class="bi bi-box-seam"></i> Recursos
+          <i class="bi bi-box-seam"></i> Inventário
         </a>
         <a href="#" class="cg-sidebar__item" :class="{ 'is-active': $store.app.view === 'caixinhas' }" @click.prevent="$store.app.setView('caixinhas')">
           <i class="bi bi-piggy-bank"></i> Caixinhas
@@ -439,10 +439,10 @@
 
             <div class="cg-card">
               <button type="button" class="btn p-0 border-0 bg-transparent w-100 d-flex align-items-center justify-content-between mb-0" :disabled="!recursosSugestoes.length" @click="recursosSugestoes.length && (recursosSugestoesAbertas = !recursosSugestoesAbertas)">
-                <div class="cg-section-title mb-0"><i class="bi bi-box-seam"></i> Recursos em falta <span class="cg-badge cg-badge--danger" x-show="recursosSugestoes.length" x-text="recursosSugestoes.length"></span></div>
+                <div class="cg-section-title mb-0"><i class="bi bi-box-seam"></i> Em falta no inventário <span class="cg-badge cg-badge--danger" x-show="recursosSugestoes.length" x-text="recursosSugestoes.length"></span></div>
                 <i class="bi fs-5 cg-muted" x-show="recursosSugestoes.length" :class="recursosSugestoesAbertas ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
               </button>
-              <template x-if="!recursosSugestoes.length"><p class="cg-muted small mb-0 mt-2">Nenhum recurso em falta ou vencendo. 🎉</p></template>
+              <template x-if="!recursosSugestoes.length"><p class="cg-muted small mb-0 mt-2">Nenhum item do inventário em falta ou vencendo. 🎉</p></template>
               <div class="mt-2" x-show="recursosSugestoesAbertas && recursosSugestoes.length" style="max-height: 260px; overflow-y: auto; padding-bottom: var(--space-2);">
               <div class="d-flex flex-column gap-2">
                 <template x-for="s in recursosSugestoes" :key="s.item.id">
@@ -1263,6 +1263,62 @@
 
         <!-- ===== LISTA DE COMPRAS ===== -->
         <section class="cg-view-compras" x-show="$store.app.view === 'compras'" x-data="shoppingView()" x-init="init()">
+          <!-- Minhas listas (2026-10-04): várias listas abertas ao mesmo tempo;
+               entrar numa lista abre a tela de sempre. -->
+          <div x-show.important="!list" class="cg-listas-compras">
+            <div class="d-flex align-items-center justify-content-between gap-2 mb-2 mb-md-3">
+              <div class="cg-section-title mb-0"><i class="bi bi-cart3"></i> Minhas listas</div>
+              <button type="button" class="cg-btn btn btn-outline-secondary btn-sm" @click="abrirHistorico()"><i class="bi bi-clock-history"></i> Histórico</button>
+            </div>
+            <p class="cg-muted small" x-show="loading">Carregando…</p>
+            <div class="cg-room-grid" x-show="!loading">
+              <template x-for="l in listasAbertas" :key="l.list.id">
+                <div class="cg-room-tile cg-lista-tile" :class="l.list.status === 'comprando' && 'cg-lista-tile--comprando'" role="button" tabindex="0"
+                  @click="abrirLista(l.list)" @keydown.enter="abrirLista(l.list)" :aria-label="'Abrir a lista ' + l.list.nome">
+                  <span class="cg-lista-tile__status" x-show="l.list.status !== 'planejando'" x-text="l.list.status === 'comprando' ? 'Comprando agora' : 'Pausada'"></span>
+                  <i class="bi bi-cart3"></i>
+                  <span class="cg-room-tile__nome" x-text="l.list.nome"></span>
+                  <span class="cg-room-tile__count" x-text="l.totalItens + ' ' + (l.totalItens === 1 ? 'item' : 'itens') + (l.valorTotal ? ' · ' + cgFormat.formatCurrency(l.valorTotal) : '')"></span>
+                </div>
+              </template>
+              <button type="button" class="cg-room-tile cg-room-tile--add" @click="abrirNovaLista()">
+                <i class="bi bi-plus-lg"></i>
+                <span class="cg-room-tile__nome">Nova lista</span>
+              </button>
+            </div>
+            <p class="cg-muted small mt-3 mb-0" x-show="!loading && !listasAbertas.length">
+              Crie uma lista para cada tipo de compra — mercado, internet, farmácia… Para comprar, é só entrar na lista.
+            </p>
+          </div>
+
+          <!-- Nova lista -->
+          <div class="cg-modal-backdrop" x-show="novaListaAberta" x-cloak @click.self="novaListaAberta = false">
+            <div class="cg-modal cg-modal--sm" role="dialog" aria-modal="true" aria-label="Nova lista">
+              <div class="d-flex align-items-center justify-content-between mb-3">
+                <h2 class="h6 fw-bold mb-0">Nova lista</h2>
+                <button type="button" class="btn-close" @click="novaListaAberta = false" aria-label="Fechar"></button>
+              </div>
+              <form @submit.prevent="criarLista()">
+                <label class="form-label small" for="cg-nova-lista-nome">Nome da lista</label>
+                <input id="cg-nova-lista-nome" type="text" class="form-control mb-2" x-model="novaListaNome" maxlength="60" placeholder="Ex: Mercado do mês" required />
+                <div class="d-flex flex-wrap gap-1 mb-3">
+                  <template x-for="sugestao in sugestoesNomeLista" :key="sugestao">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" @click="novaListaNome = sugestao" x-text="sugestao"></button>
+                  </template>
+                </div>
+                <button type="submit" class="cg-btn btn btn-primary w-100" :disabled="!novaListaNome.trim()">Criar lista</button>
+              </form>
+            </div>
+          </div>
+
+          <div x-show.important="!!list">
+            <div class="d-flex align-items-center gap-2 mb-2">
+              <button type="button" class="cg-back" @click="voltarParaListas()" aria-label="Voltar para Minhas listas"><i class="bi bi-chevron-left" aria-hidden="true"></i> Minhas listas</button>
+              <div class="ms-auto d-flex gap-2">
+                <button type="button" class="btn btn-sm btn-outline-secondary" @click="renomearLista()" aria-label="Renomear lista"><i class="bi bi-pencil"></i> Renomear</button>
+                <button type="button" class="btn btn-sm btn-outline-danger" @click="excluirLista()" aria-label="Excluir lista"><i class="bi bi-trash"></i></button>
+              </div>
+            </div>
           <div class="cg-card cg-shopping-panel mb-2 mb-md-3" x-show="list">
             <!-- Importar CSV virou botão fixo no canto superior direito do
                  painel (pedido explícito, 2026-09-02) — antes disputava
@@ -1388,11 +1444,11 @@
                   <div class="d-flex gap-2">
                     <input type="text" class="form-control" x-ref="inputNovoItem" x-model="novoItem.nome" @input="onNomeInput()" placeholder="Ex: Arroz 5kg" required />
                     <button type="button" class="cg-btn btn btn-outline-secondary flex-shrink-0" @click="abrirScanner()" title="Ler código de barras"><i class="bi bi-upc-scan"></i></button>
-                    <label class="cg-btn btn btn-outline-secondary mb-0 flex-shrink-0" style="cursor:pointer;" title="Tirar foto do item">
+                    <button type="button" class="cg-btn btn btn-outline-secondary mb-0 flex-shrink-0" title="Tirar foto do item" aria-label="Tirar foto do item" :disabled="lendoFotoItem"
+                      @click="$store.camera.capturar('Foto do item').then((f) => f && onFotoItem(cgEventoDeArquivo(f)))">
                       <span x-show="!lendoFotoItem"><i class="bi bi-camera"></i></span>
                       <span x-show="lendoFotoItem" class="spinner-border spinner-border-sm"></span>
-                      <input type="file" accept="image/*" capture="environment" class="d-none" @change="onFotoItem($event)" :disabled="lendoFotoItem" />
-                    </label>
+                    </button>
                     <label class="cg-btn btn btn-outline-secondary mb-0 flex-shrink-0" style="cursor:pointer;" title="Enviar foto da galeria">
                       <span x-show="!lendoFotoItem"><i class="bi bi-image"></i></span>
                       <span x-show="lendoFotoItem" class="spinner-border spinner-border-sm"></span>
@@ -1900,12 +1956,13 @@
               <button type="button" class="cg-btn btn btn-outline-secondary w-100 mt-3" @click="fecharDetalheHistorico()">Fechar</button>
             </div>
           </div>
+                  </div>
         </section>
 
         <!-- ===== RECURSOS ===== -->
         <section x-show="$store.app.view === 'recursos'" x-data="resourcesView()" x-init="init()">
           <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
-            <div class="cg-section-title mb-0"><i class="bi bi-box-seam"></i> Recursos</div>
+            <div class="cg-section-title mb-0"><i class="bi bi-box-seam"></i> Inventário</div>
             <button type="button" class="cg-btn btn btn-outline-secondary btn-sm" @click="$store.csvModal.openFor('recursos')"><i class="bi bi-upload"></i> Importar CSV</button>
           </div>
 
@@ -2105,11 +2162,11 @@
                 <div class="d-flex gap-2">
                   <input type="text" class="form-control" x-model="itemForm.nome" placeholder="Ex: Arroz, Papel higiênico…" required />
                   <button type="button" class="cg-btn btn btn-outline-secondary flex-shrink-0" @click="abrirScanner()" title="Ler código de barras"><i class="bi bi-upc-scan"></i></button>
-                  <label class="cg-btn btn btn-outline-secondary mb-0 flex-shrink-0" style="cursor:pointer;" title="Tirar foto do item">
+                  <button type="button" class="cg-btn btn btn-outline-secondary mb-0 flex-shrink-0" title="Tirar foto do item" aria-label="Tirar foto do item" :disabled="lendoFotoItem"
+                    @click="$store.camera.capturar('Foto do item').then((f) => f && onFotoNomeItem(cgEventoDeArquivo(f)))">
                     <span x-show="!lendoFotoItem"><i class="bi bi-camera"></i></span>
                     <span x-show="lendoFotoItem" class="spinner-border spinner-border-sm"></span>
-                    <input type="file" accept="image/*" capture="environment" class="d-none" @change="onFotoNomeItem($event)" :disabled="lendoFotoItem" />
-                  </label>
+                  </button>
                   <label class="cg-btn btn btn-outline-secondary mb-0 flex-shrink-0" style="cursor:pointer;" title="Enviar foto da galeria">
                     <span x-show="!lendoFotoItem"><i class="bi bi-image"></i></span>
                     <span x-show="lendoFotoItem" class="spinner-border spinner-border-sm"></span>
@@ -2730,7 +2787,7 @@
                   <div class="cg-icon-badge"><i class="bi bi-bell"></i></div>
                   <div class="flex-fill">
                     <h2 class="h6 fw-bold mb-1">Notificações push</h2>
-                    <p class="cg-muted small mb-0" x-show="pushSuportado">Avisos de despesa a vencer/vencida, item de Recursos acabando/vencendo e pagamento de um membro — mesmo com o app fechado.</p>
+                    <p class="cg-muted small mb-0" x-show="pushSuportado">Avisos de despesa a vencer/vencida, item do Inventário acabando/vencendo e pagamento de um membro — mesmo com o app fechado.</p>
                     <p class="cg-muted small mb-0" x-show="!pushSuportado">Este navegador não suporta notificações push.</p>
                   </div>
                   <div class="form-check form-switch mb-0" x-show="pushSuportado">
@@ -2742,7 +2799,7 @@
                   <div class="cg-icon-badge"><i class="bi bi-download"></i></div>
                   <div class="flex-fill">
                     <h2 class="h6 fw-bold mb-1">Exportar meus dados</h2>
-                    <p class="cg-muted small mb-0">Baixa um arquivo com tudo que você vê hoje no app (lançamentos, categorias, caixinhas, compras, recursos).</p>
+                    <p class="cg-muted small mb-0">Baixa um arquivo com tudo que você vê hoje no app (lançamentos, categorias, caixinhas, compras, inventário).</p>
                   </div>
                   <span x-show="exportando" class="spinner-border spinner-border-sm" aria-hidden="true"></span>
                   <i class="bi bi-chevron-right cg-muted" x-show="!exportando"></i>
@@ -2803,7 +2860,7 @@
             <i class="bi bi-cart3"></i> Lista de compras
           </a>
           <a href="#" class="cg-sidebar__item" :class="{ 'is-active': $store.app.view === 'recursos' }" @click.prevent="$store.app.setView('recursos')">
-            <i class="bi bi-box-seam"></i> Recursos
+            <i class="bi bi-box-seam"></i> Inventário
           </a>
           <a href="#" class="cg-sidebar__item" :class="{ 'is-active': $store.app.view === 'caixinhas' }" @click.prevent="$store.app.setView('caixinhas')">
             <i class="bi bi-piggy-bank"></i> Caixinhas
@@ -3276,11 +3333,12 @@
                  PDF"/"Enviar arquivo" por extenso nunca conseguia (sempre
                  quebrava pra 2 linhas, mesmo no modal de 600px). -->
             <div class="d-flex align-items-center gap-2 flex-nowrap" data-tour-alvo="campo-comprovante">
-              <label class="cg-btn-icon btn btn-outline-secondary mb-0 flex-shrink-0" style="cursor:pointer;" title="Tirar foto do comprovante" aria-label="Tirar foto do comprovante">
+              <button type="button" class="cg-btn-icon btn btn-outline-secondary mb-0 flex-shrink-0" title="Tirar foto do comprovante" aria-label="Tirar foto do comprovante"
+                :disabled="$store.txModal.uploadingComprovante || $store.txModal.lendoComprovante"
+                @click="$store.camera.capturar('Foto do comprovante').then((f) => f && $store.txModal.onComprovanteChange(cgEventoDeArquivo(f)))">
                 <span x-show="!$store.txModal.uploadingComprovante && !$store.txModal.lendoComprovante"><i class="bi bi-camera"></i></span>
                 <span x-show="$store.txModal.uploadingComprovante || $store.txModal.lendoComprovante" class="spinner-border spinner-border-sm"></span>
-                <input type="file" accept="image/*" capture="environment" class="d-none" @change="$store.txModal.onComprovanteChange($event)" :disabled="$store.txModal.uploadingComprovante || $store.txModal.lendoComprovante" />
-              </label>
+              </button>
               <label class="cg-btn-icon btn btn-outline-secondary mb-0 flex-shrink-0" style="cursor:pointer;" :title="$store.txModal.form.comprovante_url ? 'Trocar arquivo do comprovante' : 'Enviar arquivo do comprovante'" :aria-label="$store.txModal.form.comprovante_url ? 'Trocar arquivo do comprovante' : 'Enviar arquivo do comprovante'">
                 <span x-show="!$store.txModal.uploadingComprovante && !$store.txModal.lendoComprovante"><i class="bi bi-image"></i></span>
                 <span x-show="$store.txModal.uploadingComprovante || $store.txModal.lendoComprovante" class="spinner-border spinner-border-sm"></span>
@@ -3302,6 +3360,9 @@
             <p class="cg-muted small mb-0 mt-1" x-show="$store.txModal.form.codigo_barras || $store.txModal.form.qrcode_dados">
               <i class="bi bi-upc-scan"></i> Código guardado:
               <span class="text-truncate d-inline-block align-middle" style="max-width: 260px; vertical-align: middle;" x-text="$store.txModal.form.codigo_barras || $store.txModal.form.qrcode_dados"></span>
+              <a class="ms-1" x-show="/^https:\/\//i.test($store.txModal.form.qrcode_dados || '')" :href="$store.txModal.form.qrcode_dados" target="_blank" rel="noopener noreferrer">
+                <i class="bi bi-box-arrow-up-right"></i> Abrir nota
+              </a>
             </p>
           </div>
 
@@ -3913,5 +3974,27 @@
 
   <script type="module" src="./js/app.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
+  <!-- ============ MODAL: CÂMERA DENTRO DO APP (Galaxy S21, 2026-10-04) ============ -->
+  <div class="cg-modal-backdrop cg-camera-backdrop" x-data x-show="$store.camera.aberta" x-cloak @keydown.escape.window="$store.camera.aberta && $store.camera.cancelar()">
+    <div class="cg-modal text-center" role="dialog" aria-modal="true" :aria-label="$store.camera.titulo">
+      <h2 class="h6 fw-bold mb-3" x-text="$store.camera.titulo"></h2>
+      <div class="cg-camera-visor">
+        <video id="cg-camera-video" playsinline muted autoplay></video>
+        <span class="spinner-border text-light cg-camera-carregando" x-show="$store.camera.carregando"></span>
+      </div>
+      <p class="text-danger small mt-2" x-show="$store.camera.erro" x-text="$store.camera.erro"></p>
+      <div class="d-flex gap-2 justify-content-center flex-wrap mt-3">
+        <button type="button" class="cg-btn btn btn-outline-secondary" @click="$store.camera.cancelar()">Cancelar</button>
+        <label class="cg-btn btn btn-outline-secondary mb-0" style="cursor:pointer;">
+          <i class="bi bi-image"></i> Galeria
+          <input type="file" accept="image/*" class="d-none" @change="$store.camera.escolherArquivo($event)" />
+        </label>
+        <button type="button" class="cg-btn btn btn-primary" @click="$store.camera.tirarFoto()" :disabled="$store.camera.carregando || !!$store.camera.erro">
+          <i class="bi bi-camera"></i> Tirar foto
+        </button>
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>

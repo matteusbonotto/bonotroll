@@ -88,3 +88,14 @@ test('groupHistoricoByMonth: respeita o filtro aplicado antes (não reagrupa lis
   assert.equal(grupos[0].linhas.length, 1);
   assert.equal(grupos[0].linhas[0].list.id, 'ago-2');
 });
+
+test('ordenarListasAbertas: só listas em aberto, a que está em compra primeiro (várias listas, 2026-10-04)', async () => {
+  const { ordenarListasAbertas } = await import('../../js/services/shoppingList.js');
+  const r = ordenarListasAbertas([
+    { id: 'a', status: 'planejando', criado_em: '2026-10-01' },
+    { id: 'b', status: 'finalizada', criado_em: '2026-10-03' },
+    { id: 'c', status: 'comprando', criado_em: '2026-09-01' },
+    { id: 'd', status: 'planejando', criado_em: '2026-10-02' },
+  ]);
+  assert.deepEqual(r.map((l) => l.id), ['c', 'd', 'a']);
+});
