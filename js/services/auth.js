@@ -39,6 +39,34 @@ export async function signUp(email, password, nome) {
   return data.session;
 }
 
+// Recuperação de senha (2026-10-04 — o app não tinha). O link do e-mail volta
+// para a raiz do app; o supabase-js reconhece o token e dispara o evento
+// PASSWORD_RECOVERY (ver store.js), que abre a tela "Definir nova senha".
+export async function sendPasswordReset(email) {
+  const supabase = await getSupabase();
+  const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${location.origin}/` });
+  if (error) throw error;
+}
+
+export async function updatePassword(novaSenha) {
+  const supabase = await getSupabase();
+  const { error } = await supabase.auth.updateUser({ password: novaSenha });
+  if (error) throw error;
+}
+
+// Mensagens do Supabase Auth em português, claras para quem não é técnico.
+export function mensagemErroAuth(e) {
+  const m = (e?.message || '').toLowerCase();
+  if (m.includes('invalid login credentials')) return 'E-mail ou senha incorretos. Se esqueceu a senha, use "Esqueci minha senha".';
+  if (m.includes('email not confirmed')) return 'Confirme seu e-mail pelo link que enviamos antes de entrar.';
+  if (m.includes('rate limit')) return 'Muitas tentativas de envio de e-mail. Aguarde cerca de 1 hora e tente de novo.';
+  if (m.includes('user already registered')) return 'Já existe uma conta com este e-mail. Entre ou use "Esqueci minha senha".';
+  if (m.includes('password should be at least') || m.includes('weak password')) return 'Senha fraca: use pelo menos 8 caracteres, misturando letras e números.';
+  if (m.includes('same password') || m.includes('different from the old')) return 'A nova senha precisa ser diferente da atual.';
+  if (m.includes('failed to fetch') || m.includes('network')) return 'Sem conexão com o servidor. Verifique a internet e tente de novo.';
+  return e?.message || 'Não foi possível concluir. Tente novamente.';
+}
+
 export async function signOut() {
   if (isDemoMode()) {
     mockSession.clear();

@@ -83,6 +83,8 @@ export function appStore() {
         // loadSession() (e ensureDefaultCategories) roda duas vezes em
         // paralelo no primeiro carregamento e cria categorias duplicadas.
         if (event === 'INITIAL_SESSION') return;
+        // Voltou pelo link de "Esqueci minha senha": pede a nova senha.
+        if (event === 'PASSWORD_RECOVERY') this.novaSenhaAberta = true;
         if (session) await this.loadSession(session);
         else this.clearSession();
       });
@@ -248,6 +250,30 @@ export function appStore() {
     async loginDemo(profileId) {
       const profile = await authService.signInDemo(profileId);
       await this.loadSession({ user: { id: profile.id } });
+    },
+
+    // "Definir nova senha" (recuperação de senha, 2026-10-04).
+    novaSenhaAberta: false,
+    novaSenha: '',
+    novaSenhaErro: '',
+    salvandoNovaSenha: false,
+    async salvarNovaSenha() {
+      this.novaSenhaErro = '';
+      if (this.novaSenha.length < 8) {
+        this.novaSenhaErro = 'Use pelo menos 8 caracteres.';
+        return;
+      }
+      this.salvandoNovaSenha = true;
+      try {
+        await authService.updatePassword(this.novaSenha);
+        this.novaSenha = '';
+        this.novaSenhaAberta = false;
+        this.notify('Senha alterada! Use a nova senha nas próximas vezes.');
+      } catch (e) {
+        this.novaSenhaErro = authService.mensagemErroAuth(e);
+      } finally {
+        this.salvandoNovaSenha = false;
+      }
     },
 
     async loginPassword(email, password) {

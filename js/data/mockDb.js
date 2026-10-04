@@ -7,7 +7,9 @@ import { isDemoMode } from './config.js';
 // v2 (2026-09-01): bump deliberado pra forçar recriação em QUALQUER
 // navegador que já tinha dado salvo antes da correção de privacidade — ver
 // CHAVES_ANTIGAS/loadDb() logo abaixo.
-const STORAGE_KEY = 'bonotto_demo_db_v2';
+// v3 (2026-10-04): nomes e valores 100% fictícios (o seed anterior usava os
+// nomes reais do casal) — trocar a chave descarta o demo antigo salvo.
+const STORAGE_KEY = 'bonotto_demo_db_v3';
 const SESSION_KEY = 'bonotto_demo_session';
 
 // Versão pinada (mesmo padrão de qualquer outro import pesado via esm.sh
@@ -237,7 +239,7 @@ function seedDatabase(nomes = NOMES_GENERICOS_PADRAO) {
     tx({ tipo: 'saida', titulo: `${nomes.utilityAgua} (água)`, categoria_id: 'cat-casa', tipo_despesa: 'variavel', valor: 119.64, empresa_servico: nomes.utilityAgua, data_vencimento: isoDaysFromNow(4), cartao_credito: true, cartao_id: 'cartao-nubank-matheus' }),
     tx({ tipo: 'saida', titulo: 'Condomínio', categoria_id: 'cat-casa', tipo_despesa: 'fixa', valor: 415.90, data_vencimento: null }),
     tx({ tipo: 'saida', titulo: 'Seguro Carro', categoria_id: 'cat-carro', tipo_despesa: 'fixa', valor: 212.58, empresa_servico: 'Porto Seguro', data_vencimento: isoDaysFromNow(-30), data_pagamento: isoDaysFromNow(-30) }),
-    tx({ tipo: 'saida', titulo: 'Financiamento Carro', categoria_id: 'cat-carro', tipo_despesa: 'fixa', valor: 765.87, empresa_servico: 'Santander', data_vencimento: isoDaysFromNow(6) }),
+    tx({ tipo: 'saida', titulo: 'Financiamento Carro', categoria_id: 'cat-carro', tipo_despesa: 'fixa', valor: 612.40, empresa_servico: 'Santander', data_vencimento: isoDaysFromNow(6) }),
     tx({ tipo: 'saida', titulo: 'Gasolina', categoria_id: 'cat-carro', tipo_despesa: 'variavel', valor: 200.00, empresa_servico: 'Shell', data_vencimento: isoDaysFromNow(-5), data_pagamento: isoDaysFromNow(-5) }),
     tx({ tipo: 'saida', titulo: 'Petlove', categoria_id: 'cat-pet', tipo_despesa: 'variavel', valor: 44.90, empresa_servico: 'Petlove', data_vencimento: isoDaysFromNow(-8), data_pagamento: isoDaysFromNow(-8) }),
     tx({ tipo: 'saida', titulo: 'iFood / 99', categoria_id: 'cat-delivery', tipo_despesa: 'variavel', valor: 500.00, empresa_servico: 'iFood', data_vencimento: null }),
@@ -252,15 +254,15 @@ function seedDatabase(nomes = NOMES_GENERICOS_PADRAO) {
     // pagador (transaction_payers) já no primeiro login, senão ninguém vê o
     // avatar-stack/"Dividido" ou o saldo "Entre vocês" sem criar uma despesa
     // dividida manualmente primeiro.
-    tx({ tipo: 'saida', titulo: 'Financiamento Casa', categoria_id: 'cat-casa', tipo_despesa: 'fixa', valor: 1000.00, empresa_servico: 'Caixa Econômica', data_vencimento: isoDaysFromNow(-3) }),
+    tx({ tipo: 'saida', titulo: 'Financiamento Casa', categoria_id: 'cat-casa', tipo_despesa: 'fixa', valor: 1250.00, empresa_servico: 'Caixa Econômica', data_vencimento: isoDaysFromNow(-3) }),
     tx({ tipo: 'saida', titulo: 'Dízimo', categoria_id: 'cat-outro', tipo_despesa: 'variavel', valor: 200.00, data_vencimento: isoDaysFromNow(-7), data_pagamento: isoDaysFromNow(-7) }),
     // Parcelada — exemplo de parcela_atual/parcela_total (nenhum outro
     // lançamento do seed usava esse campo).
     tx({ tipo: 'saida', titulo: 'Geladeira nova', categoria_id: 'cat-casa', tipo_despesa: 'variavel', valor: 250.00, empresa_servico: 'Magazine Luiza', parcela_atual: 3, parcela_total: 10, data_vencimento: isoDaysFromNow(9) }),
     // Empregador FICTÍCIO gerado por Faker — antes era "MB Labs"/"Dinamo"
     // (empregadores reais/específicos demais pra um demo público).
-    tx({ tipo: 'entrada', titulo: `Salário ${nomes.empregadorMatheus}`, categoria_id: 'cat-salario', tipo_despesa: 'fixa', valor: 6000.00, empresa_servico: nomes.empregadorMatheus, responsavel_id: matheusId, owner_id: matheusId, data_vencimento: isoDaysFromNow(-11), data_pagamento: isoDaysFromNow(-11), recorrente: true }),
-    tx({ tipo: 'entrada', titulo: `Salário ${nomes.empregadorBeatriz}`, categoria_id: 'cat-salario', tipo_despesa: 'fixa', valor: 5200.00, empresa_servico: nomes.empregadorBeatriz, responsavel_id: beatrizId, owner_id: beatrizId, data_vencimento: isoDaysFromNow(-11), data_pagamento: isoDaysFromNow(-11), recorrente: true }),
+    tx({ tipo: 'entrada', titulo: `Salário ${nomes.empregadorMatheus}`, categoria_id: 'cat-salario', tipo_despesa: 'fixa', valor: 4800.00, empresa_servico: nomes.empregadorMatheus, responsavel_id: matheusId, owner_id: matheusId, data_vencimento: isoDaysFromNow(-11), data_pagamento: isoDaysFromNow(-11), recorrente: true }),
+    tx({ tipo: 'entrada', titulo: `Salário ${nomes.empregadorBeatriz}`, categoria_id: 'cat-salario', tipo_despesa: 'fixa', valor: 4100.00, empresa_servico: nomes.empregadorBeatriz, responsavel_id: beatrizId, owner_id: beatrizId, data_vencimento: isoDaysFromNow(-11), data_pagamento: isoDaysFromNow(-11), recorrente: true }),
     // Propositalmente cadastrada há ~2 meses (não no mês atual) pra
     // demonstrar a geração automática de recorrência (js/services/recurring.js)
     // já no primeiro login demo — vira 2 lançamentos novos sozinha.
@@ -282,8 +284,8 @@ function seedDatabase(nomes = NOMES_GENERICOS_PADRAO) {
   // vocês").
   const txFinanciamentoCasa = transactions.find((t) => t.titulo === 'Financiamento Casa');
   const transactionPayers = [
-    { id: uid('txpayer'), transaction_id: txFinanciamentoCasa.id, profile_id: matheusId, percentual: 60, valor: 600, criado_em: new Date().toISOString() },
-    { id: uid('txpayer'), transaction_id: txFinanciamentoCasa.id, profile_id: beatrizId, percentual: 40, valor: 400, criado_em: new Date().toISOString() },
+    { id: uid('txpayer'), transaction_id: txFinanciamentoCasa.id, profile_id: matheusId, percentual: 60, valor: 750, criado_em: new Date().toISOString() },
+    { id: uid('txpayer'), transaction_id: txFinanciamentoCasa.id, profile_id: beatrizId, percentual: 40, valor: 500, criado_em: new Date().toISOString() },
   ];
 
   // Empresas/serviços com logo — sem isso, "empresa_servico" nas transações
@@ -451,8 +453,8 @@ function seedDatabase(nomes = NOMES_GENERICOS_PADRAO) {
 
   return {
     profiles: [
-      { id: matheusId, nome: 'Matheus', avatar_url: null, cor: '#2877E8', criado_em: new Date().toISOString() },
-      { id: beatrizId, nome: 'Beatriz', avatar_url: null, cor: '#D94E92', criado_em: new Date().toISOString() },
+      { id: matheusId, nome: 'Lucas', avatar_url: null, cor: '#2877E8', criado_em: new Date().toISOString() },
+      { id: beatrizId, nome: 'Carla', avatar_url: null, cor: '#D94E92', criado_em: new Date().toISOString() },
     ],
     groups: [{ id: groupId, nome: 'Família', criado_por: matheusId, codigo: 'FAMILIA-DEMO', criado_em: new Date().toISOString() }],
     group_members: [
@@ -500,7 +502,7 @@ function seedDatabase(nomes = NOMES_GENERICOS_PADRAO) {
 // uso, 2026-09-01: "vejo meu nome, o da Bia, contas e salários de
 // verdade"). Removidas explicitamente aqui, não só abandonadas, pra tirar
 // o dado sensível do navegador de vez, não só parar de lê-lo.
-const CHAVES_ANTIGAS = ['bonotto_demo_db_v1'];
+const CHAVES_ANTIGAS = ['bonotto_demo_db_v1', 'bonotto_demo_db_v2'];
 
 function loadDb() {
   if (!isDemoMode()) return {};

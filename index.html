@@ -112,16 +112,18 @@
               <label class="form-label">E-mail</label>
               <input type="email" class="form-control" x-model="email" required placeholder="voce@email.com" />
             </div>
-            <div class="mb-3">
-              <label class="form-label">Senha</label>
-              <input type="password" class="form-control" x-model="password" required minlength="6" placeholder="••••••••" />
+            <div class="mb-3" x-show="mode !== 'recuperar'">
+              <label class="form-label" for="cg-login-senha">Senha</label>
+              <input id="cg-login-senha" type="password" class="form-control" x-model="password" :required="mode !== 'recuperar'" minlength="6" placeholder="••••••••" autocomplete="current-password" />
+              <button type="button" class="btn btn-link btn-sm px-0 mt-1" x-show="mode === 'login'" @click="mode = 'recuperar'; error = ''; info = ''">Esqueci minha senha</button>
             </div>
+            <p class="small cg-muted" x-show="mode === 'recuperar'">Digite o e-mail da sua conta. Vamos enviar um link para você criar uma nova senha.</p>
 
             <template x-if="error"><div class="alert alert-danger py-2 small" x-text="error"></div></template>
             <template x-if="info"><div class="alert alert-success py-2 small" x-text="info"></div></template>
 
             <button type="submit" class="cg-btn btn btn-success w-100" :disabled="loading">
-              <span x-show="!loading" x-text="mode === 'signup' ? 'Criar conta' : 'Entrar'"></span>
+              <span x-show="!loading" x-text="mode === 'signup' ? 'Criar conta' : mode === 'recuperar' ? 'Enviar link' : 'Entrar'"></span>
               <span x-show="loading"><span class="spinner-border spinner-border-sm"></span> Aguarde…</span>
             </button>
 
@@ -129,8 +131,8 @@
               <template x-if="mode === 'login'">
                 <span>Ainda não tem conta? <a href="#" @click.prevent="mode = 'signup'">Criar conta</a></span>
               </template>
-              <template x-if="mode === 'signup'">
-                <span>Já tem conta? <a href="#" @click.prevent="mode = 'login'">Entrar</a></span>
+              <template x-if="mode === 'signup' || mode === 'recuperar'">
+                <span><a href="#" @click.prevent="mode = 'login'; error = ''; info = ''">Voltar para entrar</a></span>
               </template>
             </p>
           </form>
@@ -4117,6 +4119,19 @@
           <i class="bi bi-camera"></i> Tirar foto
         </button>
       </div>
+    </div>
+  </div>
+
+  <!-- ============ MODAL: DEFINIR NOVA SENHA (recuperação, 2026-10-04) ============ -->
+  <div class="cg-modal-backdrop" x-data x-show="$store.app.novaSenhaAberta" x-cloak>
+    <div class="cg-modal cg-modal--sm" role="dialog" aria-modal="true" aria-labelledby="cg-nova-senha-titulo">
+      <h2 class="h6 fw-bold mb-2" id="cg-nova-senha-titulo">Definir nova senha</h2>
+      <form @submit.prevent="$store.app.salvarNovaSenha()">
+        <label class="form-label small" for="cg-nova-senha">Nova senha (mínimo 8 caracteres)</label>
+        <input id="cg-nova-senha" type="password" class="form-control mb-2" x-model="$store.app.novaSenha" minlength="8" required autocomplete="new-password" />
+        <div class="alert alert-danger py-2 small" x-show="$store.app.novaSenhaErro" x-text="$store.app.novaSenhaErro"></div>
+        <button type="submit" class="cg-btn btn btn-success w-100" :disabled="$store.app.salvandoNovaSenha">Salvar nova senha</button>
+      </form>
     </div>
   </div>
 

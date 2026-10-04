@@ -157,3 +157,13 @@ O checklist acima (8 itens) foi todo concluído. Depois disso vieram mais pedido
 
 - [x] Item da lista que a casa já comprou numa compra encerrada mostra "Menor que você pagou: R$ X no <mercado>"; tocar abre o menor preço, o preço comum (mediana), compras e mercados e o histórico com data. Sem API externa (ver `docs/PESQUISA-PROMOCOES.md`). Preços abaixo do comum aparecem em verde.
 - [ ] Promoções de outros mercados da região: depende de fonte de dados (preços colaborativos pelas notas fiscais ou convênio SEFAZ) — decisão do usuário.
+
+## Incidente 2026-10-04 — "Failed to fetch" no login
+
+- [x] Causa: os aparelhos abriam o endereço ANTIGO (GitHub Pages). Com a configuração do banco saindo do fonte (Fase 0), ele caiu no modo demonstração e tentava logar em `SEU-PROJETO.supabase.co`. Correção: o GitHub Pages redireciona para https://bnttapp.web.app (`js/tema-inicial.js`).
+- [x] A CSP não era a causa: `connect-src` voltou à lista estrita.
+- [x] Contas: as 3 existem no banco novo, mas a migração de 2026-09 não copiou as senhas (temporária aleatória). O usuário define a senha com `node scripts/definir-senha.mjs <email>` ou pelo novo "Esqueci minha senha".
+- [x] "Esqueci minha senha" na tela de entrada, mais a tela "Definir nova senha" ao voltar pelo link; erros do Supabase em português.
+- [x] Modo demonstração 100% fictício: Lucas e Carla (eram os nomes reais), salários e financiamentos com outros valores; a chave do demo subiu para v3, então o demo antigo salvo nos aparelhos é descartado.
+- [ ] E-mails (cadastro e recuperação) limitados pelo SMTP de teste do Supabase (2–4 por hora, "email rate limit exceeded"): o usuário precisa configurar um SMTP próprio no Supabase.
+- [ ] Supabase Auth → URL Configuration: Site URL `https://bnttapp.web.app` e Redirect URL `https://bnttapp.web.app/**` (ação do usuário).
