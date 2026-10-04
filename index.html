@@ -1290,6 +1290,36 @@
             </p>
           </div>
 
+          <!-- Histórico de preços de um item (2026-10-04) -->
+          <div class="cg-modal-backdrop" x-show="precoDetalhe" x-cloak @click.self="precoDetalhe = null" @keydown.escape.window="precoDetalhe = null">
+            <div class="cg-modal cg-modal--sm" role="dialog" aria-modal="true" :aria-label="'Preços de ' + (precoDetalhe?.nome || '')">
+              <div class="d-flex align-items-center justify-content-between mb-2">
+                <h2 class="h6 fw-bold mb-0" x-text="precoDetalhe?.nome"></h2>
+                <button type="button" class="btn-close" @click="precoDetalhe = null" aria-label="Fechar"></button>
+              </div>
+              <template x-if="precoDetalhe">
+                <div>
+                  <div class="cg-preco-resumo mb-3">
+                    <div><span class="cg-muted small d-block">Menor preço</span><strong x-text="cgFormat.formatCurrency(precoDetalhe.resumo.menor.preco)"></strong>
+                      <span class="cg-muted small d-block" x-text="(precoDetalhe.resumo.menor.mercado || 'mercado não informado') + (precoDetalhe.resumo.menor.data ? ' · ' + cgFormat.formatDate(precoDetalhe.resumo.menor.data) : '')"></span></div>
+                    <div><span class="cg-muted small d-block">Preço comum</span><strong x-text="cgFormat.formatCurrency(precoDetalhe.resumo.mediana)"></strong>
+                      <span class="cg-muted small d-block" x-text="precoDetalhe.resumo.vezes + ' compra(s) · ' + precoDetalhe.resumo.mercados + ' mercado(s)'"></span></div>
+                  </div>
+                  <p class="small fw-semibold mb-1">Histórico (mais recente primeiro)</p>
+                  <ul class="list-unstyled small mb-2 cg-preco-lista">
+                    <template x-for="(pt, i) in precoDetalhe.resumo.pontos.slice(0, 12)" :key="i">
+                      <li class="d-flex justify-content-between gap-2">
+                        <span x-text="(pt.data ? cgFormat.formatDate(pt.data) : '—') + ' · ' + (pt.mercado || 'mercado não informado')"></span>
+                        <strong :class="pt.preco <= precoDetalhe.resumo.mediana && 'text-success'" x-text="cgFormat.formatCurrency(pt.preco) + (pt.unidade === 'un' ? '' : '/' + pt.unidade)"></strong>
+                      </li>
+                    </template>
+                  </ul>
+                  <p class="cg-muted small mb-0">Baseado nas compras que vocês encerraram no BNTT. Preencha "Onde vai comprar" para comparar mercados.</p>
+                </div>
+              </template>
+            </div>
+          </div>
+
           <!-- Nova lista -->
           <div class="cg-modal-backdrop" x-show="novaListaAberta" x-cloak @click.self="novaListaAberta = false">
             <div class="cg-modal cg-modal--sm" role="dialog" aria-modal="true" aria-label="Nova lista">
@@ -1624,6 +1654,14 @@
                        nome do item. -->
                   <div class="flex-fill min-w-0">
                     <div class="cg-item-row__nome" x-text="item.nome"></div>
+                    <!-- Histórico de preços da casa (2026-10-04) -->
+                    <template x-if="precoInfo(item)">
+                      <button type="button" class="cg-preco-chip" @click="abrirPrecoDetalhe(item)"
+                        :aria-label="'Histórico de preços de ' + item.nome">
+                        <i class="bi bi-graph-down" aria-hidden="true"></i>
+                        <span x-text="'Menor que você pagou: ' + cgFormat.formatCurrency(precoInfo(item).menor.preco) + (precoInfo(item).menor.mercado ? ' no ' + precoInfo(item).menor.mercado : '')"></span>
+                      </button>
+                    </template>
                     <div class="cg-item-row__meta d-flex align-items-center justify-content-between gap-2">
                       <div class="cg-muted small d-flex align-items-center gap-2 min-w-0">
                         <span x-text="item.quantidade + ' ' + item.unidade"></span>

@@ -205,6 +205,9 @@ export function shoppingView() {
     // Várias listas (2026-10-04): a tela abre em "Minhas listas"; entrar
     // numa lista mostra a mesma tela de sempre (planejar → comprar → encerrar).
     listasAbertas: [], // [{ list, totalItens, valorTotal }]
+    // Histórico de preços da casa (compras encerradas), carregado 1x por sessão.
+    historicoPrecos: null,
+    precoDetalhe: null, // { nome, resumo } aberto no modal
     novaListaAberta: false,
     novaListaNome: '',
     sugestoesNomeLista: ['Mercado', 'Internet', 'Farmácia', 'Feira', 'Casa'],
@@ -245,7 +248,30 @@ export function shoppingView() {
       );
     },
 
+    async carregarHistoricoPrecos() {
+      if (this.historicoPrecos) return;
+      const store = this.$store.app;
+      try {
+        const todas = await sl.listLists({ ownerId: store.profile.id, groupId: store.group?.group?.id });
+        const finalizadas = todas.filter((l) => l.status === 'finalizada').slice(0, 60);
+        const entries = await Promise.all(finalizadas.map(async (list) => ({ list, items: await sl.listItems(list.id).catch(() => []) })));
+        this.historicoPrecos = sl.montarHistoricoPrecos(entries);
+      } catch {
+        this.historicoPrecos = new Map(); // melhor-esforço: sem histórico, a lista funciona igual
+      }
+    },
+
+    precoInfo(item) {
+      return sl.resumoPrecoItem(this.historicoPrecos, item.nome);
+    },
+
+    abrirPrecoDetalhe(item) {
+      const resumo = this.precoInfo(item);
+      if (resumo) this.precoDetalhe = { nome: item.nome, resumo };
+    },
+
     async abrirLista(lista) {
+      this.carregarHistoricoPrecos();
       this.list = lista;
       try { localStorage.setItem(CHAVE_LISTA_ABERTA, lista.id); } catch { /* sem armazenamento */ }
       this.items = await sl.listItems(lista.id).catch(() => []);

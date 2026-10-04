@@ -1248,9 +1248,9 @@ img.cg-company-logo { display: block; }
 }
 
 @media (max-width: 991.98px) {
+  /* Logo abaixo da barra do topo (embaixo cobria as janelas que abrem de baixo). */
   .cg-toast-container {
-    top: auto !important;
-    bottom: calc(12px + env(safe-area-inset-bottom));
+    top: 64px !important;
     left: 0;
     right: 0;
   }
@@ -1266,4 +1266,40 @@ img.cg-company-logo { display: block; }
   background: var(--color-primary);
   color: #fff;
   font-weight: 700;
+}
+
+/* Histórico de preços da casa (2026-10-04). */
+.cg-preco-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 2px;
+  padding: 2px 8px;
+  min-height: 28px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-success, #1a7f4b);
+  font: inherit;
+  font-size: var(--font-size-caption);
+  font-weight: 600;
+  max-width: 100%;
+  text-align: left;
+}
+
+.cg-preco-chip span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cg-preco-resumo {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.cg-preco-lista li {
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--color-border);
 }

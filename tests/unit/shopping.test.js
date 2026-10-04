@@ -99,3 +99,22 @@ test('ordenarListasAbertas: só listas em aberto, a que está em compra primeiro
   ]);
   assert.deepEqual(r.map((l) => l.id), ['c', 'd', 'a']);
 });
+
+test('histórico de preços da casa: menor preço, onde, mediana e quantos mercados (2026-10-04)', async () => {
+  const { montarHistoricoPrecos, resumoPrecoItem } = await import('../../js/services/shoppingList.js');
+  const h = montarHistoricoPrecos([
+    { list: { nome_mercado: 'Mercado A', finalizado_em: '2026-09-01T10:00:00Z' }, items: [{ nome: 'Arroz 5kg', unidade: 'un', preco_unitario: 25 }] },
+    { list: { nome_mercado: 'Mercado B', finalizado_em: '2026-09-15T10:00:00Z' }, items: [{ nome: 'arroz  5KG', unidade: 'un', preco_unitario: 22.9 }, { nome: 'Sem preço', unidade: 'un', preco_unitario: null }] },
+    { list: { nome_mercado: 'Mercado A', finalizado_em: '2026-10-01T10:00:00Z' }, items: [{ nome: 'Arroz 5kg', unidade: 'un', preco_unitario: 27 }] },
+  ]);
+  const r = resumoPrecoItem(h, 'ARROZ 5kg');
+  assert.equal(r.menor.preco, 22.9);
+  assert.equal(r.menor.mercado, 'Mercado B');
+  assert.equal(r.menor.data, '2026-09-15');
+  assert.equal(r.ultimo.preco, 27);
+  assert.equal(r.vezes, 3);
+  assert.equal(r.mercados, 2);
+  assert.equal(r.mediana, 25);
+  assert.equal(resumoPrecoItem(h, 'Sem preço'), null);
+  assert.equal(resumoPrecoItem(h, 'Feijão'), null);
+});

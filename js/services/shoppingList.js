@@ -116,6 +116,52 @@ export function ordenarListasAbertas(lists) {
 // aproxima/atinge/passa do limite — usado só aqui (Compras); orçamento por
 // categoria (computeBudgetProgress em budgets.js) continua com a régua
 // própria dele, sem mudança.
+// Histórico de preços da PRÓPRIA casa (2026-10-04, 1ª versão do comparador
+// de promoções — ver docs/PESQUISA-PROMOCOES.md: não existe API pública de
+// preço de supermercado; o dado confiável que já temos são as compras
+// encerradas). Puro: recebe [{ list, items }] das listas FINALIZADAS e
+// devolve, por nome de produto normalizado, os preços pagos (mais novo primeiro).
+export function normalizarNomeProduto(nome) {
+  return (nome || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
+}
+
+export function montarHistoricoPrecos(entries) {
+  const mapa = new Map();
+  for (const { list, items } of entries) {
+    for (const item of items || []) {
+      const preco = item.unidade === 'un' ? Number(item.preco_unitario) : Number(item.preco_por_kg);
+      if (!(preco > 0)) continue;
+      const chave = normalizarNomeProduto(item.nome);
+      if (!chave) continue;
+      const lista = mapa.get(chave) || [];
+      lista.push({ preco, unidade: item.unidade, mercado: list.nome_mercado || null, data: (list.finalizado_em || list.criado_em || '').slice(0, 10) || null });
+      mapa.set(chave, lista);
+    }
+  }
+  for (const lista of mapa.values()) lista.sort((a, b) => (b.data || '').localeCompare(a.data || ''));
+  return mapa;
+}
+
+// Resumo para o chip do item: menor preço já pago (e onde), último preço,
+// quantas vezes e em quantos mercados; "abaixoDaMediana" marca o último
+// preço como bom quando está abaixo da mediana do próprio histórico.
+export function resumoPrecoItem(historico, nome) {
+  const pontos = historico?.get(normalizarNomeProduto(nome));
+  if (!pontos?.length) return null;
+  const menor = pontos.reduce((m, p) => (p.preco < m.preco ? p : m), pontos[0]);
+  const ordenados = pontos.map((p) => p.preco).sort((a, b) => a - b);
+  const meio = Math.floor(ordenados.length / 2);
+  const mediana = ordenados.length % 2 ? ordenados[meio] : (ordenados[meio - 1] + ordenados[meio]) / 2;
+  return {
+    menor,
+    ultimo: pontos[0],
+    vezes: pontos.length,
+    mercados: new Set(pontos.map((p) => p.mercado).filter(Boolean)).size,
+    mediana,
+    pontos,
+  };
+}
+
 export function computeListLimitStatus(total, limite) {
   if (!limite) return null;
   const percentual = Math.round((total / limite) * 100);
