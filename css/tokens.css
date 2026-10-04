@@ -95,7 +95,7 @@
   --shadow-lg: 0 16px 36px rgba(19, 35, 30, 0.13);
 
   --font-family-base: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-size-base: 16px;
+  --font-size-base: 1rem; /* 16px no tamanho normal; acompanha "Tamanho do texto" (Perfil) */
 
   /* Escala tipográfica (2026-08-20, DESIGN-SYSTEM-2027.md §6) — antes disso
      cada componente escolhia um font-size solto "no olho" (15+ valores

@@ -998,23 +998,65 @@ export function onboardingStore() {
     // visita sem NENHUM caminho guiado — só um menu jogado na cara sem
     // contexto seria pior, não melhor), só não força mais que UMA ação
     // prática antes de deixar a pessoa escolher o resto sozinha.
+    // NOVO TOUR (revisão com personas, 2026-10-04): o anterior tinha 19
+    // passos, 17 sobre um único formulário, e travava no "Salvar" (não dava
+    // para pular e obrigava a criar um lançamento real). Agora são 6 passos
+    // curtos, todos puláveis, que só MOSTRAM onde fica cada coisa — nada é
+    // criado. Aprender cada ação a fundo fica na Central de tutoriais.
     abrir() {
-      const financeiro = this.catalogo.find((g) => g.id === 'financeiro');
+      const celular = window.matchMedia('(max-width: 991.98px)').matches;
       this.passos = [
         {
           id: 'boas-vindas',
           tipo: 'info',
           icone: 'bi-house-heart-fill',
           titulo: 'Bem-vindo(a) ao BNTT!',
-          texto: 'Aqui vocês dois colocam o dinheiro, a lista de compras e o que tem em casa sob controle — tudo num só lugar. No próximo passo você vai USAR a ferramenta de verdade, registrando um gasto real. Depois disso, você escolhe o que mais quer aprender.',
+          texto: 'Em menos de 1 minuto você vê onde fica cada coisa. Você pode pular quando quiser.',
         },
-        ...financeiro.passos,
+        {
+          id: 'saldo',
+          tipo: 'campo',
+          view: 'home',
+          alvoSeletor: 'section[x-data^="dashboardView"] .cg-hero-balance',
+          icone: 'bi-wallet2',
+          titulo: 'Seu saldo',
+          texto: 'Aqui você vê quanto entrou, quanto saiu e quanto sobrou no mês.',
+        },
+        {
+          id: 'nova-despesa',
+          tipo: 'campo',
+          view: 'home',
+          alvoSeletor: 'section[x-data^="dashboardView"] [data-tour-alvo="nova-transacao"]',
+          icone: 'bi-plus-circle-fill',
+          titulo: 'Anotar um gasto',
+          texto: 'Toque aqui sempre que gastar. Só o nome e o valor são obrigatórios.',
+        },
+        {
+          id: 'menu',
+          tipo: 'campo',
+          view: 'home',
+          alvoSeletor: celular ? '.cg-topbar [aria-label="Abrir menu"]' : 'aside.cg-sidebar',
+          icone: 'bi-list',
+          titulo: 'Todas as telas',
+          texto: celular
+            ? 'Toque no menu para ir a Transações, Lista de compras, Inventário, Caixinhas e Primeiros socorros.'
+            : 'Aqui ficam Transações, Lista de compras, Inventário, Caixinhas e Primeiros socorros.',
+        },
+        {
+          id: 'ajuda',
+          tipo: 'campo',
+          view: 'home',
+          alvoSeletor: '.cg-topbar .cg-topbar-ajuda',
+          icone: 'bi-question-circle-fill',
+          titulo: 'Ficou com dúvida?',
+          texto: 'Em "Ajuda" tem tutoriais passo a passo, perguntas frequentes e primeiros socorros.',
+        },
         {
           id: 'conclusao',
           tipo: 'info',
           icone: 'bi-signpost-2-fill',
-          titulo: 'Boa! Você já viu como funciona.',
-          texto: 'Tem bastante mais coisa pra explorar — dividir despesa com seu par, despesa fixa, cartão de crédito, caixinha, lista de compras, inventário da casa e mais. A Central de tutoriais tem um guia rápido pra cada uma dessas ações, pra você escolher o que quiser aprender agora.',
+          titulo: 'Pronto! Agora é com você.',
+          texto: 'Vindo de uma planilha? Em Transações, use "Importar" para trazer seus dados. Quer aprender algo específico? A Central de tutoriais tem um guia curto para cada tarefa.',
           cta: { label: 'Abrir Central de tutoriais', metodo: 'abrirCentralDoTour' },
         },
       ];

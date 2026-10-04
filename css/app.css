@@ -213,7 +213,7 @@ a { color: var(--color-primary); }
 .cg-hero-stat > div { min-width: 0; }
 .cg-hero-stat__label {
   display: block;
-  font-size: 0.7rem;
+  font-size: var(--font-size-caption);
   text-transform: uppercase;
   letter-spacing: 0.03em;
   opacity: 0.8;
@@ -231,7 +231,7 @@ a { color: var(--color-primary); }
    display:block força cada delta pra própria linha, sempre (2026-08-22). */
 .cg-hero-stat__delta {
   display: block;
-  font-size: 0.7rem;
+  font-size: var(--font-size-caption);
   font-weight: 600;
   opacity: 0.9;
   white-space: nowrap;
@@ -407,7 +407,7 @@ a { color: var(--color-primary); }
     padding-inline: 2px;
     padding-block: 8px;
     min-height: 54px;
-    font-size: 0.64rem;
+    font-size: var(--font-size-caption);
     line-height: 1.15;
     white-space: normal;
   }
@@ -673,7 +673,7 @@ a { color: var(--color-primary); }
   display: flex;
   align-items: center;
   gap: 4px;
-  font-size: 0.7rem;
+  font-size: var(--font-size-caption);
   font-weight: 600;
   color: var(--color-text-muted);
   margin-bottom: 2px;
@@ -862,7 +862,7 @@ button, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 /* Densidade "compacta" (2026-08-20) — linha mais baixa, fonte um degrau
    menor, mesma informação. Só muda espaçamento/tamanho, nunca esconde
    coluna (informação sumir sem avisar é pior que uma linha mais alta). */
-.cg-table--compact thead th { padding: 7px 10px; font-size: 0.62rem; }
+.cg-table--compact thead th { padding: 7px 10px; font-size: var(--font-size-caption); }
 .cg-table--compact tbody td { padding: 7px 10px; font-size: var(--font-size-body-sm); }
 .cg-table--compact .cg-avatar--sm { width: 26px; height: 26px; }
 /* Reportado: "a tabela não usa a largura disponível no desktop, precisa
@@ -1044,7 +1044,7 @@ img.cg-company-logo { display: block; }
   position: absolute;
   top: 6px;
   left: 6px;
-  font-size: 0.7rem;
+  font-size: var(--font-size-caption);
   font-weight: 700;
   padding: 1px 6px;
   border-radius: 999px;
@@ -1183,4 +1183,61 @@ img.cg-company-logo { display: block; }
   width: calc(100% - 2rem) !important;
   min-height: 48px;
   font-weight: 700;
+}
+
+/* Botão único "Ajuda" no topo (2026-10-04). */
+.cg-topbar-ajuda {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-weight: 600;
+}
+
+.cg-topbar-ajuda__menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 1045;
+  min-width: 240px;
+  padding: 0.35rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.cg-topbar-ajuda__item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 48px;
+  padding: 0.5rem 0.75rem;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+.cg-topbar-ajuda__item:hover {
+  background: var(--color-surface-2, rgba(0, 0, 0, 0.05));
+}
+
+.cg-topbar-ajuda__item i {
+  font-size: 1.2rem;
+  color: var(--color-primary);
+}
+
+/* Contraste no card de saldo (revisão com personas, 2026-10-04): o cinza
+   "cg-muted" sobre o fundo colorido ficava abaixo de 4,5:1. */
+.cg-hero-balance .cg-muted {
+  color: inherit;
+  opacity: 0.9;
+}
+
+/* Topo em tela estreita (ou com "Tamanho do texto" grande): o nome BNTT ao
+   lado do menu sai para não cortar o avatar — o menu lateral já mostra. */
+@media (max-width: 419.98px) {
+  .cg-topbar h1 {
+    display: none;
+  }
 }

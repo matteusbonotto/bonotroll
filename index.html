@@ -208,25 +208,25 @@
             <h1 class="h5 fw-bold mb-0 d-lg-none">BNTT</h1>
           </div>
           <div class="d-flex align-items-center gap-2">
-            <button type="button" class="btn p-0 border-0 bg-transparent cg-touch" @click="$store.app.toggleTheme()" :aria-label="$store.app.isDarkNow() ? 'Mudar para modo claro' : 'Mudar para modo escuro'" :title="$store.app.isDarkNow() ? 'Modo claro' : 'Modo escuro'">
-              <i class="bi fs-5" :class="$store.app.isDarkNow() ? 'bi-sun' : 'bi-moon-stars'"></i>
-            </button>
-            <!-- Central de tutoriais (TASK-042) — ícone PRÓPRIO, separado do
-                 "?" de FAQ: são conteúdos diferentes ("me ensina a fazer
-                 isso" vs. dúvida pontual). Pedido explícito do usuário
-                 ("dar a opção para o usuário escolher oq ele quer
-                 aprender") — precisa estar fácil de achar, não só dentro de
-                 Perfil → Preferências (que também tem o mesmo atalho). -->
-            <button type="button" class="btn p-0 border-0 bg-transparent cg-touch" @click="$store.onboarding.abrirCentral()" aria-label="Central de tutoriais" title="Central de tutoriais">
-              <i class="bi bi-signpost-2 fs-5"></i>
-            </button>
-            <!-- Ponto de acesso global do FAQ (TASK-037/038) — ao lado do
-                 tema/notificações, sempre visível em qualquer tela, sem
-                 precisar entrar em Perfil (que também tem o mesmo atalho,
-                 ver Preferências abaixo). -->
-            <button type="button" class="btn p-0 border-0 bg-transparent cg-touch" @click="$store.faq.abrir()" aria-label="Perguntas frequentes" title="Perguntas frequentes">
-              <i class="bi bi-question-circle fs-5"></i>
-            </button>
+            <!-- Ajuda num botão só, COM texto (revisão com personas, 2026-10-04: 4
+                 ícones sem texto no topo confundiam idoso e iniciante). O tema
+                 foi para Perfil → Preferências. -->
+            <div x-data="{ ajuda: false }" class="position-relative" @click.outside="ajuda = false" @keydown.escape.window="ajuda = false">
+              <button type="button" class="btn btn-outline-secondary btn-sm cg-topbar-ajuda" @click="ajuda = !ajuda" :aria-expanded="ajuda" aria-haspopup="menu">
+                <i class="bi bi-question-circle" aria-hidden="true"></i> <span>Ajuda</span>
+              </button>
+              <div class="cg-card cg-topbar-ajuda__menu" x-show="ajuda" x-cloak x-transition role="menu">
+                <button type="button" class="cg-topbar-ajuda__item" role="menuitem" @click="ajuda = false; $store.onboarding.abrirCentral()" aria-label="Central de tutoriais">
+                  <i class="bi bi-signpost-2" aria-hidden="true"></i> Tutoriais: aprenda a usar
+                </button>
+                <button type="button" class="cg-topbar-ajuda__item" role="menuitem" @click="ajuda = false; $store.faq.abrir()" aria-label="Perguntas frequentes">
+                  <i class="bi bi-chat-square-text" aria-hidden="true"></i> Perguntas frequentes
+                </button>
+                <button type="button" class="cg-topbar-ajuda__item" role="menuitem" @click="ajuda = false; $store.app.setView('socorros')">
+                  <i class="bi bi-heart-pulse" aria-hidden="true"></i> Primeiros socorros
+                </button>
+              </div>
+            </div>
             <div x-data="{ open: false }" class="position-relative" @click.outside="open = false">
               <button type="button" class="btn p-0 border-0 bg-transparent position-relative cg-touch" @click="open = !open; if (open) $store.app.refreshNotifications()" aria-label="Notificações">
                 <i class="bi bi-bell fs-5"></i>
@@ -290,7 +290,7 @@
         <template x-if="$store.app.isDemoMode">
           <div class="cg-demo-banner">
             <i class="bi bi-info-circle fs-5"></i>
-            <span>Você está no <strong>modo demonstração</strong> — os dados abaixo são de exemplo e ficam salvos só neste navegador. Veja o README para conectar o Supabase de verdade.</span>
+            <span>Você está no <strong>modo demonstração</strong>: os dados são de exemplo e ficam só neste aparelho.</span>
           </div>
         </template>
 
@@ -2754,6 +2754,30 @@
                    DESIGN-SYSTEM-2027.md §7) — antes eram 6 .cg-card empilhados,
                    cada um com a própria borda+sombra ("card dentro de card"). -->
               <div class="cg-card p-0">
+                <div class="cg-list-flat px-3">
+                  <div class="cg-icon-badge"><i class="bi bi-type"></i></div>
+                  <div class="flex-fill">
+                    <h2 class="h6 fw-bold mb-1" id="cg-tamanho-texto-titulo">Tamanho do texto</h2>
+                    <p class="cg-muted small mb-2">Deixe as letras maiores para ler com mais conforto.</p>
+                    <div class="d-flex gap-2 flex-wrap" role="group" aria-labelledby="cg-tamanho-texto-titulo">
+                      <template x-for="op in [{ id: 'normal', rotulo: 'Normal', tam: '1rem' }, { id: 'grande', rotulo: 'Grande', tam: '1.15rem' }, { id: 'muito-grande', rotulo: 'Muito grande', tam: '1.3rem' }]" :key="op.id">
+                        <button type="button" class="btn btn-outline-secondary" :class="$store.app.tamanhoTexto === op.id && 'active'" :aria-pressed="$store.app.tamanhoTexto === op.id"
+                          @click="$store.app.setTamanhoTexto(op.id)"><span :style="'font-size:' + op.tam" x-text="'A'"></span> <span x-text="op.rotulo"></span></button>
+                      </template>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="cg-list-flat px-3">
+                  <div class="cg-icon-badge"><i class="bi" :class="$store.app.isDarkNow() ? 'bi-moon-stars' : 'bi-sun'"></i></div>
+                  <div class="flex-fill">
+                    <h2 class="h6 fw-bold mb-1">Modo escuro</h2>
+                    <p class="cg-muted small mb-0">Fundo escuro, mais confortável à noite.</p>
+                  </div>
+                  <button type="button" class="btn btn-outline-secondary" @click="$store.app.toggleTheme()" :aria-pressed="$store.app.isDarkNow()"
+                    x-text="$store.app.isDarkNow() ? 'Ligado' : 'Desligado'" aria-label="Modo escuro"></button>
+                </div>
+
                 <div class="cg-list-flat cg-list-flat--hoverable px-3" role="button" @click="$store.onboarding.abrirCentral()">
                   <div class="cg-icon-badge"><i class="bi bi-signpost-2"></i></div>
                   <div class="flex-fill">

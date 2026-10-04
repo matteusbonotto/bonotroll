@@ -279,6 +279,18 @@ export function appStore() {
     },
 
     // theme: 'dark' | 'light' | null (null = volta a seguir o sistema).
+    // Tamanho do texto (acessibilidade, 2026-10-04): normal | grande | muito-grande.
+    tamanhoTexto: (() => { try { return localStorage.getItem('bonotto_tamanho_texto') || 'normal'; } catch { return 'normal'; } })(),
+    setTamanhoTexto(tamanho) {
+      this.tamanhoTexto = tamanho;
+      const escala = { grande: '112.5%', 'muito-grande': '125%' }[tamanho] || '';
+      document.documentElement.style.fontSize = escala;
+      try {
+        if (tamanho === 'normal') localStorage.removeItem('bonotto_tamanho_texto');
+        else localStorage.setItem('bonotto_tamanho_texto', tamanho);
+      } catch { /* sem armazenamento: vale só nesta sessão */ }
+    },
+
     applyTheme(theme) {
       if (theme) {
         document.documentElement.setAttribute('data-bs-theme', theme);

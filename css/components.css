@@ -174,7 +174,7 @@
   padding: 8px 10px;
   font-size: 0.8rem;
 }
-.cg-card--dense .cg-avatar--sm { width: 28px; height: 28px; font-size: 0.7rem; }
+.cg-card--dense .cg-avatar--sm { width: 28px; height: 28px; font-size: var(--font-size-caption); }
 .cg-card--dense .fw-semibold { font-size: 0.85rem; }
 
 .cg-card--stat .cg-card__label {
@@ -289,7 +289,7 @@
   align-items: center;
   padding: 1px 7px;
   border-radius: var(--radius-pill);
-  font-size: 0.68rem;
+  font-size: var(--font-size-caption);
   font-weight: 600;
   line-height: 1.4;
   background: var(--color-surface-alt);
@@ -310,7 +310,7 @@
   border-radius: var(--radius-pill);
   background: var(--color-surface-alt);
   color: var(--color-text-muted);
-  font-size: 0.68rem;
+  font-size: var(--font-size-caption);
   font-weight: 600;
   line-height: 1.4;
 }
@@ -818,7 +818,7 @@
 .cg-grid-view--compact .cg-grid-view__avatar .cg-avatar--sm {
   width: 24px;
   height: 24px;
-  font-size: 0.6rem;
+  font-size: var(--font-size-caption);
 }
 .cg-grid-view__logo {
   width: 40px;
@@ -1014,7 +1014,7 @@
    (1.7rem, gigante). Precisa de uma seletor mais específico pra garantir
    que o lápis fica pequeno independente da ordem no arquivo. */
 .cg-room-tile .cg-room-tile__edit i {
-  font-size: 0.65rem;
+  font-size: var(--font-size-caption);
 }
 .cg-room-tile i {
   font-size: 1.7rem;
@@ -1026,7 +1026,7 @@
   text-align: center;
 }
 .cg-room-tile__count {
-  font-size: 0.72rem;
+  font-size: var(--font-size-caption);
   color: var(--color-text-muted);
 }
 .cg-room-tile__alert {
@@ -1038,7 +1038,7 @@
   min-width: 18px;
   height: 18px;
   border-radius: 999px;
-  font-size: 0.65rem;
+  font-size: var(--font-size-caption);
   font-weight: 700;
   display: flex;
   align-items: center;
@@ -1323,7 +1323,7 @@ body { font-size: var(--font-size-body); }
   .cg-sidebar > .cg-sidebar__item::before {
     display: none;
     color: var(--color-text-muted);
-    font-size: 0.66rem;
+    font-size: var(--font-size-caption);
     font-weight: 800;
     letter-spacing: .08em;
     position: absolute;
@@ -1791,3 +1791,51 @@ body { font-size: var(--font-size-body); }
    sempre no primeiro login de alguém novo — exatamente o pior momento pra
    isso acontecer. */
 .cg-toast-container { top: var(--space-3); }
+
+/* Acessibilidade (revisão com personas, 2026-10-04): alvo de toque ≥ 44 px.
+   Ícones pequenos mantêm o visual e ganham área de toque invisível ao redor
+   (::after); em tela de toque, botões e chips ficam com 44 px de altura. */
+.cg-help__trigger,
+.cg-room-tile__edit,
+.btn-close {
+  position: relative;
+}
+
+.cg-help__trigger::after,
+.cg-room-tile__edit::after,
+.btn-close::after {
+  content: '';
+  position: absolute;
+  inset: -12px;
+}
+
+@media (pointer: coarse) {
+  .btn,
+  .cg-btn,
+  .cg-chip,
+  .form-select,
+  .form-control,
+  .cg-sidebar__item {
+    min-height: 44px;
+  }
+
+  .btn.btn-sm,
+  .cg-btn-icon {
+    min-width: 44px;
+  }
+
+  .form-check-input {
+    width: 1.5em;
+    height: 1.5em;
+  }
+
+  .form-switch .form-check-input {
+    width: 2.75em;
+  }
+}
+
+/* Foco visível e consistente para quem usa teclado. */
+:where(a, button, input, select, textarea, [role="button"], [tabindex]):focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
+}

@@ -132,3 +132,17 @@ O checklist acima (8 itens) foi todo concluído. Depois disso vieram mais pedido
 - [x] CI com `npm ci`.
 - [ ] Migração de endurecimento do banco (C1, C2, A1, A2, A3, M1, M2) escrita em `supabase/endurecimento-2026-10.sql` e anexada ao `schema.sql`, mas NÃO APLICADA: a CLI não acessa o projeto `appbntt` (403). Precisa de `npx supabase login` com a conta do BNTT.
 - [ ] `.env-old` com chaves `service_role` do banco antigo: o usuário precisa rotacionar ou excluir o projeto antigo e apagar o arquivo.
+
+## Rodada 2026-10-04 — Acessibilidade, parte 1 (prioridade do usuário)
+
+- [x] Tour de boas-vindas novo: 6 passos (boas-vindas, saldo, anotar gasto, menu, ajuda, conclusão com dica para quem vem de planilha), todos puláveis; nenhum cria dado nem abre formulário. O antigo tinha 19 passos e travava no "Salvar". O guia detalhado "Registre um gasto de verdade" continua na Central de tutoriais.
+- [x] "Ajuda" virou um botão só, com texto, no topo: Tutoriais, Perguntas frequentes e Primeiros socorros. O modo escuro foi para Perfil → Preferências.
+- [x] "Tamanho do texto" (Normal / Grande / Muito grande) em Perfil → Preferências, aplicado antes de a página pintar; o app inteiro escala (base em rem).
+- [x] Nenhum texto abaixo de 12 px (14 regras ajustadas).
+- [x] Alvos de toque de 44 px: ícones pequenos ganham área de toque invisível; botões, campos e chips com 44 px em tela de toque.
+- [x] Foco de teclado visível e igual em todo o app.
+- [x] Contraste do "(pagas)" no card de saldo.
+- [x] Banner do modo demonstração sem "README/Supabase".
+- [x] Nome BNTT some do topo em tela estreita para não cortar o avatar.
+- [ ] Exportar = importar (mesmas colunas, `;`, "1234,56", dd/mm/aaaa, .xlsx) e assistente de importação para quem vem de planilha — próxima entrega.
+- [ ] Tabela de Transações densa com totais e atalhos de teclado — próxima entrega.

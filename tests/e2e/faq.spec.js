@@ -21,7 +21,8 @@ test('FAQ abre pelo ícone "?" da topbar, expande uma pergunta e fecha com Esc',
   const faqModal = page.locator('.cg-modal-backdrop[x-show="$store.faq.aberto"]');
   await expect(faqModal).toBeHidden();
 
-  await page.getByRole('button', { name: 'Perguntas frequentes' }).click();
+  await page.locator('.cg-topbar').getByRole('button', { name: 'Ajuda' }).click();
+  await page.getByRole('menuitem', { name: 'Perguntas frequentes' }).click();
   await expect(faqModal).toBeVisible({ timeout: 5000 });
 
   // Conteúdo real (não genérico) — pelo menos as perguntas-chave pedidas
