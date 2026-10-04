@@ -1,8 +1,11 @@
-// Preencha com os dados do SEU projeto Supabase quando for conectar o backend real.
-// Enquanto os valores abaixo forem os placeholders, o app roda automaticamente
-// em MODO DEMONSTRAÇÃO (dados mockados em localStorage, sem nenhuma chamada de rede).
-export const SUPABASE_URL = 'https://zkoxuafdcsfrdmlfckxz.supabase.co';
-export const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inprb3h1YWZkY3NmcmRtbGZja3h6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5Nzc1MzYsImV4cCI6MjEwMjU1MzUzNn0.8XD_v4pkOXf0VqPp_7prBa7sZMoPHCMOBSAz9GVbE9E';
+// NÃO edite os valores abaixo à mão. Eles ficam como placeholder no código-fonte
+// e são trocados pela configuração PÚBLICA do .env (SB_PROJ_ID + SB_PB) só na
+// cópia servida por `npm run dev` e na gerada por `npm run build` (ver
+// scripts/env.mjs::injetarConfig). Enquanto forem os placeholders — ex.: servir
+// a pasta crua com `python -m http.server` — o app roda automaticamente em
+// MODO DEMONSTRAÇÃO (dados mockados em localStorage, sem nenhuma chamada de rede).
+export const SUPABASE_URL = 'https://SEU-PROJETO.supabase.co';
+export const SUPABASE_ANON_KEY = 'SUA-ANON-KEY';
 
 // Além do placeholder acima, o modo demo também pode ser forçado sem tocar
 // nas credenciais reais — via ?demo=1 na URL (persiste em localStorage) ou

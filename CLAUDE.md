@@ -2,7 +2,7 @@
 
 Contexto principal do repositório para o Claude Code. Leia isto primeiro; os documentos vivos em `.claude/docs/` e `docs/` aprofundam cada assunto.
 
-**Histórico de nome**: o produto já passou por 2 rebrands — "CasaGrana" (nome original) → "Bõnotto" (2026-08-20, ver `docs/CHECKLIST-REBRAND.md`) → "**BNTT**" (2026-09-14, este). Documentos históricos (`docs/BONOTTO-2027-BLUEPRINT.md`, `docs/CHECKLIST-REBRAND.md`, `.claude/memory/`, `.claude/discussions/`, nomes de arquivo, commits antigos) continuam mencionando "Bõnotto"/"CasaGrana" de propósito — são registro do que aconteceu quando esses eram os nomes vigentes, não erro a corrigir. O nome do repositório GitHub (`bonotroll`) e a URL pública também não mudam (decisão explícita: não quebrar link nenhum já compartilhado).
+**Histórico de nome**: o produto já passou por 2 rebrands — "CasaGrana" (nome original) → "Bõnotto" (2026-08-20, ver `docs/CHECKLIST-REBRAND.md`) → "**BNTT**" (2026-09-14, este). Documentos históricos (`docs/BONOTTO-2027-BLUEPRINT.md`, `docs/CHECKLIST-REBRAND.md`, `.claude/memory/`, `.claude/discussions/`, nomes de arquivo, commits antigos) continuam mencionando "Bõnotto"/"CasaGrana" de propósito — são registro do que aconteceu quando esses eram os nomes vigentes, não erro a corrigir. O nome do repositório GitHub (`bonotroll`) não muda. A URL pública MUDOU em 2026-09 (decisão explícita do usuário): de GitHub Pages para o Firebase Hosting `https://bnttapp.web.app` — o GitHub Pages será desligado e o repositório privatizado depois da migração (ver `docs/DEPLOY-FIREBASE.md`).
 
 ## Idioma
 
@@ -34,9 +34,9 @@ Backend:            Supabase (Postgres + Auth + Storage + Edge Functions) — su
 Database:           Postgres com RLS ativo em toda tabela (owner_id = auth.uid() OR membro do grupo)
 Authentication:      Supabase Auth (email/senha) + modo demo local (localStorage, mesma forma de dado, ver js/data/mockDb.js)
 Testing:             node --test (unit, tests/unit/*.test.js) + Playwright (e2e, tests/e2e/*.spec.js) — npm run test:unit && npm test
-Build:               NENHUM — index.html único, <script type="module"> direto no navegador
-Deployment:          git push origin main → GitHub Pages serve a branch main diretamente. Sem CI de deploy (só CI de teste, .github/workflows/tests.yml). Nunca trabalhar direto em main — sempre numa branch de feature, mergear (fast-forward) só quando o usuário pedir deploy explicitamente.
-Supabase CLI:         `npx supabase <comando>` funciona neste ambiente — autenticado e com o projeto real já linkado (confirmar com `npx supabase projects list`; se aparecer "linked": true, está pronto). Não precisa instalar nada global. Pra aplicar `supabase/schema.sql` (idempotente) na conta real: `npx supabase db query --linked -f supabase/schema.sql`. Pra rodar uma query solta: `npx supabase db query --linked "select ..."`. Isto é uma ação real em produção — sempre confirmar com o usuário antes de rodar (mesma regra de qualquer mudança irreversível/em estado compartilhado), mas TECNICAMENTE possível e já usado com sucesso em 2026-08-21 (coluna `cartao_credito` aplicada direto assim). Se o login expirar de novo, `npx supabase login` precisa ser feito pelo usuário (fluxo de navegador, não automatizável).
+Build:               Só para produção — `npm run build` (scripts/build.mjs) copia o que é público para dist/, injeta a config pública do .env em js/data/config.js, minifica (esbuild) e obfusca (javascript-obfuscator, semente fixa) cada .js no mesmo caminho, sem bundle nem sourcemap, carimba a versão no CACHE_NAME do sw.js e aborta se achar segredo no artefato. Desenvolvimento continua sem build: `npm run dev` serve o fonte legível.
+Deployment:          Firebase Hosting, projeto `bnttapp` (https://bnttapp.web.app) — `npm run deploy` (= build + `firebase deploy --only hosting`, public = dist/). Ver docs/DEPLOY-FIREBASE.md. O GitHub Pages (branch main) é a hospedagem ANTIGA, a ser desligada depois da migração. Nunca trabalhar direto em main — sempre numa branch de feature, mergear (fast-forward) e fazer deploy só quando o usuário pedir explicitamente.
+Supabase CLI:         `npx supabase <comando>` funciona neste ambiente. Banco OFICIAL desde 2026-09-25: projeto `appbntt` (ref `qlcrsclgtpjeqkmykqrs`, conta do BNTT) — confirmar com `npx supabase projects list` que é ele que aparece com "linked": true. O banco antigo (`zkoxuafdcsfrdmlfckxz`, conta pessoal) só existe como origem da migração de dados. Pra aplicar `supabase/schema.sql` (idempotente): `npx supabase db query --linked -f supabase/schema.sql`; query solta: `npx supabase db query --linked "select ..."`. Isto é ação real em produção — sempre confirmar com o usuário antes. Se o login expirar, `npx supabase login` precisa ser feito pelo usuário (fluxo de navegador). Configuração do frontend (URL + publishable key) vem do .env (SB_PROJ_ID, SB_PB) — js/data/config.js só tem placeholders no fonte; SB_SK/STRIP_TOKEN são secretos e nunca vão pro frontend (scripts/env.mjs).
 Infrastructure:      Nenhuma própria — Supabase free tier
 External Services:   Frankfurter (câmbio), CoinGecko (cripto), Open Food Facts (código de barras), esm.sh (CDN de módulos pesados: Chart.js, Tesseract.js, pdf.js, html5-qrcode, PapaParse, @supabase/supabase-js), Google Fonts (só a fonte "Caveat" na tela de Compras)
 ```
@@ -80,12 +80,16 @@ tests/e2e/*.spec.js         — Playwright, sempre contra ?demo=1 (não precisa 
 ## Comandos
 
 ```bash
-python -m http.server 5500      # servidor local (o app não precisa de nada além de arquivos estáticos)
-# abrir http://localhost:5500/?demo=1
+npm run dev                     # fonte legível + Supabase do .env → http://localhost:5510/
+python -m http.server 5500      # fonte cru, sempre em modo demo (config.js com placeholder) → http://localhost:5500/?demo=1
+npm run build                   # dist/ de produção (minificado + obfuscado + varredura de segredos)
+npm run preview                 # build + emulador do Firebase Hosting (atenção: o emulador não aplica os headers do firebase.json)
+npm run deploy                  # build + firebase deploy --only hosting (produção — só quando o usuário pedir)
 
 npm run test:unit                # testes de função pura (node --test)
 npm test                         # Playwright e2e (usa playwright.config.js, sobe o server sozinho)
 npx playwright test --workers=2  # mesma coisa, mais rápido em paralelo
+npm run test:dist                # mesma suíte e2e contra o dist/ obfuscado (build --demo, porta 5520)
 ```
 
 ## Onde cavar mais fundo

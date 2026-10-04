@@ -1,0 +1,17 @@
+# Só a configuração das Edge Functions usada no deploy (`npx supabase functions
+# deploy <nome>`). As 3 funções são chamadas apenas pelo próprio banco (pg_cron
+# + trigger via pg_net, ver notifications_push.sql) e se autorizam pelo header
+# x-bntt-cron (functions/_shared/autorizacao.ts) — as chaves novas do Supabase
+# (sb_secret_…) não são JWT, então a verificação de JWT do gateway fica
+# desligada aqui. Sem isto, um deploy "esquecido" sem --no-verify-jwt faria o
+# gateway recusar toda chamada do cron.
+project_id = "bntt"
+
+[functions.keepalive]
+verify_jwt = false
+
+[functions.notify-scan]
+verify_jwt = false
+
+[functions.notify-payment]
+verify_jwt = false

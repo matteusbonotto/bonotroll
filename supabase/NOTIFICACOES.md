@@ -18,9 +18,9 @@ Nenhum dos dois é obrigatório pro resto do app funcionar — sem eles, a centr
 
 ```bash
 npx supabase login
-# abre o navegador pra autorizar — faça login na conta dona do projeto zkoxuafdcsfrdmlfckxz
+# abre o navegador pra autorizar — faça login na conta dona do projeto qlcrsclgtpjeqkmykqrs
 
-npx supabase link --project-ref zkoxuafdcsfrdmlfckxz
+npx supabase link --project-ref qlcrsclgtpjeqkmykqrs
 ```
 
 ## 2. Configurar os secrets das Edge Functions
@@ -47,11 +47,11 @@ npx supabase functions deploy notify-payment
 Teste rápido de cada uma (deve responder `{"ok":true,...}`):
 
 ```bash
-curl -i --request POST "https://zkoxuafdcsfrdmlfckxz.supabase.co/functions/v1/keepalive" \
+curl -i --request POST "https://qlcrsclgtpjeqkmykqrs.supabase.co/functions/v1/keepalive" \
   -H "apikey: SUA_SERVICE_ROLE_KEY" \
   -H "Authorization: Bearer SUA_SERVICE_ROLE_KEY"
 
-curl -i --request POST "https://zkoxuafdcsfrdmlfckxz.supabase.co/functions/v1/notify-scan" \
+curl -i --request POST "https://qlcrsclgtpjeqkmykqrs.supabase.co/functions/v1/notify-scan" \
   -H "apikey: SUA_SERVICE_ROLE_KEY" \
   -H "Authorization: Bearer SUA_SERVICE_ROLE_KEY"
 ```
@@ -61,6 +61,8 @@ curl -i --request POST "https://zkoxuafdcsfrdmlfckxz.supabase.co/functions/v1/no
 ## 4. Trigger + agendamentos (pg_cron)
 
 Abra `supabase/notifications_push.sql`, troque todas as ocorrências de `<SERVICE_ROLE_KEY>` pela sua chave `service_role` (**Project Settings → API → service_role secret** — nunca a `anon key`), e rode o arquivo inteiro no SQL Editor do projeto.
+
+> **Projeto novo (`appbntt`, 2026-09):** ele usa o formato novo de chaves (`sb_publishable_…`/`sb_secret_…`), que **não são JWT**. As Edge Functions, publicadas do jeito padrão (`verify_jwt` ligado), rejeitam uma `sb_secret_…` no `Authorization: Bearer`. Duas saídas: (a) usar a chave **legada** `service_role` (JWT), se ela estiver habilitada em Project Settings → API Keys → *Legacy API keys*; ou (b) publicar as 3 funções com `--no-verify-jwt` e fazer cada função conferir o header `apikey` contra `SUPABASE_SERVICE_ROLE_KEY`/secret por conta própria. Ainda não foi decidido nem testado — ver `docs/DEPLOY-FIREBASE.md` (Pendências).
 
 > Se você já tinha rodado uma versão anterior deste arquivo (antes do header `apikey` ser adicionado nas chamadas `net.http_post`), rode de novo — sem esse header o gateway do Supabase rejeita a chamada com `"No API key found in request"`, mesmo com uma `service_role` key válida no `Authorization`.
 

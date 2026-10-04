@@ -2,12 +2,19 @@
   "name": "bntt",
   "private": true,
   "type": "module",
-  "description": "Suíte de testes do BNTT (o app em si não tem build step — isto é só tooling de teste, ver docs/RAIO-X-2.0.md §5).",
+  "description": "BNTT — sem bundler no desenvolvimento (npm run dev serve o fonte legível); npm run build gera dist/ minificado + obfuscado para o Firebase Hosting (ver docs/DEPLOY-FIREBASE.md).",
   "scripts": {
+    "dev": "node scripts/dev-server.mjs",
+    "build": "node scripts/build.mjs",
+    "preview": "npm run build && firebase emulators:start --only hosting",
+    "deploy": "npm run build && firebase deploy --only hosting",
     "test": "playwright test",
-    "test:unit": "node --test --import ./tests/unit/_setup.js tests/unit/*.test.js"
+    "test:unit": "node --test --import ./tests/unit/_setup.js tests/unit/*.test.js",
+    "test:dist": "node scripts/build.mjs --demo && node scripts/test-dist.mjs"
   },
   "devDependencies": {
-    "@playwright/test": "^1.62.1"
+    "@playwright/test": "^1.62.1",
+    "esbuild": "^0.28.2",
+    "javascript-obfuscator": "^5.8.0"
   }
 }

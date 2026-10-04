@@ -6,8 +6,9 @@
 import { test, expect } from '@playwright/test';
 
 // A suíte inteira roda contra ?demo=1 de propósito (ver playwright.config.js:
-// "nunca faz uma chamada de rede real ao Supabase") — js/data/config.js tem
-// credenciais reais commitadas, então ?demo=0 faria o app tentar checar
+// "nunca faz uma chamada de rede real ao Supabase") — js/data/config.js hoje
+// só tem placeholders no fonte (a config real é injetada por npm run dev/build),
+// mas se um dia alguém servir uma cópia injetada, ?demo=0 faria o app checar
 // sessão de verdade contra o Supabase de produção. Bloqueia esse domínio
 // explicitamente (defesa em profundidade) e só verifica o que a correção do
 // bug realmente precisa garantir: a flag persistida é limpa e a URL muda —

@@ -1,20 +1,37 @@
--- Bõnotto — trigger + agendamentos das Edge Functions de notificação/keepalive
+-- BNTT — trigger + agendamentos das Edge Functions de notificação/keepalive
 --
--- ESTE ARQUIVO NÃO É EXECUTADO AUTOMATICAMENTE POR NADA. Rode manualmente no
--- SQL Editor do seu projeto Supabase, DEPOIS de:
---   1. Rodar supabase/schema.sql (já contém as tabelas notifications e
---      push_subscriptions usadas aqui).
---   2. Fazer o deploy das 3 Edge Functions em supabase/functions/
---      (keepalive, notify-scan, notify-payment) — ver supabase/NOTIFICACOES.md
---      pro passo a passo completo, incluindo gerar as chaves VAPID.
+-- ESTE ARQUIVO NÃO É EXECUTADO AUTOMATICAMENTE POR NADA. Rode manualmente
+-- (`npx supabase db query --linked -f supabase/notifications_push.sql`) DEPOIS de:
+--   1. Rodar supabase/schema.sql.
+--   2. Publicar as 3 Edge Functions (supabase/functions/, verify_jwt = false
+--      via supabase/config.toml) e configurar os secrets delas — ver
+--      supabase/NOTIFICACOES.md.
+--   3. Criar no Vault o segredo 'bntt_cron_secret' com o MESMO valor do secret
+--      BNTT_CRON_SECRET das functions (NOTIFICACOES.md, passo 2).
 --
--- ANTES DE RODAR: troque toda ocorrência de <SERVICE_ROLE_KEY> abaixo pela
--- sua chave service_role (Project Settings → API → service_role secret).
--- NUNCA cole essa chave em nenhum arquivo deste repositório — é só pra
--- colar direto no SQL Editor, uma vez, ao rodar este script.
+-- Nenhuma chave fica neste arquivo: o header x-bntt-cron é lido do Vault
+-- (vault.decrypted_secrets) na hora de cada chamada. As chaves novas do
+-- Supabase (sb_secret_…) não são JWT, por isso as functions não usam mais
+-- a service_role no Authorization (ver functions/_shared/autorizacao.ts).
 
 create extension if not exists pg_cron with schema extensions;
 create extension if not exists pg_net with schema extensions;
+
+-- Headers de toda chamada do banco para as Edge Functions. security definer +
+-- search_path fixo: só o dono (postgres) lê o Vault; ninguém com role
+-- anon/authenticated consegue chamar isto (revoke abaixo).
+create or replace function public.bntt_cron_headers()
+returns jsonb
+language sql
+security definer
+set search_path = ''
+as $$
+  select jsonb_build_object(
+    'Content-Type', 'application/json',
+    'x-bntt-cron', (select decrypted_secret from vault.decrypted_secrets where name = 'bntt_cron_secret')
+  );
+$$;
+revoke all on function public.bntt_cron_headers() from public, anon, authenticated;
 
 -- =========================================================
 -- TRIGGER: avisa a Edge Function notify-payment em tempo real sempre que
@@ -37,13 +54,9 @@ set search_path = public
 as $$
 begin
   perform net.http_post(
-    url := 'https://zkoxuafdcsfrdmlfckxz.supabase.co/functions/v1/notify-payment',
+    url := 'https://qlcrsclgtpjeqkmykqrs.supabase.co/functions/v1/notify-payment',
     body := jsonb_build_object('record', to_jsonb(new), 'old_record', to_jsonb(old)),
-    -- "apikey" E "Authorization" são checados separadamente pelo gateway do
-    -- Supabase na frente das Edge Functions — só Authorization (como este
-    -- arquivo mandava antes) dá "No API key found in request" (401), mesmo
-    -- com uma service_role key válida no Bearer.
-    headers := jsonb_build_object('Content-Type', 'application/json', 'apikey', '<SERVICE_ROLE_KEY>', 'Authorization', 'Bearer ' || '<SERVICE_ROLE_KEY>')
+    headers := public.bntt_cron_headers()
   );
   return new;
 end;
@@ -80,8 +93,8 @@ select cron.schedule(
   '*/5 * * * *', -- a cada 5 minutos
   $$
   select net.http_post(
-    url := 'https://zkoxuafdcsfrdmlfckxz.supabase.co/functions/v1/notify-scan',
-    headers := jsonb_build_object('Content-Type', 'application/json', 'apikey', '<SERVICE_ROLE_KEY>', 'Authorization', 'Bearer ' || '<SERVICE_ROLE_KEY>')
+    url := 'https://qlcrsclgtpjeqkmykqrs.supabase.co/functions/v1/notify-scan',
+    headers := public.bntt_cron_headers()
   );
   $$
 );
@@ -92,8 +105,8 @@ select cron.schedule(
   '0 6 */3 * *', -- a cada 3 dias, 06:00 UTC
   $$
   select net.http_post(
-    url := 'https://zkoxuafdcsfrdmlfckxz.supabase.co/functions/v1/keepalive',
-    headers := jsonb_build_object('Content-Type', 'application/json', 'apikey', '<SERVICE_ROLE_KEY>', 'Authorization', 'Bearer ' || '<SERVICE_ROLE_KEY>')
+    url := 'https://qlcrsclgtpjeqkmykqrs.supabase.co/functions/v1/keepalive',
+    headers := public.bntt_cron_headers()
   );
   $$
 );

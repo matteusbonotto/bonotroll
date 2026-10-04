@@ -1,4 +1,4 @@
-// Edge Function "notify-scan" — varredura por hora (agendada via pg_cron,
+// Edge Function "notify-scan" — varredura periódica (agendada via pg_cron a cada 5 min,
 // ver supabase/notifications_push.sql) que gera notificações de:
 //   - despesas a vencer/vencidas (todo o grupo da despesa, não só quem é
 //     responsavel_id — "se um não vir, o outro vê e avisa"; sem grupo, só
@@ -15,6 +15,7 @@
 // quando os dois rodam no mesmo dia.
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import webpush from 'npm:web-push@3';
+import { naoAutorizado } from '../_shared/autorizacao.ts';
 
 const DIAS_PARA_VENCER = 7;
 
@@ -39,7 +40,10 @@ type NotificationRow = {
   lida: boolean;
 };
 
-Deno.serve(async () => {
+Deno.serve(async (req) => {
+  const bloqueio = naoAutorizado(req);
+  if (bloqueio) return bloqueio;
+
   const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
   const vapidPublic = Deno.env.get('VAPID_PUBLIC_KEY');
   const vapidPrivate = Deno.env.get('VAPID_PRIVATE_KEY');

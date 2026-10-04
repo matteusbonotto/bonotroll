@@ -7,6 +7,7 @@
 // { type, table, record, old_record, schema }.
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import webpush from 'npm:web-push@3';
+import { naoAutorizado } from '../_shared/autorizacao.ts';
 
 type TransactionRecord = {
   id: string;
@@ -18,6 +19,9 @@ type TransactionRecord = {
 };
 
 Deno.serve(async (req) => {
+  const bloqueio = naoAutorizado(req);
+  if (bloqueio) return bloqueio;
+
   const payload = (await req.json()) as { record?: TransactionRecord; old_record?: TransactionRecord };
   const record = payload.record;
   const oldRecord = payload.old_record;
