@@ -20,12 +20,15 @@ test('densidade compacta reduz o padding do card de transação no mobile', asyn
   const card = secao.locator('.cg-card.cg-card--compact').first();
   await expect(card).toBeVisible();
 
-  const paddingNormal = await card.evaluate((el) => getComputedStyle(el).padding);
+  // Palm (fase 5): o card virou uma linha cujo espaçamento mora no botão
+  // que abre o lançamento (.cg-tx-linha__abrir).
+  const linha = card.locator('.cg-tx-linha__abrir');
+  const paddingNormal = await linha.evaluate((el) => getComputedStyle(el).padding);
 
   await secao.getByTitle('Compacta', { exact: true }).click();
   await page.waitForTimeout(200);
   await expect(card).toHaveClass(/cg-card--dense/);
-  const paddingCompacto = await card.evaluate((el) => getComputedStyle(el).padding);
+  const paddingCompacto = await linha.evaluate((el) => getComputedStyle(el).padding);
 
   expect(paddingCompacto).not.toBe(paddingNormal);
   // 8px de padding vertical na densidade compacta (era travado em 16-20px

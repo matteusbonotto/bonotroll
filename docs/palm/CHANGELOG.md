@@ -1,5 +1,10 @@
 # CHANGELOG — Palm Business
 
+## Fase 5 (mobile-first, parte 2) — checkpoint/mobile
+- **Movimentações no celular:** cada lançamento virou **uma linha legível** (quem, nome, categoria · empresa, situação com data em palavras, valor) em vez de um mini-formulário com 2 campos de data, 2 seletores e 3 botões. Tocar abre o formulário completo (onde tudo continua editável); a única ação direta é **"Marcar como pago/recebido"** / "Desfazer", com 44 px.
+- Alvos de toque menores que 44 px na tela (375 px): **~293 → 0**. Barras de ferramenta (visualização, densidade, atalhos) com 44 px no celular/tablet.
+- Sem rolagem lateral em 320 px.
+
 ## Fase 6 (Início) — checkpoint/dashboard
 - O Início responde primeiro **"o que precisa de mim?"**: saudação por período do dia e o bloco **"Precisa de você"** (contas vencidas com o total, contas que vencem em 7 dias, itens acabando/vencendo em casa, orçamento estourado), cada um com botão que leva à tela certa. Sem pendências: "Tudo em dia".
 - Saldo negativo agora também é dito **em palavras** ("Saiu mais dinheiro do que entrou neste período"), não só pela cor/sinal.
