@@ -2613,6 +2613,146 @@
             </template>
           </div>
 
+          <!-- ===== Fichas de emergência das pessoas (fase 8, cifradas ponta a ponta) ===== -->
+          <section class="cg-fichas mt-4" x-data="fichasSaude()" x-init="init()" aria-labelledby="cg-fichas-titulo">
+            <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
+              <h2 class="h5 fw-bold mb-0" id="cg-fichas-titulo"><i class="bi bi-person-vcard" aria-hidden="true"></i> Fichas de emergência</h2>
+              <button type="button" class="cg-btn btn btn-success" x-show="etapa === 'aberto'" @click="nova()"><i class="bi bi-plus-lg" aria-hidden="true"></i> Pessoa</button>
+            </div>
+
+            <p class="cg-muted" x-show="etapa === 'carregando'">Carregando…</p>
+            <div class="alert alert-warning" x-show="etapa === 'erro'" x-text="erro"></div>
+
+            <!-- Primeira vez: criar a senha da família -->
+            <div class="cg-card" x-show="etapa === 'sem-cofre'">
+              <p class="fw-bold mb-1"><i class="bi bi-shield-lock" aria-hidden="true"></i> Proteja as informações de saúde</p>
+              <p class="small mb-3">Tipo sanguíneo, alergias e remédios ficam <strong>criptografados</strong>: só quem tem a senha da família consegue ler. Nem o Palm vê.</p>
+              <form @submit.prevent="criarCofre()" class="d-grid gap-2">
+                <label class="form-label mb-0" for="cg-cofre-s1">Crie a senha da família (mínimo 8 caracteres)</label>
+                <input id="cg-cofre-s1" type="password" class="form-control" x-model="senha1" autocomplete="new-password" minlength="8" required />
+                <label class="form-label mb-0" for="cg-cofre-s2">Repita a senha</label>
+                <input id="cg-cofre-s2" type="password" class="form-control" x-model="senha2" autocomplete="new-password" minlength="8" required />
+                <div class="alert alert-danger py-2 small mb-0" x-show="erro" x-text="erro" role="alert"></div>
+                <button type="submit" class="cg-btn btn btn-success" :disabled="ocupado"><span x-show="!ocupado">Criar e continuar</span><span x-show="ocupado">Protegendo…</span></button>
+              </form>
+            </div>
+
+            <!-- Código de recuperação (mostrado uma única vez) -->
+            <div class="cg-card" x-show="etapa === 'codigo'">
+              <p class="fw-bold mb-1"><i class="bi bi-key" aria-hidden="true"></i> Guarde este código de recuperação</p>
+              <p class="small">Se alguém esquecer a senha da família, este código é o <strong>único jeito</strong> de abrir as fichas. Anote, imprima ou guarde no seu gerenciador de senhas.</p>
+              <p class="cg-cofre-codigo" x-text="codigoMostrado"></p>
+              <div class="d-flex gap-2 flex-wrap mb-2">
+                <button type="button" class="btn btn-outline-secondary" @click="copiarCodigo()"><i class="bi bi-clipboard" aria-hidden="true"></i> Copiar</button>
+                <button type="button" class="btn btn-outline-secondary" @click="window.print()"><i class="bi bi-printer" aria-hidden="true"></i> Imprimir</button>
+              </div>
+              <label class="form-check mb-2"><input type="checkbox" class="form-check-input" x-model="guardouCodigo" /> <span class="form-check-label">Guardei o código num lugar seguro</span></label>
+              <button type="button" class="cg-btn btn btn-success w-100" :disabled="!guardouCodigo" @click="concluirCodigo()">Continuar</button>
+            </div>
+
+            <!-- Aparelho sem a chave -->
+            <div class="cg-card" x-show="etapa === 'bloqueado'">
+              <p class="fw-bold mb-1"><i class="bi bi-lock" aria-hidden="true"></i> Fichas protegidas</p>
+              <p class="small mb-2">Digite a senha da família uma vez neste aparelho. Depois as fichas abrem direto, mesmo numa emergência.</p>
+              <form @submit.prevent="desbloquear()" class="d-grid gap-2">
+                <label class="form-label mb-0" for="cg-cofre-abrir" x-text="usarCodigo ? 'Código de recuperação' : 'Senha da família'"></label>
+                <input id="cg-cofre-abrir" :type="usarCodigo ? 'text' : 'password'" class="form-control" x-model="senhaDesbloqueio" autocomplete="current-password" required />
+                <div class="alert alert-danger py-2 small mb-0" x-show="erro" x-text="erro" role="alert"></div>
+                <button type="submit" class="cg-btn btn btn-success" :disabled="ocupado">Abrir fichas</button>
+                <button type="button" class="btn btn-link btn-sm" @click="usarCodigo = !usarCodigo; erro = ''" x-text="usarCodigo ? 'Usar a senha da família' : 'Esqueci a senha — usar o código de recuperação'"></button>
+              </form>
+            </div>
+
+            <!-- Fichas abertas -->
+            <div x-show="etapa === 'aberto' && !form">
+              <div class="cg-estado" x-show="!fichas.length">
+                <p class="fw-bold mb-1">Ainda não há fichas.</p>
+                <p class="small mb-2">Cadastre cada pessoa da casa: numa emergência, tipo sanguíneo, alergias e contato ficam a um toque.</p>
+                <button type="button" class="cg-btn btn btn-success" @click="nova()"><i class="bi bi-plus-lg" aria-hidden="true"></i> Adicionar pessoa</button>
+              </div>
+              <ul class="cg-fichas__lista">
+                <template x-for="f in fichas" :key="f.id">
+                  <li class="cg-card cg-ficha">
+                    <div class="d-flex align-items-start justify-content-between gap-2">
+                      <div>
+                        <h3 class="h6 fw-bold mb-0" x-text="f.nome"></h3>
+                        <span class="small cg-muted" x-show="idade(f) !== null" x-text="idade(f) + ' anos'"></span>
+                      </div>
+                      <span class="cg-ficha__sangue" :class="!f.tipo_sanguineo && 'is-vazio'">
+                        <i class="bi bi-droplet-fill" aria-hidden="true"></i>
+                        <span x-text="f.tipo_sanguineo ? 'Tipo ' + f.tipo_sanguineo : 'Tipo não informado'"></span>
+                      </span>
+                    </div>
+                    <div class="cg-ficha__alergias" x-show="f.alergias?.length" role="note">
+                      <strong><i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i> Alergias:</strong> <span x-text="(f.alergias || []).join(', ')"></span>
+                    </div>
+                    <p class="small mb-1" x-show="!f.alergias?.length && !f.ilegivel">Alergias: não informadas</p>
+                    <p class="small mb-1" x-show="f.medicamentos?.length"><strong>Remédios:</strong> <span x-text="(f.medicamentos || []).join(', ')"></span></p>
+                    <p class="small mb-1" x-show="f.condicoes?.length"><strong>Condições:</strong> <span x-text="(f.condicoes || []).join(', ')"></span></p>
+                    <p class="small mb-1" x-show="f.observacoes"><strong>Observações:</strong> <span x-text="f.observacoes"></span></p>
+                    <div class="d-flex gap-2 flex-wrap mt-2">
+                      <a class="cg-btn btn btn-danger" x-show="f.contato_telefone" :href="'tel:' + (f.contato_telefone || '').replace(/[^0-9+]/g, '')">
+                        <i class="bi bi-telephone-fill" aria-hidden="true"></i> <span x-text="'Ligar para ' + (f.contato_nome || 'contato de emergência')"></span>
+                      </a>
+                      <button type="button" class="btn btn-outline-secondary" x-show="!f.ilegivel" @click="editar(f)"><i class="bi bi-pencil" aria-hidden="true"></i> Editar</button>
+                    </div>
+                  </li>
+                </template>
+              </ul>
+              <button type="button" class="btn btn-link btn-sm px-0" x-show="fichas.length" @click="bloquearAparelho()"><i class="bi bi-lock" aria-hidden="true"></i> Trancar as fichas neste aparelho</button>
+            </div>
+
+            <!-- Formulário: o essencial primeiro -->
+            <form class="cg-card d-grid gap-2" x-show.important="etapa === 'aberto' && form" @submit.prevent="salvar()">
+              <template x-if="form">
+                <div class="d-grid gap-2">
+                  <h3 class="h6 fw-bold mb-0" x-text="form.id ? 'Editar ficha' : 'Nova pessoa'"></h3>
+                  <label class="form-label mb-0" for="cg-ficha-nome">Nome *</label>
+                  <input id="cg-ficha-nome" class="form-control" x-model="form.nome" required maxlength="80" />
+                  <div class="row g-2">
+                    <div class="col-6">
+                      <label class="form-label mb-0" for="cg-ficha-sangue">Tipo sanguíneo</label>
+                      <select id="cg-ficha-sangue" class="form-select" x-model="form.tipo_sanguineo">
+                        <option value="">Não sei</option>
+                        <template x-for="t in TIPOS" :key="t"><option :value="t" x-text="t"></option></template>
+                      </select>
+                    </div>
+                    <div class="col-6">
+                      <label class="form-label mb-0" for="cg-ficha-nasc">Nascimento</label>
+                      <input id="cg-ficha-nasc" type="date" class="form-control" x-model="form.nascimento" />
+                    </div>
+                  </div>
+                  <label class="form-label mb-0" for="cg-ficha-alergias">Alergias (uma por linha)</label>
+                  <textarea id="cg-ficha-alergias" class="form-control" rows="2" x-model="form.alergiasTexto" placeholder="Ex.: Dipirona&#10;Camarão"></textarea>
+                  <label class="form-label mb-0" for="cg-ficha-remedios">Remédios de uso contínuo</label>
+                  <textarea id="cg-ficha-remedios" class="form-control" rows="2" x-model="form.medicamentosTexto" placeholder="Ex.: Losartana 50 mg (manhã)"></textarea>
+                  <label class="form-label mb-0" for="cg-ficha-condicoes">Condições importantes</label>
+                  <textarea id="cg-ficha-condicoes" class="form-control" rows="2" x-model="form.condicoesTexto" placeholder="Ex.: Diabetes, marca-passo"></textarea>
+                  <div class="row g-2">
+                    <div class="col-12 col-sm-6">
+                      <label class="form-label mb-0" for="cg-ficha-cnome">Contato de emergência</label>
+                      <input id="cg-ficha-cnome" class="form-control" x-model="form.contato_nome" placeholder="Nome" maxlength="80" />
+                    </div>
+                    <div class="col-12 col-sm-6">
+                      <label class="form-label mb-0" for="cg-ficha-ctel">Telefone do contato</label>
+                      <input id="cg-ficha-ctel" type="tel" inputmode="tel" class="form-control" x-model="form.contato_telefone" placeholder="(11) 99999-9999" maxlength="20" />
+                    </div>
+                  </div>
+                  <label class="form-label mb-0" for="cg-ficha-obs">Observações médicas</label>
+                  <textarea id="cg-ficha-obs" class="form-control" rows="2" x-model="form.observacoes" maxlength="1000" placeholder="Ex.: plano de saúde, médico de confiança"></textarea>
+                  <div class="alert alert-danger py-2 small mb-0" x-show="erro" x-text="erro" role="alert"></div>
+                  <div class="d-flex gap-2 flex-wrap">
+                    <button type="submit" class="cg-btn btn btn-success flex-fill" :disabled="ocupado">Salvar</button>
+                    <button type="button" class="btn btn-outline-secondary" @click="form = null">Cancelar</button>
+                    <button type="button" class="btn btn-outline-danger" x-show="form.id" @click="excluir(form)"><i class="bi bi-trash" aria-hidden="true"></i> Apagar</button>
+                  </div>
+                  <p class="small cg-muted mb-0">O Palm só guarda o que você escrever aqui — não faz diagnóstico nem sugere tratamento.</p>
+                </div>
+              </template>
+            </form>
+          </section>
+
+          <h2 class="h5 fw-bold mt-4 mb-2"><i class="bi bi-journal-medical" aria-hidden="true"></i> O que fazer</h2>
           <label class="form-label mt-3 mb-1" for="cg-socorros-busca">O que aconteceu?</label>
           <input id="cg-socorros-busca" type="search" class="form-control form-control-lg mb-3" x-model="busca" placeholder="Ex.: engasgo, queimadura, desmaio" autocomplete="off" />
 

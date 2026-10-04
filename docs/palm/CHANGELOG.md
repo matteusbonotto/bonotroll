@@ -11,3 +11,10 @@
   - rótulos de 10–11 px do card de saldo.
 - O título do topo é o h1 real da área. Marca visível: **Palm Business** (app, aba e manifest).
 - O aviso automático de "lançamentos recorrentes gerados" deixou de cobrir o topo a cada login.
+
+## Fase 8 (Pronto Socorro / Saúde) — checkpoint/health
+- **Fichas de emergência** das pessoas da casa (inclusive quem não tem conta: crianças, avós): nome, nascimento/idade, **tipo sanguíneo** (destaque vermelho), **alergias** (faixa de alerta com ícone + texto), remédios de uso contínuo, condições, contato de emergência com botão **Ligar** e observações.
+- **Criptografia ponta a ponta:** chave de dados AES-256-GCM criada no aparelho; vai ao servidor só embrulhada pela **senha da família** e por um **código de recuperação** mostrado uma vez (PBKDF2-SHA256, 310 mil iterações). O aparelho guarda a chave como não extraível (IndexedDB), então numa emergência a ficha abre sem senha. "Trancar neste aparelho" esquece a chave.
+- Ordem da tela Saúde: ligar (números) → fichas → "o que fazer" (guias).
+- Banco: `supabase/saude-2026-10.sql` (tabelas `cofres` e `fichas_saude` com RLS) — junto com o endurecimento em `supabase/APLICAR-NO-SQL-EDITOR-2026-10.sql`.
+- Testes: unitário de criptografia (ida e volta, senha e código errados, troca de senha) e e2e (o dado salvo não contém o nome nem a alergia em texto).
