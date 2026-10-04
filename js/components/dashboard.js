@@ -2,7 +2,7 @@ import { listTransactions, computeSummary, groupByCategory, groupByCompany, grou
 import { listAllItems as listAllResourceItems } from '../services/resources.js';
 import { listBudgets, computeBudgetProgress } from '../services/budgets.js';
 import { computeExpiryStatus, expiryStatusMeta } from '../utils/status.js';
-import { todayIso } from '../utils/format.js';
+import { todayIso, formatCurrency } from '../utils/format.js';
 
 const QUEBRAS_STORAGE_KEY = 'bonotto_dashboard_quebras';
 function quebrasIniciais() {
@@ -97,6 +97,41 @@ export function dashboardView() {
       } catch (e) {
         store.notify(e.message || 'Não consegui carregar as sugestões do Inventário.', 'danger');
       }
+    },
+
+    // "Precisa de você" (Palm Business, fase 6): o que pede ação AGORA, em
+    // ordem de urgência. Reaproveita os mesmos dados da tela (nada novo no banco).
+    analisesAbertas: false,
+    get atencao() {
+      const hoje = new Date();
+      const em7 = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() + 7).toISOString().slice(0, 10);
+      const minhas = this.escopo.filter((t) => this.participaEu(t) && t.tipo === 'saida');
+      const vencidas = minhas.filter((t) => t._status === 'vencido');
+      const logo = minhas.filter((t) => t._status === 'a_vencer' && (t.data_vencimento || '') <= em7);
+      const soma = (l) => l.reduce((s, t) => s + (Number(t.valor) || 0), 0);
+      const itens = [];
+      if (vencidas.length) {
+        itens.push({ id: 'vencidas', nivel: 'perigo', icone: 'bi-exclamation-triangle-fill',
+          texto: `${vencidas.length} ${vencidas.length === 1 ? 'conta vencida' : 'contas vencidas'}`,
+          detalhe: `${formatCurrency(soma(vencidas))} para pagar`, acao: 'Ver contas', view: 'transacoes' });
+      }
+      if (logo.length) {
+        itens.push({ id: 'logo', nivel: 'atencao', icone: 'bi-clock-fill',
+          texto: `${logo.length} ${logo.length === 1 ? 'conta vence' : 'contas vencem'} nos próximos 7 dias`,
+          detalhe: formatCurrency(soma(logo)), acao: 'Ver contas', view: 'transacoes' });
+      }
+      const faltando = this.recursosSugestoes.length;
+      if (faltando) {
+        itens.push({ id: 'inventario', nivel: 'atencao', icone: 'bi-box-seam',
+          texto: `${faltando} ${faltando === 1 ? 'item acabando ou vencendo' : 'itens acabando ou vencendo'} em casa`,
+          detalhe: 'No inventário', acao: 'Ver itens', view: 'recursos' });
+      }
+      if (this.orcamentoAlerta?.estourado) {
+        itens.push({ id: 'orcamento', nivel: 'perigo', icone: 'bi-pie-chart-fill',
+          texto: `Orçamento de ${this.orcamentoAlerta.categoriaNome} em ${this.orcamentoAlerta.percentual}%`,
+          detalhe: 'Passou do limite', acao: 'Ver gastos', view: 'transacoes' });
+      }
+      return itens;
     },
 
     get recursosSugestoes() {

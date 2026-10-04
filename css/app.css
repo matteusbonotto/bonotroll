@@ -1542,3 +1542,72 @@ img.cg-company-logo { display: block; }
   border-radius: var(--radius-md);
   text-align: center;
 }
+
+/* Início (fase 6): "Precisa de você" antes de qualquer número. */
+.cg-saudacao {
+  font-size: var(--font-size-title-sm);
+  font-weight: 800;
+}
+
+.cg-atencao__lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-2);
+}
+
+.cg-atencao__item {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 56px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-left-width: 4px;
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.cg-atencao__item > i {
+  font-size: 1.3rem;
+}
+
+.cg-atencao__item--perigo {
+  border-left-color: var(--color-danger);
+}
+
+.cg-atencao__item--perigo > i {
+  color: var(--color-danger);
+}
+
+.cg-atencao__item--atencao {
+  border-left-color: var(--color-warning, #d97706);
+}
+
+.cg-atencao__item--atencao > i {
+  color: var(--color-warning, #d97706);
+}
+
+.cg-atencao__texto {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.cg-atencao__texto small {
+  color: var(--color-text-muted);
+}
+
+.cg-atencao__ok {
+  color: var(--color-success, #1a7f4b);
+  font-weight: 600;
+}
+
+.cg-hero-balance__aviso {
+  position: relative;
+  z-index: 1;
+  margin: -14px 0 16px;
+  font-weight: 700;
+}

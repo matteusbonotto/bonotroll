@@ -1,5 +1,12 @@
 # CHANGELOG — Palm Business
 
+## Fase 6 (Início) — checkpoint/dashboard
+- O Início responde primeiro **"o que precisa de mim?"**: saudação por período do dia e o bloco **"Precisa de você"** (contas vencidas com o total, contas que vencem em 7 dias, itens acabando/vencendo em casa, orçamento estourado), cada um com botão que leva à tela certa. Sem pendências: "Tudo em dia".
+- Saldo negativo agora também é dito **em palavras** ("Saiu mais dinheiro do que entrou neste período"), não só pela cor/sinal.
+- Os 3 gráficos ficam **fechados por padrão** atrás de "Ver análises e gráficos" (menos rolagem e menos carga para quem só quer saber o que fazer).
+- Orçamento estourado aparece num lugar só (Precisa de você); o card de saldo mostra só o "Restam R$ X".
+- Tour: "Bem-vindo(a) ao Palm!".
+
 ## Fase 5 (navegação) — checkpoint/navigation
 - Navegação por intenção: **barra inferior no celular** (Início · Dinheiro · **Adicionar** · Casa · Pessoas, com ícone + texto, safe-area) e **barra lateral agrupada** no computador; sub-abas por área (Movimentações/Reservas, Lista de compras/Inventário, Membros/Saúde). As rotas antigas continuam funcionando.
 - **Adicionar universal:** folha agrupada (Dinheiro: Despesa, Receita; Casa: Item para comprar, Item no inventário; Pessoas: Pessoa).

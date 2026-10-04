@@ -12,8 +12,11 @@ test('linha de orçamento aparece com categoria estourada, formatada corretament
   await page.getByText('Entrar como', { exact: false }).first().click();
   await expect(page.locator('.cg-hero-balance').first()).toBeVisible({ timeout: 10000 });
 
-  const linha = page.locator('.cg-hero-balance__row', { hasText: 'Orçamento de' });
+  // Palm (fase 6): estourado é pendência — vai pro "Precisa de você", não
+  // fica repetido no card de saldo (lá só aparece o "Restam R$ X").
+  const linha = page.locator('.cg-atencao__item', { hasText: 'Orçamento de' });
   await expect(linha).toBeVisible({ timeout: 5000 });
-  await expect(linha).toContainText('já passou do limite');
+  await expect(linha).toContainText('Passou do limite');
   await expect(linha).toContainText('%');
+  await expect(page.locator('.cg-hero-balance__row', { hasText: 'já passou do limite' })).toBeHidden();
 });

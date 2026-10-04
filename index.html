@@ -304,7 +304,22 @@
 
         <!-- ===== HOME ===== -->
         <section x-show="$store.app.view === 'home'" x-data="dashboardView()" x-init="init()">
-          <div class="cg-section-title"><i class="bi bi-person-circle"></i> Olá, <span x-text="$store.app.profile?.nome?.split(' ')[0] || ''"></span></div>
+          <p class="cg-saudacao mb-2"><span x-text="(new Date().getHours() < 12 ? 'Bom dia' : new Date().getHours() < 18 ? 'Boa tarde' : 'Boa noite') + ', ' + ($store.app.profile?.nome?.split(' ')[0] || '') + '.'"></span></p>
+
+          <!-- "Precisa de você" (fase 6): o que pede ação agora, antes de qualquer número -->
+          <section class="cg-atencao mb-4" aria-labelledby="cg-atencao-titulo">
+            <h2 class="h6 fw-bold mb-2" id="cg-atencao-titulo" x-text="atencao.length ? (atencao.length === 1 ? '1 coisa precisa de você' : atencao.length + ' coisas precisam de você') : 'Tudo em dia'"></h2>
+            <p class="cg-atencao__ok mb-0" x-show="!loading && !atencao.length"><i class="bi bi-check-circle-fill" aria-hidden="true"></i> Nenhuma conta vencida e nada faltando em casa.</p>
+            <ul class="cg-atencao__lista" x-show="atencao.length">
+              <template x-for="a in atencao" :key="a.id">
+                <li class="cg-atencao__item" :class="'cg-atencao__item--' + a.nivel">
+                  <i class="bi" :class="a.icone" aria-hidden="true"></i>
+                  <span class="cg-atencao__texto"><strong x-text="a.texto"></strong><small x-text="a.detalhe"></small></span>
+                  <button type="button" class="btn btn-outline-secondary" @click="$store.app.setView(a.view)" x-text="a.acao"></button>
+                </li>
+              </template>
+            </ul>
+          </section>
 
           <!-- Seletor "de quem é esse resumo": Eu / cada membro / Grupo. Só
                aparece quando há grupo (senão a única opção seria "Eu" mesmo).
@@ -368,10 +383,11 @@
               <div class="cg-help__popover" x-show.important="aberto" x-cloak x-transition.opacity.duration.120ms :id="id" role="tooltip" x-text="texto"></div>
             </span>
             <div class="cg-hero-balance__value" :title="cgFormat.formatCurrency(resumoSelecionado.saldo)" x-text="cgFormat.formatCurrencyCompact(resumoSelecionado.saldo)"></div>
+            <p class="cg-hero-balance__aviso" x-show="resumoSelecionado.saldo < 0"><i class="bi bi-arrow-down-circle-fill" aria-hidden="true"></i> Saiu mais dinheiro do que entrou neste período.</p>
             <!-- "Quanto ainda posso gastar" (docs/BONOTTO-2027-BLUEPRINT.md,
                  Conflito 2) — só aparece quando há algo a decidir (categoria
                  a 80%+ do orçamento); silêncio nos outros casos. -->
-            <div class="cg-hero-balance__row" x-show="orcamentoAlerta" x-cloak style="margin-top: -8px; margin-bottom: 8px;">
+            <div class="cg-hero-balance__row" x-show="orcamentoAlerta && !orcamentoAlerta.estourado" x-cloak style="margin-top: -8px; margin-bottom: 8px;">
               <span class="small" style="opacity: 0.9;">
                 <i class="bi" :class="orcamentoAlerta?.estourado ? 'bi-exclamation-triangle-fill' : 'bi-piggy-bank'"></i>
                 <template x-if="!orcamentoAlerta?.estourado">
@@ -470,6 +486,10 @@
           <!-- 3 gráficos independentes, cada um com a própria quebra
                (categoria/empresa/fluxo/dia/mês/ano) escolhível a qualquer
                momento — a escolha de cada um fica salva por navegador. -->
+          <button type="button" class="cg-btn btn btn-outline-secondary w-100 mb-4" x-show="!analisesAbertas" @click="analisesAbertas = true">
+            <i class="bi bi-bar-chart-line" aria-hidden="true"></i> Ver análises e gráficos
+          </button>
+          <div x-show="analisesAbertas">
           <div class="d-flex align-items-center justify-content-between mb-2">
             <div class="cg-section-title mb-0"><i class="bi bi-bar-chart-line"></i> Análises</div>
             <button type="button" class="cg-btn btn btn-outline-secondary btn-sm" @click="dashboardFullAberto = true"><i class="bi bi-arrows-fullscreen"></i> Ver mais</button>
@@ -634,6 +654,7 @@
             </div>
           </div>
 
+          </div>
           <div class="cg-card">
             <div class="cg-section-title mb-2"><i class="bi bi-clock-history"></i> Lançamentos recentes</div>
             <template x-if="!recentes.length"><p class="cg-muted small mb-0">Nada por aqui ainda.</p></template>
