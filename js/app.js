@@ -124,6 +124,26 @@ document.addEventListener('alpine:init', () => {
 // $store.app.view com o que "voltar" já desempilhou. Nunca chama setView
 // de novo aqui — isso empurraria uma entrada nova por cima da que acabou
 // de sair, e o próximo "voltar" ficaria preso sem sair do lugar.
+// Atalhos de teclado (usuário avançado / vindo de planilha, 2026-10-04):
+// N = nova despesa, / = buscar em Transações. Ignorados enquanto se digita
+// ou com modal aberto.
+window.addEventListener('keydown', (e) => {
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  const alvo = e.target;
+  if (alvo.closest?.('input, textarea, select, [contenteditable="true"]')) return;
+  if (document.querySelector('.cg-modal-backdrop:not([style*="display: none"]) .cg-modal')) return;
+  const store = Alpine.store('app');
+  if (!store?.profile) return;
+  if (e.key === 'n' || e.key === 'N') {
+    e.preventDefault();
+    Alpine.store('txModal').openNew('saida');
+  } else if (e.key === '/') {
+    e.preventDefault();
+    if (store.view !== 'transacoes') store.setView('transacoes');
+    setTimeout(() => document.querySelector('section[x-data^="transactionsView"] input[type="search"]')?.focus(), 50);
+  }
+});
+
 window.addEventListener('popstate', () => {
   const store = Alpine.store('app');
   if (!store?.ready) return;

@@ -148,3 +148,7 @@ O checklist acima (8 itens) foi todo concluído. Depois disso vieram mais pedido
 - [x] Importar da planilha: colar linhas copiadas do Excel/Google Planilhas; colunas reconhecidas por nomes comuns (Data, Descrição, Histórico, Valor, D/C, Débito/Crédito, Obs…); "Crédito/C/Receita" vira entrada; validação linha a linha antes de importar ("N prontas · M com problema" e o motivo de cada linha); modelo com 2 linhas de exemplo; botão "Escolher arquivo" em português.
 - [ ] Ler .xlsx direto: adiado — a biblioteca gratuita (SheetJS 0.18.5 no npm) tem vulnerabilidade conhecida ao abrir arquivo malicioso; colar e CSV cobrem o caso.
 - [ ] Tabela de Transações densa com totais e atalhos de teclado — próxima entrega.
+- [x] Avisos (toast) não cobrem mais o topo: no celular aparecem embaixo; no computador, abaixo da barra.
+- [x] `<main>` e link "Pular para o conteúdo" (teclado e leitor de tela); rótulos nas buscas e no filtro de entrada/saída.
+- [x] Linguagem simples: "Esperado" (era "Previsto"), "Entrou ou saiu" (era "Movimentação"), "Onde vai comprar (opcional)" (era "Mercado (opcional)").
+- [x] Atalhos de teclado: N = nova despesa, / = buscar em Transações (ignorados enquanto se digita); explicados nas Perguntas frequentes.

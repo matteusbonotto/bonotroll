@@ -19,6 +19,12 @@ export function faqStore() {
 
     perguntas: [
       {
+        id: 'atalhos',
+        pergunta: 'Tem atalhos de teclado?',
+        resposta:
+          'Tem, no computador: aperte N para anotar uma nova despesa e / (barra) para buscar em Transações. Eles não funcionam enquanto você está digitando num campo. Para deixar as letras maiores, use Perfil → Preferências → Tamanho do texto.',
+      },
+      {
         id: 'o-que-e',
         pergunta: 'O que é o BNTT e pra quem é?',
         resposta:

@@ -1241,3 +1241,29 @@ img.cg-company-logo { display: block; }
     display: none;
   }
 }
+
+/* Avisos não cobrem mais o topo nem o menu (revisão com personas, 2026-10-04). */
+.cg-toast-container {
+  top: 72px;
+}
+
+@media (max-width: 991.98px) {
+  .cg-toast-container {
+    top: auto !important;
+    bottom: calc(12px + env(safe-area-inset-bottom));
+    left: 0;
+    right: 0;
+  }
+}
+
+.cg-pular-conteudo {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 3000;
+  padding: 0.6rem 1rem;
+  border-radius: var(--radius-md);
+  background: var(--color-primary);
+  color: #fff;
+  font-weight: 700;
+}
