@@ -1,0 +1,104 @@
+320x568 home       rolagemH=não vazando=0 toque<44=7 fonte<12=15
+320x568 transacoes rolagemH=não vazando=0 toque<44=293 fonte<12=56
+320x568 compras    rolagemH=não vazando=0 toque<44=2 fonte<12=0
+320x568 recursos   rolagemH=não vazando=0 toque<44=8 fonte<12=2
+320x568 caixinhas  rolagemH=não vazando=0 toque<44=8 fonte<12=6
+320x568 socorros   rolagemH=não vazando=0 toque<44=1 fonte<12=1
+320x568 grupo      rolagemH=não vazando=0 toque<44=4 fonte<12=1
+320x568 perfil     rolagemH=não vazando=0 toque<44=3 fonte<12=2
+360x800 home       rolagemH=não vazando=0 toque<44=7 fonte<12=15
+360x800 transacoes rolagemH=não vazando=0 toque<44=293 fonte<12=56
+360x800 compras    rolagemH=não vazando=0 toque<44=2 fonte<12=1
+360x800 recursos   rolagemH=não vazando=0 toque<44=8 fonte<12=2
+360x800 caixinhas  rolagemH=não vazando=0 toque<44=10 fonte<12=6
+360x800 socorros   rolagemH=não vazando=0 toque<44=1 fonte<12=1
+360x800 grupo      rolagemH=não vazando=0 toque<44=4 fonte<12=1
+360x800 perfil     rolagemH=não vazando=0 toque<44=5 fonte<12=2
+375x667 home       rolagemH=não vazando=0 toque<44=7 fonte<12=15
+375x667 transacoes rolagemH=não vazando=0 toque<44=293 fonte<12=56
+375x667 compras    rolagemH=não vazando=0 toque<44=2 fonte<12=1
+375x667 recursos   rolagemH=não vazando=0 toque<44=8 fonte<12=2
+375x667 caixinhas  rolagemH=não vazando=0 toque<44=10 fonte<12=6
+375x667 socorros   rolagemH=não vazando=0 toque<44=1 fonte<12=1
+375x667 grupo      rolagemH=não vazando=0 toque<44=4 fonte<12=1
+375x667 perfil     rolagemH=não vazando=0 toque<44=5 fonte<12=2
+390x844 home       rolagemH=não vazando=0 toque<44=6 fonte<12=14
+390x844 transacoes rolagemH=não vazando=0 toque<44=253 fonte<12=48
+390x844 compras    rolagemH=não vazando=0 toque<44=2 fonte<12=0
+390x844 recursos   rolagemH=não vazando=0 toque<44=8 fonte<12=2
+390x844 caixinhas  rolagemH=não vazando=0 toque<44=10 fonte<12=6
+390x844 socorros   rolagemH=não vazando=0 toque<44=1 fonte<12=1
+390x844 grupo      rolagemH=não vazando=0 toque<44=4 fonte<12=1
+390x844 perfil     rolagemH=não vazando=0 toque<44=5 fonte<12=2
+393x852 home       rolagemH=não vazando=0 toque<44=7 fonte<12=15
+393x852 transacoes rolagemH=não vazando=0 toque<44=293 fonte<12=56
+393x852 compras    rolagemH=não vazando=0 toque<44=2 fonte<12=1
+393x852 recursos   rolagemH=não vazando=0 toque<44=8 fonte<12=2
+393x852 caixinhas  rolagemH=não vazando=0 toque<44=10 fonte<12=6
+393x852 socorros   rolagemH=não vazando=0 toque<44=1 fonte<12=1
+393x852 grupo      rolagemH=não vazando=0 toque<44=4 fonte<12=1
+393x852 perfil     rolagemH=não vazando=0 toque<44=5 fonte<12=2
+412x915 home       rolagemH=não vazando=0 toque<44=7 fonte<12=15
+412x915 transacoes rolagemH=não vazando=0 toque<44=293 fonte<12=56
+412x915 compras    rolagemH=não vazando=0 toque<44=2 fonte<12=1
+412x915 recursos   rolagemH=não vazando=0 toque<44=8 fonte<12=2
+412x915 caixinhas  rolagemH=não vazando=0 toque<44=10 fonte<12=6
+412x915 socorros   rolagemH=não vazando=0 toque<44=1 fonte<12=1
+412x915 grupo      rolagemH=não vazando=0 toque<44=4 fonte<12=1
+412x915 perfil     rolagemH=não vazando=0 toque<44=5 fonte<12=2
+430x932 home       rolagemH=não vazando=0 toque<44=7 fonte<12=15
+430x932 transacoes rolagemH=não vazando=0 toque<44=293 fonte<12=56
+430x932 compras    rolagemH=não vazando=0 toque<44=2 fonte<12=1
+430x932 recursos   rolagemH=não vazando=0 toque<44=8 fonte<12=2
+430x932 caixinhas  rolagemH=não vazando=0 toque<44=10 fonte<12=6
+430x932 socorros   rolagemH=não vazando=0 toque<44=1 fonte<12=1
+430x932 grupo      rolagemH=não vazando=0 toque<44=4 fonte<12=1
+430x932 perfil     rolagemH=não vazando=0 toque<44=5 fonte<12=2
+768x1024 home       rolagemH=não vazando=0 toque<44=7 fonte<12=15
+768x1024 transacoes rolagemH=não vazando=0 toque<44=237 fonte<12=66
+768x1024 compras    rolagemH=não vazando=0 toque<44=2 fonte<12=1
+768x1024 recursos   rolagemH=não vazando=0 toque<44=8 fonte<12=2
+768x1024 caixinhas  rolagemH=não vazando=0 toque<44=10 fonte<12=6
+768x1024 socorros   rolagemH=não vazando=0 toque<44=1 fonte<12=1
+768x1024 grupo      rolagemH=não vazando=0 toque<44=4 fonte<12=1
+768x1024 perfil     rolagemH=não vazando=0 toque<44=5 fonte<12=2
+1024x768 home       rolagemH=não vazando=1 (cg-topbar) toque<44=7 fonte<12=15
+1024x768 transacoes rolagemH=não vazando=1 (cg-topbar) toque<44=245 fonte<12=66
+1024x768 compras    rolagemH=não vazando=1 (cg-topbar) toque<44=2 fonte<12=1
+1024x768 recursos   rolagemH=não vazando=1 (cg-topbar) toque<44=8 fonte<12=2
+1024x768 caixinhas  rolagemH=não vazando=1 (cg-topbar) toque<44=10 fonte<12=6
+1024x768 socorros   rolagemH=não vazando=1 (cg-topbar) toque<44=1 fonte<12=1
+1024x768 grupo      rolagemH=não vazando=1 (cg-topbar) toque<44=4 fonte<12=1
+1024x768 perfil     rolagemH=não vazando=1 (cg-topbar) toque<44=5 fonte<12=2
+1280x720 home       rolagemH=não vazando=1 (cg-topbar) toque<44=7 fonte<12=15
+1280x720 transacoes rolagemH=não vazando=1 (cg-topbar) toque<44=245 fonte<12=66
+1280x720 compras    rolagemH=não vazando=1 (cg-topbar) toque<44=2 fonte<12=1
+1280x720 recursos   rolagemH=não vazando=1 (cg-topbar) toque<44=8 fonte<12=2
+1280x720 caixinhas  rolagemH=não vazando=1 (cg-topbar) toque<44=10 fonte<12=6
+1280x720 socorros   rolagemH=não vazando=1 (cg-topbar) toque<44=1 fonte<12=1
+1280x720 grupo      rolagemH=não vazando=1 (cg-topbar) toque<44=4 fonte<12=1
+1280x720 perfil     rolagemH=não vazando=1 (cg-topbar) toque<44=5 fonte<12=2
+1366x768 home       rolagemH=não vazando=1 (cg-topbar) toque<44=7 fonte<12=15
+1366x768 transacoes rolagemH=não vazando=1 (cg-topbar) toque<44=245 fonte<12=66
+1366x768 compras    rolagemH=não vazando=1 (cg-topbar) toque<44=2 fonte<12=1
+1366x768 recursos   rolagemH=não vazando=1 (cg-topbar) toque<44=8 fonte<12=2
+1366x768 caixinhas  rolagemH=não vazando=1 (cg-topbar) toque<44=10 fonte<12=6
+1366x768 socorros   rolagemH=não vazando=1 (cg-topbar) toque<44=1 fonte<12=1
+1366x768 grupo      rolagemH=não vazando=1 (cg-topbar) toque<44=4 fonte<12=1
+1366x768 perfil     rolagemH=não vazando=1 (cg-topbar) toque<44=5 fonte<12=2
+1440x900 home       rolagemH=não vazando=1 (cg-topbar) toque<44=7 fonte<12=15
+1440x900 transacoes rolagemH=não vazando=1 (cg-topbar) toque<44=245 fonte<12=66
+1440x900 compras    rolagemH=não vazando=1 (cg-topbar) toque<44=2 fonte<12=1
+1440x900 recursos   rolagemH=não vazando=1 (cg-topbar) toque<44=8 fonte<12=2
+1440x900 caixinhas  rolagemH=não vazando=1 (cg-topbar) toque<44=10 fonte<12=6
+1440x900 socorros   rolagemH=não vazando=1 (cg-topbar) toque<44=1 fonte<12=1
+1440x900 grupo      rolagemH=não vazando=1 (cg-topbar) toque<44=4 fonte<12=1
+1440x900 perfil     rolagemH=não vazando=1 (cg-topbar) toque<44=5 fonte<12=2
+1920x1080 home       rolagemH=não vazando=0 toque<44=7 fonte<12=15
+1920x1080 transacoes rolagemH=não vazando=0 toque<44=245 fonte<12=66
+1920x1080 compras    rolagemH=não vazando=0 toque<44=2 fonte<12=1
+1920x1080 recursos   rolagemH=não vazando=0 toque<44=8 fonte<12=2
+1920x1080 caixinhas  rolagemH=não vazando=0 toque<44=10 fonte<12=6
+1920x1080 socorros   rolagemH=não vazando=0 toque<44=1 fonte<12=1
+1920x1080 grupo      rolagemH=não vazando=0 toque<44=4 fonte<12=1
+1920x1080 perfil     rolagemH=não vazando=0 toque<44=5 fonte<12=2
