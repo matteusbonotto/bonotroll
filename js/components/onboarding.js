@@ -1035,7 +1035,7 @@ export function onboardingStore() {
           id: 'menu',
           tipo: 'campo',
           view: 'home',
-          alvoSeletor: celular ? '.cg-topbar [aria-label="Abrir menu"]' : 'aside.cg-sidebar',
+          alvoSeletor: celular ? 'nav.cg-nav-inferior' : 'aside.cg-sidebar',
           icone: 'bi-list',
           titulo: 'Todas as telas',
           texto: celular

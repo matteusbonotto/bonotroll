@@ -6,7 +6,7 @@ import { test, expect } from '@playwright/test';
 test('layout e densidade combinam livremente em Transações', async ({ page }) => {
   await page.goto('/?demo=1');
   await page.getByText('Entrar como', { exact: false }).first().click();
-  await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Transações' }).first().click();
+  await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Movimentações' }).first().click();
   await page.waitForTimeout(400);
 
   // .cg-grid-view/.cg-scroll-x são reaproveitados por Compras também (as

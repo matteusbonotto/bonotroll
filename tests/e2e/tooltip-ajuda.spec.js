@@ -70,7 +70,7 @@ test('tooltip do "Entre vocês" (Grupo) e do "Total guardado" (Caixinhas) existe
   await page.goto('/?demo=1');
   await page.getByText('Entrar como', { exact: false }).first().click();
 
-  await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Caixinhas' }).first().click();
+  await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Reservas' }).first().click();
   await page.waitForTimeout(300);
   const caixinhas = page.locator('section[x-data^="caixinhasView"]');
   const caixinhaTrigger = caixinhas.locator('.cg-help__trigger[aria-label="O que é uma caixinha"]').first();

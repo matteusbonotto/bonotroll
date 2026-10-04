@@ -1306,37 +1306,8 @@ body { font-size: var(--font-size-body); }
     width: 264px;
     padding: 22px 14px;
   }
-  .cg-sidebar::before {
-    content: 'BNTT';
-    display: block;
-    color: var(--color-text);
-    font-size: 1.25rem;
-    font-weight: 800;
-    letter-spacing: 0;
-    padding: 0 10px 22px 42px;
-    background: url('../assets/icons/icon.svg') no-repeat 10px 0 / 25px 25px;
-  }
-  .cg-sidebar > .d-flex:first-child { display: none !important; }
-  .cg-sidebar > .cg-sidebar__item:nth-of-type(1)::before { content: 'GERAL'; }
-  .cg-sidebar > .cg-sidebar__item:nth-of-type(3)::before { content: 'CASA'; }
-  .cg-sidebar > .cg-sidebar__item:nth-of-type(6)::before { content: 'CONTA'; }
-  .cg-sidebar > .cg-sidebar__item::before {
-    display: none;
-    color: var(--color-text-muted);
-    font-size: var(--font-size-caption);
-    font-weight: 800;
-    letter-spacing: .08em;
-    position: absolute;
-    top: -23px;
-    left: 10px;
-  }
-  .cg-sidebar > .cg-sidebar__item:nth-of-type(1),
-  .cg-sidebar > .cg-sidebar__item:nth-of-type(3),
-  .cg-sidebar > .cg-sidebar__item:nth-of-type(6) { margin-top: 25px; }
-  .cg-sidebar > .cg-sidebar__item:nth-of-type(1) { margin-top: 0; }
-  .cg-sidebar > .cg-sidebar__item:nth-of-type(1)::before,
-  .cg-sidebar > .cg-sidebar__item:nth-of-type(3)::before,
-  .cg-sidebar > .cg-sidebar__item:nth-of-type(6)::before { display: block; }
+  /* Marca e rótulos de grupo agora vêm do HTML (Palm Business, fase 5) — antes
+     eram texto gerado por CSS (::before) sobre a marcação escondida. */
 }
 
 .cg-sidebar__item {
@@ -1361,10 +1332,11 @@ body { font-size: var(--font-size-body); }
   margin: 0 -18px 28px;
   padding: 0 18px;
 }
+/* O título do topo é o h1 real (área atual). A margem negativa que fazia a
+   barra ultrapassar a largura no desktop saiu (fase 5). */
 @media (min-width: 992px) {
-  .cg-topbar { margin: -24px -42px 34px; padding: 0 42px; }
-  .cg-topbar::before { content: 'Painel financeiro'; font-size: var(--font-size-title-sm); font-weight: 750; }
-  .cg-topbar > :first-child { display: none !important; }
+  .cg-topbar { margin-bottom: 24px; }
+  .cg-topbar__titulo { font-size: var(--font-size-title-sm); }
 }
 .cg-topbar .cg-touch { border-radius: 50%; }
 .cg-topbar .cg-touch:hover { background: var(--color-surface-alt) !important; }
@@ -1398,7 +1370,7 @@ body { font-size: var(--font-size-body); }
   right: -100px;
   top: -150px;
 }
-.cg-hero-balance__label { font-size: .69rem; letter-spacing: .1em; }
+.cg-hero-balance__label { font-size: var(--font-size-caption); letter-spacing: .1em; }
 .cg-hero-balance__value { font-size: clamp(2rem, 4vw, 3rem); margin: 6px 0 22px; }
 .cg-hero-balance__row { position: relative; z-index: 1; gap: 12px; }
 .cg-hero-stat {
@@ -1407,7 +1379,7 @@ body { font-size: var(--font-size-body); }
   gap: 0;
 }
 .cg-hero-stat i { display: none; }
-.cg-hero-stat__label { font-size: .67rem; letter-spacing: .07em; }
+.cg-hero-stat__label { font-size: var(--font-size-caption); letter-spacing: .07em; }
 .cg-hero-stat__value { font-size: 1rem; }
 
 .cg-quick-actions { gap: 10px; }

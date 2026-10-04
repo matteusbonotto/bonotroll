@@ -39,7 +39,7 @@ test('alternar pra Lista em Recursos e em Caixinhas mantém os mesmos dados vis�
   await expect(secaoRecursos.locator('.cg-resource-grid .cg-resource-item', { hasText: nomeItem })).toBeVisible();
 
   // ---------- Caixinhas: única grade da tela (bancos) ----------
-  await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Caixinhas' }).first().click();
+  await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Reservas' }).first().click();
   await page.waitForTimeout(400);
 
   const secaoCaixinhas = page.locator('section[x-data^="caixinhasView"]');
@@ -54,7 +54,7 @@ test('alternar pra Lista em Recursos e em Caixinhas mantém os mesmos dados vis�
   // Linha da lista continua clicável — entra no detalhe da caixinha (mesmo
   // handler selecionar() da grade, só reorganizado visualmente).
   await secaoCaixinhas.locator('.cg-list-row', { hasText: nomeBanco }).first().click();
-  await expect(secaoCaixinhas.locator('.cg-back', { hasText: 'Caixinhas' })).toBeVisible();
+  await expect(secaoCaixinhas.locator('.cg-back', { hasText: 'Reservas' })).toBeVisible();
 });
 
 test('digitar quantidade em Recursos persiste depois de recarregar a página', async ({ page }) => {

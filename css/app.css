@@ -1234,13 +1234,6 @@ img.cg-company-logo { display: block; }
   opacity: 0.9;
 }
 
-/* Topo em tela estreita (ou com "Tamanho do texto" grande): o nome BNTT ao
-   lado do menu sai para não cortar o avatar — o menu lateral já mostra. */
-@media (max-width: 419.98px) {
-  .cg-topbar h1 {
-    display: none;
-  }
-}
 
 /* Avisos não cobrem mais o topo nem o menu (revisão com personas, 2026-10-04). */
 .cg-toast-container {
@@ -1302,4 +1295,181 @@ img.cg-company-logo { display: block; }
 .cg-preco-lista li {
   padding: 0.35rem 0;
   border-bottom: 1px solid var(--color-border);
+}
+
+/* ===== Navegação Palm Business (fase 5 — docs/palm/NAVIGATION.md) =====
+   Contrato: até 991px barra inferior fixa (4 áreas + Adicionar, ícone + texto,
+   alvo de 56px, safe-area); a partir de 992px barra lateral agrupada. */
+:root {
+  --cg-nav-inferior-altura: 64px;
+}
+
+.cg-nav-inferior {
+  display: none;
+}
+
+@media (max-width: 991.98px) {
+  .cg-nav-inferior {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1030;
+    display: flex;
+    align-items: stretch;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    background: var(--color-surface);
+    border-top: 1px solid var(--color-border);
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.06);
+  }
+
+  .cg-main {
+    padding-bottom: calc(var(--cg-nav-inferior-altura) + env(safe-area-inset-bottom, 0px) + var(--space-4));
+  }
+
+  /* O botão flutuante (Compras) sobe para cima da barra. */
+  .cg-fab {
+    bottom: calc(var(--cg-nav-inferior-altura) + var(--space-4) + env(safe-area-inset-bottom, 0px)) !important;
+  }
+}
+
+.cg-nav-inferior__slot {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+}
+
+.cg-nav-inferior__item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: var(--cg-nav-inferior-altura);
+  padding: 6px 2px;
+  border: 0;
+  background: none;
+  color: var(--color-text-muted, #5b6470);
+  font: inherit;
+  font-size: var(--font-size-caption);
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.cg-nav-inferior__item i {
+  font-size: 1.35rem;
+}
+
+.cg-nav-inferior__item span {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cg-nav-inferior__item.is-active {
+  color: var(--color-primary);
+  box-shadow: inset 0 3px 0 var(--color-primary);
+}
+
+.cg-nav-inferior__item.cg-nav-inferior__adicionar i {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 1.4rem;
+}
+
+.cg-nav-inferior__item.cg-nav-inferior__adicionar {
+  color: var(--color-primary);
+}
+
+/* Sub-abas da área */
+.cg-abas {
+  display: flex;
+  gap: var(--space-2);
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin: 0 0 var(--space-4);
+}
+
+.cg-abas__aba {
+  flex: 0 0 auto;
+  min-height: 44px;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+}
+
+.cg-abas__aba.is-active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+
+/* Barra lateral agrupada */
+.cg-sidebar__titulo {
+  margin: var(--space-3) 0 var(--space-1);
+  padding: 0 var(--space-3);
+  font-size: var(--font-size-caption);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted, #5b6470);
+}
+
+.cg-sidebar__item.cg-sidebar__item--sub {
+  padding-left: calc(var(--space-3) + 1.6rem);
+}
+
+/* Folha "Adicionar": de baixo no celular, centralizada no computador */
+.cg-folha__grupo {
+  margin: var(--space-3) 0 var(--space-2);
+  font-size: var(--font-size-caption);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted, #5b6470);
+}
+
+.cg-folha__opcoes {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.cg-folha__opcao {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: 56px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+.cg-folha__opcao > i {
+  font-size: 1.5rem;
+}
+
+.cg-folha__opcao span {
+  display: flex;
+  flex-direction: column;
+}
+
+.cg-folha__opcao small {
+  color: var(--color-text-muted, #5b6470);
 }

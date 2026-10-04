@@ -43,6 +43,7 @@ Frankfurter (câmbio fiat), CoinGecko (cripto), Open Food Facts (código de barr
 - `services/` como única fronteira — nenhuma tela sabe se está em demo ou real.
 - Nada calculado é persistido (status, saldo, totais — sempre derivado ao vivo).
 - Import dinâmico para toda lib pesada.
+- Ordenação sempre via `Array.prototype.sort()` nativo (TimSort no V8) — estável, O(n log n) garantido, já híbrido. Não implementar merge sort ou quicksort à mão: as 27 ocorrências do app (services/ e utils/) usam o nativo e os volumes são domésticos — nenhuma delas é gargalo. O ponto que exige cuidado é o comparador, não o algoritmo: datas ordenadas por `localeCompare` dependem do formato ISO `YYYY-MM-DD` (`js/services/transactions.js:119`, `js/services/caixinhas.js:95`).
 
 ## Dívida arquitetural conhecida (ver `.claude/docs/roadmap.md` § Technical Debt)
 

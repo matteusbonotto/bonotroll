@@ -12,8 +12,8 @@ test.use({ viewport: { width: 390, height: 844 } });
 test('densidade compacta reduz o padding do card de transação no mobile', async ({ page }) => {
   await page.goto('/?demo=1');
   await page.getByText('Entrar como', { exact: false }).first().click();
-  await page.getByLabel('Abrir menu').click();
-  await page.locator('.cg-drawer a', { hasText: 'Transações' }).first().click();
+  // Celular: barra inferior (Palm Business, fase 5) — Dinheiro abre Movimentações.
+  await page.locator('.cg-nav-inferior').getByRole('button', { name: 'Dinheiro' }).click();
   await page.waitForTimeout(400);
 
   const secao = page.locator('section[x-data^="transactionsView"]');

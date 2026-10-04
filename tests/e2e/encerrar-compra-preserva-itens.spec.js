@@ -16,7 +16,7 @@ test('encerrar a compra mantém no histórico os itens que não foram marcados c
 
   await page.goto('/?demo=1');
   await page.getByText('Entrar como', { exact: false }).first().click();
-  await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Compras' }).first().click();
+  await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Lista de compras' }).first().click();
   await page.waitForTimeout(400);
 
   const secao = page.locator('section.cg-view-compras');

@@ -37,7 +37,7 @@ test('Perfil → Bancos gerencia só nome/logo; caixinha (meta/moeda/responsáve
 
   // Tela de Caixinhas: "Nova caixinha" mostra banco/moeda/meta/responsável
   // (não mistura com o cadastro de banco) e reconhece o banco recém-criado.
-  await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Caixinhas' }).first().click();
+  await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Reservas' }).first().click();
   await page.waitForTimeout(300);
   await page.getByRole('button', { name: 'Nova caixinha' }).click();
 

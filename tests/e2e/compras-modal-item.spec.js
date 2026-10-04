@@ -7,7 +7,7 @@ import { test, expect } from '@playwright/test';
 test('Adicionar item em Compras abre como modal, adiciona e fecha', async ({ page }) => {
   await page.goto('/?demo=1');
   await page.getByText('Entrar como', { exact: false }).first().click();
-  await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Compras' }).first().click();
+  await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Lista de compras' }).first().click();
   await page.waitForTimeout(400);
 
   const modal = page.locator('.cg-modal-backdrop', { has: page.getByRole('heading', { name: 'Adicionar item' }) });

@@ -7,7 +7,7 @@ import { test, expect } from '@playwright/test';
 test('remover movimentação de Caixinha: some na hora, "Desfazer" restaura', async ({ page }) => {
   await page.goto('/?demo=1');
   await page.getByText('Entrar como', { exact: false }).first().click();
-  await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Caixinhas' }).first().click();
+  await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Reservas' }).first().click();
   await page.waitForTimeout(400);
 
   // .cg-room-tile é reaproveitado por Recursos E Caixinhas — as duas telas

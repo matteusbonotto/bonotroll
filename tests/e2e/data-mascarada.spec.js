@@ -13,7 +13,7 @@ import { test, expect } from '@playwright/test';
 test('digitar uma data completa no campo mascarado salva e persiste (recarregando a página)', async ({ page }) => {
   await page.goto('/?demo=1');
   await page.getByText('Entrar como', { exact: false }).first().click();
-  await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Compras' }).first().click();
+  await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Lista de compras' }).first().click();
   await page.waitForTimeout(400);
 
   const secao = page.locator('section[x-data^="shoppingView"]');
@@ -43,7 +43,7 @@ test('digitar uma data completa no campo mascarado salva e persiste (recarregand
 
   await page.reload();
   await page.waitForTimeout(500);
-  await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Compras' }).first().click();
+  await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Lista de compras' }).first().click();
   await page.waitForTimeout(400);
 
   const linha = secao.locator('.cg-item-row', { hasText: nomeItem });
@@ -64,7 +64,7 @@ test('escolher uma data no seletor nativo (botão de calendário) atualiza o cam
 
   await page.goto('/?demo=1');
   await page.getByText('Entrar como', { exact: false }).first().click();
-  await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Compras' }).first().click();
+  await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Lista de compras' }).first().click();
   await page.waitForTimeout(400);
 
   const secao = page.locator('section[x-data^="shoppingView"]');

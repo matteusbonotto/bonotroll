@@ -60,7 +60,7 @@ test('Agrupar por Período: cabeçalho de Ano aparece, colapsa/expande todos os 
   await page.reload();
   await page.getByText('Entrar como', { exact: false }).first().click();
   const secao = page.locator('section[x-data^="transactionsView"]');
-  await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Transações' }).first().click();
+  await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Movimentações' }).first().click();
   await page.waitForTimeout(400);
 
   await page.getByRole('button', { name: 'Agrupar' }).click();

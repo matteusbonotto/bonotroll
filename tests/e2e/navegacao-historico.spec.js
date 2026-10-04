@@ -12,7 +12,7 @@ test('botão voltar do navegador anda pelas telas do app (pushState), não fecha
 
   const viewAtual = () => page.evaluate(() => Alpine.store('app').view);
 
-  await page.locator('.cg-sidebar__item', { hasText: 'Transações' }).first().click();
+  await page.locator('.cg-sidebar__item', { hasText: 'Movimentações' }).first().click();
   await page.waitForTimeout(200);
   await page.locator('.cg-sidebar__item', { hasText: 'Lista de compras' }).first().click();
   await page.waitForTimeout(200);

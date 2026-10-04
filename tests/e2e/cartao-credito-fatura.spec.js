@@ -31,7 +31,7 @@ test('fatura do cartão vira accordion e a compra dentro dela não soma duas vez
   expect(totalAgrupado).toBeGreaterThan(0);
 
   // ---------- Transações: accordion ----------
-  await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Transações' }).first().click();
+  await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Movimentações' }).first().click();
   await page.waitForTimeout(500);
 
   const secao = page.locator('section[x-data^="transactionsView"]');
@@ -119,7 +119,7 @@ test('compra dentro da fatura continua aparecendo em "Contas a vencer" quando es
 
   // ...e, ao mesmo tempo, continua agrupada dentro da fatura em Transações
   // (some da lista de topo, não da cobrança).
-  await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Transações' }).first().click();
+  await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Movimentações' }).first().click();
   await page.waitForTimeout(500);
   const secao = page.locator('section[x-data^="transactionsView"]');
   await expect(secao.locator('tbody tr', { hasText: 'Amazon Prime' })).toHaveCount(0);
@@ -134,7 +134,7 @@ test('duas faturas no mesmo mês de cartões diferentes não misturam as compras
   await page.goto('/?demo=1');
   await page.getByText('Entrar como', { exact: false }).first().click();
 
-  await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Transações' }).first().click();
+  await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Movimentações' }).first().click();
   await page.waitForTimeout(500);
   const secao = page.locator('section[x-data^="transactionsView"]');
 

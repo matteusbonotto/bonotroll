@@ -9,7 +9,7 @@ import { test, expect } from '@playwright/test';
 test('grupo fechado no Agrupar remove o conteúdo do DOM (x-if), não só esconde', async ({ page }) => {
   await page.goto('/?demo=1');
   await page.getByText('Entrar como', { exact: false }).first().click();
-  await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Transações' }).first().click();
+  await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Movimentações' }).first().click();
   await page.waitForTimeout(400);
 
   await page.getByRole('button', { name: 'Agrupar' }).click();

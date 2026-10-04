@@ -7,7 +7,7 @@ import { test, expect } from '@playwright/test';
 test('"Entre vocês" mostra a dívida líquida entre os dois membros do grupo demo', async ({ page }) => {
   await page.goto('/?demo=1');
   await page.getByText('Entrar como', { exact: false }).first().click();
-  await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Grupo' }).first().click();
+  await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Membros' }).first().click();
   await page.waitForTimeout(400);
 
   const membros = await page.evaluate(() => {

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0E9F6E" />
   <meta name="description" content="BNTT — Controle Financeiro Doméstico. Seu dinheiro, sua casa, sob controle." />
-  <title>BNTT — Controle Financeiro Doméstico</title>
+  <title>Palm Business</title>
 
   <!-- Aplica o tema salvo (ou nenhum = segue o sistema) ANTES do CSS carregar,
        pra não piscar o tema errado por uma fração de segundo no reload — o
@@ -79,7 +79,7 @@
       <div class="cg-card" style="max-width: 420px; width:100%;">
         <div class="text-center mb-4">
           <img src="./assets/logos/logo-colorida.svg" width="72" height="78" alt="" class="mb-2" />
-          <h1 class="h4 fw-bold mb-1">BNTT</h1>
+          <h1 class="h4 fw-bold mb-1">Palm Business</h1>
           <p class="cg-muted mb-0">Seu dinheiro, sua casa, sob controle.</p>
         </div>
 
@@ -168,32 +168,33 @@
       <aside class="cg-sidebar">
         <div class="d-flex align-items-center gap-2 mb-4 px-1">
           <img src="./assets/logos/logo-colorida.svg" width="30" height="33" alt="" />
-          <span class="fw-bold">BNTT</span>
+          <span class="fw-bold">Palm Business</span>
         </div>
-        <a href="#" class="cg-sidebar__item" :class="{ 'is-active': $store.app.view === 'home' }" @click.prevent="$store.app.setView('home')">
-          <i class="bi bi-house-door"></i> Início
-        </a>
-        <a href="#" class="cg-sidebar__item" :class="{ 'is-active': $store.app.view === 'transacoes' }" @click.prevent="$store.app.setView('transacoes')">
-          <i class="bi bi-table"></i> Transações
-        </a>
-        <a href="#" class="cg-sidebar__item" :class="{ 'is-active': $store.app.view === 'compras' }" @click.prevent="$store.app.setView('compras')">
-          <i class="bi bi-cart3"></i> Lista de compras
-        </a>
-        <a href="#" class="cg-sidebar__item" :class="{ 'is-active': $store.app.view === 'recursos' }" @click.prevent="$store.app.setView('recursos')">
-          <i class="bi bi-box-seam"></i> Inventário
-        </a>
-        <a href="#" class="cg-sidebar__item" :class="{ 'is-active': $store.app.view === 'caixinhas' }" @click.prevent="$store.app.setView('caixinhas')">
-          <i class="bi bi-piggy-bank"></i> Caixinhas
-        </a>
-        <a href="#" class="cg-sidebar__item" :class="{ 'is-active': $store.app.view === 'socorros' }" @click.prevent="$store.app.setView('socorros')">
-          <i class="bi bi-heart-pulse"></i> Primeiros socorros
-        </a>
-        <a href="#" class="cg-sidebar__item" :class="{ 'is-active': $store.app.view === 'grupo' }" @click.prevent="$store.app.setView('grupo')">
-          <i class="bi bi-people"></i> Grupo
-        </a>
-        <a href="#" class="cg-sidebar__item" :class="{ 'is-active': $store.app.view === 'perfil' }" @click.prevent="$store.app.setView('perfil')">
-          <i class="bi bi-person-circle"></i> Perfil
-        </a>
+        <button type="button" class="cg-btn btn btn-success w-100 mb-3 cg-sidebar__adicionar" @click="$store.app.adicionarAberto = true">
+          <i class="bi bi-plus-lg" aria-hidden="true"></i> Adicionar
+        </button>
+        <nav aria-label="Áreas do app">
+          <template x-for="area in $store.app.AREAS" :key="area.id">
+            <div class="cg-sidebar__grupo">
+              <template x-if="area.abas.length === 1">
+                <a href="#" class="cg-sidebar__item" :class="{ 'is-active': $store.app.view === area.abas[0].view }" :aria-current="$store.app.view === area.abas[0].view ? 'page' : null" @click.prevent="$store.app.setView(area.abas[0].view)">
+                  <i class="bi" :class="area.icone" aria-hidden="true"></i> <span x-text="area.rotulo"></span>
+                </a>
+              </template>
+              <template x-if="area.abas.length > 1">
+                <div>
+                  <p class="cg-sidebar__titulo"><i class="bi" :class="area.icone" aria-hidden="true"></i> <span x-text="area.rotulo"></span></p>
+                  <template x-for="aba in area.abas" :key="aba.view">
+                    <a href="#" class="cg-sidebar__item cg-sidebar__item--sub" :class="{ 'is-active': $store.app.view === aba.view }" :aria-current="$store.app.view === aba.view ? 'page' : null" @click.prevent="$store.app.setView(aba.view)" x-text="aba.rotulo"></a>
+                  </template>
+                </div>
+              </template>
+            </div>
+          </template>
+          <a href="#" class="cg-sidebar__item" :class="{ 'is-active': $store.app.view === 'perfil' }" :aria-current="$store.app.view === 'perfil' ? 'page' : null" @click.prevent="$store.app.setView('perfil')">
+            <i class="bi bi-person-circle" aria-hidden="true"></i> Perfil
+          </a>
+        </nav>
         <div class="mt-auto pt-4">
           <a href="#" class="cg-sidebar__item text-danger" @click.prevent="$store.app.logout()">
             <i class="bi bi-box-arrow-right"></i> Sair
@@ -205,10 +206,7 @@
         <!-- Topbar -->
         <header class="cg-topbar">
           <div class="d-flex align-items-center gap-2">
-            <button type="button" class="btn p-0 border-0 bg-transparent d-lg-none cg-touch" @click="$store.app.navOpen = true" aria-label="Abrir menu">
-              <i class="bi bi-list fs-3"></i>
-            </button>
-            <h1 class="h5 fw-bold mb-0 d-lg-none">BNTT</h1>
+            <h1 class="h5 fw-bold mb-0 cg-topbar__titulo" x-text="$store.app.tituloTela"></h1>
           </div>
           <div class="d-flex align-items-center gap-2">
             <!-- Ajuda num botão só, COM texto (revisão com personas, 2026-10-04: 4
@@ -289,6 +287,13 @@
             </div>
           </div>
         </header>
+
+        <!-- Sub-abas da área atual (Palm Business, fase 5) -->
+        <nav class="cg-abas" x-show.important="($store.app.areaAtual?.abas.length || 0) > 1" :aria-label="'Seções de ' + ($store.app.areaAtual?.rotulo || '')">
+          <template x-for="aba in ($store.app.areaAtual?.abas || [])" :key="aba.view">
+            <button type="button" class="cg-abas__aba" :class="{ 'is-active': $store.app.view === aba.view }" :aria-current="$store.app.view === aba.view ? 'page' : null" @click="$store.app.setView(aba.view)" x-text="aba.rotulo"></button>
+          </template>
+        </nav>
 
         <template x-if="$store.app.isDemoMode">
           <div class="cg-demo-banner">
@@ -2472,7 +2477,7 @@
             <template x-if="activeId && caixinhaAtiva">
               <div>
                 <div class="d-flex align-items-center justify-content-between mb-3">
-                  <button type="button" class="cg-back" @click="voltar()" aria-label="Voltar para Caixinhas"><i class="bi bi-chevron-left" aria-hidden="true"></i> Caixinhas</button>
+                  <button type="button" class="cg-back" @click="voltar()" aria-label="Voltar para Reservas"><i class="bi bi-chevron-left" aria-hidden="true"></i> Reservas</button>
                   <div class="cg-section-title mb-0">
                     <img :src="bankFor(caixinhaAtiva.banco_nome)?.logo_url" x-show="bankFor(caixinhaAtiva.banco_nome)?.logo_url" style="width:24px;height:24px;border-radius:50%;object-fit:cover;" />
                     <i class="bi bi-bank2" x-show="!bankFor(caixinhaAtiva.banco_nome)?.logo_url"></i>
@@ -2949,46 +2954,50 @@
       <!-- Menu hambúrguer (mobile): substitui a antiga bottom nav, que ficava
            apertada com 6 destinos (Recursos entrou como 6º). Reaproveita o
            mesmo item visual da sidebar desktop (.cg-sidebar__item). -->
-      <div class="cg-drawer-backdrop d-lg-none" x-show="$store.app.navOpen" x-cloak x-transition @click.self="$store.app.navOpen = false">
-        <aside class="cg-drawer" x-show="$store.app.navOpen" x-transition>
-          <div class="d-flex align-items-center justify-content-between mb-4">
-            <div class="d-flex align-items-center gap-2">
-              <img src="./assets/logos/logo-colorida.svg" width="26" height="28" alt="" />
-              <span class="fw-bold">BNTT</span>
+        <!-- Barra inferior (celular): 4 áreas + Adicionar, ícone + texto -->
+        <nav class="cg-nav-inferior" aria-label="Áreas do app">
+          <template x-for="(area, i) in $store.app.AREAS" :key="area.id">
+            <div class="cg-nav-inferior__slot" :style="{ order: i < 2 ? i : i + 1 }">
+              <button type="button" class="cg-nav-inferior__item" :class="{ 'is-active': $store.app.areaAtual?.id === area.id }" :aria-current="$store.app.areaAtual?.id === area.id ? 'page' : null" @click="$store.app.irParaArea(area.id)">
+                <i class="bi" :class="area.icone" aria-hidden="true"></i>
+                <span x-text="area.rotulo"></span>
+              </button>
             </div>
-            <button type="button" class="btn-close" @click="$store.app.navOpen = false" aria-label="Fechar menu"></button>
+          </template>
+          <div class="cg-nav-inferior__slot" style="order: 2">
+            <button type="button" class="cg-nav-inferior__item cg-nav-inferior__adicionar" @click="$store.app.adicionarAberto = true" aria-haspopup="dialog">
+              <i class="bi bi-plus-lg" aria-hidden="true"></i>
+              <span>Adicionar</span>
+            </button>
           </div>
-          <a href="#" class="cg-sidebar__item" :class="{ 'is-active': $store.app.view === 'home' }" @click.prevent="$store.app.setView('home')">
-            <i class="bi bi-house-door"></i> Início
-          </a>
-          <a href="#" class="cg-sidebar__item" :class="{ 'is-active': $store.app.view === 'transacoes' }" @click.prevent="$store.app.setView('transacoes')">
-            <i class="bi bi-table"></i> Transações
-          </a>
-          <a href="#" class="cg-sidebar__item" :class="{ 'is-active': $store.app.view === 'compras' }" @click.prevent="$store.app.setView('compras')">
-            <i class="bi bi-cart3"></i> Lista de compras
-          </a>
-          <a href="#" class="cg-sidebar__item" :class="{ 'is-active': $store.app.view === 'recursos' }" @click.prevent="$store.app.setView('recursos')">
-            <i class="bi bi-box-seam"></i> Inventário
-          </a>
-          <a href="#" class="cg-sidebar__item" :class="{ 'is-active': $store.app.view === 'caixinhas' }" @click.prevent="$store.app.setView('caixinhas')">
-            <i class="bi bi-piggy-bank"></i> Caixinhas
-          </a>
-          <a href="#" class="cg-sidebar__item" :class="{ 'is-active': $store.app.view === 'socorros' }" @click.prevent="$store.app.setView('socorros')">
-            <i class="bi bi-heart-pulse"></i> Primeiros socorros
-          </a>
-          <a href="#" class="cg-sidebar__item" :class="{ 'is-active': $store.app.view === 'grupo' }" @click.prevent="$store.app.setView('grupo')">
-            <i class="bi bi-people"></i> Grupo
-          </a>
-          <a href="#" class="cg-sidebar__item" :class="{ 'is-active': $store.app.view === 'perfil' }" @click.prevent="$store.app.setView('perfil')">
-            <i class="bi bi-person-circle"></i> Perfil
-          </a>
-          <div class="mt-auto pt-4">
-            <a href="#" class="cg-sidebar__item text-danger" @click.prevent="$store.app.logout()">
-              <i class="bi bi-box-arrow-right"></i> Sair
-            </a>
+        </nav>
+
+        <!-- Folha "Adicionar" (universal, agrupada por intenção) -->
+        <div class="cg-modal-backdrop cg-folha-fundo" x-show="$store.app.adicionarAberto" x-cloak @click.self="$store.app.adicionarAberto = false" @keydown.escape.window="$store.app.adicionarAberto = false">
+          <div class="cg-modal cg-folha" role="dialog" aria-modal="true" aria-labelledby="cg-adicionar-titulo">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <h2 class="h5 fw-bold mb-0" id="cg-adicionar-titulo">O que você quer adicionar?</h2>
+              <button type="button" class="btn-close" @click="$store.app.adicionarAberto = false" aria-label="Fechar"></button>
+            </div>
+            <p class="cg-folha__grupo">Dinheiro</p>
+            <div class="cg-folha__opcoes">
+              <button type="button" class="cg-folha__opcao" @click="$store.app.adicionarAberto = false; $store.txModal.openNew('saida')"><i class="bi bi-dash-circle text-danger" aria-hidden="true"></i><span><strong>Despesa</strong><small>Algo que você pagou ou vai pagar</small></span></button>
+              <button type="button" class="cg-folha__opcao" @click="$store.app.adicionarAberto = false; $store.txModal.openNew('entrada')"><i class="bi bi-plus-circle text-success" aria-hidden="true"></i><span><strong>Receita</strong><small>Dinheiro que entrou</small></span></button>
+            </div>
+            <p class="cg-folha__grupo">Casa</p>
+            <div class="cg-folha__opcoes">
+              <button type="button" class="cg-folha__opcao" @click="$store.app.setView('compras'); window.dispatchEvent(new CustomEvent('cg:compras-abrir-lista'))"><i class="bi bi-cart-plus" aria-hidden="true"></i><span><strong>Item para comprar</strong><small>Vai para a sua lista de compras</small></span></button>
+              <button type="button" class="cg-folha__opcao" @click="$store.app.setView('recursos')"><i class="bi bi-box-seam" aria-hidden="true"></i><span><strong>Item no inventário</strong><small>Algo que vocês têm em casa</small></span></button>
+            </div>
+            <p class="cg-folha__grupo">Pessoas</p>
+            <div class="cg-folha__opcoes">
+              <button type="button" class="cg-folha__opcao" @click="$store.app.setView('grupo')"><i class="bi bi-person-plus" aria-hidden="true"></i><span><strong>Pessoa</strong><small>Convide alguém para a sua casa</small></span></button>
+            </div>
           </div>
-        </aside>
-      </div>
+        </div>
+
+        <!-- O menu lateral do celular (☰) foi substituído pela barra inferior (Palm Business, fase 5). -->
+      
     </div>
   </template>
 

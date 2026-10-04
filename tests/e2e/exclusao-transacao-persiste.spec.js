@@ -23,7 +23,7 @@ test('excluir uma transação sem clicar "Desfazer" remove ela de verdade, mesmo
   test.setTimeout(60000);
   await page.goto('/?demo=1');
   await page.getByText('Entrar como', { exact: false }).first().click();
-  await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Transações' }).first().click();
+  await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Movimentações' }).first().click();
   await page.waitForTimeout(400);
 
   const secao = page.locator('section[x-data^="transactionsView"]');
@@ -65,7 +65,7 @@ test('excluir uma transação sem clicar "Desfazer" remove ela de verdade, mesmo
 
   await page.reload();
   await page.waitForTimeout(500);
-  await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Transações' }).first().click();
+  await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Movimentações' }).first().click();
   await page.waitForTimeout(400);
 
   await expect(secao.getByText(tituloExcluido, { exact: true })).toHaveCount(0);

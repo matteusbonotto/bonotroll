@@ -143,11 +143,9 @@ export function appStore() {
       gerarRecorrentesPendentes({ ownerId: profile.id, groupId })
         .then((criadas) => {
           if (!criadas.length) return;
-          this.notify(
-            criadas.length === 1
-              ? '1 lançamento recorrente foi gerado automaticamente.'
-              : `${criadas.length} lançamentos recorrentes foram gerados automaticamente.`
-          );
+          // Sem aviso flutuante (Palm Business, fase 5): é ação do sistema, não
+          // resposta a algo que a pessoa fez, e cobria o topo a cada login. As
+          // contas novas aparecem em "Precisa de você" e nas Movimentações.
           window.dispatchEvent(new CustomEvent('cg:transactions-changed'));
         })
         .catch(() => {});
@@ -348,8 +346,38 @@ export function appStore() {
     // "popstate" em js/app.js — que só LÊ o hash, nunca chama setView, pra
     // não empurrar uma entrada nova por cima da que acabou de ser
     // desempilhada (isso quebraria voltar de novo).
+    // Navegação por intenção (Palm Business, fase 5 — docs/palm/NAVIGATION.md):
+    // 4 áreas + Adicionar. As telas antigas (view) continuam existindo e são
+    // as sub-abas de cada área; rotas antigas (#/transacoes etc.) seguem válidas.
+    AREAS: [
+      { id: 'home', rotulo: 'Início', icone: 'bi-house-door', abas: [{ view: 'home', rotulo: 'Início' }] },
+      { id: 'dinheiro', rotulo: 'Dinheiro', icone: 'bi-cash-stack', abas: [{ view: 'transacoes', rotulo: 'Movimentações' }, { view: 'caixinhas', rotulo: 'Reservas' }] },
+      { id: 'casa', rotulo: 'Casa', icone: 'bi-house-heart', abas: [{ view: 'compras', rotulo: 'Lista de compras' }, { view: 'recursos', rotulo: 'Inventário' }] },
+      { id: 'pessoas', rotulo: 'Pessoas', icone: 'bi-people', abas: [{ view: 'grupo', rotulo: 'Membros' }, { view: 'socorros', rotulo: 'Saúde' }] },
+    ],
+    ultimaAbaPorArea: {},
+    adicionarAberto: false,
+
+    get areaAtual() {
+      return this.AREAS.find((a) => a.abas.some((t) => t.view === this.view)) || null;
+    },
+    get tituloTela() {
+      if (this.view === 'perfil') return 'Perfil';
+      const area = this.areaAtual;
+      return area ? area.rotulo : 'Palm Business';
+    },
+    irParaArea(id) {
+      const area = this.AREAS.find((a) => a.id === id);
+      if (!area) return;
+      const destino = this.ultimaAbaPorArea[id] || area.abas[0].view;
+      this.setView(destino);
+    },
+
     setView(view) {
       this.navOpen = false;
+      this.adicionarAberto = false;
+      const area = this.AREAS.find((a) => a.abas.some((t) => t.view === view));
+      if (area) this.ultimaAbaPorArea[area.id] = view;
       if (view === this.view) return;
       this.view = view;
       history.pushState({ view }, '', '#/' + view);

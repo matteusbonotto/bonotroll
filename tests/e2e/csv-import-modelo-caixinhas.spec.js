@@ -10,7 +10,7 @@ test('botão "Baixar modelo" no import de CSV baixa um cabeçalho com as colunas
   await page.goto('/?demo=1');
   await page.getByText('Entrar como', { exact: false }).first().click();
 
-  await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Transações' }).first().click();
+  await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Movimentações' }).first().click();
   await page.waitForTimeout(400);
   await page.getByRole('button', { name: 'Importar CSV' }).click();
 
@@ -34,7 +34,7 @@ test('Caixinhas: importar CSV cria a caixinha (valor inicial incluso) e ela apar
   await page.goto('/?demo=1');
   await page.getByText('Entrar como', { exact: false }).first().click();
 
-  await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Caixinhas' }).first().click();
+  await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Reservas' }).first().click();
   await page.waitForTimeout(400);
   const secao = page.locator('section[x-data^="caixinhasView"]');
   await expect(secao.getByText('Nubank').first()).toBeVisible({ timeout: 10000 }); // seed demo já carregada

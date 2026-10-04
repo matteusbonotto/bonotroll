@@ -1,6 +1,6 @@
 {
-  "name": "BNTT — Controle Financeiro Doméstico",
-  "short_name": "BNTT",
+  "name": "Palm Business",
+  "short_name": "Palm",
   "description": "Seu dinheiro, sua casa, sob controle. Controle financeiro pessoal e do grupo, com lista de compras integrada.",
   "start_url": "./index.html",
   "scope": "./",
