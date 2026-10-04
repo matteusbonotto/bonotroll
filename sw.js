@@ -18,6 +18,7 @@ const APP_SHELL = [
   './css/tokens.css',
   './css/components.css',
   './css/app.css',
+  './js/tema-inicial.js',
   './js/app.js',
   './js/data/config.js',
   './js/data/vapid.js',
