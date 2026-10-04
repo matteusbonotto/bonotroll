@@ -18,3 +18,8 @@
 - Ordem da tela Saúde: ligar (números) → fichas → "o que fazer" (guias).
 - Banco: `supabase/saude-2026-10.sql` (tabelas `cofres` e `fichas_saude` com RLS) — junto com o endurecimento em `supabase/APLICAR-NO-SQL-EDITOR-2026-10.sql`.
 - Testes: unitário de criptografia (ida e volta, senha e código errados, troca de senha) e e2e (o dado salvo não contém o nome nem a alergia em texto).
+
+## Fase 9 (notificações) — checkpoint/notifications
+- **Diagnóstico:** o servidor aceita as inscrições (testado com a chave de serviço), mas a produção tinha **0 inscrições**. O app tratava "bloqueado pelo navegador", "fechou o pedido", "iPhone sem o app instalado" e "inscrição que não chegou ao servidor" tudo como "Permissão negada". Agravante: a troca de endereço (github.io → web.app) zera a permissão concedida antes.
+- **Correção:** `estadoPush()` lê o estado real (não suportado · precisa instalar no iPhone · bloqueado · não pedido · ativo · só no aparelho), conferindo no servidor se a inscrição existe. O switch foi trocado por um **estado escrito + a ação certa**: bloqueado mostra o passo a passo para liberar e um botão "Já liberei — verificar de novo"; o iPhone explica como instalar; "só no aparelho" oferece concluir.
+- e2e com permissão simulada (bloqueada e não pedida).

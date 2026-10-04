@@ -1,6 +1,6 @@
 import { updateProfile, uploadAvatar } from '../services/auth.js';
 import { mockDb } from '../data/mockDb.js';
-import { isPushSupported, getExistingSubscription, subscribeToPush, unsubscribeFromPush } from '../services/push.js';
+import { isPushSupported, estadoPush, subscribeToPush, unsubscribeFromPush } from '../services/push.js';
 import { resizeImage } from '../utils/image.js';
 import { exportarMeusDados, baixarComoJson } from '../services/dataExport.js';
 
@@ -11,39 +11,53 @@ export function profileView() {
     saving: false,
     uploadingAvatar: false,
     pushSuportado: isPushSupported(),
-    pushAtivo: false,
+    pushEstado: 'verificando',
+    pushErro: '',
     pushCarregando: false,
     exportando: false,
 
     async init() {
       this.nome = this.$store.app.profile?.nome || '';
       this.cor = this.$store.app.profile?.cor || '#0E9F6E';
-      if (this.pushSuportado) {
-        try {
-          this.pushAtivo = !!(await getExistingSubscription());
-        } catch {
-          // best-effort: se a checagem falhar o switch só começa desligado
-        }
+      await this.verificarPush();
+    },
+
+    // Estado real (ver services/push.js::estadoPush) — a tela nunca finge.
+    async verificarPush() {
+      this.pushErro = '';
+      try {
+        this.pushEstado = await estadoPush();
+      } catch {
+        this.pushEstado = 'nao-pedido';
       }
     },
 
-    async alternarPush() {
+    async ativarPush() {
       const store = this.$store.app;
       this.pushCarregando = true;
+      this.pushErro = '';
       try {
-        if (this.pushAtivo) {
-          await unsubscribeFromPush();
-          this.pushAtivo = false;
-          store.notify('Notificações push desativadas.');
-        } else {
-          await subscribeToPush(store.profile.id);
-          this.pushAtivo = true;
-          store.notify('Notificações push ativadas.');
-        }
+        await subscribeToPush(store.profile.id);
+        await this.verificarPush();
+        if (this.pushEstado === 'ativo') store.notify('Notificações ativadas neste aparelho.');
       } catch (e) {
-        store.notify(e.message || 'Não foi possível alterar as notificações push.', 'danger');
+        if (e.estado) this.pushEstado = e.estado;
+        this.pushErro = e.estado === 'bloqueado' ? '' : (e.message || 'Não foi possível ativar agora. Tente de novo.');
       } finally {
         this.pushCarregando = false;
+      }
+    },
+
+    async desativarPush() {
+      this.pushCarregando = true;
+      try {
+        await unsubscribeFromPush();
+        this.$store.app.notify('Notificações desativadas neste aparelho.');
+      } catch (e) {
+        this.pushErro = e.message || 'Não foi possível desativar agora.';
+      } finally {
+        this.pushCarregando = false;
+        await this.verificarPush();
       }
     },
 

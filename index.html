@@ -3040,11 +3040,35 @@
                   <div class="cg-icon-badge"><i class="bi bi-bell"></i></div>
                   <div class="flex-fill">
                     <h2 class="h6 fw-bold mb-1">Notificações push</h2>
-                    <p class="cg-muted small mb-0" x-show="pushSuportado">Avisos de despesa a vencer/vencida, item do Inventário acabando/vencendo e pagamento de um membro — mesmo com o app fechado.</p>
-                    <p class="cg-muted small mb-0" x-show="!pushSuportado">Este navegador não suporta notificações push.</p>
-                  </div>
-                  <div class="form-check form-switch mb-0" x-show="pushSuportado">
-                    <input class="form-check-input" type="checkbox" role="switch" style="width:2.5em;height:1.4em;" :checked="pushAtivo" :disabled="pushCarregando" @change="alternarPush()" />
+                    <p class="cg-muted small mb-0">Avisos de despesa a vencer/vencida, item do Inventário acabando/vencendo e pagamento de um membro — mesmo com o app fechado.</p>
+                    <!-- Estado real, em palavras (fase 9) — sem switch que finge -->
+                    <div class="cg-push-estado mt-2" role="status" aria-live="polite">
+                      <p class="mb-1 fw-semibold" x-show="pushEstado === 'verificando'">Verificando…</p>
+                      <template x-if="pushEstado === 'ativo'">
+                        <div><p class="mb-2 fw-semibold text-success"><i class="bi bi-check-circle-fill" aria-hidden="true"></i> Ativas neste aparelho</p>
+                          <button type="button" class="btn btn-outline-secondary" :disabled="pushCarregando" @click="desativarPush()">Desativar</button></div>
+                      </template>
+                      <template x-if="pushEstado === 'nao-pedido'">
+                        <div><p class="mb-2"><i class="bi bi-bell-slash" aria-hidden="true"></i> Desativadas neste aparelho.</p>
+                          <button type="button" class="cg-btn btn btn-success" :disabled="pushCarregando" @click="ativarPush()"><span x-show="!pushCarregando">Ativar notificações</span><span x-show="pushCarregando">Ativando…</span></button></div>
+                      </template>
+                      <template x-if="pushEstado === 'so-no-aparelho'">
+                        <div><p class="mb-2"><i class="bi bi-exclamation-circle text-warning" aria-hidden="true"></i> Permitidas, mas ainda não ligadas à sua conta.</p>
+                          <button type="button" class="cg-btn btn btn-success" :disabled="pushCarregando" @click="ativarPush()">Concluir ativação</button></div>
+                      </template>
+                      <template x-if="pushEstado === 'bloqueado'">
+                        <div class="cg-push-ajuda"><p class="mb-1 fw-semibold"><i class="bi bi-slash-circle text-danger" aria-hidden="true"></i> As notificações estão bloqueadas pelo navegador.</p>
+                          <p class="small mb-1">Para liberar no celular (Chrome): toque no <strong>cadeado</strong> ao lado do endereço → <strong>Permissões</strong> → <strong>Notificações</strong> → <strong>Permitir</strong>. No app instalado: segure o ícone → <strong>Informações do app</strong> → <strong>Notificações</strong>.</p>
+                          <button type="button" class="btn btn-outline-secondary" @click="verificarPush()">Já liberei — verificar de novo</button></div>
+                      </template>
+                      <template x-if="pushEstado === 'precisa-instalar'">
+                        <p class="small mb-0"><i class="bi bi-phone" aria-hidden="true"></i> No iPhone, as notificações só funcionam com o app instalado: toque em <strong>Compartilhar</strong> → <strong>Adicionar à Tela de Início</strong> e abra o Palm por lá.</p>
+                      </template>
+                      <template x-if="pushEstado === 'nao-suportado'">
+                        <p class="small mb-0"><i class="bi bi-x-circle" aria-hidden="true"></i> Este navegador não recebe notificações. Use o Chrome no Android ou instale o app.</p>
+                      </template>
+                      <p class="small text-danger mb-0 mt-1" x-show="pushErro" x-text="pushErro" role="alert"></p>
+                    </div>
                   </div>
                 </div>
 
