@@ -17,6 +17,7 @@ import { transactionsView } from './components/transactionTable.js';
 import { shoppingView } from './components/shoppingList.js';
 import { resourcesView } from './components/resourcesView.js';
 import { caixinhasView } from './components/caixinhasView.js';
+import { primeirosSocorrosView } from './components/primeirosSocorros.js';
 import { groupView } from './components/groupView.js';
 import { profileView } from './components/profileView.js';
 import { categoryChart } from './components/charts.js';
@@ -61,6 +62,7 @@ document.addEventListener('alpine:init', () => {
   Alpine.data('shoppingView', shoppingView);
   Alpine.data('resourcesView', resourcesView);
   Alpine.data('caixinhasView', caixinhasView);
+  Alpine.data('primeirosSocorrosView', primeirosSocorrosView);
   Alpine.data('groupView', groupView);
   Alpine.data('profileView', profileView);
   Alpine.data('categoryChart', categoryChart);

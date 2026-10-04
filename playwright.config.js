@@ -49,7 +49,7 @@ export default defineConfig({
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
   ],
   webServer: {
-    command: DIST ? `python -m http.server ${PORTA} -d dist` : `python -m http.server ${PORTA}`,
+    command: DIST ? `node scripts/servir-dist.mjs ${PORTA}` : `python -m http.server ${PORTA}`,
     url: ORIGEM,
     reuseExistingServer: !process.env.CI,
     timeout: 20_000,

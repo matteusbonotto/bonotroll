@@ -10,12 +10,7 @@
   <!-- Aplica o tema salvo (ou nenhum = segue o sistema) ANTES do CSS carregar,
        pra não piscar o tema errado por uma fração de segundo no reload — o
        resto da lógica (toggle, persistência) fica em store.js::applyTheme. -->
-  <script>
-    (function () {
-      var salvo = localStorage.getItem('bonotto_theme');
-      if (salvo === 'dark' || salvo === 'light') document.documentElement.setAttribute('data-bs-theme', salvo);
-    })();
-  </script>
+  <script src="./js/tema-inicial.js"></script>
 
   <!-- ?v=2 nos 3 ícones (aqui e em manifest.webmanifest): navegador/SO
        cacheia ícone de PWA instalada de forma agressiva e separada do cache
@@ -186,6 +181,9 @@
         </a>
         <a href="#" class="cg-sidebar__item" :class="{ 'is-active': $store.app.view === 'caixinhas' }" @click.prevent="$store.app.setView('caixinhas')">
           <i class="bi bi-piggy-bank"></i> Caixinhas
+        </a>
+        <a href="#" class="cg-sidebar__item" :class="{ 'is-active': $store.app.view === 'socorros' }" @click.prevent="$store.app.setView('socorros')">
+          <i class="bi bi-heart-pulse"></i> Primeiros socorros
         </a>
         <a href="#" class="cg-sidebar__item" :class="{ 'is-active': $store.app.view === 'grupo' }" @click.prevent="$store.app.setView('grupo')">
           <i class="bi bi-people"></i> Grupo
@@ -2552,6 +2550,51 @@
         </section>
 
         <!-- ===== GRUPO ===== -->
+        <!-- ============ PRIMEIROS SOCORROS (2026-10-04) ============ -->
+        <section x-show="$store.app.view === 'socorros'" x-data="primeirosSocorrosView()" class="cg-socorros" aria-labelledby="cg-socorros-titulo">
+          <div class="cg-section-title mb-1" id="cg-socorros-titulo"><i class="bi bi-heart-pulse"></i> Primeiros socorros</div>
+          <p class="cg-muted small mb-3">Orientações rápidas para agir até a ajuda chegar. <strong>Não substituem atendimento médico — em emergência, ligue 192.</strong></p>
+
+          <div class="cg-socorros-numeros" role="list" aria-label="Números de emergência">
+            <template x-for="n in numeros" :key="n.numero">
+              <a role="listitem" class="cg-socorros-numero" :class="n.destaque && 'cg-socorros-numero--destaque'" :href="'tel:' + n.numero"
+                :aria-label="'Ligar para ' + n.nome + ', ' + (n.rotulo || n.numero) + ' — ' + n.descricao">
+                <i class="bi" :class="n.icone" aria-hidden="true"></i>
+                <span class="cg-socorros-numero__num" x-text="n.rotulo || n.numero"></span>
+                <span class="cg-socorros-numero__nome" x-text="n.nome"></span>
+                <span class="cg-socorros-numero__desc" x-text="n.descricao"></span>
+              </a>
+            </template>
+          </div>
+
+          <label class="form-label mt-3 mb-1" for="cg-socorros-busca">O que aconteceu?</label>
+          <input id="cg-socorros-busca" type="search" class="form-control form-control-lg mb-3" x-model="busca" placeholder="Ex.: engasgo, queimadura, desmaio" autocomplete="off" />
+
+          <div class="cg-socorros-topicos">
+            <template x-for="t in topicos" :key="t.id">
+              <div class="cg-card cg-socorros-topico" :class="t.urgente && 'cg-socorros-topico--urgente'">
+                <button type="button" class="cg-socorros-topico__cabecalho" @click="alternar(t.id)" :aria-expanded="abertoId === t.id" :aria-controls="'cg-socorros-' + t.id">
+                  <i class="bi" :class="t.icone" aria-hidden="true"></i>
+                  <span class="cg-socorros-topico__titulo" x-text="t.titulo"></span>
+                  <span class="cg-badge cg-socorros-urgente" x-show="t.urgente">Ligue 192</span>
+                  <i class="bi ms-auto" :class="abertoId === t.id ? 'bi-chevron-up' : 'bi-chevron-down'" aria-hidden="true"></i>
+                </button>
+                <div :id="'cg-socorros-' + t.id" x-show="abertoId === t.id">
+                  <ol class="cg-socorros-passos">
+                    <template x-for="(passo, i) in t.passos" :key="i"><li x-text="passo"></li></template>
+                  </ol>
+                  <p class="cg-socorros-nao-faca-titulo"><i class="bi bi-x-octagon-fill" aria-hidden="true"></i> Não faça</p>
+                  <ul class="cg-socorros-nao-faca">
+                    <template x-for="(item, i) in t.naoFaca" :key="i"><li x-text="item"></li></template>
+                  </ul>
+                  <a class="cg-btn btn btn-danger w-100 mt-2" href="tel:192"><i class="bi bi-telephone-fill"></i> Ligar 192 (SAMU)</a>
+                </div>
+              </div>
+            </template>
+            <p class="cg-muted" x-show="!topicos.length">Nada encontrado. Em dúvida, ligue 192 — o SAMU orienta por telefone.</p>
+          </div>
+        </section>
+
         <section x-show="$store.app.view === 'grupo'" x-data="groupView()" x-init="init()">
           <div class="cg-section-title"><i class="bi bi-people"></i> Grupo</div>
 
@@ -2864,6 +2907,9 @@
           </a>
           <a href="#" class="cg-sidebar__item" :class="{ 'is-active': $store.app.view === 'caixinhas' }" @click.prevent="$store.app.setView('caixinhas')">
             <i class="bi bi-piggy-bank"></i> Caixinhas
+          </a>
+          <a href="#" class="cg-sidebar__item" :class="{ 'is-active': $store.app.view === 'socorros' }" @click.prevent="$store.app.setView('socorros')">
+            <i class="bi bi-heart-pulse"></i> Primeiros socorros
           </a>
           <a href="#" class="cg-sidebar__item" :class="{ 'is-active': $store.app.view === 'grupo' }" @click.prevent="$store.app.setView('grupo')">
             <i class="bi bi-people"></i> Grupo

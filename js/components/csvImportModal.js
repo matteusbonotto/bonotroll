@@ -1,4 +1,4 @@
-import { parseCsvFile, applyMapping, IMPORT_TARGETS, normalizarDataCsv, baixarTemplateCsv } from '../services/csvImport.js';
+import { parseCsvFile, applyMapping, IMPORT_TARGETS, normalizarDataCsv, baixarTemplateCsv, parseValorBR } from '../services/csvImport.js';
 import { createTransaction } from '../services/transactions.js';
 import { createCategory } from '../services/categories.js';
 import { createCompany, updateCompany } from '../services/companies.js';
@@ -106,7 +106,7 @@ export function csvModalStore() {
               empresa_servico: row.empresa_servico || null,
               categoria_id: await this.resolveCategoria(row.categoria_nome),
               tipo_despesa: (row.tipo_despesa || 'variavel').toLowerCase().startsWith('fix') ? 'fixa' : 'variavel',
-              valor: Number(String(row.valor).replace(',', '.')) || 0,
+              valor: parseValorBR(row.valor) ?? 0,
               data_vencimento: dataVencimento,
               data_pagamento: dataPagamento,
               responsavel_id: await this.resolveResponsavel(row.responsavel_nome),
@@ -137,7 +137,7 @@ export function csvModalStore() {
               nome: row.nome,
               room_id: room.id,
               category_id: categoria?.id || null,
-              quantidade: Number(String(row.quantidade || 1).replace(',', '.')) || 1,
+              quantidade: parseValorBR(row.quantidade) || 1,
               data_validade: normalizarDataCsv(row.data_validade),
               icone: row.icone || null,
               foto_url: row.foto_url || null,
@@ -152,7 +152,7 @@ export function csvModalStore() {
               nome: row.nome,
               categoria_id: await this.resolveCategoria(row.categoria_nome),
               unidade,
-              quantidade: Number(String(row.quantidade || 1).replace(',', '.')) || 1,
+              quantidade: parseValorBR(row.quantidade) || 1,
             });
           } else {
             // caixinhas: sem find-or-create por nome — banco_nome não é
@@ -160,8 +160,8 @@ export function csvModalStore() {
             // mesmo banco, ex.: moedas diferentes), então cada linha vira
             // uma caixinha nova, igual a "Nova caixinha" manual.
             if (!row.banco_nome) throw new Error('banco é obrigatório');
-            const meta = row.meta ? Number(String(row.meta).replace(',', '.')) || null : null;
-            const valorInicial = row.valor_inicial ? Number(String(row.valor_inicial).replace(',', '.')) || 0 : 0;
+            const meta = parseValorBR(row.meta) || null;
+            const valorInicial = parseValorBR(row.valor_inicial) ?? 0;
             const moeda = (row.moeda || 'BRL').toUpperCase();
             // Valida contra a lista real de moedas que o app sabe converter
             // (MOEDAS_SUPORTADAS) — sem isso, um código digitado errado no

@@ -137,6 +137,38 @@ export function normalizarDataCsv(valor) {
   return parseDataBR(texto);
 }
 
+// Valor monetário de planilha (bug crítico achado na revisão de 2026-10-04:
+// "1.234,56" e "R$ 10,00" viravam R$ 0,00 sem aviso). Entende:
+// "1.234,56" · "1234,56" · "R$ 10,00" · "10,00 R$" · "1,234.56" · "34.9" ·
+// "-50" · "(50,00)" · "50,00-". Vazio → null. Texto que não é número → ERRO
+// (a linha aparece no relatório de erros), nunca zero silencioso.
+export function parseValorBR(valor) {
+  let t = (valor ?? '').toString().replace(/R\$|\s| /gi, '').trim();
+  if (!t) return null;
+  let negativo = false;
+  if (/^\(.*\)$/.test(t)) { negativo = true; t = t.slice(1, -1); }
+  if (t.endsWith('-')) { negativo = true; t = t.slice(0, -1); }
+  if (t.startsWith('-')) { negativo = !negativo; t = t.slice(1); }
+  if (t.startsWith('+')) t = t.slice(1);
+  if (!/^[\d.,]+$/.test(t)) throw new Error(`valor "${valor}" não entendido`);
+  const virgula = t.lastIndexOf(',');
+  const ponto = t.lastIndexOf('.');
+  if (virgula > -1 && ponto > -1) {
+    // O separador que aparece por último é o decimal.
+    t = virgula > ponto ? t.replace(/\./g, '').replace(',', '.') : t.replace(/,/g, '');
+  } else if (virgula > -1) {
+    if ((t.match(/,/g) || []).length > 1) throw new Error(`valor "${valor}" não entendido`);
+    t = t.replace(',', '.');
+  } else if (ponto > -1) {
+    // Só ponto: "1.234" / "1.234.567" = milhar; "34.9" / "34.90" = decimal.
+    const partes = t.split('.');
+    if (partes.length > 2 || partes[1].length === 3) t = partes.join('');
+  }
+  const n = Number(t);
+  if (!Number.isFinite(n)) throw new Error(`valor "${valor}" não entendido`);
+  return negativo ? -n : n;
+}
+
 // Aplica o de-para escolhido pelo usuário (target -> cabeçalho do CSV) sobre as linhas cruas.
 export function applyMapping(rows, mapping) {
   return rows.map((row) => {

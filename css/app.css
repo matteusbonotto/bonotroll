@@ -1051,3 +1051,136 @@ img.cg-company-logo { display: block; }
   background: var(--color-primary);
   color: #fff;
 }
+
+/* Primeiros socorros (2026-10-04): botões grandes de ligar, alvos ≥ 48px,
+   leitura rápida (idoso/criança/pressa). */
+.cg-socorros-numeros {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 0.6rem;
+}
+
+.cg-socorros-numero {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-areas: "icone num" "icone nome" "desc desc";
+  column-gap: 0.6rem;
+  align-items: center;
+  min-height: 56px;
+  padding: 0.7rem 0.8rem;
+  border-radius: var(--radius-md);
+  border: 2px solid var(--color-danger, #c0392b);
+  color: inherit;
+  text-decoration: none;
+  background: var(--color-surface, #fff);
+}
+
+.cg-socorros-numero:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.cg-socorros-numero i {
+  grid-area: icone;
+  font-size: 1.6rem;
+  color: var(--color-danger, #c0392b);
+}
+
+.cg-socorros-numero__num {
+  grid-area: num;
+  font-size: 1.35rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.cg-socorros-numero__nome {
+  grid-area: nome;
+  font-weight: 700;
+}
+
+.cg-socorros-numero__desc {
+  grid-area: desc;
+  font-size: 0.85rem;
+  opacity: 0.8;
+  margin-top: 0.2rem;
+}
+
+.cg-socorros-numero.cg-socorros-numero--destaque {
+  background: var(--color-danger, #c0392b);
+  color: #fff;
+}
+
+.cg-socorros-numero.cg-socorros-numero--destaque i {
+  color: #fff;
+}
+
+.cg-socorros-topicos {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.cg-card.cg-socorros-topico {
+  padding: 0;
+  overflow: hidden;
+}
+
+.cg-socorros-topico__cabecalho {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  min-height: 56px;
+  padding: 0.75rem 1rem;
+  background: none;
+  border: 0;
+  text-align: left;
+  font: inherit;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: inherit;
+}
+
+.cg-socorros-topico__cabecalho > .bi:first-child {
+  font-size: 1.4rem;
+  color: var(--color-primary);
+}
+
+.cg-socorros-topico--urgente .cg-socorros-topico__cabecalho > .bi:first-child {
+  color: var(--color-danger, #c0392b);
+}
+
+.cg-socorros-urgente {
+  background: var(--color-danger, #c0392b);
+  color: #fff;
+  font-size: 0.75rem;
+}
+
+.cg-socorros-passos {
+  margin: 0;
+  padding: 0 1rem 0 2.4rem;
+  font-size: 1.05rem;
+  line-height: 1.5;
+}
+
+.cg-socorros-passos li {
+  margin-bottom: 0.45rem;
+}
+
+.cg-socorros-nao-faca-titulo {
+  margin: 0.6rem 1rem 0.2rem;
+  font-weight: 800;
+  color: var(--color-danger, #c0392b);
+}
+
+.cg-socorros-nao-faca {
+  margin: 0 1rem;
+  padding-left: 1.4rem;
+}
+
+.cg-socorros-topico .btn {
+  margin: 0.6rem 1rem 1rem;
+  width: calc(100% - 2rem) !important;
+  min-height: 48px;
+  font-weight: 700;
+}

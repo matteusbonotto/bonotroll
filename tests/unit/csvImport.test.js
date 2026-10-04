@@ -32,3 +32,17 @@ test('normalizarDataCsv tolera espaço em volta do valor', () => {
   assert.equal(normalizarDataCsv('  01/09/2026  '), '2026-09-01');
   assert.equal(normalizarDataCsv('  2026-09-01  '), '2026-09-01');
 });
+
+test('parseValorBR entende os formatos de planilha pt-BR e nunca zera em silêncio (revisão 2026-10-04)', async () => {
+  const { parseValorBR } = await import('../../js/services/csvImport.js');
+  const casos = {
+    '1.234,56': 1234.56, '1234,56': 1234.56, 'R$ 10,00': 10, '10,00 R$': 10, '1,234.56': 1234.56,
+    '34.9': 34.9, '34.90': 34.9, '1.234': 1234, '1.234.567': 1234567, '-50': -50, '(50,00)': -50,
+    '50,00-': -50, 'R$ 1.234.567,89': 1234567.89, '0': 0,
+  };
+  for (const [entrada, esperado] of Object.entries(casos)) assert.equal(parseValorBR(entrada), esperado, entrada);
+  assert.equal(parseValorBR(''), null);
+  assert.equal(parseValorBR(undefined), null);
+  assert.throws(() => parseValorBR('abc'), /não entendido/);
+  assert.throws(() => parseValorBR('1,2,3'), /não entendido/);
+});

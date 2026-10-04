@@ -19,7 +19,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-      - run: npm install
+      - run: npm ci
       - run: npm run test:unit
       - run: node scripts/build.mjs --demo
       - run: npx playwright install --with-deps chromium

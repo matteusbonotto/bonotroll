@@ -119,3 +119,16 @@ O checklist acima (8 itens) foi todo concluído. Depois disso vieram mais pedido
 - [x] Todas as importações por foto (item de Compras, item do Inventário, comprovante) usam a câmera do app.
 - [x] "Recursos" virou "Inventário" em todo texto visível (identificadores e chaves salvas mantidos, ver CLAUDE.md).
 - [x] Várias listas de compras: "Minhas listas" (cartões com status, itens e total), "Nova lista" com sugestões (Mercado, Internet, Farmácia, Feira, Casa), renomear/excluir, entrar na lista para comprar; ao encerrar, a mesma lista volta vazia e a compra vai para o histórico; a lista aberta é lembrada ao recarregar a página.
+
+## Rodada 2026-10-04 — Fase 2 (revisão completa: segurança e usabilidade)
+
+- [x] Auditoria de segurança registrada em `docs/AUDITORIA-SEGURANCA-2026-10.md`.
+- [x] Revisão de usabilidade e acessibilidade com 5 personas em `docs/REVISAO-UX-2026-10.md`.
+- [x] Pesquisa de APIs de promoções em `docs/PESQUISA-PROMOCOES.md`.
+- [x] CSP de verdade em `firebase.json`: `script-src`, `connect-src` e `worker-src` restritos aos domínios usados, mais COOP. Validada com 55 e2e contra o build servido com os cabeçalhos reais (`scripts/servir-dist.mjs`) e com OCR real (Tesseract leu "ARROZ 5KG" com a CSP ligada).
+- [x] Script inline do tema virou `js/tema-inicial.js`, para não precisar de `unsafe-inline` em script.
+- [x] Importação de planilha: "1.234,56", "R$ 10,00", "(50,00)" e "1,234.56" agora entram com o valor certo; texto que não é número vira erro na linha, nunca R$ 0,00 silencioso (`parseValorBR`).
+- [x] Aba "Primeiros socorros": números de emergência com botão de ligar e 16 guias pesquisáveis com passos e "não faça".
+- [x] CI com `npm ci`.
+- [ ] Migração de endurecimento do banco (C1, C2, A1, A2, A3, M1, M2) escrita em `supabase/endurecimento-2026-10.sql` e anexada ao `schema.sql`, mas NÃO APLICADA: a CLI não acessa o projeto `appbntt` (403). Precisa de `npx supabase login` com a conta do BNTT.
+- [ ] `.env-old` com chaves `service_role` do banco antigo: o usuário precisa rotacionar ou excluir o projeto antigo e apagar o arquivo.
