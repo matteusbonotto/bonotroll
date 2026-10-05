@@ -649,7 +649,15 @@ export function txModalStore() {
         } else {
           salva = await createTransaction(payload);
           transactionId = salva.id;
-          store.notify(this.form.tipo === 'entrada' ? 'Entrada adicionada.' : 'Despesa adicionada.');
+          // Fluxo A (Palm, fase 7): salvou → confirma com "Desfazer" (5s),
+          // para quem tocou em Salvar sem querer não precisar procurar e apagar.
+          const idCriado = salva.id;
+          store.notifyUndo(
+            this.form.tipo === 'entrada' ? 'Entrada salva.' : 'Despesa salva.',
+            async () => {},
+            async () => { await deleteTransaction(idCriado); window.dispatchEvent(new CustomEvent('cg:transactions-changed')); },
+            'bi-check-circle-fill',
+          );
         }
 
         // Best-effort (mesmo padrão de avisarPagamento em transactionTable.js): a

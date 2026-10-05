@@ -454,6 +454,7 @@ test.describe('viewport de celular (regressão: balão não pode cobrir/esconder
   });
 
   test('guia "Registre um gasto de verdade" (financeiro): balão sempre dentro da tela em todos os 17 passos, inclusive logo após o modal abrir (transição CSS)', async ({ page }) => {
+    test.slow(); // 17 passos; no build ofuscado e com a suíte em paralelo passava dos 30s padrão
     await page.goto('/?demo=1');
     await page.getByText('Entrar como', { exact: false }).first().click();
     await page.locator('.cg-topbar').getByRole('button', { name: 'Ajuda' }).click();

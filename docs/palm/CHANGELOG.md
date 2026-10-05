@@ -1,5 +1,12 @@
 # CHANGELOG — Palm Business
 
+## Fases 7, 11 e 12 (fluxos, QA, hardening) — checkpoint/qa
+- **Fluxo A (adicionar despesa):** ao salvar, aviso "Despesa salva." com **Desfazer** (5 s) que apaga o lançamento de verdade — antes, salvar sem querer obrigava a procurar e excluir. Ícone de confirmação (não lixeira).
+- **45 rótulos de formulário ligados aos campos** (`for`/`id`): leitor de tela e narração agora dizem "Valor (R$)" em vez de só "campo de edição"; tocar no rótulo foca o campo.
+- Linguagem: "Fixa (todo mês)" / "Variável (muda)"; "Previsto" → "Esperado" (o nome que o cartão de saldo usa).
+- **Segurança:** SRI (integridade) em Bootstrap, Bootstrap Icons e Alpine vindos do CDN; dependências sem vulnerabilidades (`npm audit`); cabeçalhos conferidos em produção (HSTS com preload, CSP, X-Frame-Options, nosniff, Permissions-Policy).
+- **QA:** 129 unitários + 65 e2e no fonte + mesma suíte e2e no build de produção ofuscado (`npm run test:dist`); auditoria de telas sem problemas nas 5 larguras.
+
 ## Fase 4 + 10 (componentes e acessibilidade) — checkpoint/componentes
 - **Auditoria automática** `npm run auditar` (scripts/auditar-telas.mjs; precisa do app servido em :5511): 8 telas × 320/375/768/1280/1920 px medindo alvo de toque, rolagem lateral, nome acessível, imagens sem alt, texto < 12 px e inglês na interface. **90 problemas → 0.**
 - Regra única do design system: todo botão/campo ≥ 44 px (tabela densa do computador ≥ 24 px, WCAG 2.5.8). Ícones-botão (ajuda, editar cômodo/caixinha) mantêm o desenho pequeno com área de toque de 44 px.

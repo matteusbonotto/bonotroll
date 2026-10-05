@@ -30,8 +30,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="BNTT" />
 
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" integrity="sha384-XGjxtQfXaH2tnPFa9x+ruJTuLE3Aa6LhHSWRr1XeTyhezb4abCG4ccI5AkVDxqC+" crossorigin="anonymous" />
   <!-- Plus Jakarta Sans (2026-08-20, DESIGN-SYSTEM-2027.md) — a identidade
        visual do produto inteiro. Antes disso o app rodava na fonte padrão do
        sistema operacional (Segoe UI/San Francisco/Roboto conforme o
@@ -105,12 +105,12 @@
         <template x-if="!$store.app.isDemoMode">
           <form @submit.prevent="submit">
             <div class="mb-3" x-show="mode === 'signup'">
-              <label class="form-label">Seu nome</label>
-              <input type="text" class="form-control" x-model="nome" placeholder="Como podemos te chamar?" />
+              <label class="form-label" for="cg-campo-nome">Seu nome</label>
+              <input id="cg-campo-nome" type="text" class="form-control" x-model="nome" placeholder="Como podemos te chamar?" />
             </div>
             <div class="mb-3">
-              <label class="form-label">E-mail</label>
-              <input type="email" class="form-control" x-model="email" required placeholder="voce@email.com" />
+              <label class="form-label" for="cg-campo-email">E-mail</label>
+              <input id="cg-campo-email" type="email" class="form-control" x-model="email" required placeholder="voce@email.com" />
             </div>
             <div class="mb-3" x-show="mode !== 'recuperar'">
               <label class="form-label" for="cg-login-senha">Senha</label>
@@ -376,7 +376,7 @@
 
           <div class="cg-hero-balance mb-4" :style="corSelecionada ? { background: corSelecionada } : {}">
             <span class="cg-hero-balance__label">Saldo <span x-text="quemVer === 'grupo' ? 'do grupo' : quemVer === 'eu' ? 'atual' : ('de ' + (opcoesQuemVer.find(o => o.id === quemVer)?.nome || ''))"></span></span>
-            <span class="cg-help" x-data="cgHelp('Entradas pagas menos saídas pagas, olhando pra quem está selecionado acima. Lançamentos ainda não pagos não entram aqui — eles aparecem à parte, em \'Previsto\'.')" @mouseenter="aoPassarMouse()" @mouseleave="fechar()" @click.outside="fechar()">
+            <span class="cg-help" x-data="cgHelp('Entradas pagas menos saídas pagas, olhando pra quem está selecionado acima. Lançamentos ainda não pagos não entram aqui — eles aparecem à parte, em \'Esperado\'.')" @mouseenter="aoPassarMouse()" @mouseleave="fechar()" @click.outside="fechar()">
               <button type="button" class="cg-help__trigger" @click="aoClicar()" @keydown.escape.stop="fechar()" :aria-expanded="aberto ? 'true' : 'false'" :aria-describedby="id" aria-label="O que é o saldo">
                 <i class="bi bi-question-circle-fill" aria-hidden="true"></i>
               </button>
@@ -811,8 +811,8 @@
               <div class="col-12 col-md-2">
                 <select class="form-select form-select-sm" x-model="filtro.tipoDespesa">
                   <option value="">Fixa/Variável</option>
-                  <option value="fixa">Fixa</option>
-                  <option value="variavel">Variável</option>
+                  <option value="fixa">Fixa (todo mês)</option>
+                  <option value="variavel">Variável (muda)</option>
                 </select>
               </div>
               <div class="col-12 col-md-2">
@@ -826,17 +826,17 @@
             </div>
             <div class="row g-2 align-items-end mt-1">
               <div class="col-6 col-md-3">
-                <label class="form-label small mb-1 cg-muted">Vencimento de</label>
+                <label class="form-label small mb-1 cg-muted" for="cg-campo-829">Vencimento de</label>
                 <div class="cg-date-field">
-                  <input type="text" inputmode="numeric" autocomplete="off" class="form-control form-control-sm" placeholder="dd/mm/aaaa" x-datamask="filtro.dataInicio" />
+                  <input id="cg-campo-829" type="text" inputmode="numeric" autocomplete="off" class="form-control form-control-sm" placeholder="dd/mm/aaaa" x-datamask="filtro.dataInicio" />
                   <button type="button" class="cg-date-field__btn" @click="cgAbrirSeletorNativo($event)" aria-label="Escolher data no calendário"><i class="bi bi-calendar3"></i></button>
                   <input type="date" class="cg-date-field__nativo" tabindex="-1" aria-hidden="true" x-model="filtro.dataInicio" />
                 </div>
               </div>
               <div class="col-6 col-md-3">
-                <label class="form-label small mb-1 cg-muted">até</label>
+                <label class="form-label small mb-1 cg-muted" for="cg-campo-837">até</label>
                 <div class="cg-date-field">
-                  <input type="text" inputmode="numeric" autocomplete="off" class="form-control form-control-sm" placeholder="dd/mm/aaaa" x-datamask="filtro.dataFim" />
+                  <input id="cg-campo-837" type="text" inputmode="numeric" autocomplete="off" class="form-control form-control-sm" placeholder="dd/mm/aaaa" x-datamask="filtro.dataFim" />
                   <button type="button" class="cg-date-field__btn" @click="cgAbrirSeletorNativo($event)" aria-label="Escolher data no calendário"><i class="bi bi-calendar3"></i></button>
                   <input type="date" class="cg-date-field__nativo" tabindex="-1" aria-hidden="true" x-model="filtro.dataFim" />
                 </div>
@@ -1355,8 +1355,8 @@
                  antes col-12 col-sm-6 empilhava os dois abaixo de ~576px). -->
             <div class="row g-2 g-md-3 border-top pt-2 pt-md-3 mt-1">
               <div class="col-6">
-                <label class="form-label small">Onde vai comprar (opcional)</label>
-                <input type="text" class="form-control form-control-sm" placeholder="Ex: Extra, Carrefour…" :value="list?.nome_mercado || ''" @change="salvarNomeMercado($event.target.value)" />
+                <label class="form-label small" for="cg-campo-1358">Onde vai comprar (opcional)</label>
+                <input id="cg-campo-1358" type="text" class="form-control form-control-sm" placeholder="Ex: Extra, Carrefour…" :value="list?.nome_mercado || ''" @change="salvarNomeMercado($event.target.value)" />
               </div>
               <div class="col-6">
                 <label class="form-label small">Limite de gasto (opcional)</label>
@@ -1411,9 +1411,9 @@
               </div>
               <form @submit.prevent="addItem()">
                 <div class="mb-3" data-tour-alvo="campo-nome-compra">
-                  <label class="form-label small">Nome</label>
+                  <label class="form-label small" for="cg-campo-novoitem-nome">Nome</label>
                   <div class="d-flex gap-2">
-                    <input type="text" class="form-control" x-ref="inputNovoItem" x-model="novoItem.nome" @input="onNomeInput()" placeholder="Ex: Arroz 5kg" required />
+                    <input id="cg-campo-novoitem-nome" type="text" class="form-control" x-ref="inputNovoItem" x-model="novoItem.nome" @input="onNomeInput()" placeholder="Ex: Arroz 5kg" required />
                     <button type="button" class="cg-btn btn btn-outline-secondary flex-shrink-0" @click="abrirScanner()" title="Ler código de barras"><i class="bi bi-upc-scan"></i></button>
                     <button type="button" class="cg-btn btn btn-outline-secondary mb-0 flex-shrink-0" title="Tirar foto do item" aria-label="Tirar foto do item" :disabled="lendoFotoItem"
                       @click="$store.camera.capturar('Foto do item').then((f) => f && onFotoItem(cgEventoDeArquivo(f)))">
@@ -1432,16 +1432,16 @@
                   </div>
                 </div>
                 <div class="mb-3" data-tour-alvo="campo-categoria-compra">
-                  <label class="form-label small">Categoria <span class="cg-muted" x-show="novoItem.categoria_id && !categoriaEscolhidaManualmente">(sugerida)</span></label>
-                  <select class="form-select" x-model="novoItem.categoria_id" @change="onCategoriaManual()">
+                  <label class="form-label small" for="cg-campo-novoitem-categoria-id">Categoria <span class="cg-muted" x-show="novoItem.categoria_id && !categoriaEscolhidaManualmente">(sugerida)</span></label>
+                  <select id="cg-campo-novoitem-categoria-id" class="form-select" x-model="novoItem.categoria_id" @change="onCategoriaManual()">
                     <option value="">Sem categoria</option>
                     <template x-for="c in $store.app.categories" :key="c.id"><option :value="c.id" x-text="c.nome"></option></template>
                   </select>
                 </div>
                 <div class="row g-2 mb-3" data-tour-alvo="campo-unidade-compra">
                   <div class="col-6">
-                    <label class="form-label small">Unidade</label>
-                    <select class="form-select" x-model="novoItem.unidade">
+                    <label class="form-label small" for="cg-campo-novoitem-unidade">Unidade</label>
+                    <select id="cg-campo-novoitem-unidade" class="form-select" x-model="novoItem.unidade">
                       <option value="un">Unidade</option>
                       <option value="kg">Kg</option>
                       <option value="g">Gramas</option>
@@ -1467,9 +1467,9 @@
                     </div>
                   </div>
                   <div class="col-6">
-                    <label class="form-label small">Validade (opcional)</label>
+                    <label class="form-label small" for="cg-campo-1470">Validade (opcional)</label>
                     <div class="cg-date-field">
-                      <input type="text" inputmode="numeric" autocomplete="off" class="form-control" placeholder="dd/mm/aaaa" x-datamask="novoItem.data_validade" />
+                      <input id="cg-campo-1470" type="text" inputmode="numeric" autocomplete="off" class="form-control" placeholder="dd/mm/aaaa" x-datamask="novoItem.data_validade" />
                       <button type="button" class="cg-date-field__btn" @click="cgAbrirSeletorNativo($event)" aria-label="Escolher data no calendário"><i class="bi bi-calendar3"></i></button>
                       <input type="date" class="cg-date-field__nativo" tabindex="-1" aria-hidden="true" x-model="novoItem.data_validade" />
                     </div>
@@ -1682,20 +1682,20 @@
             <div class="cg-modal">
               <h2 class="h6 fw-bold mb-3">Editar item</h2>
               <div class="mb-3">
-                <label class="form-label small">Nome</label>
-                <input type="text" class="form-control" x-model="edicaoForm.nome" required />
+                <label class="form-label small" for="cg-campo-edicaoform-nome">Nome</label>
+                <input id="cg-campo-edicaoform-nome" type="text" class="form-control" x-model="edicaoForm.nome" required />
               </div>
               <div class="row g-2 mb-3">
                 <div class="col-12">
-                  <label class="form-label small">Categoria</label>
-                  <select class="form-select form-select-sm" x-model="edicaoForm.categoria_id">
+                  <label class="form-label small" for="cg-campo-edicaoform-categoria-id">Categoria</label>
+                  <select id="cg-campo-edicaoform-categoria-id" class="form-select form-select-sm" x-model="edicaoForm.categoria_id">
                     <option value="">Sem categoria</option>
                     <template x-for="c in $store.app.categories" :key="c.id"><option :value="c.id" x-text="c.nome"></option></template>
                   </select>
                 </div>
                 <div class="col-6">
-                  <label class="form-label small">Unidade</label>
-                  <select class="form-select form-select-sm" x-model="edicaoForm.unidade">
+                  <label class="form-label small" for="cg-campo-edicaoform-unidade">Unidade</label>
+                  <select id="cg-campo-edicaoform-unidade" class="form-select form-select-sm" x-model="edicaoForm.unidade">
                     <option value="un">Unidade</option>
                     <option value="kg">Kg</option>
                     <option value="g">Gramas</option>
@@ -1719,16 +1719,16 @@
                   </div>
                 </div>
                 <div class="col-6">
-                  <label class="form-label small">Validade</label>
+                  <label class="form-label small" for="cg-campo-1722">Validade</label>
                   <div class="cg-date-field">
-                    <input type="text" inputmode="numeric" autocomplete="off" class="form-control form-control-sm" placeholder="dd/mm/aaaa" x-datamask="edicaoForm.data_validade" />
+                    <input id="cg-campo-1722" type="text" inputmode="numeric" autocomplete="off" class="form-control form-control-sm" placeholder="dd/mm/aaaa" x-datamask="edicaoForm.data_validade" />
                     <button type="button" class="cg-date-field__btn" @click="cgAbrirSeletorNativo($event)" aria-label="Escolher data no calendário"><i class="bi bi-calendar3"></i></button>
                     <input type="date" class="cg-date-field__nativo" tabindex="-1" aria-hidden="true" x-model="edicaoForm.data_validade" />
                   </div>
                 </div>
                 <div class="col-12">
-                  <label class="form-label small">Código de barras</label>
-                  <input type="text" class="form-control form-control-sm" x-model="edicaoForm.codigo_barras" placeholder="Opcional" />
+                  <label class="form-label small" for="cg-campo-edicaoform-codigo-barras">Código de barras</label>
+                  <input id="cg-campo-edicaoform-codigo-barras" type="text" class="form-control form-control-sm" x-model="edicaoForm.codigo_barras" placeholder="Opcional" />
                 </div>
                 <div class="col-12">
                   <label class="form-label small d-block">Prioridade</label>
@@ -2137,9 +2137,9 @@
                 <span class="cg-muted fw-normal" x-text="'— ' + (salaAtual?.nome || '')"></span>
               </h2>
               <div class="mb-3" data-tour-alvo="campo-nome-recurso">
-                <label class="form-label small">Nome</label>
+                <label class="form-label small" for="cg-campo-itemform-nome">Nome</label>
                 <div class="d-flex gap-2">
-                  <input type="text" class="form-control" x-model="itemForm.nome" placeholder="Ex: Arroz, Papel higiênico…" required />
+                  <input id="cg-campo-itemform-nome" type="text" class="form-control" x-model="itemForm.nome" placeholder="Ex: Arroz, Papel higiênico…" required />
                   <button type="button" class="cg-btn btn btn-outline-secondary flex-shrink-0" @click="abrirScanner()" title="Ler código de barras"><i class="bi bi-upc-scan"></i></button>
                   <button type="button" class="cg-btn btn btn-outline-secondary mb-0 flex-shrink-0" title="Tirar foto do item" aria-label="Tirar foto do item" :disabled="lendoFotoItem"
                     @click="$store.camera.capturar('Foto do item').then((f) => f && onFotoNomeItem(cgEventoDeArquivo(f)))">
@@ -2158,25 +2158,25 @@
                 </div>
               </div>
               <div class="mb-3" data-tour-alvo="campo-subcategoria-recurso">
-                <label class="form-label small">Subcategoria (opcional)</label>
-                <select class="form-select" x-model="itemForm.categoria_id">
+                <label class="form-label small" for="cg-campo-itemform-categoria-id">Subcategoria (opcional)</label>
+                <select id="cg-campo-itemform-categoria-id" class="form-select" x-model="itemForm.categoria_id">
                   <option value="">Sem subcategoria</option>
                   <template x-for="c in roomCategories" :key="c.id"><option :value="c.id" x-text="c.nome"></option></template>
                 </select>
               </div>
               <div class="row g-2 mb-3">
                 <div class="col-6" data-tour-alvo="campo-quantidade-recurso">
-                  <label class="form-label small">Quantidade</label>
+                  <label class="form-label small" for="cg-campo-itemform-quantidade">Quantidade</label>
                   <div class="cg-num-stepper">
                     <button type="button" class="cg-num-stepper__btn" data-repeat @click="itemForm.quantidade = Math.max(0, (Number(itemForm.quantidade) || 0) - 1)" aria-label="Diminuir"><i class="bi bi-dash"></i></button>
-                    <input type="number" min="0" class="form-control text-center" x-model="itemForm.quantidade" />
+                    <input id="cg-campo-itemform-quantidade" type="number" min="0" class="form-control text-center" x-model="itemForm.quantidade" />
                     <button type="button" class="cg-num-stepper__btn" data-repeat @click="itemForm.quantidade = (Number(itemForm.quantidade) || 0) + 1" aria-label="Aumentar"><i class="bi bi-plus"></i></button>
                   </div>
                 </div>
                 <div class="col-6" data-tour-alvo="campo-validade-recurso">
-                  <label class="form-label small">Validade (opcional)</label>
+                  <label class="form-label small" for="cg-campo-2177">Validade (opcional)</label>
                   <div class="cg-date-field">
-                    <input type="text" inputmode="numeric" autocomplete="off" class="form-control" placeholder="dd/mm/aaaa" x-datamask="itemForm.data_validade" />
+                    <input id="cg-campo-2177" type="text" inputmode="numeric" autocomplete="off" class="form-control" placeholder="dd/mm/aaaa" x-datamask="itemForm.data_validade" />
                     <button type="button" class="cg-date-field__btn" @click="cgAbrirSeletorNativo($event)" aria-label="Escolher data no calendário"><i class="bi bi-calendar3"></i></button>
                     <input type="date" class="cg-date-field__nativo" tabindex="-1" aria-hidden="true" x-model="itemForm.data_validade" />
                   </div>
@@ -2210,8 +2210,8 @@
                 <button type="button" class="btn-close" @click="fecharRoomModal()" aria-label="Fechar"></button>
               </div>
               <div class="mb-3">
-                <label class="form-label small">Nome</label>
-                <input type="text" class="form-control" x-model="roomForm.nome" placeholder="Ex: Garagem, Área de serviço…" @keydown.enter="salvarRoom()" required />
+                <label class="form-label small" for="cg-campo-roomform-nome">Nome</label>
+                <input id="cg-campo-roomform-nome" type="text" class="form-control" x-model="roomForm.nome" placeholder="Ex: Garagem, Área de serviço…" @keydown.enter="salvarRoom()" required />
               </div>
               <div class="mb-3">
                 <label class="form-label small d-block">Ícone</label>
@@ -2244,8 +2244,8 @@
                 <button type="button" class="btn-close" @click="fecharCategoriaModal()" aria-label="Fechar"></button>
               </div>
               <div class="mb-3">
-                <label class="form-label small">Nome</label>
-                <input type="text" class="form-control" x-model="categoriaForm.nome" placeholder="Ex: Despensa, Armário de cima…" @keydown.enter="salvarSubcategoria()" required />
+                <label class="form-label small" for="cg-campo-categoriaform-nome">Nome</label>
+                <input id="cg-campo-categoriaform-nome" type="text" class="form-control" x-model="categoriaForm.nome" placeholder="Ex: Despensa, Armário de cima…" @keydown.enter="salvarSubcategoria()" required />
               </div>
               <div class="d-flex gap-2">
                 <template x-if="categoriaForm.id">
@@ -2507,20 +2507,20 @@
                 <button type="button" class="btn-close" @click="fecharMovModal()" aria-label="Fechar"></button>
               </div>
               <div class="mb-3">
-                <label class="form-label small">Valor</label>
-                <input type="number" min="0.01" step="0.01" class="form-control" x-model="movForm.valor" @keydown.enter="salvarMovimentacao()" required autofocus />
+                <label class="form-label small" for="cg-campo-movform-valor">Valor</label>
+                <input id="cg-campo-movform-valor" type="number" min="0.01" step="0.01" class="form-control" x-model="movForm.valor" @keydown.enter="salvarMovimentacao()" required autofocus />
               </div>
               <div class="mb-3">
-                <label class="form-label small">Data</label>
+                <label class="form-label small" for="cg-campo-2514">Data</label>
                 <div class="cg-date-field">
-                  <input type="text" inputmode="numeric" autocomplete="off" class="form-control" placeholder="dd/mm/aaaa" x-datamask="movForm.data" />
+                  <input id="cg-campo-2514" type="text" inputmode="numeric" autocomplete="off" class="form-control" placeholder="dd/mm/aaaa" x-datamask="movForm.data" />
                   <button type="button" class="cg-date-field__btn" @click="cgAbrirSeletorNativo($event)" aria-label="Escolher data no calendário"><i class="bi bi-calendar3"></i></button>
                   <input type="date" class="cg-date-field__nativo" tabindex="-1" aria-hidden="true" x-model="movForm.data" />
                 </div>
               </div>
               <div class="mb-3">
-                <label class="form-label small">Observações (opcional)</label>
-                <input type="text" class="form-control" x-model="movForm.observacoes" placeholder="Ex: sobra do mês, resgate pra emergência…" />
+                <label class="form-label small" for="cg-campo-movform-observacoes">Observações (opcional)</label>
+                <input id="cg-campo-movform-observacoes" type="text" class="form-control" x-model="movForm.observacoes" placeholder="Ex: sobra do mês, resgate pra emergência…" />
               </div>
               <div class="d-flex gap-2">
                 <button type="button" class="cg-btn btn btn-outline-secondary flex-fill" @click="fecharMovModal()">Cancelar</button>
@@ -3279,22 +3279,22 @@
         </div>
 
         <div class="mb-3" data-tour-alvo="campo-titulo">
-          <label class="form-label">Título</label>
-          <input type="text" class="form-control" x-model="$store.txModal.form.titulo" @input="$store.txModal.onTituloInput()" placeholder="Ex: Aluguel, Mercado, Salário…" required />
+          <label class="form-label" for="cg-campo-txmodal-form-titulo">Título</label>
+          <input id="cg-campo-txmodal-form-titulo" type="text" class="form-control" x-model="$store.txModal.form.titulo" @input="$store.txModal.onTituloInput()" placeholder="Ex: Aluguel, Mercado, Salário…" required />
         </div>
 
         <div class="row g-2 mb-3">
           <div class="col-7" data-tour-alvo="campo-categoria">
-            <label class="form-label">Categoria</label>
-            <select class="form-select" x-model="$store.txModal.form.categoria_id" @change="$store.txModal.onCategoriaChange()">
+            <label class="form-label" for="cg-campo-txmodal-form-categoria-id">Categoria</label>
+            <select id="cg-campo-txmodal-form-categoria-id" class="form-select" x-model="$store.txModal.form.categoria_id" @change="$store.txModal.onCategoriaChange()">
               <option value="">Sem categoria</option>
               <template x-for="c in $store.app.categories" :key="c.id"><option :value="c.id" x-text="c.nome"></option></template>
               <option value="__nova__">+ Nova categoria…</option>
             </select>
           </div>
           <div class="col-5" data-tour-alvo="campo-valor">
-            <label class="form-label">Valor (R$)</label>
-            <input type="number" min="0" step="0.01" class="form-control" x-model="$store.txModal.form.valor" required />
+            <label class="form-label" for="cg-campo-txmodal-form-valor">Valor (R$)</label>
+            <input id="cg-campo-txmodal-form-valor" type="number" min="0" step="0.01" class="form-control" x-model="$store.txModal.form.valor" required />
           </div>
         </div>
 
@@ -3312,12 +3312,12 @@
           <div class="cg-muted small fw-semibold text-uppercase mb-2">Detalhes</div>
           <div class="row g-2 mb-2">
             <div class="col-8" data-tour-alvo="campo-empresa">
-              <label class="form-label">Empresa / Serviço</label>
+              <label class="form-label" for="cg-campo-txmodal-form-empresa-servico">Empresa / Serviço</label>
               <div class="d-flex align-items-center gap-2">
                 <span class="cg-avatar cg-avatar--sm flex-shrink-0" style="background: var(--color-surface-alt);" x-show="$store.txModal.empresaLogoPreview">
                   <img alt="" :src="$store.txModal.empresaLogoPreview" />
                 </span>
-                <input type="text" class="form-control" list="cg-empresas-lista" x-model="$store.txModal.form.empresa_servico" placeholder="Ex: Nubank, iFood…" />
+                <input id="cg-campo-txmodal-form-empresa-servico" type="text" class="form-control" list="cg-empresas-lista" x-model="$store.txModal.form.empresa_servico" placeholder="Ex: Nubank, iFood…" />
                 <template x-if="$store.txModal.form.empresa_servico.trim()">
                   <div class="btn-group flex-shrink-0">
                     <label class="cg-btn btn btn-outline-secondary mb-0" style="cursor:pointer;" title="Anexar logo (upload)" @click="$store.txModal.empresaLogoModoUrl = false">
@@ -3335,7 +3335,7 @@
               </datalist>
             </div>
             <div class="col-4" data-tour-alvo="campo-tipo-despesa">
-              <label class="form-label d-flex align-items-center">
+              <label class="form-label d-flex align-items-center" for="cg-campo-txmodal-form-tipo-despesa">
                 Tipo
                 <span class="cg-help cg-help--direita" x-data="cgHelp('Fixa: se repete todo mês com valor parecido (aluguel, assinatura). Variável: muda de mês pra mês (mercado, lazer). Marcar como fixa já liga a recorrência mensal automaticamente, mas dá pra desligar se quiser.')" @mouseenter="aoPassarMouse()" @mouseleave="fechar()" @click.outside="fechar()">
                   <button type="button" class="cg-help__trigger" @click="aoClicar()" @keydown.escape.stop="fechar()" :aria-expanded="aberto ? 'true' : 'false'" :aria-describedby="id" aria-label="Diferença entre despesa fixa e variável">
@@ -3344,9 +3344,9 @@
                   <div class="cg-help__popover" x-show.important="aberto" x-cloak x-transition.opacity.duration.120ms :id="id" role="tooltip" x-text="texto"></div>
                 </span>
               </label>
-              <select class="form-select form-select-sm" x-model="$store.txModal.form.tipo_despesa" @change="$store.txModal.onTipoDespesaChange()">
-                <option value="variavel">Variável</option>
-                <option value="fixa">Fixa</option>
+              <select id="cg-campo-txmodal-form-tipo-despesa" class="form-select form-select-sm" x-model="$store.txModal.form.tipo_despesa" @change="$store.txModal.onTipoDespesaChange()">
+                <option value="variavel">Variável (muda)</option>
+                <option value="fixa">Fixa (todo mês)</option>
               </select>
             </div>
           </div>
@@ -3360,8 +3360,8 @@
           <div class="mb-2" data-tour-alvo="campo-responsavel" x-data="{ open: false }" @click.outside="open = false">
             <div class="d-flex align-items-end gap-2" x-show.important="!$store.txModal.pagadores.length">
               <div class="flex-fill">
-                <label class="form-label">Responsável</label>
-                <select class="form-select" x-model="$store.txModal.form.responsavel_id">
+                <label class="form-label" for="cg-campo-txmodal-form-responsavel-id">Responsável</label>
+                <select id="cg-campo-txmodal-form-responsavel-id" class="form-select" x-model="$store.txModal.form.responsavel_id">
                   <option :value="$store.app.profile?.id" x-text="$store.app.profile?.nome"></option>
                   <template x-for="m in ($store.app.group?.members || [])" :key="m.id">
                     <option :value="m.id" x-text="m.nome" x-show="m.id !== $store.app.profile?.id"></option>
@@ -3434,9 +3434,9 @@
           <div class="cg-muted small fw-semibold text-uppercase mb-2 pt-2 border-top">Quando</div>
           <div class="row g-2 mb-2" data-tour-alvo="campo-datas">
             <div :class="$store.txModal.usaCadenciaParaVencimento ? 'col-12' : 'col-6'">
-              <label class="form-label">Cadastro</label>
+              <label class="form-label" for="cg-campo-3437">Cadastro</label>
               <div class="cg-date-field">
-                <input type="text" inputmode="numeric" autocomplete="off" class="form-control" placeholder="dd/mm/aaaa" x-datamask="$store.txModal.form.data_cadastro" />
+                <input id="cg-campo-3437" type="text" inputmode="numeric" autocomplete="off" class="form-control" placeholder="dd/mm/aaaa" x-datamask="$store.txModal.form.data_cadastro" />
                 <button type="button" class="cg-date-field__btn" @click="cgAbrirSeletorNativo($event)" aria-label="Escolher data no calendário"><i class="bi bi-calendar3"></i></button>
                 <input type="date" class="cg-date-field__nativo" tabindex="-1" aria-hidden="true" x-model="$store.txModal.form.data_cadastro" />
               </div>
@@ -3447,9 +3447,9 @@
                  dois juntos, pra não ter duas fontes brigando pela mesma
                  data (ver $store.txModal.usaCadenciaParaVencimento). -->
             <div class="col-6" x-show="!$store.txModal.usaCadenciaParaVencimento" x-cloak>
-              <label class="form-label">Vencimento</label>
+              <label class="form-label" for="cg-campo-3450">Vencimento</label>
               <div class="cg-date-field">
-                <input type="text" inputmode="numeric" autocomplete="off" class="form-control" placeholder="dd/mm/aaaa" x-datamask="$store.txModal.form.data_vencimento" />
+                <input id="cg-campo-3450" type="text" inputmode="numeric" autocomplete="off" class="form-control" placeholder="dd/mm/aaaa" x-datamask="$store.txModal.form.data_vencimento" />
                 <button type="button" class="cg-date-field__btn" @click="cgAbrirSeletorNativo($event)" aria-label="Escolher data no calendário"><i class="bi bi-calendar3"></i></button>
                 <input type="date" class="cg-date-field__nativo" tabindex="-1" aria-hidden="true" x-model="$store.txModal.form.data_vencimento" />
               </div>
@@ -3509,9 +3509,9 @@
 
           <template x-if="$store.txModal.form.data_pagamento">
             <div class="mb-2">
-              <label class="form-label small mb-1">Pago em</label>
+              <label class="form-label small mb-1" for="cg-campo-3512">Pago em</label>
               <div class="cg-date-field" style="max-width: 200px;">
-                <input type="text" inputmode="numeric" autocomplete="off" class="form-control form-control-sm" placeholder="dd/mm/aaaa" x-datamask="$store.txModal.form.data_pagamento" />
+                <input id="cg-campo-3512" type="text" inputmode="numeric" autocomplete="off" class="form-control form-control-sm" placeholder="dd/mm/aaaa" x-datamask="$store.txModal.form.data_pagamento" />
                 <button type="button" class="cg-date-field__btn" @click="cgAbrirSeletorNativo($event)" aria-label="Escolher data no calendário"><i class="bi bi-calendar3"></i></button>
                 <input type="date" class="cg-date-field__nativo" tabindex="-1" aria-hidden="true" x-model="$store.txModal.form.data_pagamento" />
               </div>
@@ -3529,20 +3529,20 @@
             </div>
             <template x-if="$store.txModal.form.recorrencia_tipo === 'mensal'">
               <div class="col-12 mt-2">
-                <label class="form-label small mb-1">Todo dia</label>
-                <input type="number" min="1" max="31" class="form-control form-control-sm" style="max-width: 100px;" x-model="$store.txModal.form.recorrencia_dia_mes" placeholder="Dia" />
+                <label class="form-label small mb-1" for="cg-campo-txmodal-form-recorrencia-dia-mes">Todo dia</label>
+                <input id="cg-campo-txmodal-form-recorrencia-dia-mes" type="number" min="1" max="31" class="form-control form-control-sm" style="max-width: 100px;" x-model="$store.txModal.form.recorrencia_dia_mes" placeholder="Dia" />
                 <p class="cg-muted small mb-0 mt-1" x-show="$store.txModal.form.recorrencia_dia_mes" x-text="'Próximo vencimento: ' + cgFormat.formatDate($store.txModal.proximoVencimentoPreview)"></p>
               </div>
             </template>
             <template x-if="$store.txModal.form.recorrencia_tipo === 'anual'">
               <div class="col-12 mt-2 d-flex align-items-end gap-2">
                 <div>
-                  <label class="form-label small mb-1">Dia</label>
-                  <input type="number" min="1" max="31" class="form-control form-control-sm" style="width: 90px;" x-model="$store.txModal.form.recorrencia_dia_mes" placeholder="Dia" />
+                  <label class="form-label small mb-1" for="cg-campo-txmodal-form-recorrencia-dia-mes-2">Dia</label>
+                  <input id="cg-campo-txmodal-form-recorrencia-dia-mes-2" type="number" min="1" max="31" class="form-control form-control-sm" style="width: 90px;" x-model="$store.txModal.form.recorrencia_dia_mes" placeholder="Dia" />
                 </div>
                 <div>
-                  <label class="form-label small mb-1">Mês</label>
-                  <select class="form-select form-select-sm" x-model="$store.txModal.form.recorrencia_mes">
+                  <label class="form-label small mb-1" for="cg-campo-txmodal-form-recorrencia-mes">Mês</label>
+                  <select id="cg-campo-txmodal-form-recorrencia-mes" class="form-select form-select-sm" x-model="$store.txModal.form.recorrencia_mes">
                     <option value="1">Janeiro</option><option value="2">Fevereiro</option><option value="3">Março</option>
                     <option value="4">Abril</option><option value="5">Maio</option><option value="6">Junho</option>
                     <option value="7">Julho</option><option value="8">Agosto</option><option value="9">Setembro</option>
@@ -3601,8 +3601,8 @@
           </div>
 
           <div class="mb-2" data-tour-alvo="campo-observacoes">
-            <label class="form-label">Observações</label>
-            <textarea class="form-control" rows="2" x-model="$store.txModal.form.observacoes" placeholder="Opcional"></textarea>
+            <label class="form-label" for="cg-campo-txmodal-form-observacoes">Observações</label>
+            <textarea id="cg-campo-txmodal-form-observacoes" class="form-control" rows="2" x-model="$store.txModal.form.observacoes" placeholder="Opcional"></textarea>
           </div>
         </div>
 
@@ -3750,10 +3750,10 @@
         </span>
         <div class="cg-muted small">A imagem aparece nas transa&ccedil;&otilde;es.</div>
       </div>
-      <label class="form-label">Nome</label>
-      <input type="text" class="form-control mb-2" placeholder="Ex: Nubank, iFood" x-model="$store.companyModal.nome" @keydown.enter.prevent="$store.companyModal.save()" />
-      <label class="form-label">Logo por URL</label>
-      <input type="url" class="form-control mb-2" placeholder="https://..." x-model="$store.companyModal.logoUrl" />
+      <label class="form-label" for="cg-campo-companymodal-nome">Nome</label>
+      <input id="cg-campo-companymodal-nome" type="text" class="form-control mb-2" placeholder="Ex: Nubank, iFood" x-model="$store.companyModal.nome" @keydown.enter.prevent="$store.companyModal.save()" />
+      <label class="form-label" for="cg-campo-companymodal-logourl">Logo por URL</label>
+      <input id="cg-campo-companymodal-logourl" type="url" class="form-control mb-2" placeholder="https://..." x-model="$store.companyModal.logoUrl" />
       <div class="d-flex gap-2">
         <label class="cg-btn btn btn-outline-secondary flex-fill mb-0" style="cursor:pointer;">
           <i class="bi bi-image"></i>
@@ -3779,8 +3779,8 @@
       </div>
 
       <div class="mb-3" data-tour-alvo="campo-banco-caixinha">
-        <label class="form-label small">Banco</label>
-        <select class="form-select" x-model="$store.caixinhaModal.bancoId" @change="$store.caixinhaModal.onBancoChange()">
+        <label class="form-label small" for="cg-campo-caixinhamodal-bancoid">Banco</label>
+        <select id="cg-campo-caixinhamodal-bancoid" class="form-select" x-model="$store.caixinhaModal.bancoId" @change="$store.caixinhaModal.onBancoChange()">
           <option value="" disabled>Escolha um banco…</option>
           <template x-for="b in $store.app.banks" :key="b.id">
             <option :value="b.id" x-text="b.nome"></option>
@@ -3790,21 +3790,21 @@
       </div>
       <div class="row g-2 mb-3" data-tour-alvo="campo-moeda-caixinha">
         <div class="col-6">
-          <label class="form-label small">Moeda</label>
-          <select class="form-select" x-model="$store.caixinhaModal.moeda">
+          <label class="form-label small" for="cg-campo-caixinhamodal-moeda">Moeda</label>
+          <select id="cg-campo-caixinhamodal-moeda" class="form-select" x-model="$store.caixinhaModal.moeda">
             <template x-for="m in $store.caixinhaModal.moedasSuportadas" :key="m.codigo">
               <option :value="m.codigo" x-text="m.codigo + ' — ' + m.nome"></option>
             </template>
           </select>
         </div>
         <div class="col-6">
-          <label class="form-label small">Meta (opcional)</label>
-          <input type="number" min="0" step="0.01" class="form-control" x-model="$store.caixinhaModal.meta" :placeholder="cgFormat.moedaInfo($store.caixinhaModal.moeda).simbolo" />
+          <label class="form-label small" for="cg-campo-caixinhamodal-meta">Meta (opcional)</label>
+          <input id="cg-campo-caixinhamodal-meta" type="number" min="0" step="0.01" class="form-control" x-model="$store.caixinhaModal.meta" :placeholder="cgFormat.moedaInfo($store.caixinhaModal.moeda).simbolo" />
         </div>
       </div>
       <div class="mb-3" data-tour-alvo="campo-responsavel-caixinha" x-show="$store.app.group">
-        <label class="form-label small">Responsável</label>
-        <select class="form-select" x-model="$store.caixinhaModal.responsavelId">
+        <label class="form-label small" for="cg-campo-caixinhamodal-responsavelid">Responsável</label>
+        <select id="cg-campo-caixinhamodal-responsavelid" class="form-select" x-model="$store.caixinhaModal.responsavelId">
           <template x-for="m in $store.caixinhaModal.membros" :key="m.id">
             <option :value="m.id" x-text="m.nome"></option>
           </template>
@@ -3863,8 +3863,8 @@
         <button type="button" class="btn-close" @click="$store.bankModal.closeForm()" aria-label="Fechar"></button>
       </div>
       <div class="mb-3">
-        <label class="form-label small">Nome do banco</label>
-        <input type="text" class="form-control" x-model="$store.bankModal.nome" placeholder="Ex: Nubank, Inter, XP…" @keydown.enter.prevent="$store.bankModal.salvar()" required />
+        <label class="form-label small" for="cg-campo-bankmodal-nome">Nome do banco</label>
+        <input id="cg-campo-bankmodal-nome" type="text" class="form-control" x-model="$store.bankModal.nome" placeholder="Ex: Nubank, Inter, XP…" @keydown.enter.prevent="$store.bankModal.salvar()" required />
       </div>
       <div class="mb-3">
         <label class="form-label small">Logo (opcional)</label>
@@ -3931,12 +3931,12 @@
         <button type="button" class="btn-close" @click="$store.cartaoModal.closeForm()" aria-label="Fechar"></button>
       </div>
       <div class="mb-3">
-        <label class="form-label small">Nome do cartão</label>
-        <input type="text" class="form-control" x-model="$store.cartaoModal.nome" placeholder="Ex: Nubank, Inter, C6..." @keydown.enter.prevent="$store.cartaoModal.salvar()" required />
+        <label class="form-label small" for="cg-campo-cartaomodal-nome">Nome do cartão</label>
+        <input id="cg-campo-cartaomodal-nome" type="text" class="form-control" x-model="$store.cartaoModal.nome" placeholder="Ex: Nubank, Inter, C6..." @keydown.enter.prevent="$store.cartaoModal.salvar()" required />
       </div>
       <div class="mb-3">
-        <label class="form-label small">Banco (opcional)</label>
-        <select class="form-select" x-model="$store.cartaoModal.bancoId">
+        <label class="form-label small" for="cg-campo-cartaomodal-bancoid">Banco (opcional)</label>
+        <select id="cg-campo-cartaomodal-bancoid" class="form-select" x-model="$store.cartaoModal.bancoId">
           <option value="">Sem banco vinculado</option>
           <template x-for="b in $store.app.banks" :key="b.id">
             <option :value="b.id" x-text="b.nome"></option>
@@ -4093,7 +4093,7 @@
     <template x-for="t in $store.app.toasts" :key="t.id">
       <div class="toast cg-toast show" style="pointer-events: auto;" :class="'cg-toast--' + t.type" role="status" aria-live="polite" x-transition>
         <div class="toast-body d-flex align-items-start gap-2">
-          <i class="bi fs-5 flex-shrink-0" :class="t.type === 'danger' ? 'bi-exclamation-circle-fill' : t.type === 'undo' ? 'bi-trash3' : 'bi-check-circle-fill'"></i>
+          <i class="bi fs-5 flex-shrink-0" :class="t.type === 'danger' ? 'bi-exclamation-circle-fill' : t.type === 'undo' ? (t.icone || 'bi-trash3') : 'bi-check-circle-fill'"></i>
           <span class="flex-fill" x-text="t.message"></span>
           <button type="button" class="btn btn-link btn-sm p-0 flex-shrink-0 fw-semibold" x-show="t.type === 'undo'" @click="t.desfazer()">Desfazer</button>
           <button type="button" class="btn-close flex-shrink-0" @click="$store.app.dismissToast(t.id)" aria-label="Fechar"></button>
@@ -4222,7 +4222,7 @@
   </template>
 
   <script type="module" src="./js/app.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js" integrity="sha384-l8f0VcPi/M1iHPv8egOnY/15TDwqgbOR1anMIJWvU6nLRgZVLTLSaNqi/TOoT5Fh" crossorigin="anonymous"></script>
   <!-- ============ MODAL: CÂMERA DENTRO DO APP (Galaxy S21, 2026-10-04) ============ -->
   <div class="cg-modal-backdrop cg-camera-backdrop" x-data x-show="$store.camera.aberta" x-cloak @keydown.escape.window="$store.camera.aberta && $store.camera.cancelar()">
     <div class="cg-modal text-center" role="dialog" aria-modal="true" :aria-label="$store.camera.titulo">

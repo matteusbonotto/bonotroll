@@ -469,7 +469,7 @@ export function appStore() {
     // "desfazer de verdade o que já rodou" — cada chamador agora precisa
     // passar um `aoDesfazer` que recria/restaura o dado (não só o estado
     // local), já que a exclusão real já foi feita.
-    async notifyUndo(message, aoConfirmar, aoDesfazer) {
+    async notifyUndo(message, aoConfirmar, aoDesfazer, icone = null) {
       try {
         await aoConfirmar();
       } catch (e) {
@@ -482,7 +482,7 @@ export function appStore() {
         this.toasts = this.toasts.filter((t) => t.id !== id);
       }, 5000);
       this.toasts.push({
-        id, message, type: 'undo',
+        id, message, type: 'undo', icone,
         desfazer: async () => {
           if (desfeito) return;
           desfeito = true;

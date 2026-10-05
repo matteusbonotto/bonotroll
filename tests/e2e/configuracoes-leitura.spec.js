@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 
 // Configurações → Leitura: A−/A+ em passos, com limites, e narração.
 test('A+ e A− mudam o texto um passo por toque, dentro dos limites, e lembram a escolha', async ({ page }) => {
+  test.slow(); // muitos toques + recarga da página
   await page.goto('/?demo=1');
   await page.getByText('Entrar como', { exact: false }).first().click();
   await page.locator('.cg-sidebar__item', { hasText: 'Configurações' }).first().click();
