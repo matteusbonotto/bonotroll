@@ -28,7 +28,7 @@ test('cria a senha da família, cadastra pessoa com alergia e tipo sanguíneo, d
   await expect(card.locator('.cg-ficha__alergias')).toContainText('Dipirona, Penicilina');
   await expect(card.getByRole('link', { name: 'Ligar para Carla' })).toHaveAttribute('href', 'tel:11988887777');
 
-  const salvo = await page.evaluate(() => localStorage.getItem('bonotto_demo_db_v4'));
+  const salvo = await page.evaluate(() => localStorage.getItem('bonotto_demo_db_v5'));
   expect(salvo).not.toContain('Dipirona');
   expect(salvo).not.toContain('Vó Rosa');
 

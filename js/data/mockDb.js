@@ -9,7 +9,7 @@ import { isDemoMode } from './config.js';
 // CHAVES_ANTIGAS/loadDb() logo abaixo.
 // v3 (2026-10-04): nomes e valores 100% fictícios (o seed anterior usava os
 // nomes reais do casal) — trocar a chave descarta o demo antigo salvo.
-const STORAGE_KEY = 'bonotto_demo_db_v4';
+const STORAGE_KEY = 'bonotto_demo_db_v5';
 const SESSION_KEY = 'bonotto_demo_session';
 
 // Versão pinada (mesmo padrão de qualquer outro import pesado via esm.sh
@@ -620,7 +620,7 @@ function seedDatabase(nomes = NOMES_GENERICOS_PADRAO) {
 // uso, 2026-09-01: "vejo meu nome, o da Bia, contas e salários de
 // verdade"). Removidas explicitamente aqui, não só abandonadas, pra tirar
 // o dado sensível do navegador de vez, não só parar de lê-lo.
-const CHAVES_ANTIGAS = ['bonotto_demo_db_v1', 'bonotto_demo_db_v2', 'bonotto_demo_db_v3'];
+const CHAVES_ANTIGAS = ['bonotto_demo_db_v1', 'bonotto_demo_db_v2', 'bonotto_demo_db_v3', 'bonotto_demo_db_v4'];
 
 function loadDb() {
   if (!isDemoMode()) return {};

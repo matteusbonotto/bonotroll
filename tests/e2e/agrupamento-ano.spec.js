@@ -16,7 +16,7 @@ test('Agrupar por Período: cabeçalho de Ano aparece, colapsa/expande todos os 
   await page.goto('/?demo=1');
 
   const { anoAtual, anoQueVem } = await page.evaluate(() => {
-    const db = JSON.parse(localStorage.getItem('bonotto_demo_db_v4'));
+    const db = JSON.parse(localStorage.getItem('bonotto_demo_db_v5'));
     const hoje = new Date();
     const anoAtual = hoje.getFullYear();
     const anoQueVem = anoAtual + 1;
@@ -53,7 +53,7 @@ test('Agrupar por Período: cabeçalho de Ano aparece, colapsa/expande todos os 
         parcela_atual: null,
       }
     );
-    localStorage.setItem('bonotto_demo_db_v4', JSON.stringify(db));
+    localStorage.setItem('bonotto_demo_db_v5', JSON.stringify(db));
     return { anoAtual, anoQueVem };
   });
 
