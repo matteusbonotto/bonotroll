@@ -12,7 +12,9 @@ import os
 RAIZ = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
 DESTINO = os.path.join(RAIZ, "supabase", "templates")
 SITE = "https://bnttapp.web.app"
-LOGO = f"{SITE}/assets/icons/apple-touch-icon.png?v=4"
+# Logo hospedado no Storage do próprio Supabase (bucket público "marca"):
+# o painel do Supabase só mostra na prévia imagens de *.supabase.co.
+LOGO = "https://qlcrsclgtpjeqkmykqrs.supabase.co/storage/v1/object/public/marca/bntt-logo.png"
 VERDE = "#0E9F6E"
 VERDE_ESCURO = "#0A6E4D"
 TINTA = "#10201A"
