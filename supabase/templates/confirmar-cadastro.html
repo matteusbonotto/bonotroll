@@ -1,10 +1,86 @@
-<!-- Supabase → Authentication → Emails → "Confirm signup". Assunto: Confirme seu e-mail no BNTT -->
-<div style="font-family:Arial,Helvetica,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#10201A">
-  <p style="font-size:22px;font-weight:800;margin:0 0 16px">BNTT</p>
-  <p style="font-size:16px;line-height:1.5">Olá! Falta só um passo para começar a usar o BNTT.</p>
-  <p style="text-align:center;margin:28px 0">
-    <a href="{{ .ConfirmationURL }}" style="background:#0E9F6E;color:#fff;text-decoration:none;font-weight:700;padding:14px 28px;border-radius:999px;display:inline-block">Confirmar meu e-mail</a>
-  </p>
-  <p style="font-size:14px;color:#4B5B55;line-height:1.5">Se o botão não funcionar, copie e cole este endereço no navegador:<br><span style="word-break:break-all">{{ .ConfirmationURL }}</span></p>
-  <p style="font-size:13px;color:#6E7F79">Não foi você? Pode ignorar este e-mail.</p>
-</div>
+<!-- Confirm signup · Assunto: Confirme seu e-mail para começar no BNTT -->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<meta name="supported-color-schemes" content="light">
+<title>Confirme seu e-mail para começar no BNTT</title>
+</head>
+<body style="margin:0;padding:0;background:#F3F6F4;-webkit-text-size-adjust:100%;">
+<!-- Texto de pré-visualização (aparece ao lado do assunto na caixa de entrada) -->
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">Falta só um toque para sua conta ficar pronta.&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#F3F6F4;">
+  <tr>
+    <td align="center" style="padding:32px 16px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;">
+        <!-- Marca -->
+        <tr>
+          <td align="center" style="padding:0 0 20px;">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td style="vertical-align:middle;"><img src="https://bnttapp.web.app/assets/icons/apple-touch-icon.png?v=4" width="40" height="40" alt="BNTT" style="display:block;border:0;border-radius:10px;"></td>
+                <td style="vertical-align:middle;padding-left:10px;font-family:Arial,Helvetica,sans-serif;font-size:20px;font-weight:800;color:#10201A;letter-spacing:.5px;">BNTT</td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <!-- Cartão -->
+        <tr>
+          <td style="background:#FFFFFF;border-radius:16px;border:1px solid #E1E8E4;border-top:5px solid #0E9F6E;padding:36px 32px;font-family:Arial,Helvetica,sans-serif;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td align="center" style="padding:0 0 18px;">
+                  <div style="width:64px;height:64px;line-height:64px;border-radius:32px;background:#E3F5EC;font-size:30px;text-align:center;">&#9993;&#65039;</div>
+                </td>
+              </tr>
+              <tr>
+                <td align="center" style="font-size:24px;line-height:1.25;font-weight:800;color:#10201A;padding:0 0 12px;">Confirme seu e-mail</td>
+              </tr>
+              <tr>
+                <td align="center" style="font-size:16px;line-height:1.6;color:#5B6B65;padding:0 0 28px;">Que bom ter você no BNTT! Toque no botão abaixo para confirmar este e-mail e entrar na sua conta.</td>
+              </tr>
+              <tr>
+                <td align="center">
+                  <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                    <tr>
+                      <td align="center" bgcolor="#0E9F6E" style="border-radius:999px;background:#0E9F6E;">
+                        <a href="{{ .ConfirmationURL }}" target="_blank" style="display:inline-block;padding:16px 36px;font-family:Arial,Helvetica,sans-serif;font-size:17px;font-weight:700;color:#FFFFFF;text-decoration:none;border-radius:999px;">Confirmar meu e-mail</a>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              <tr>
+                <td align="center" style="padding:22px 0 0;font-size:13px;line-height:1.5;color:#5B6B65;">
+                  O botão não funcionou? Copie e cole este endereço no navegador:<br>
+                  <a href="{{ .ConfirmationURL }}" style="color:#0A6E4D;word-break:break-all;">{{ .ConfirmationURL }}</a>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:28px 0 0;">
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#F3F6F4;border-radius:12px;">
+                    <tr>
+                      <td style="padding:14px 16px;font-size:13px;line-height:1.55;color:#5B6B65;"><strong>Não criou uma conta no BNTT?</strong> Pode ignorar este e-mail — nada será criado sem a confirmação.</td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <!-- Rodapé -->
+        <tr>
+          <td align="center" style="padding:22px 12px 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.6;color:#8A9A94;">
+            BNTT · Seu dinheiro. Sua casa. Sob controle.<br>
+            Você recebeu este e-mail porque ele foi usado no <a href="https://bnttapp.web.app" style="color:#8A9A94;text-decoration:underline;">bnttapp.web.app</a>.<br>
+            E-mail automático — não precisa responder.
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+</body>
+</html>

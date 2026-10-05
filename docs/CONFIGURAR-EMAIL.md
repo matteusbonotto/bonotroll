@@ -28,11 +28,22 @@ Supabase → **Authentication → URL Configuration**:
 - **Site URL:** `https://bnttapp.web.app`
 - **Redirect URLs:** adicione `https://bnttapp.web.app/app` e `https://bnttapp.web.app/**`
 
-## Textos em português (recomendado)
+## Modelos de e-mail (cole cada um no Supabase)
 
-Supabase → **Authentication → Emails → Templates**:
-- **Confirm signup** → assunto `Confirme seu e-mail no BNTT` → cole o conteúdo de `supabase/templates/confirmar-cadastro.html`.
-- **Reset password** → assunto `Crie uma nova senha do BNTT` → cole `supabase/templates/redefinir-senha.html`.
+Supabase → **Authentication → Emails → Templates**. Para cada linha: escolha o
+modelo, cole o **assunto**, troque para o editor de código ("Source"), apague
+tudo e cole o conteúdo do arquivo. Salve.
+
+| Modelo no Supabase | Assunto | Arquivo |
+|---|---|---|
+| Confirm signup | Confirme seu e-mail para começar no BNTT | `supabase/templates/confirmar-cadastro.html` |
+| Reset password *(é o "Esqueci minha senha")* | Crie uma nova senha do BNTT | `supabase/templates/redefinir-senha.html` |
+| Magic link | Seu link para entrar no BNTT | `supabase/templates/link-magico.html` |
+| Change email address | Confirme o seu novo e-mail no BNTT | `supabase/templates/trocar-email.html` |
+| Invite user | Você foi convidado para o BNTT | `supabase/templates/convite.html` |
+| Reauthentication | Seu código de confirmação do BNTT | `supabase/templates/codigo-confirmacao.html` |
+
+Para mudar texto ou cor de todos de uma vez: edite `scripts/gerar-emails.py` e rode `python scripts/gerar-emails.py`.
 
 ## Testar (5 minutos)
 
