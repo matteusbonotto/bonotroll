@@ -4,7 +4,7 @@ import { test, expect } from '@playwright/test';
 // escolhido chega ao app — que oferece seguir para o pagamento no Stripe.
 test('LP troca Casa/Negócio e Mensal/Anual, com os preços certos', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Sua casa inteira em 1 tela.');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText(/Seu dinheiro.*Sua casa.*Sob controle/);
   const familia = page.getByRole('article', { name: 'Plano Família' });
   await expect(familia).toContainText('R$ 19,90');
 
@@ -13,7 +13,7 @@ test('LP troca Casa/Negócio e Mensal/Anual, com os preços certos', async ({ pa
   await expect(familia).toContainText('R$ 191,04 por ano');
 
   await page.getByRole('radio', { name: 'Negócio' }).click();
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Seu negócio inteiro em 1 tela.');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText(/Seu caixa.*Sua empresa.*Sob controle/);
   await expect(page.locator('html')).toHaveAttribute('data-linha', 'business');
   await expect(page.getByRole('article', { name: 'Plano Expansão' })).toBeVisible();
   await expect(page.locator('[data-plano="business_expansao"]')).toHaveAttribute('href', /tipo=business&plano=business_expansao&ciclo=anual/);

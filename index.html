@@ -1,98 +1,188 @@
 <!DOCTYPE html>
 <html lang="pt-BR" data-linha="home">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <!-- Quem já usa vai direto para /app (ver o arquivo) — antes de qualquer pintura. -->
-  <script src="./js/lp-redirecionar.js"></script>
-  <title>BNTT — sua casa ou seu negócio em 1 tela</title>
-  <meta name="description" content="BNTT Home organiza contas, lista de compras, inventário e a saúde da família. BNTT Business reúne contas, estoque e equipe de todas as unidades da sua empresa em 1 tela." />
-  <meta name="theme-color" content="#0E9F6E" />
-  <meta property="og:type" content="website" />
-  <meta property="og:title" content="BNTT — sua casa ou seu negócio em 1 tela" />
-  <meta property="og:description" content="Simples para todo mundo: contas, compras, estoque e equipe em um lugar só. 30 dias grátis." />
-  <meta property="og:locale" content="pt_BR" />
-  <link rel="icon" href="./assets/icons/icon.svg?v=4" type="image/svg+xml" />
-  <link rel="apple-touch-icon" href="./assets/icons/apple-touch-icon.png?v=4" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" integrity="sha384-XGjxtQfXaH2tnPFa9x+ruJTuLE3Aa6LhHSWRr1XeTyhezb4abCG4ccI5AkVDxqC+" crossorigin="anonymous" />
-  <link rel="stylesheet" href="./landing-assets/lp.css" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- Quem já usa o BNTT vai direto para /app (ver o arquivo) — antes de pintar a página. -->
+<script src="./js/lp-redirecionar.js"></script>
+<title>BNTT — Seu dinheiro. Sua casa. Sob controle.</title>
+<meta name="description" content="BNTT Home organiza o dinheiro, a lista de compras, o inventário e a saúde da família em um só lugar. BNTT Business faz o mesmo pela sua empresa: contas, estoque, equipe e filiais em 1 tela. 30 dias grátis.">
+<meta name="theme-color" content="#0A0F0D">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="BNTT — Seu dinheiro. Sua casa. Sob controle.">
+<meta property="og:description" content="Financeiro, compras e casa num app só — ou o seu negócio inteiro em 1 tela. 30 dias grátis, sem cartão.">
+<meta property="og:locale" content="pt_BR">
+<meta name="twitter:card" content="summary">
+
+<link rel="icon" type="image/svg+xml" href="./landing-assets/logos/logo-verde.svg">
+<link rel="apple-touch-icon" href="./assets/icons/apple-touch-icon.png?v=4">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./landing-assets/landing.css">
 </head>
 <body>
-  <a class="lp-pular" href="#conteudo">Pular para o conteúdo</a>
 
-  <header class="lp-topo">
-    <div class="lp-faixa lp-topo__dentro">
-      <a class="lp-marca" href="./" aria-label="BNTT, início">
-        <img src="./assets/logos/logo-colorida.svg" alt="" width="30" height="33" />
-        <span>BNTT <strong data-texto="linha">Home</strong></span>
-      </a>
-      <div class="lp-seletor" role="radiogroup" aria-label="Para quem é">
-        <button type="button" role="radio" data-escolher="home" aria-checked="true"><i class="bi bi-house-heart" aria-hidden="true"></i> Casa</button>
-        <button type="button" role="radio" data-escolher="business" aria-checked="false"><i class="bi bi-briefcase" aria-hidden="true"></i> Negócio</button>
+<div class="lp-grain" aria-hidden="true"></div>
+
+<a class="lp-skip" href="#conteudo">Pular para o conteúdo</a>
+
+<header class="lp-nav" id="lp-nav">
+  <div class="lp-nav__inner">
+    <a class="lp-nav__brand" href="#topo" aria-label="BNTT, voltar ao topo">
+      <img src="./landing-assets/logos/logo-branco.svg" alt="" width="28" height="30" class="lp-nav__mark">
+      <span>BNTT <em data-texto="linha">Home</em></span>
+    </a>
+    <div class="lp-nav__actions">
+      <div class="lp-switch" role="radiogroup" aria-label="Para quem é o BNTT">
+        <button type="button" role="radio" data-escolher="home" aria-checked="true">Casa</button>
+        <button type="button" role="radio" data-escolher="business" aria-checked="false">Negócio</button>
       </div>
-      <a class="lp-botao lp-botao--fantasma lp-topo__entrar" href="./app">Entrar</a>
+      <a class="lp-link-entrar" href="./app">Entrar</a>
     </div>
-  </header>
+  </div>
+</header>
 
-  <main id="conteudo">
-    <section class="lp-heroi">
-      <div class="lp-faixa lp-heroi__grade">
-        <div>
-          <p class="lp-selo" data-texto="selo">BNTT Home · para a sua casa</p>
-          <h1 data-texto="titulo">Sua casa inteira em 1 tela.</h1>
-          <p class="lp-heroi__sub" data-texto="sub">Contas, lista de compras, o que tem em casa e a saúde da família — num app simples para todo mundo, dos avós às crianças.</p>
-          <div class="lp-heroi__acoes">
-            <a class="lp-botao lp-botao--grande" data-link="comecar" href="./app?cadastro=1&amp;tipo=home"><span data-texto="cta">Começar grátis</span> <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
-            <a class="lp-botao lp-botao--fantasma lp-botao--grande" data-link="demo" href="./app?demo=1&amp;tipo=home">Ver demonstração</a>
-          </div>
-          <p class="lp-nota" data-texto="nota">30 dias com tudo do plano Família. Sem cartão.</p>
-        </div>
-        <ul class="lp-provas" data-lista="provas" aria-label="O que você resolve"></ul>
+<main id="conteudo">
+
+  <!-- HERO -->
+  <section class="lp-hero" id="topo">
+    <div class="lp-hero__glow" aria-hidden="true"></div>
+    <img class="lp-hero__watermark" src="./landing-assets/logos/logo-branco.svg" alt="" aria-hidden="true">
+
+    <div class="lp-hero__content lp-reveal">
+      <p class="lp-kicker" data-texto="kicker">BNTT Home</p>
+      <h1 class="lp-hero__title" data-lista="titulo">
+        <span>Seu dinheiro.</span>
+        <span>Sua casa.</span>
+        <span>Sob controle.</span>
+      </h1>
+      <p class="lp-hero__tagline" data-texto="tagline">Controle financeiro doméstico</p>
+      <p class="lp-hero__sub" data-texto="sub">O financeiro da casa, a lista de compras, o inventário e a saúde da família em um só lugar — simples para todo mundo, dos avós às crianças.</p>
+      <div class="lp-hero__cta">
+        <a class="lp-btn lp-btn--lg" data-link="comecar" href="./app?cadastro=1&amp;tipo=home">Começar grátis</a>
+        <a class="lp-btn lp-btn--lg lp-btn--ghost" data-link="demo" href="./app?demo=1&amp;tipo=home">Ver demonstração</a>
       </div>
-    </section>
-
-    <section class="lp-secao" aria-labelledby="lp-recursos-titulo">
-      <div class="lp-faixa">
-        <h2 id="lp-recursos-titulo" data-texto="recursosTitulo">Tudo o que a casa precisa, sem planilha</h2>
-        <div class="lp-cartoes" data-lista="recursos"></div>
-      </div>
-    </section>
-
-    <section class="lp-secao lp-secao--planos" id="planos" aria-labelledby="lp-planos-titulo">
-      <div class="lp-faixa">
-        <h2 id="lp-planos-titulo">Planos</h2>
-        <p class="lp-secao__sub" data-texto="planosSub">Comece grátis. Mude ou cancele quando quiser.</p>
-        <div class="lp-ciclo" role="radiogroup" aria-label="Forma de pagamento">
-          <button type="button" role="radio" data-ciclo="mensal" aria-checked="true">Mensal</button>
-          <button type="button" role="radio" data-ciclo="anual" aria-checked="false">Anual <span class="lp-ciclo__desconto">−20%</span></button>
-        </div>
-        <div class="lp-planos" data-lista="planos"></div>
-        <p class="lp-nota lp-nota--centro"><i class="bi bi-shield-lock" aria-hidden="true"></i> Pagamento seguro pelo Stripe. O BNTT nunca vê o número do seu cartão.</p>
-      </div>
-    </section>
-
-    <section class="lp-secao" aria-labelledby="lp-faq-titulo">
-      <div class="lp-faixa lp-faixa--estreita">
-        <h2 id="lp-faq-titulo">Perguntas rápidas</h2>
-        <div class="lp-faq" data-lista="faq"></div>
-      </div>
-    </section>
-  </main>
-
-  <footer class="lp-rodape">
-    <div class="lp-faixa lp-rodape__dentro">
-      <span>BNTT © 2026</span>
-      <nav aria-label="Documentos">
-        <a href="./termos.html">Termos de uso</a>
-        <a href="./privacidade.html">Privacidade</a>
-        <a href="./app">Entrar</a>
-      </nav>
+      <p class="lp-hero__microcopy" data-texto="micro">30 dias com tudo do plano Família. Sem cartão.</p>
     </div>
-  </footer>
 
-  <script type="module" src="./landing-assets/lp.js"></script>
+    <div class="lp-hero__scrollcue" aria-hidden="true"><span></span></div>
+  </section>
+
+  <!-- DOR -->
+  <section class="lp-section lp-section--dark" aria-labelledby="dor-titulo">
+    <div class="lp-container">
+      <p class="lp-kicker lp-reveal">O problema</p>
+      <h2 id="dor-titulo" class="lp-h2 lp-reveal" data-texto="dorTitulo">Sua vida doméstica está espalhada em apps demais.</h2>
+      <p class="lp-lead lp-reveal" data-texto="dorLead">Financeiro numa planilha, compras num app, a casa na cabeça. Cada tarefa doméstica ganhou o próprio aplicativo — e nenhum deles se fala.</p>
+      <ul class="lp-pains" data-lista="dores"></ul>
+      <p class="lp-closing lp-reveal" data-texto="dorFecho">No fim do mês, ninguém sabe exatamente quanto sobrou, o que falta comprar ou o que já venceu na geladeira.</p>
+    </div>
+  </section>
+
+  <!-- SOLUÇÃO -->
+  <section class="lp-section" aria-labelledby="solucao-titulo">
+    <div class="lp-container">
+      <p class="lp-kicker lp-reveal">A solução</p>
+      <h2 id="solucao-titulo" class="lp-h2 lp-reveal" data-texto="solTitulo">Cada letra do BNTT organiza uma parte da sua vida financeira.</h2>
+      <p class="lp-lead lp-reveal">BNTT não é só um nome — é o que o produto faz por você, resumido em quatro palavras.</p>
+      <div class="lp-pillars" data-lista="pilares"></div>
+    </div>
+  </section>
+
+  <!-- COMO FUNCIONA -->
+  <section class="lp-section lp-section--dark" aria-labelledby="como-titulo">
+    <div class="lp-container">
+      <p class="lp-kicker lp-reveal">Como funciona</p>
+      <h2 id="como-titulo" class="lp-h2 lp-reveal">Simples assim.</h2>
+      <ol class="lp-steps" data-lista="passos"></ol>
+    </div>
+  </section>
+
+  <!-- PLANOS -->
+  <section class="lp-section" id="planos" aria-labelledby="planos-titulo">
+    <div class="lp-container lp-container--narrow lp-container--plans">
+      <p class="lp-kicker lp-reveal">Planos</p>
+      <h2 id="planos-titulo" class="lp-h2 lp-reveal" data-texto="planosTitulo">Comece grátis. Cresça quando precisar.</h2>
+      <p class="lp-lead lp-reveal" data-texto="planosLead">Todo plano começa com 30 dias de tudo liberado. Depois, você escolhe — ou continua no grátis.</p>
+      <div class="lp-billing lp-reveal" role="radiogroup" aria-label="Forma de pagamento">
+        <button type="button" role="radio" data-ciclo="mensal" aria-checked="true">Mensal</button>
+        <button type="button" role="radio" data-ciclo="anual" aria-checked="false">Anual <span class="lp-billing__off">−20%</span></button>
+      </div>
+      <div class="lp-plans" data-lista="planos"></div>
+      <p class="lp-plans__safe">Pagamento pelo Stripe — o BNTT nunca vê o número do seu cartão. Cancele quando quiser, sem multa.</p>
+    </div>
+  </section>
+
+  <!-- CONFIANÇA -->
+  <section class="lp-section lp-section--dark" aria-labelledby="confianca-titulo">
+    <div class="lp-container lp-container--narrow">
+      <p class="lp-kicker lp-reveal">Por que confiar</p>
+      <h2 id="confianca-titulo" class="lp-h2 lp-reveal">Não é uma ideia solta. É um produto feito pra durar.</h2>
+      <p class="lp-lead lp-reveal">O BNTT nasceu do uso real de uma família — não de uma planilha de roadmap genérica. Cada tela é pensada, testada e usada em casa antes de chegar até você.</p>
+      <div class="lp-trust">
+        <div class="lp-trust__item lp-reveal">
+          <strong>Seus dados, isolados por padrão</strong>
+          <p>Cada casa e cada empresa só enxerga o que é seu. As fichas de saúde são criptografadas no seu aparelho — nem a gente consegue ler.</p>
+        </div>
+        <div class="lp-trust__item lp-reveal">
+          <strong>Feito pra uso real, não pra pitch</strong>
+          <p>Antes de virar produto, o BNTT já organizava o dinheiro, as compras e a casa de quem o constrói.</p>
+        </div>
+        <div class="lp-trust__item lp-reveal">
+          <strong>Direto do navegador</strong>
+          <p>Funciona como app no celular, sem loja de aplicativos — e continua de pé mesmo com a internet instável.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="lp-section" aria-labelledby="faq-titulo">
+    <div class="lp-container lp-container--narrow">
+      <p class="lp-kicker lp-reveal">Perguntas frequentes</p>
+      <h2 id="faq-titulo" class="lp-h2 lp-reveal">O básico, antes de qualquer coisa.</h2>
+      <div class="lp-faq" data-lista="faq"></div>
+    </div>
+  </section>
+
+  <!-- CHAMADA FINAL -->
+  <section class="lp-section lp-section--cta" aria-labelledby="cta-titulo">
+    <div class="lp-hero__glow lp-hero__glow--cta" aria-hidden="true"></div>
+    <div class="lp-container lp-container--narrow">
+      <p class="lp-kicker lp-reveal">Comece hoje</p>
+      <h2 id="cta-titulo" class="lp-h2 lp-reveal" data-texto="ctaTitulo">Sua casa em ordem a partir de hoje.</h2>
+      <p class="lp-lead lp-reveal">Crie sua conta em menos de um minuto. Você usa tudo por 30 dias, sem cartão, e decide depois.</p>
+      <div class="lp-hero__cta lp-reveal">
+        <a class="lp-btn lp-btn--lg" data-link="comecar" href="./app?cadastro=1&amp;tipo=home">Começar grátis</a>
+      </div>
+      <p class="lp-hero__microcopy">Já tem conta? <a href="./app"><u>Entrar</u></a></p>
+    </div>
+  </section>
+
+</main>
+
+<footer class="lp-footer">
+  <div class="lp-container">
+    <a class="lp-nav__brand" href="#topo">
+      <img src="./landing-assets/logos/logo-branco.svg" alt="" width="22" height="24" class="lp-nav__mark">
+      <span>BNTT</span>
+    </a>
+    <nav class="lp-footer__links" aria-label="Navegação do rodapé">
+      <a href="#planos">Planos</a>
+      <a href="#faq-titulo">FAQ</a>
+      <a href="./termos.html">Termos de uso</a>
+      <a href="./privacidade.html">Privacidade</a>
+      <a href="./app">Entrar</a>
+    </nav>
+    <div class="lp-footer__meta-group">
+      <p class="lp-footer__meta">BNTT © 2026 — Criado por Matheus Bonotto</p>
+      <p class="lp-footer__meta lp-footer__meta--muted">Balanço. Necessidades. Transações. Tranquilidade.</p>
+    </div>
+  </div>
+</footer>
+
+<script type="module" src="./landing-assets/landing.js"></script>
 </body>
 </html>

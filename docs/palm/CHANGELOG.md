@@ -2,6 +2,11 @@
 
 > 2026-10-05: o nome voltou a ser **BNTT** (decisão do usuário), com duas linhas: **BNTT Home** (verde) e **BNTT Business** (azul). As entradas abaixo citam "Palm" porque eram o nome na época.
 
+## LP com o visual original + banco e webhook em produção — checkpoint/lp-original
+- **LP volta à identidade original** (escura, Anton, grão, brilho, pilares B·N·T·T, scroll-reveal, parallax) com o conteúdo novo: Casa/Negócio (Business com a mesma estética em azul), planos Mensal/Anual (−20%), chamada final para o app, demonstração, Termos e Privacidade.
+- **Banco de produção atualizado** (backup antes em backups/bntt/2026-10-05-antes-sql-final, contagens conferidas depois): endurecimento de segurança (fim da inserção direta em group_members), fichas de saúde (cofres, fichas_saude) e Business (unidades, papéis, regras no servidor).
+- **Webhook do Stripe publicado** (`stripe-webhook`), endpoint criado no Stripe e segredos configurados; testado: sem assinatura → 400, evento irrelevante → ignorado, conta inexistente → 404.
+
 ## BNTT Home / Business, LP, planos e Stripe — checkpoint/linhas
 - **Nome e marca de volta para BNTT** (logo, ícones v=4, cor do tema).
 - **Acessibilidade no menu do avatar:** texto A−/A+, Narração e Tema escuro como chaves liga/desliga.
