@@ -7,7 +7,7 @@ test('salvar despesa nova mostra "Desfazer", que apaga o lançamento de verdade'
   await page.evaluate(() => localStorage.setItem('bonotto_onboarding_v2_seen', '1'));
   await page.reload();
   await expect(page.locator('.cg-hero-balance').first()).toBeVisible({ timeout: 10000 });
-  const contar = () => page.evaluate(() => JSON.parse(localStorage.getItem('bonotto_demo_db_v3')).transactions.filter((t) => t.titulo === 'Pão de teste').length);
+  const contar = () => page.evaluate(() => JSON.parse(localStorage.getItem('bonotto_demo_db_v4')).transactions.filter((t) => t.titulo === 'Pão de teste').length);
 
   await page.evaluate(() => Alpine.store('txModal').openNew('saida'));
   await page.getByLabel('Título', { exact: true }).fill('Pão de teste');

@@ -76,7 +76,7 @@ as $$
       "home_gratis":       {"pessoas": 1, "lancamentosMes": 30, "listas": 1, "unidades": 1, "saude": 0},
       "home_solteiro":     {"pessoas": 1, "unidades": 1, "saude": 0},
       "home_casal":        {"pessoas": 2, "unidades": 1, "saude": 0},
-      "home_familia":      {"pessoas": 6, "unidades": 1, "saude": 1},
+      "home_familia":      {"pessoas": 6, "unidades": 2, "saude": 1},
       "business_largada":  {"pessoas": 1, "lancamentosMes": 30, "listas": 1, "unidades": 1},
       "business_balcao":   {"pessoas": 3, "unidades": 1},
       "business_expansao": {"pessoas": 10, "unidades": 3},

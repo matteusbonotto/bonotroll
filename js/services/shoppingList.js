@@ -23,7 +23,7 @@ export function computeListSummary(items) {
 
 export async function listLists({ ownerId, groupId }) {
   if (isDemoMode()) {
-    const rows = await mockDb.list('shopping_lists', (l) => l.owner_id === ownerId || (groupId && l.group_id === groupId));
+    const rows = await mockDb.list('shopping_lists', (l) => mockDb.noEscopo(l, ownerId, groupId));
     return rows.sort((a, b) => (b.criado_em || '').localeCompare(a.criado_em || ''));
   }
   const supabase = await getSupabase();

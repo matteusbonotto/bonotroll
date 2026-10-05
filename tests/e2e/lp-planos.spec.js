@@ -25,9 +25,9 @@ test('quem chega com link do app (demo) vai direto para /app', async ({ page }) 
 });
 
 test('plano escolhido na LP vira o aviso "Continuar para o pagamento" com o link do Stripe', async ({ page }) => {
-  await page.goto('/app?demo=1&cadastro=1&tipo=home&plano=home_familia&ciclo=anual');
+  await page.goto('/app?demo=1&cadastro=1&tipo=home&plano=home_casal&ciclo=anual');
   await page.getByText('Entrar como', { exact: false }).first().click();
-  const aviso = page.getByRole('dialog', { name: 'Plano Família' });
+  const aviso = page.getByRole('dialog', { name: 'Plano Casal' });
   await expect(aviso).toBeVisible();
   await expect(aviso).toContainText('20% de desconto');
   const url = await page.evaluate(() => Alpine.store('app').pagamentoPendente.url);

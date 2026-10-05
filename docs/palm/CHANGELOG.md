@@ -2,6 +2,14 @@
 
 > 2026-10-05: o nome voltou a ser **BNTT** (decisão do usuário), com duas linhas: **BNTT Home** (verde) e **BNTT Business** (azul). As entradas abaixo citam "Palm" porque eram o nome na época.
 
+## Business simples: tutoriais, demonstração realista e casas — checkpoint/demo-negocio
+- **Tutoriais do Business** (Central mostra só os da linha em uso): "Crie sua empresa", "Cadastre suas filiais", "Chame sua equipe", "Escolha o papel de cada pessoa". No Home: "Cadastre suas casas".
+- **"Comece aqui"** na Equipe do Business: 3 passos (empresa → filiais → equipe e papéis), com "Me mostre"; some quando tudo está feito.
+- **Demonstração realista:** Lucas é dono de **4 padarias** (Business: Marina gerente, Diego funcionário, Sônia contadora; vendas, insumos, aluguel e energia por padaria, folha e impostos gerais) e de **2 casas** (Home: Casa e Casa da praia, com a Carla). A tela de entrada da demonstração mostra só as pessoas da linha, com o papel. Na demonstração vale o plano mais completo da linha.
+- **Casas no Home:** a mesma ideia das filiais ("Todas as casas", campo "Casa" no lançamento). Plano Família: até 2 casas (app, banco e Stripe atualizados).
+- Escopo da demonstração corrigido: "do grupo aberto ou pessoal sem grupo" (antes, as contas da casa apareciam nas padarias).
+- Topo do celular: "Ajuda" só com o ícone; excluir filial discreto.
+
 ## Tutoriais por tela, push consertado, e-mail, Primeiros socorros e acabamento — checkpoint/acabamento
 - **Push — causa raiz do servidor:** o projeto novo do Supabase nunca recebeu as chaves do push (VAPID) nem o segredo do agendador; as funções de aviso recusavam toda chamada (401 a cada 5 min). Chaves novas geradas e configuradas (cofre do banco + funções); chamada do banco → função agora 200.
 - **Push — celular:** pedido de permissão com prazo (o Chrome às vezes não mostra o pedido e nada acontecia); estado "o celular não mostrou o pedido" com o caminho para liberar; **Diagnóstico deste aparelho**; botão **Enviar notificação de teste** (função `push-teste`).

@@ -28,7 +28,7 @@ export const DEFAULT_ROOM_CATEGORIES = {
 
 export async function listRooms({ ownerId, groupId }) {
   if (isDemoMode()) {
-    const rows = await mockDb.list('resource_rooms', (r) => r.owner_id === ownerId || (groupId && r.group_id === groupId));
+    const rows = await mockDb.list('resource_rooms', (r) => mockDb.noEscopo(r, ownerId, groupId));
     return rows.sort((a, b) => a.ordem - b.ordem);
   }
   const supabase = await getSupabase();
@@ -195,7 +195,7 @@ export async function listItems({ roomId, categoryId } = {}) {
 // traz tudo e filtra no cliente com computeExpiryStatus.
 export async function listAllItems({ ownerId, groupId }) {
   if (isDemoMode()) {
-    return mockDb.list('resource_items', (i) => i.owner_id === ownerId || (groupId && i.group_id === groupId));
+    return mockDb.list('resource_items', (i) => mockDb.noEscopo(i, ownerId, groupId));
   }
   const supabase = await getSupabase();
   let query = supabase.from('resource_items').select('*');

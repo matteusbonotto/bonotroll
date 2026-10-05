@@ -53,6 +53,11 @@ export function contaDaSessao(session) {
   const usr = u.user_metadata || {};
   const tipoDemo = isDemoMode() ? lerJson(CHAVE_TIPO_DEMO) : null;
   const tipo = (app.tipo || usr.tipo_conta || tipoDemo) === 'business' ? 'business' : 'home';
+  // Demonstração: mostra a linha com o plano mais completo (o dono de
+  // exemplo tem 4 padarias e 2 casas).
+  if (isDemoMode()) {
+    return { tipo, plano: tipo === 'business' ? 'business_rede' : 'home_familia', assinaturaAtiva: true, cortesia: false, ciclo: 'mensal', criadaEm: u.created_at || null };
+  }
   return {
     tipo,
     plano: app.plano || null,

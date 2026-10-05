@@ -23,6 +23,15 @@ export function appStore() {
     session: null,
     profile: null,
     demoProfiles: [],
+    demoPapeis: {}, // perfil -> { home: papel, business: papel } (só demonstração)
+    get perfisDemoDaLinha() {
+      const daLinha = this.demoProfiles.filter((p) => this.demoPapeis[p.id]?.[this.conta.tipo]);
+      return daLinha.length ? daLinha : this.demoProfiles;
+    },
+    rotuloPapelDemo(p) {
+      const papel = this.demoPapeis[p.id]?.[this.conta.tipo];
+      return { admin: 'dono', dono: 'dono', membro: 'família', gerente: 'gerente', funcionario: 'funcionário', contador: 'contadora' }[papel] || '';
+    },
     // Linha e plano (BNTT Home / BNTT Business) — ver services/assinatura.js.
     conta: { tipo: 'home', plano: null, assinaturaAtiva: false, cortesia: false, ciclo: null, criadaEm: null },
     intencao: null, // o que a pessoa escolheu na LP (cadastro, plano, ciclo)
@@ -84,6 +93,7 @@ export function appStore() {
 
       if (this.isDemoMode) {
         this.demoProfiles = await authService.getDemoProfiles();
+        this.demoPapeis = await authService.getDemoPapeis();
       }
 
       try {
@@ -113,7 +123,7 @@ export function appStore() {
     // os <option> criados por x-for depois não re-selecionam o valor já setado.
     async loadSession(session) {
       const profile = await authService.getProfile(session.user.id);
-      const group = await groupsService.getMyGroup(profile.id);
+      const group = await groupsService.getMyGroup(profile.id, assinatura.contaDaSessao(session).tipo);
       const groupId = group?.group?.id;
       if (!this.isDemoMode) await categoriesService.ensureDefaultCategories(profile.id, groupId);
       const categories = await categoriesService.listCategories({ ownerId: profile.id, groupId });
@@ -281,13 +291,20 @@ export function appStore() {
     // ── BNTT Business: unidades e papéis ─────────────────────────────────
     async carregarUnidades() {
       const gid = this.group?.group?.id;
-      if (this.conta.tipo !== 'business' || !gid) { this.unidades = []; return; }
+      if (!gid) { this.unidades = []; return; }
       try {
         this.unidades = await unidadesService.listarUnidades(gid);
       } catch {
         this.unidades = []; // banco ainda sem a migração: o app segue sem unidades
       }
       if (this.unidadeAtual && !this.unidades.some((u) => u.id === this.unidadeAtual)) this.trocarUnidade('');
+    },
+    // "Filial" no Business, "Casa" no Home.
+    get rotuloUnidade() {
+      return this.conta.tipo === 'business' ? 'Filial' : 'Casa';
+    },
+    get rotuloUnidades() {
+      return this.conta.tipo === 'business' ? 'Filiais' : 'Casas';
     },
     trocarUnidade(id) {
       this.unidadeAtual = id || '';
@@ -328,7 +345,13 @@ export function appStore() {
       assinatura.trocarTipoDemo(tipo);
       this.conta = { ...this.conta, tipo };
       this.aplicarLinha();
-      this.carregarUnidades();
+      if (this.session) {
+        groupsService.getMyGroup(this.profile.id, tipo).then(async (g) => {
+          this.group = g;
+          await this.carregarUnidades();
+          window.dispatchEvent(new CustomEvent('cg:transactions-changed'));
+        });
+      }
       if (!this.AREAS.some((a) => a.abas.some((t) => t.view === this.view))) this.setView('home');
     },
 

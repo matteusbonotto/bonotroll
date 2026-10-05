@@ -87,7 +87,7 @@ export async function getComprovanteUrl(path) {
 export async function listTransactions({ ownerId, groupId, filters = {} } = {}) {
   let rows;
   if (isDemoMode()) {
-    rows = await mockDb.list('transactions', (t) => t.owner_id === ownerId || (groupId && t.group_id === groupId));
+    rows = await mockDb.list('transactions', (t) => mockDb.noEscopo(t, ownerId, groupId));
   } else {
     const supabase = await getSupabase();
     let query = supabase.from('transactions').select('*');

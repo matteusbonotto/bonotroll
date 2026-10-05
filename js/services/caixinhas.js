@@ -12,7 +12,7 @@ import { somar, subtrair } from '../utils/money.js';
 
 export async function listCaixinhas({ ownerId, groupId }) {
   if (isDemoMode()) {
-    return mockDb.list('caixinhas', (c) => c.owner_id === ownerId || (groupId && c.group_id === groupId));
+    return mockDb.list('caixinhas', (c) => mockDb.noEscopo(c, ownerId, groupId));
   }
   const supabase = await getSupabase();
   let query = supabase.from('caixinhas').select('*');

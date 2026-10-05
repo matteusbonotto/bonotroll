@@ -87,13 +87,13 @@
           <div class="mb-4">
             <p class="fw-semibold mb-2"><i class="bi bi-stars"></i> Modo demonstração — entre com um perfil de exemplo:</p>
             <div class="d-flex flex-column gap-2">
-              <template x-for="p in $store.app.demoProfiles" :key="p.id">
+              <template x-for="p in $store.app.perfisDemoDaLinha" :key="p.id">
                 <button type="button" class="cg-btn cg-touch btn btn-outline-success text-start" @click="enterDemo(p.id)" :disabled="loading">
                   <span class="cg-avatar cg-avatar--sm" :style="{ borderColor: p.cor || 'var(--color-primary-soft)', background: p.cor || 'var(--color-primary)' }">
                     <template x-if="p.avatar_url"><img :src="p.avatar_url" :alt="p.nome" /></template>
                     <template x-if="!p.avatar_url"><span x-text="cgFormat.initials(p.nome)"></span></template>
                   </span>
-                  <span class="ms-2">Entrar como <strong x-text="p.nome"></strong></span>
+                  <span class="ms-2">Entrar como <strong x-text="p.nome"></strong> <span class="cg-muted" x-show="$store.app.rotuloPapelDemo(p)" x-text="'(' + $store.app.rotuloPapelDemo(p) + ')'"></span></span>
                 </button>
               </template>
             </div>
@@ -212,7 +212,7 @@
             <h1 class="h5 fw-bold mb-0 cg-topbar__titulo" x-text="$store.app.tituloTela"></h1>
             <select class="form-select cg-unidade-seletor" aria-label="Unidade" x-show="$store.app.linha === 'business' && $store.app.unidades.length" x-cloak
               @change="$store.app.trocarUnidade($event.target.value)">
-              <option value="" :selected="!$store.app.unidadeAtual">Todas as unidades</option>
+              <option value="" :selected="!$store.app.unidadeAtual" x-text="$store.app.linha === 'business' ? 'Todas as filiais' : 'Todas as casas'"></option>
               <template x-for="u in $store.app.unidades" :key="u.id">
                 <option :value="u.id" :selected="u.id === $store.app.unidadeAtual" x-text="u.nome"></option>
               </template>
@@ -223,7 +223,7 @@
                  ícones sem texto no topo confundiam idoso e iniciante). O tema
                  foi para Perfil → Preferências. -->
             <div x-data="{ ajuda: false }" class="position-relative" @click.outside="ajuda = false" @keydown.escape.window="ajuda = false">
-              <button type="button" class="btn btn-outline-secondary btn-sm cg-topbar-ajuda" @click="ajuda = !ajuda" :aria-expanded="ajuda" aria-haspopup="menu">
+              <button type="button" class="btn btn-outline-secondary btn-sm cg-topbar-ajuda" aria-label="Ajuda" @click="ajuda = !ajuda" :aria-expanded="ajuda" aria-haspopup="menu">
                 <i class="bi bi-question-circle" aria-hidden="true"></i> <span>Ajuda</span>
               </button>
               <div class="cg-card cg-topbar-ajuda__menu" x-show="ajuda" x-cloak x-transition role="menu">
@@ -2873,6 +2873,22 @@
                 <button type="button" class="btn btn-sm btn-outline-secondary py-0" data-tour-alvo="copiar-codigo-grupo" @click="copiarCodigo()"><i class="bi bi-clipboard"></i> Copiar código</button>
               </p>
               <div x-data="equipeBusiness()">
+              <section class="cg-comece mb-3" x-show="$store.app.linha === 'business' && $store.app.podeGerirUnidades && !($store.app.unidades.length && ($store.app.group?.members?.length || 0) > 1)" aria-labelledby="cg-comece-titulo">
+                <h3 class="h6 fw-bold mb-2" id="cg-comece-titulo">Comece aqui</h3>
+                <ol class="cg-comece__lista">
+                  <li class="is-feito"><i class="bi bi-check-circle-fill" aria-hidden="true"></i> <span>Empresa criada</span></li>
+                  <li :class="$store.app.unidades.length && 'is-feito'">
+                    <i class="bi" :class="$store.app.unidades.length ? 'bi-check-circle-fill' : 'bi-2-circle'" aria-hidden="true"></i>
+                    <span x-text="$store.app.unidades.length ? $store.app.unidades.length + ($store.app.unidades.length === 1 ? ' filial cadastrada' : ' filiais cadastradas') : 'Cadastre suas filiais'"></span>
+                    <button type="button" class="btn btn-link p-0 ms-auto" x-show="!$store.app.unidades.length" @click="$store.onboarding.iniciarGuia('filiais')">Me mostre</button>
+                  </li>
+                  <li :class="($store.app.group?.members?.length || 0) > 1 && 'is-feito'">
+                    <i class="bi" :class="($store.app.group?.members?.length || 0) > 1 ? 'bi-check-circle-fill' : 'bi-3-circle'" aria-hidden="true"></i>
+                    <span>Chame a equipe e escolha o papel de cada um</span>
+                    <button type="button" class="btn btn-link p-0 ms-auto" @click="$store.onboarding.iniciarGuia(($store.app.group?.members?.length || 0) > 1 ? 'papeis' : 'convite-equipe')">Me mostre</button>
+                  </li>
+                </ol>
+              </section>
               <div class="d-flex flex-column gap-2 mb-3">
                 <template x-for="m in $store.app.group.members" :key="m.id">
                   <div class="d-flex align-items-center gap-2 border-bottom pb-2">
@@ -2901,9 +2917,9 @@
               </details>
 
               <!-- BNTT Business: unidades (filiais) -->
-              <section class="cg-unidades mb-3" x-show="$store.app.linha === 'business'" aria-labelledby="cg-unidades-titulo">
-                <h3 class="h6 fw-bold" id="cg-unidades-titulo"><i class="bi bi-shop" aria-hidden="true"></i> Unidades</h3>
-                <p class="cg-muted small mb-2" x-show="!$store.app.unidades.length">Loja, filial ou obra. Com unidades, você vê cada uma separada ou todas juntas no topo da tela.</p>
+              <section class="cg-unidades mb-3" x-show="$store.app.linha === 'business' || $store.app.unidades.length || ($store.app.limiteDoPlano('unidades') ?? 2) > 1" aria-labelledby="cg-unidades-titulo">
+                <h3 class="h6 fw-bold" id="cg-unidades-titulo"><i class="bi" :class="$store.app.linha === 'business' ? 'bi-shop' : 'bi-houses'" aria-hidden="true"></i> <span x-text="$store.app.rotuloUnidades"></span></h3>
+                <p class="cg-muted small mb-2" x-show="!$store.app.unidades.length" x-text="$store.app.linha === 'business' ? 'Uma para cada loja, padaria ou obra. Depois você vê cada uma separada ou todas juntas, no topo da tela.' : 'Tem mais de uma casa? Cadastre cada uma (ex.: Casa e Casa da praia) e veja as contas de cada.'"></p>
                 <ul class="cg-unidades__lista">
                   <template x-for="u in $store.app.unidades" :key="u.id">
                     <li>
@@ -2911,7 +2927,7 @@
                         <div class="d-flex align-items-center gap-2">
                           <span class="flex-fill fw-semibold" x-text="u.nome"></span>
                           <button type="button" class="btn btn-outline-secondary" x-show="$store.app.podeGerirUnidades" @click="editar(u)" :aria-label="'Renomear ' + u.nome"><i class="bi bi-pencil" aria-hidden="true"></i></button>
-                          <button type="button" class="btn btn-outline-danger" x-show="$store.app.podeGerirUnidades" @click="excluir(u)" :aria-label="'Excluir ' + u.nome"><i class="bi bi-trash3" aria-hidden="true"></i></button>
+                          <button type="button" class="btn btn-link cg-acao-discreta" x-show="$store.app.podeGerirUnidades" @click="excluir(u)" :aria-label="'Excluir ' + u.nome"><i class="bi bi-trash3" aria-hidden="true"></i></button>
                         </div>
                       </template>
                       <template x-if="editandoId === u.id">
@@ -2924,7 +2940,7 @@
                   </template>
                 </ul>
                 <div class="input-group" x-show="$store.app.podeGerirUnidades">
-                  <input type="text" class="form-control" placeholder="Ex.: Loja Centro" aria-label="Nome da nova unidade" x-model="novaUnidade" @keydown.enter="criar()" maxlength="80" />
+                  <input type="text" class="form-control" :placeholder="$store.app.linha === 'business' ? 'Ex.: Padaria Centro' : 'Ex.: Casa da praia'" aria-label="Nome da nova unidade" x-model="novaUnidade" @keydown.enter="criar()" maxlength="80" />
                   <button type="button" class="btn btn-success" @click="criar()" :disabled="ocupado || !novaUnidade.trim()">Criar unidade</button>
                 </div>
               </section>
@@ -3484,9 +3500,9 @@
         </div>
 
         <div class="mb-3" x-show="$store.app.unidades.length">
-          <label class="form-label" for="cg-campo-txmodal-unidade">Unidade</label>
+          <label class="form-label" for="cg-campo-txmodal-unidade" x-text="$store.app.rotuloUnidade"></label>
           <select id="cg-campo-txmodal-unidade" class="form-select" x-model="$store.txModal.form.unidade_id">
-            <option value="">Sem unidade (geral)</option>
+            <option value="" x-text="$store.app.linha === 'business' ? 'Geral (todas as filiais)' : 'Geral (todas as casas)'"></option>
             <template x-for="u in $store.app.unidades" :key="u.id">
               <option :value="u.id" x-text="u.nome"></option>
             </template>

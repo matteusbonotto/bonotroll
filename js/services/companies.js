@@ -7,7 +7,7 @@ import { getSupabase } from '../data/supabaseClient.js';
 // o mesmo nome digitado de novo já reaproveita o logo salvo antes.
 export async function listCompanies({ ownerId, groupId }) {
   if (isDemoMode()) {
-    return mockDb.list('companies', (c) => c.owner_id === ownerId || (groupId && c.group_id === groupId));
+    return mockDb.list('companies', (c) => mockDb.noEscopo(c, ownerId, groupId));
   }
   const supabase = await getSupabase();
   let query = supabase.from('companies').select('*');

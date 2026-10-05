@@ -19,7 +19,7 @@ import { getSupabase } from '../data/supabaseClient.js';
 // o nome é único por dono, não por grupo.
 export async function listCartoes({ ownerId, groupId }) {
   if (isDemoMode()) {
-    return mockDb.list('cartoes', (c) => c.owner_id === ownerId || (groupId && c.group_id === groupId));
+    return mockDb.list('cartoes', (c) => mockDb.noEscopo(c, ownerId, groupId));
   }
   const supabase = await getSupabase();
   let query = supabase.from('cartoes').select('*');

@@ -33,7 +33,7 @@ export const DEFAULT_CATEGORIES = [
 
 export async function listCategories({ ownerId, groupId }) {
   if (isDemoMode()) {
-    return mockDb.list('categories', (c) => c.owner_id === ownerId || (groupId && c.group_id === groupId));
+    return mockDb.list('categories', (c) => mockDb.noEscopo(c, ownerId, groupId));
   }
   const supabase = await getSupabase();
   let query = supabase.from('categories').select('*');

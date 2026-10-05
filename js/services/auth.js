@@ -7,6 +7,17 @@ export async function getDemoProfiles() {
   return mockDb.list('profiles');
 }
 
+// Papel de cada perfil de demonstração em cada linha (para a tela de entrada).
+export async function getDemoPapeis() {
+  const grupos = await mockDb.list('groups');
+  const papeis = {};
+  for (const m of await mockDb.list('group_members')) {
+    const linha = grupos.find((g) => g.id === m.group_id)?.linha || 'home';
+    papeis[m.profile_id] = { ...(papeis[m.profile_id] || {}), [linha]: m.papel };
+  }
+  return papeis;
+}
+
 export async function getSession() {
   if (isDemoMode()) {
     const id = mockSession.getUserId();

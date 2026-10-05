@@ -9,7 +9,7 @@ import { isDemoMode } from './config.js';
 // CHAVES_ANTIGAS/loadDb() logo abaixo.
 // v3 (2026-10-04): nomes e valores 100% fictícios (o seed anterior usava os
 // nomes reais do casal) — trocar a chave descarta o demo antigo salvo.
-const STORAGE_KEY = 'bonotto_demo_db_v3';
+const STORAGE_KEY = 'bonotto_demo_db_v4';
 const SESSION_KEY = 'bonotto_demo_session';
 
 // Versão pinada (mesmo padrão de qualquer outro import pesado via esm.sh
@@ -282,6 +282,64 @@ function seedDatabase(nomes = NOMES_GENERICOS_PADRAO) {
   // de shareForMember (services/transactions.js): existir uma linha aqui é
   // o que faz a despesa contar como "dividida" (avatar-stack, saldo "Entre
   // vocês").
+  // ── Demonstração realista (2026-10-05) ───────────────────────────────
+  // O Lucas é dono de 2 CASAS (BNTT Home, grupo "Família") e de 4 PADARIAS
+  // (BNTT Business, grupo "Padarias do Lucas"), com uma pessoa de cada papel:
+  // Marina (gerente da Centro), Diego (funcionário da Vila Nova) e Sônia
+  // (contadora). O app abre o grupo da linha em uso (ver groups.getMyGroup).
+  const padariasId = 'demo-padarias';
+  const marinaId = 'demo-marina';
+  const diegoId = 'demo-diego';
+  const soniaId = 'demo-sonia';
+  const agoraIso = new Date().toISOString();
+  const unidades = [
+    { id: 'un-casa', group_id: groupId, nome: 'Casa' },
+    { id: 'un-praia', group_id: groupId, nome: 'Casa da praia' },
+    { id: 'un-centro', group_id: padariasId, nome: 'Padaria Centro' },
+    { id: 'un-vila', group_id: padariasId, nome: 'Padaria Vila Nova' },
+    { id: 'un-jardim', group_id: padariasId, nome: 'Padaria Jardim' },
+    { id: 'un-shopping', group_id: padariasId, nome: 'Padaria Shopping' },
+  ].map((u) => ({ ...u, criado_por: matheusId, criado_em: agoraIso }));
+
+  // Casa da praia: contas próprias (a casa principal fica como "geral").
+  transactions.push(
+    tx({ data_cadastro: isoDaysFromNow(-1), tipo: 'saida', titulo: 'Condomínio da praia', categoria_id: 'cat-casa', tipo_despesa: 'fixa', valor: 480.00, data_vencimento: isoDaysFromNow(6), unidade_id: 'un-praia' }),
+    tx({ data_cadastro: isoDaysFromNow(-1), tipo: 'saida', titulo: 'Energia da praia', categoria_id: 'cat-casa', tipo_despesa: 'variavel', valor: 132.40, data_vencimento: isoDaysFromNow(12), unidade_id: 'un-praia' }),
+    tx({ data_cadastro: isoDaysFromNow(-1), tipo: 'saida', titulo: 'Caseiro', categoria_id: 'cat-casa', tipo_despesa: 'fixa', valor: 900.00, data_vencimento: isoDaysFromNow(-8), data_pagamento: isoDaysFromNow(-8), unidade_id: 'un-praia' }),
+  );
+
+  const categoriasNegocio = [
+    { id: 'catb-vendas', nome: 'Vendas', cor: '#16A34A', icone: 'bi-cash-stack' },
+    { id: 'catb-insumos', nome: 'Insumos', cor: '#B45309', icone: 'bi-basket2-fill' },
+    { id: 'catb-aluguel', nome: 'Aluguel', cor: '#6366F1', icone: 'bi-shop' },
+    { id: 'catb-folha', nome: 'Folha de pagamento', cor: '#0EA5E9', icone: 'bi-people' },
+    { id: 'catb-energia', nome: 'Energia', cor: '#EAB308', icone: 'bi-lightning-charge' },
+    { id: 'catb-impostos', nome: 'Impostos', cor: '#DC2626', icone: 'bi-bank' },
+  ].map((c) => ({ ...c, owner_id: matheusId, group_id: padariasId, criado_em: agoraIso }));
+  categories.push(...categoriasNegocio);
+
+  // data_cadastro = a própria data (o resumo do mês filtra por ela).
+  const btx = (d) => tx({ group_id: padariasId, data_cadastro: d.data_pagamento || d.data_vencimento || isoDaysFromNow(0), ...d });
+  const padarias = [
+    ['un-centro', 'Centro', 1850, 3200, marinaId],
+    ['un-vila', 'Vila Nova', 1240, 2400, diegoId],
+    ['un-jardim', 'Jardim', 980, 2100, matheusId],
+    ['un-shopping', 'Shopping', 2600, 5800, matheusId],
+  ];
+  for (const [un, nome, vendas, aluguel, quem] of padarias) {
+    transactions.push(
+      btx({ tipo: 'entrada', titulo: `Vendas do dia — ${nome}`, categoria_id: 'catb-vendas', tipo_despesa: 'variavel', valor: vendas, data_vencimento: isoDaysFromNow(-1), data_pagamento: isoDaysFromNow(-1), unidade_id: un, owner_id: quem, responsavel_id: quem }),
+      btx({ tipo: 'entrada', titulo: `Vendas do dia — ${nome}`, categoria_id: 'catb-vendas', tipo_despesa: 'variavel', valor: Math.round(vendas * 0.92), data_vencimento: isoDaysFromNow(-2), data_pagamento: isoDaysFromNow(-2), unidade_id: un, owner_id: quem, responsavel_id: quem }),
+      btx({ tipo: 'saida', titulo: `Farinha e insumos — ${nome}`, categoria_id: 'catb-insumos', tipo_despesa: 'variavel', valor: Math.round(vendas * 0.35), empresa_servico: 'Moinho Bom Grão', data_vencimento: isoDaysFromNow(2), unidade_id: un, owner_id: quem, responsavel_id: quem }),
+      btx({ tipo: 'saida', titulo: `Aluguel — ${nome}`, categoria_id: 'catb-aluguel', tipo_despesa: 'fixa', valor: aluguel, data_vencimento: isoDaysFromNow(un === 'un-vila' ? -3 : 9), unidade_id: un }),
+      btx({ tipo: 'saida', titulo: `Energia — ${nome}`, categoria_id: 'catb-energia', tipo_despesa: 'variavel', valor: Math.round(aluguel * 0.18), data_vencimento: isoDaysFromNow(5), unidade_id: un }),
+    );
+  }
+  transactions.push(
+    btx({ tipo: 'saida', titulo: 'Folha de pagamento', categoria_id: 'catb-folha', tipo_despesa: 'fixa', valor: 18400.00, data_vencimento: isoDaysFromNow(4) }),
+    btx({ tipo: 'saida', titulo: 'Simples Nacional (DAS)', categoria_id: 'catb-impostos', tipo_despesa: 'fixa', valor: 3120.55, data_vencimento: isoDaysFromNow(15), owner_id: soniaId, responsavel_id: soniaId }),
+  );
+
   const txFinanciamentoCasa = transactions.find((t) => t.titulo === 'Financiamento Casa');
   const transactionPayers = [
     { id: uid('txpayer'), transaction_id: txFinanciamentoCasa.id, profile_id: matheusId, percentual: 60, valor: 750, criado_em: new Date().toISOString() },
@@ -453,14 +511,25 @@ function seedDatabase(nomes = NOMES_GENERICOS_PADRAO) {
 
   return {
     profiles: [
-      { id: matheusId, nome: 'Lucas', avatar_url: null, cor: '#2877E8', criado_em: new Date().toISOString() },
-      { id: beatrizId, nome: 'Carla', avatar_url: null, cor: '#D94E92', criado_em: new Date().toISOString() },
+      { id: matheusId, nome: 'Lucas', avatar_url: null, cor: '#2877E8', criado_em: agoraIso },
+      { id: beatrizId, nome: 'Carla', avatar_url: null, cor: '#D94E92', criado_em: agoraIso },
+      { id: marinaId, nome: 'Marina', avatar_url: null, cor: '#7C3AED', criado_em: agoraIso },
+      { id: diegoId, nome: 'Diego', avatar_url: null, cor: '#EA580C', criado_em: agoraIso },
+      { id: soniaId, nome: 'Sônia', avatar_url: null, cor: '#0891B2', criado_em: agoraIso },
     ],
-    groups: [{ id: groupId, nome: 'Família', criado_por: matheusId, codigo: 'FAMILIA-DEMO', criado_em: new Date().toISOString() }],
+    groups: [
+      { id: groupId, nome: 'Família', linha: 'home', criado_por: matheusId, codigo: 'FAMILIA-DEMO', criado_em: agoraIso },
+      { id: padariasId, nome: 'Padarias do Lucas', linha: 'business', criado_por: matheusId, codigo: 'PADARIAS-DEMO', criado_em: agoraIso },
+    ],
     group_members: [
-      { group_id: groupId, profile_id: matheusId, papel: 'admin', entrou_em: new Date().toISOString() },
-      { group_id: groupId, profile_id: beatrizId, papel: 'membro', entrou_em: new Date().toISOString() },
+      { group_id: groupId, profile_id: matheusId, papel: 'admin', entrou_em: agoraIso },
+      { group_id: groupId, profile_id: beatrizId, papel: 'membro', entrou_em: agoraIso },
+      { group_id: padariasId, profile_id: matheusId, papel: 'dono', entrou_em: agoraIso },
+      { group_id: padariasId, profile_id: marinaId, papel: 'gerente', unidade_id: 'un-centro', entrou_em: agoraIso },
+      { group_id: padariasId, profile_id: diegoId, papel: 'funcionario', unidade_id: 'un-vila', entrou_em: agoraIso },
+      { group_id: padariasId, profile_id: soniaId, papel: 'contador', entrou_em: agoraIso },
     ],
+    unidades,
     categories,
     transactions,
     transaction_payers: transactionPayers,
@@ -502,7 +571,7 @@ function seedDatabase(nomes = NOMES_GENERICOS_PADRAO) {
 // uso, 2026-09-01: "vejo meu nome, o da Bia, contas e salários de
 // verdade"). Removidas explicitamente aqui, não só abandonadas, pra tirar
 // o dado sensível do navegador de vez, não só parar de lê-lo.
-const CHAVES_ANTIGAS = ['bonotto_demo_db_v1', 'bonotto_demo_db_v2'];
+const CHAVES_ANTIGAS = ['bonotto_demo_db_v1', 'bonotto_demo_db_v2', 'bonotto_demo_db_v3'];
 
 function loadDb() {
   if (!isDemoMode()) return {};
@@ -578,6 +647,12 @@ export const mockDb = {
     return rows[idx];
   },
   // Para tabelas de chave composta (ex.: group_members), sem coluna id.
+  // Escopo da demonstração: o que é do grupo aberto, ou pessoal e sem grupo.
+  // (Antes: "meu OU do grupo" — com o dono em 2 grupos, as contas da casa
+  // apareciam nas padarias.)
+  noEscopo(row, ownerId, groupId) {
+    return row.group_id ? row.group_id === groupId : row.owner_id === ownerId;
+  },
   async updateWhere(table, predicate, patch) {
     await delay();
     db[table] = (db[table] || []).map((r) => (predicate(r) ? { ...r, ...patch } : r));

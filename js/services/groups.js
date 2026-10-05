@@ -11,9 +11,14 @@ function generateGroupCode() {
 
 // Retorna { group, members } do grupo ao qual o perfil pertence, ou null se não há grupo.
 // Grupo é sempre opcional — nem todo usuário precisa ter um.
-export async function getMyGroup(profileId) {
+// linha ('home' | 'business'): quem participa de mais de um grupo (na
+// demonstração, o dono das casas e das padarias) abre o grupo da linha em uso.
+export async function getMyGroup(profileId, linha = null) {
   if (isDemoMode()) {
-    const membership = (await mockDb.list('group_members')).find((m) => m.profile_id === profileId);
+    const minhas = await mockDb.list('group_members', (m) => m.profile_id === profileId);
+    const grupos = await mockDb.list('groups');
+    const linhaDe = (gid) => grupos.find((g) => g.id === gid)?.linha || 'home';
+    const membership = (linha && minhas.find((m) => linhaDe(m.group_id) === linha)) || minhas[0];
     if (!membership) return null;
     const group = await mockDb.get('groups', membership.group_id);
     const memberRows = await mockDb.list('group_members', (m) => m.group_id === membership.group_id);

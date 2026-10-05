@@ -11,13 +11,16 @@ async function entrarBusiness(page) {
 test('cria unidades, lança numa delas e o seletor do topo filtra', async ({ page }) => {
   await entrarBusiness(page);
   await page.evaluate(() => Alpine.store('app').setView('grupo'));
+  // A demonstração já vem com as 4 padarias do Lucas.
+  const lista = page.locator('.cg-unidades__lista li');
+  await expect(lista).toHaveCount(4);
   const nova = page.getByLabel('Nome da nova unidade');
   await nova.fill('Loja Centro');
   await page.getByRole('button', { name: 'Criar unidade' }).click();
-  await expect(page.locator('.cg-unidades__lista li')).toHaveCount(1);
+  await expect(lista).toHaveCount(5);
   await nova.fill('Filial Norte');
   await page.getByRole('button', { name: 'Criar unidade' }).click();
-  await expect(page.locator('.cg-unidades__lista li')).toHaveCount(2);
+  await expect(lista).toHaveCount(6);
 
   // Lançamento novo já nasce na unidade escolhida no topo.
   const topo = page.getByRole('combobox', { name: 'Unidade', exact: true });
@@ -35,20 +38,20 @@ test('cria unidades, lança numa delas e o seletor do topo filtra', async ({ pag
   // Na outra unidade, o lançamento não aparece.
   await topo.selectOption({ label: 'Loja Centro' });
   await expect(secao.getByText('Aluguel da filial')).toHaveCount(0);
-  await topo.selectOption({ label: 'Todas as unidades' });
+  await topo.selectOption({ label: 'Todas as filiais' });
   await expect(secao.getByText('Aluguel da filial').first()).toBeVisible();
 });
 
 test('dono troca o papel de alguém; contador não consegue lançar', async ({ page }) => {
   await entrarBusiness(page);
   await page.evaluate(() => Alpine.store('app').setView('grupo'));
-  await page.getByRole('combobox', { name: 'Papel de Carla' }).selectOption('contador');
-  await expect(page.getByText('Carla agora é contador.')).toBeVisible();
+  await page.getByRole('combobox', { name: 'Papel de Diego' }).selectOption('contador');
+  await expect(page.getByText('Diego agora é contador.')).toBeVisible();
 
-  // Entra como Carla (contadora): a regra vale para ela.
+  // Entra como Diego (agora contador): a regra vale para ele.
   await page.evaluate(async () => {
     const app = Alpine.store('app');
-    await app.loginDemo(app.demoProfiles.find((p) => p.nome === 'Carla').id);
+    await app.loginDemo(app.demoProfiles.find((p) => p.nome === 'Diego').id);
   });
   await expect.poll(() => page.evaluate(() => Alpine.store('app').meuPapel)).toBe('contador');
   await page.evaluate(() => Alpine.store('txModal').openNew('saida'));
@@ -56,4 +59,15 @@ test('dono troca o papel de alguém; contador não consegue lançar', async ({ p
   await page.getByLabel('Valor (R$)').fill('10');
   await page.locator('.cg-modal:visible').getByRole('button', { name: 'Salvar', exact: true }).click();
   await expect(page.getByText('Com o papel de contador você consulta e exporta, mas não lança.')).toBeVisible();
+});
+
+test('demonstração: o dono tem 4 padarias (Business) e 2 casas (Home), cada linha com as suas pessoas', async ({ page }) => {
+  await page.goto('/app?demo=1&tipo=business');
+  await expect(page.getByText('Entrar como Marina')).toBeVisible();
+  await expect(page.getByText('Entrar como Carla')).toBeHidden();
+  await page.getByText('Entrar como Lucas').click();
+  await expect.poll(() => page.evaluate(() => Alpine.store('app').unidades.map((u) => u.nome).sort().join(','))).toBe('Padaria Centro,Padaria Jardim,Padaria Shopping,Padaria Vila Nova');
+  await page.evaluate(() => Alpine.store('app').trocarLinhaDemo('home'));
+  await expect.poll(() => page.evaluate(() => Alpine.store('app').group?.group?.nome)).toBe('Família');
+  await expect.poll(() => page.evaluate(() => Alpine.store('app').unidades.map((u) => u.nome).sort().join(','))).toBe('Casa,Casa da praia');
 });

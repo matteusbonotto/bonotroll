@@ -19,7 +19,7 @@ test('colar linhas da planilha: reconhece colunas, valida e importa com o valor 
   await page.getByRole('button', { name: 'Importar agora' }).click();
   await expect.poll(() => page.evaluate(() => Alpine.store('csvModal').step), { timeout: 10000 }).toBe('resultado');
   const valor = await page.evaluate(() => {
-    const db = JSON.parse(localStorage.getItem('bonotto_demo_db_v3'));
+    const db = JSON.parse(localStorage.getItem('bonotto_demo_db_v4'));
     return db.transactions.find((t) => t.titulo === 'Planilha teste mercado')?.valor;
   });
   expect(Number(valor)).toBe(1234.56);

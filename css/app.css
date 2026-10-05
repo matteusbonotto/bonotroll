@@ -2267,3 +2267,22 @@ section[x-data^="dashboardView"] .cg-quick-actions .cg-btn i { font-size: 1.25re
 /* Configurações: uma coluna central (era 1 coluna curta + 1 enorme). */
 .cg-config { max-width: 760px; }
 .cg-config > .row > [class*="col-lg-"] { flex: 0 0 100%; max-width: 100%; }
+
+/* "Comece aqui" (Equipe do Business): 3 passos marcáveis, bem simples. */
+.cg-comece {
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-primary-soft);
+}
+.cg-comece__lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.cg-comece__lista li { display: flex; align-items: center; gap: 10px; min-height: 44px; font-weight: 600; }
+.cg-comece__lista li > i { font-size: 1.3rem; color: var(--color-text-muted); }
+.cg-comece__lista li.is-feito > i { color: var(--color-success, #1a7f4b); }
+.cg-comece__lista li.is-feito span { color: var(--color-text-muted); text-decoration: line-through; }
+.cg-papel-seletor { max-width: 180px; min-width: 150px; }
+/* Topo do celular: "Ajuda" vira só o ícone (o nome continua para leitores de tela). */
+@media (max-width: 575.98px) {
+  .cg-topbar-ajuda span { display: none; }
+  .cg-topbar .cg-unidade-seletor { max-width: 130px; font-size: var(--font-size-body-sm); }
+  .cg-topbar__titulo { font-size: var(--font-size-title-sm); }
+}

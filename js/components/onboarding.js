@@ -148,7 +148,8 @@ const TOURS_DA_TELA = {
     { alvoSeletor: 'section[x-data^="resourcesView"] .cg-room-grid', icone: 'bi-box-seam-fill', titulo: 'O que tem em cada lugar', texto: 'Toque num cômodo para ver os itens. O número vermelho avisa o que está acabando ou vencendo.' },
   ],
   grupo: [
-    { alvoSeletor: '[data-tour-alvo="copiar-codigo-grupo"], [data-tour-alvo="campo-nome-grupo"]', icone: 'bi-people-fill', titulo: 'Junte quem mora com você', texto: 'Mande o código para a pessoa entrar. Cada um tem o próprio acesso.' },
+    { alvoSeletor: '.cg-comece', icone: 'bi-signpost-2-fill', titulo: 'Comece aqui', texto: 'Três passos: empresa, filiais e equipe. Toque em "Me mostre" em qualquer um.' },
+    { alvoSeletor: '[data-tour-alvo="copiar-codigo-grupo"], [data-tour-alvo="campo-nome-grupo"]', icone: 'bi-people-fill', titulo: 'Junte as pessoas', texto: 'Mande o código para a pessoa entrar. Cada um tem o próprio acesso.' },
   ],
   socorros: [
     { alvoSeletor: '.cg-socorros .cg-socorro-menu', icone: 'bi-heart-pulse-fill', titulo: 'Tudo em 3 caminhos', texto: 'Emergência para agir já, Sintomas para entender o que fazer, e as fichas de cada pessoa.' },
@@ -736,6 +737,22 @@ const PASSOS_CRIAR_GRUPO = [
   },
 ];
 
+// Guias do BNTT Business e das casas (2026-10-05) — "absurdamente simples":
+// 2–3 balões curtos apontando para o lugar certo.
+const passosUnidades = (rotulo, exemplo) => [
+  { id: 'u-nome', tipo: 'campo', view: 'grupo', alvoSeletor: 'section[x-data^="groupView"] [aria-label="Nome da nova unidade"]', icone: 'bi-pencil-fill', titulo: `Nome da ${rotulo}`, texto: `Escreva como você chama. Ex.: "${exemplo}".` },
+  { id: 'u-criar', tipo: 'campo', view: 'grupo', alvoSeletor: 'section[x-data^="groupView"] .cg-unidades .input-group .btn-success', icone: 'bi-plus-circle-fill', titulo: 'Criar', texto: 'Toque em "Criar unidade". Repita para cada uma.' },
+  { id: 'u-topo', tipo: 'campo', view: 'grupo', alvoSeletor: '.cg-unidade-seletor', icone: 'bi-funnel-fill', titulo: 'Ver uma ou todas', texto: 'Aqui no topo você escolhe qual ver — ou todas juntas.' },
+];
+const PASSOS_PAPEIS = [
+  { id: 'p-escolher', tipo: 'campo', view: 'grupo', alvoSeletor: 'section[x-data^="groupView"] .cg-papel-seletor', icone: 'bi-person-badge-fill', titulo: 'O papel de cada pessoa', texto: 'Toque e escolha: Dono, Gerente, Funcionário ou Contador.' },
+  { id: 'p-ajuda', tipo: 'campo', view: 'grupo', alvoSeletor: 'section[x-data^="groupView"] .cg-papeis-ajuda', icone: 'bi-question-circle-fill', titulo: 'Quem pode o quê', texto: 'Gerente: tudo. Funcionário: só lança. Contador: só vê e exporta. Toque aqui para ler.' },
+];
+const PASSOS_CRIAR_EMPRESA = [
+  { id: 'e-nome', tipo: 'campo', view: 'grupo', alvoSeletor: '[data-tour-alvo="campo-nome-grupo"]', icone: 'bi-briefcase-fill', titulo: 'Nome da empresa', texto: 'Ex.: "Padarias do Lucas".' },
+  { id: 'e-criar', tipo: 'acao', dentroModal: true, area: 'criar-grupo', view: 'grupo', alvoSeletor: '[data-tour-alvo="campo-criar-grupo"]', icone: 'bi-check-circle-fill', titulo: 'Criar', texto: 'Toque em "Criar".', textoResultado: 'Empresa criada! Agora cadastre as filiais — o quadro "Comece aqui" mostra o próximo passo.' },
+];
+
 const CATALOGO_GUIAS = [
   {
     id: 'financeiro',
@@ -775,6 +792,7 @@ const CATALOGO_GUIAS = [
   },
   {
     id: 'dividir-despesa',
+    linha: 'home',
     area: 'dividir-despesa',
     view: 'home',
     requisito: (app) => (app.group?.members?.length || 0) >= 2,
@@ -812,7 +830,70 @@ const CATALOGO_GUIAS = [
     passos: PASSOS_CAIXINHA,
   },
   {
+    id: 'criar-empresa',
+    linha: 'business',
+    area: 'criar-grupo',
+    view: 'grupo',
+    requisito: (app) => !app.group,
+    requisitoTexto: 'Sua empresa já existe — veja a tela Equipe.',
+    icone: 'bi-briefcase-fill',
+    titulo: 'Crie sua empresa',
+    resumo: 'O primeiro passo: dar um nome ao seu negócio.',
+    passos: PASSOS_CRIAR_EMPRESA,
+  },
+  {
+    id: 'filiais',
+    linha: 'business',
+    area: 'filiais',
+    view: 'grupo',
+    requisito: (app) => !!app.group && app.podeGerirUnidades,
+    requisitoTexto: 'Crie sua empresa primeiro (tela Equipe).',
+    icone: 'bi-shop',
+    titulo: 'Cadastre suas filiais',
+    resumo: 'Uma para cada loja, padaria ou obra.',
+    passos: passosUnidades('filial', 'Padaria Centro'),
+  },
+  {
+    id: 'convite-equipe',
+    linha: 'business',
+    area: 'convite',
+    view: 'grupo',
+    alvoSeletor: 'section[x-data^="groupView"] [data-tour-alvo="copiar-codigo-grupo"]',
+    requisito: (app) => !!app.group,
+    requisitoTexto: 'Crie sua empresa primeiro (tela Equipe).',
+    icone: 'bi-person-plus-fill',
+    titulo: 'Chame sua equipe',
+    resumo: 'Mande o código para cada pessoa entrar.',
+    texto: 'Toque em "Copiar código" e mande para a pessoa. Ela entra com esse código em "Entrar em um grupo".',
+    textoResultado: 'Código copiado! Quando a pessoa entrar, escolha o papel dela aqui mesmo, na lista da equipe.',
+  },
+  {
+    id: 'papeis',
+    linha: 'business',
+    area: 'papeis',
+    view: 'grupo',
+    requisito: (app) => (app.group?.members?.length || 0) >= 2 && app.podeMudarPapeis,
+    requisitoTexto: 'Chame alguém para a equipe primeiro (guia "Chame sua equipe").',
+    icone: 'bi-person-badge',
+    titulo: 'Escolha o papel de cada pessoa',
+    resumo: 'Quem pode ver, lançar ou mudar o quê.',
+    passos: PASSOS_PAPEIS,
+  },
+  {
+    id: 'casas',
+    linha: 'home',
+    area: 'casas',
+    view: 'grupo',
+    requisito: (app) => !!app.group && (app.limiteDoPlano('unidades') ?? 2) > 1,
+    requisitoTexto: 'Ter mais de uma casa é do plano Família. Crie também um grupo antes (tela Pessoas).',
+    icone: 'bi-houses',
+    titulo: 'Cadastre suas casas',
+    resumo: 'Casa e casa de praia, cada uma com suas contas.',
+    passos: passosUnidades('casa', 'Casa da praia'),
+  },
+  {
     id: 'criar-grupo',
+    linha: 'home',
     area: 'criar-grupo',
     view: 'grupo',
     requisito: (app) => !app.group,
@@ -824,6 +905,7 @@ const CATALOGO_GUIAS = [
   },
   {
     id: 'convite',
+    linha: 'home',
     area: 'convite',
     view: 'grupo',
     alvoSeletor: 'section[x-data^="groupView"] [data-tour-alvo="copiar-codigo-grupo"]',
@@ -889,7 +971,12 @@ export function onboardingStore() {
     _pararEscutaFechamento: null,
     _correcaoAtraso: null, // setTimeout pendente pra recalcular a posição depois que a transição CSS do modal real termina — ver _focarAlvo
 
-    catalogo: CATALOGO_GUIAS,
+    // Só os guias da linha em uso (Home ou Business) — sem guia de "seu par"
+    // para quem tem padaria, nem de "filiais" para quem tem casa.
+    get catalogo() {
+      const linha = Alpine.store('app')?.linha || 'home';
+      return CATALOGO_GUIAS.filter((g) => !g.linha || g.linha === linha);
+    },
 
     // Nunca `undefined` — index.html tem vários `:aria-label`/`:class`
     // ligados a `$store.onboarding.passo.X` FORA de qualquer `x-show`/`x-if`

@@ -44,7 +44,7 @@ export function fichaVazia() {
 export async function listarFichas(chave, { ownerId, groupId }) {
   let linhas;
   if (isDemoMode()) {
-    linhas = await mockDb.list('fichas_saude', (f) => f.owner_id === ownerId || (groupId && f.group_id === groupId));
+    linhas = await mockDb.list('fichas_saude', (f) => mockDb.noEscopo(f, ownerId, groupId));
   } else {
     const supabase = await getSupabase();
     let q = supabase.from('fichas_saude').select('*').order('criado_em');

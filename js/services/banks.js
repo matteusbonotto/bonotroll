@@ -13,7 +13,7 @@ import { getSupabase } from '../data/supabaseClient.js';
 // lista (ver bankByName em store.js), o mesmo padrão de companyByName.
 export async function listBanks({ ownerId, groupId }) {
   if (isDemoMode()) {
-    return mockDb.list('banks', (b) => b.owner_id === ownerId || (groupId && b.group_id === groupId));
+    return mockDb.list('banks', (b) => mockDb.noEscopo(b, ownerId, groupId));
   }
   const supabase = await getSupabase();
   let query = supabase.from('banks').select('*');
