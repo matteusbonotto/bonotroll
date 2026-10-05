@@ -8,6 +8,7 @@
 //     Stripe ou scripts/stripe-sincronizar.mjs). O usuário não consegue se
 //     dar um plano editando a própria conta.
 import { isDemoMode } from '../data/config.js';
+import { getSupabase } from '../data/supabaseClient.js';
 import { PLANOS, planoEmVigor, planoPorId, precoAnualCentavos } from '../data/planos.js';
 import { LINKS_STRIPE, MODO_STRIPE } from '../data/stripeLinks.js';
 
@@ -62,7 +63,47 @@ export function contaDaSessao(session) {
   };
 }
 
-export const planoDaConta = (conta) => planoEmVigor(conta);
+// Plano que vale: o que o SERVIDOR calculou (considera o plano de quem criou
+// a casa/empresa) — senão, o cálculo local a partir da conta.
+export function planoDaConta(conta) {
+  const srv = conta.planoServidor;
+  if (srv?.plano && planoPorId(srv.plano)) {
+    const dias = Number(srv.dias_de_teste) || 0;
+    const emTeste = dias > 0 && !conta.assinaturaAtiva;
+    return { ...planoPorId(srv.plano), emTeste, diasRestantes: emTeste ? dias : null };
+  }
+  return planoEmVigor(conta);
+}
+
+// Pergunta ao servidor (função bntt_meu_plano, supabase/seguranca-planos-2026-10.sql).
+export async function buscarPlanoNoServidor() {
+  if (isDemoMode()) return null;
+  try {
+    const supabase = await getSupabase();
+    const { data, error } = await supabase.rpc('bntt_meu_plano');
+    if (error) return null;
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+// O banco recusa o que passa do plano com "BNTT_LIMITE: <recurso> (...)".
+export function ehErroDeLimite(texto) {
+  return /BNTT_LIMITE/.test(String(texto || ''));
+}
+
+const MOTIVOS_DE_LIMITE = {
+  lancamentosMes: 'Você chegou ao limite de lançamentos do mês no seu plano.',
+  listas: 'No seu plano cabe 1 lista de compras aberta. Para ter várias, mude de plano.',
+  saude: 'As fichas de saúde fazem parte do plano Família.',
+  unidades: 'Seu plano chegou ao limite de unidades. Para abrir mais filiais, mude de plano.',
+  pessoas: 'O plano de quem criou o grupo chegou ao limite de pessoas.',
+};
+export function motivoDoLimite(texto) {
+  const recurso = /BNTT_LIMITE:\s*([a-zA-Z]+)/.exec(String(texto || ''))?.[1];
+  return MOTIVOS_DE_LIMITE[recurso] || 'Isso passa do limite do seu plano.';
+}
 
 export function trocarTipoDemo(tipo) {
   gravar(CHAVE_TIPO_DEMO, tipo === 'business' ? 'business' : 'home');

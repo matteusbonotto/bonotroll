@@ -131,6 +131,7 @@ export function appStore() {
 
       this.session = session;
       this.conta = assinatura.contaDaSessao(session);
+      this.conta.planoServidor = await assinatura.buscarPlanoNoServidor();
       this.aplicarLinha();
       this.profile = profile;
       this.group = group;
@@ -616,6 +617,11 @@ export function appStore() {
     // seu próprio tempo. Erro fica mais tempo na tela que sucesso — dá mais
     // chance de ler algo que precisa de atenção.
     notify(message, type = 'success') {
+      // Recusa do servidor por limite do plano: vira o aviso de plano, não erro.
+      if (assinatura.ehErroDeLimite(message)) {
+        this.pedirUpgrade(assinatura.motivoDoLimite(message));
+        return;
+      }
       const entry = { message, type, id: `${Date.now()}-${Math.random().toString(36).slice(2, 6)}` };
       this.toasts.push(entry);
       const duracao = type === 'danger' ? 6500 : 3800;

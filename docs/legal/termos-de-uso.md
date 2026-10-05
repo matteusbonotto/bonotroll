@@ -38,13 +38,13 @@ Quem você convida para o seu grupo vê e pode editar os dados do grupo. O admin
 - **Mudança de preço:** avisamos com pelo menos 30 dias de antecedência; o novo valor só vale no próximo período.
 
 ## 7. Disponibilidade
-Trabalhamos para o app estar sempre no ar, mas pode haver interrupções para manutenção ou por falhas de terceiros. Recomendamos exportar seus dados de tempos em tempos (Perfil → Exportar dados).
+Trabalhamos para o app estar sempre no ar, mas pode haver interrupções para manutenção ou por falhas de terceiros. Recomendamos exportar seus dados de tempos em tempos (Configurações → Exportar meus dados).
 
 ## 8. Responsabilidade
 Na medida permitida por lei, não respondemos por decisões tomadas com base nas informações do app nem por danos causados pelo uso indevido da conta pelo próprio usuário.
 
 ## 9. Encerramento
-Você pode excluir sua conta a qualquer momento (cancele antes a assinatura, se houver). Podemos suspender contas que violem estes termos.
+Você pode excluir sua conta a qualquer momento, em Configurações → Excluir minha conta (a assinatura, se houver, é cancelada junto). Podemos suspender contas que violem estes termos.
 
 ## 10. Lei e foro
 Lei brasileira. Foro do domicílio do consumidor.

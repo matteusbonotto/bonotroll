@@ -3137,6 +3137,33 @@
               </div>
 
               <button type="button" class="cg-btn btn btn-outline-danger w-100" @click="$store.app.logout()"><i class="bi bi-box-arrow-right" aria-hidden="true"></i> Sair da conta</button>
+
+              <!-- Excluir a conta (LGPD) — fora do modo demonstração -->
+              <div class="cg-excluir-conta mt-3" x-show="!$store.app.isDemoMode">
+                <button type="button" class="btn btn-link text-danger w-100" x-show="!excluirAberto" @click="excluirAberto = true">Excluir minha conta</button>
+                <div class="cg-card border-danger" x-show="excluirAberto" x-cloak role="region" aria-labelledby="cg-excluir-titulo">
+                  <h3 class="h6 fw-bold text-danger" id="cg-excluir-titulo"><i class="bi bi-exclamation-octagon" aria-hidden="true"></i> Excluir minha conta</h3>
+                  <ul class="small mb-3 ps-3">
+                    <li>Apaga para sempre seus lançamentos, listas, inventário, fichas de saúde, fotos e comprovantes.</li>
+                    <li>Se você tem assinatura, ela é cancelada na hora — nada mais é cobrado.</li>
+                    <li>A casa ou empresa compartilhada continua para os outros membros.</li>
+                    <li>Quer guardar algo? Use "Exportar meus dados" antes.</li>
+                  </ul>
+                  <label class="form-label" for="cg-excluir-senha">Digite sua senha para confirmar</label>
+                  <input type="password" class="form-control mb-2" id="cg-excluir-senha" x-model="excluirSenha" autocomplete="current-password" />
+                  <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="cg-excluir-entendi" x-model="excluirEntendi" />
+                    <label class="form-check-label" for="cg-excluir-entendi">Entendo que isso não pode ser desfeito.</label>
+                  </div>
+                  <p class="small text-danger" x-show="excluirErro" x-text="excluirErro" role="alert"></p>
+                  <div class="d-grid gap-2">
+                    <button type="button" class="btn btn-danger" :disabled="!excluirEntendi || !excluirSenha || excluindo" @click="excluirConta()">
+                      <span x-show="!excluindo">Excluir minha conta para sempre</span><span x-show="excluindo">Excluindo…</span>
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" @click="excluirAberto = false; excluirSenha = ''; excluirEntendi = false; excluirErro = ''">Cancelar</button>
+                  </div>
+                </div>
+              </div>
               <p class="text-center cg-muted small mt-3 mb-4">BNTT © 2026</p>
             </div>
           </div>

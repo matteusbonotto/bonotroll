@@ -1785,15 +1785,24 @@ img.cg-company-logo { display: block; }
   margin: -12px;
 }
 
-.cg-room-tile__edit {
-  width: 44px;
-  height: 44px;
-  top: 0;
-  left: 0;
+/* Lápis dos cartões (cômodo, subcategoria, caixinha): pequeno e discreto no
+   canto superior direito. O desenho tem 28px; a área de toque continua com
+   44px pelo ::after (inset -8px) — sem empurrar o conteúdo do cartão. */
+.cg-room-tile .cg-room-tile__edit {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  left: auto;
+  width: 28px;
+  height: 28px;
   padding: 0;
-  border: 6px solid transparent;
-  background-clip: padding-box;
+  opacity: .75;
 }
+.cg-room-tile .cg-room-tile__edit::after { inset: -8px; }
+.cg-room-tile .cg-room-tile__edit:hover,
+.cg-room-tile .cg-room-tile__edit:focus-visible { opacity: 1; }
+/* O contador vermelho de alertas vai para o canto esquerdo (o direito é do lápis). */
+.cg-room-tile .cg-room-tile__alert { left: 6px; right: auto; }
 
 /* Contador de notificações legível (era 9,6px). */
 .cg-topbar .badge.rounded-pill {

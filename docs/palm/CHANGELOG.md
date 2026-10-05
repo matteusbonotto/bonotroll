@@ -2,6 +2,13 @@
 
 > 2026-10-05: o nome voltou a ser **BNTT** (decisão do usuário), com duas linhas: **BNTT Home** (verde) e **BNTT Business** (azul). As entradas abaixo citam "Palm" porque eram o nome na época.
 
+## Segurança no servidor, exclusão de conta e cartões quadrados — checkpoint/seguranca
+- **Limites dos planos no banco** (`supabase/seguranca-planos-2026-10.sql`): lançamentos/mês, listas abertas, fichas de saúde, unidades e pessoas são recusados pelo servidor ("BNTT_LIMITE"), não só na tela — chamar a API direto não passa mais por cima. Plano que vale = o melhor entre o da pessoa e o de quem criou a casa/empresa. O app lê o plano do servidor (`bntt_meu_plano`) e transforma a recusa no aviso "Disponível em outro plano". Teste unitário garante app e banco com os mesmos limites.
+- **Permissões mínimas:** sem login não se toca em tabela nem função nenhuma; logado não tem TRUNCATE/TRIGGER/REFERENCES; funções do banco liberadas só as que o app usa. Anexos: até 10 MB, só imagem e PDF.
+- **Testes de invasão** guardados: `node scripts/teste-seguranca.mjs` (por fora: 24/24 bloqueados) e `supabase/testes/invasao-logado.sql` (logado: 16/16 bloqueados, tudo desfeito no fim).
+- **Excluir minha conta** (LGPD): Configurações → pede a senha de novo → cancela a assinatura no Stripe, apaga arquivos e a conta (dados em cascata). Função `excluir-conta`.
+- **Cartões quadrados de novo:** o lápis de editar (Inventário, subcategorias, Reservas) voltou a ser pequeno no canto superior direito. Causa: uma regra genérica de acessibilidade com `position: relative` anulava o `absolute` do lápis. A auditoria agora mede a área de toque invisível (::after).
+
 ## LP com o visual original + banco e webhook em produção — checkpoint/lp-original
 - **LP volta à identidade original** (escura, Anton, grão, brilho, pilares B·N·T·T, scroll-reveal, parallax) com o conteúdo novo: Casa/Negócio (Business com a mesma estética em azul), planos Mensal/Anual (−20%), chamada final para o app, demonstração, Termos e Privacidade.
 - **Banco de produção atualizado** (backup antes em backups/bntt/2026-10-05-antes-sql-final, contagens conferidas depois): endurecimento de segurança (fim da inserção direta em group_members), fichas de saúde (cofres, fichas_saude) e Business (unidades, papéis, regras no servidor).

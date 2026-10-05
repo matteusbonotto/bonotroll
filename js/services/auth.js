@@ -141,3 +141,22 @@ export async function atualizarSessao() {
   if (error) throw error;
   return data.session;
 }
+
+// Excluir a própria conta (LGPD). Pede a senha de novo antes — uma sessão
+// esquecida aberta não basta para apagar tudo. Quem apaga é a função
+// supabase/functions/excluir-conta (cancela o Stripe, apaga arquivos e conta).
+export async function excluirMinhaConta(senha) {
+  const supabase = await getSupabase();
+  const { data: atual } = await supabase.auth.getUser();
+  const email = atual?.user?.email;
+  if (!email) throw new Error('Entre na sua conta de novo e tente outra vez.');
+  const { error: erroSenha } = await supabase.auth.signInWithPassword({ email, password: senha });
+  if (erroSenha) throw new Error('Senha incorreta.');
+  const { data, error } = await supabase.functions.invoke('excluir-conta', { method: 'POST' });
+  if (error || !data?.ok) {
+    let msg = data?.erro;
+    try { msg = msg || (await error?.context?.json?.())?.erro; } catch { /* sem corpo */ }
+    throw new Error(msg || 'Não consegui excluir agora. Tente de novo em alguns minutos.');
+  }
+  await supabase.auth.signOut().catch(() => {});
+}

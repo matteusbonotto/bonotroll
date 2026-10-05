@@ -1,4 +1,4 @@
-import { updateProfile, uploadAvatar } from '../services/auth.js';
+import { updateProfile, uploadAvatar, excluirMinhaConta } from '../services/auth.js';
 import { mockDb } from '../data/mockDb.js';
 import { isPushSupported, estadoPush, subscribeToPush, unsubscribeFromPush, explicarErroPush } from '../services/push.js';
 import { resizeImage } from '../utils/image.js';
@@ -18,6 +18,29 @@ export function profileView() {
     pushErroTecnico: '',
     pushCarregando: false,
     exportando: false,
+    // Excluir conta (LGPD)
+    excluirAberto: false,
+    excluirSenha: '',
+    excluirEntendi: false,
+    excluindo: false,
+    excluirErro: '',
+
+    async excluirConta() {
+      this.excluirErro = '';
+      if (!this.excluirEntendi || !this.excluirSenha) return;
+      this.excluindo = true;
+      try {
+        await excluirMinhaConta(this.excluirSenha);
+        this.excluirSenha = '';
+        this.excluirAberto = false;
+        this.$store.app.clearSession();
+        this.$store.app.notify('Sua conta e seus dados foram excluídos.');
+      } catch (e) {
+        this.excluirErro = e.message;
+      } finally {
+        this.excluindo = false;
+      }
+    },
 
     async init() {
       this.nome = this.$store.app.profile?.nome || '';

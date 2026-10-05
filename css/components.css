@@ -1768,9 +1768,8 @@ body { font-size: var(--font-size-body); }
    Ícones pequenos mantêm o visual e ganham área de toque invisível ao redor
    (::after); em tela de toque, botões e chips ficam com 44 px de altura. */
 .cg-help__trigger,
-.cg-room-tile__edit,
 .btn-close {
-  position: relative;
+  position: relative; /* o lápis dos cartões NÃO entra aqui: ele é absolute (canto do cartão) */
 }
 
 .cg-help__trigger::after,

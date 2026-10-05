@@ -47,7 +47,7 @@ Não vendemos seus dados. Não usamos seus dados para publicidade.
 Os provedores acima podem armazenar ou processar dados fora do Brasil ([[região do projeto Supabase]]). Isso ocorre com as garantias do art. 33 da LGPD (cláusulas contratuais dos provedores).
 
 ## 6. Por quanto tempo guardamos
-Enquanto sua conta existir. Ao excluir a conta, os dados são apagados em até [[30]] dias, salvo o que a lei obrigar a guardar.
+Enquanto sua conta existir. Você mesmo exclui a conta em **Configurações → Excluir minha conta**: os dados são apagados na hora (a assinatura, se houver, é cancelada), salvo o que a lei obrigar a guardar (ex.: registros fiscais de pagamento, mantidos pelo Stripe).
 
 ## 7. Como protegemos
 - Conexão sempre criptografada (HTTPS/TLS).
@@ -59,7 +59,7 @@ Enquanto sua conta existir. Ao excluir a conta, os dados são apagados em até [
 - **Em implantação:** a mesma proteção para valores e descrições dos lançamentos.
 
 ## 8. Seus direitos (LGPD, art. 18)
-Confirmar o tratamento, acessar, corrigir, levar seus dados (portabilidade — já disponível: **Perfil → Exportar dados**), anonimizar ou excluir, saber com quem compartilhamos, revogar o consentimento e pedir revisão. Peça por [[e-mail do encarregado]]; respondemos em até 15 dias. Você também pode reclamar à ANPD (gov.br/anpd).
+Confirmar o tratamento, acessar, corrigir, levar seus dados (portabilidade — já disponível: **Configurações → Exportar meus dados**), anonimizar ou excluir (já disponível: **Configurações → Excluir minha conta**), saber com quem compartilhamos, revogar o consentimento e pedir revisão. Peça por [[e-mail do encarregado]]; respondemos em até 15 dias. Você também pode reclamar à ANPD (gov.br/anpd).
 
 ## 9. Crianças e adolescentes
 O BNTT é feito para maiores de 18 anos. Dados de crianças da casa (ex.: na ficha de saúde) só podem ser registrados pelo responsável legal, no melhor interesse da criança (art. 14).

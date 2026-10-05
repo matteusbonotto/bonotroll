@@ -25,12 +25,20 @@ for (const largura of LARGURAS) {
       const ingles = new RegExp(regexIngles, 'i');
       const sec = [...document.querySelectorAll('main section[x-show]')].find((s) => s.offsetParent !== null) || document.body;
       const escopo = [sec, document.querySelector('.cg-topbar'), document.querySelector('.cg-nav-inferior')].filter(Boolean);
+      // Área de toque real: ícones pequenos ganham área invisível pelo ::after
+      // (inset negativo) — conta essa área, não só o desenho.
+      const area = (e) => {
+        const b = e.getBoundingClientRect();
+        const d = getComputedStyle(e, '::after');
+        const extra = d.content !== 'none' && d.position === 'absolute' ? Math.max(0, -parseFloat(d.top) || 0) : 0;
+        return { width: b.width + 2 * extra, height: b.height + 2 * extra };
+      };
       const visivel = (e) => { const b = e.getBoundingClientRect(); return e.offsetParent !== null && b.width > 0 && b.height > 0; };
       const nome = (e) => (e.getAttribute('aria-label') || e.innerText || e.title || e.getAttribute('aria-labelledby') || '').trim();
       const interativos = escopo.flatMap((s) => [...s.querySelectorAll('button, a[href], input:not([type=hidden]), select, textarea, [role=button]')]).filter(visivel)
         .filter((e) => !e.classList.contains('cg-date-field__nativo') && !e.classList.contains('visually-hidden-focusable'));
       // Tabela densa do computador (mouse): mínimo WCAG 2.5.8 de 24px; o resto, 44px.
-      const pequenos = interativos.filter((e) => { const b = e.getBoundingClientRect(); const min = e.closest('table') && window.innerWidth >= 992 ? 24 : 44; return b.height < min || b.width < 24; })
+      const pequenos = interativos.filter((e) => { const b = area(e); const min = e.closest('table') && window.innerWidth >= 992 ? 24 : 44; return b.height < min || b.width < 24; })
         .map((e) => `${e.tagName.toLowerCase()}.${[...e.classList].slice(0, 2).join('.')} "${nome(e).slice(0, 25)}" ${Math.round(e.getBoundingClientRect().width)}x${Math.round(e.getBoundingClientRect().height)}`);
       const semNome = interativos.filter((e) => !nome(e) && !(e.labels && e.labels.length) && !e.placeholder)
         .map((e) => `${e.tagName.toLowerCase()}.${[...e.classList].slice(0, 2).join('.')}`);
