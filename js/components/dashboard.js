@@ -3,6 +3,7 @@ import { listAllItems as listAllResourceItems } from '../services/resources.js';
 import { listBudgets, computeBudgetProgress } from '../services/budgets.js';
 import { computeExpiryStatus, expiryStatusMeta } from '../utils/status.js';
 import { todayIso, formatCurrency } from '../utils/format.js';
+import { resumoDasFiliais, resumoGeral, sugestoesDoDia } from '../utils/painelNegocio.js';
 
 const QUEBRAS_STORAGE_KEY = 'bonotto_dashboard_quebras';
 function quebrasIniciais() {
@@ -102,6 +103,35 @@ export function dashboardView() {
     // "Precisa de você" (Palm Business, fase 6): o que pede ação AGORA, em
     // ordem de urgência. Reaproveita os mesmos dados da tela (nada novo no banco).
     analisesAbertas: false,
+    todas: [],
+
+    // ── Painel do dono (BNTT Business): blocos por filial + resumo + sugestões
+    get mostrarPainelDono() {
+      const app = this.$store.app;
+      return app.linha === 'business' && app.unidades.length > 0 && app.meuPapel !== 'funcionario';
+    },
+    get _ehInsumo() {
+      const app = this.$store.app;
+      return (t) => (app.categoryById(t.categoria_id)?.nome || '').toLowerCase() === 'insumos';
+    },
+    get painelFiliais() {
+      return resumoDasFiliais(this.todas, this.$store.app.unidades, { hoje: todayIso(), ehInsumo: this._ehInsumo });
+    },
+    get painelGeral() {
+      return resumoGeral(this.todas, { hoje: todayIso(), ehInsumo: this._ehInsumo });
+    },
+    get painelSugestoes() {
+      return sugestoesDoDia(this.painelFiliais, this.painelGeral, { hoje: todayIso() });
+    },
+    get filialAberta() {
+      const id = this.$store.app.unidadeAtual;
+      return id ? this.painelFiliais.find((f) => f.id === id) || null : null;
+    },
+    abrirFilial(id) {
+      if (!id) return;
+      this.$store.app.trocarUnidade(id);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    },
     atencaoTodas: false,
     get atencao() {
       const hoje = new Date();
@@ -156,7 +186,9 @@ export function dashboardView() {
 
       try {
         const groupId = store.group?.group?.id;
-        this.escopo = (await listTransactions({ ownerId: store.profile.id, groupId })).filter((t) => store.naUnidade(t));
+        // todas = a empresa inteira (painel do dono); escopo = a filial em foco.
+        this.todas = await listTransactions({ ownerId: store.profile.id, groupId });
+        this.escopo = this.todas.filter((t) => store.naUnidade(t));
         const payersMap = await listPayersFor(this.escopo.map((t) => t.id));
         this.payersByTx = Object.fromEntries(payersMap);
 

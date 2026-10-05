@@ -346,6 +346,58 @@
             <button type="button" class="btn btn-link p-0" @click="$store.app.verPlanos()">Ver planos</button>
           </p>
 
+          <!-- Painel do dono (Business): decidir só de olhar — resumo do mês,
+               sugestões e um bloco por filial; tocar no bloco abre a filial. -->
+          <template x-if="mostrarPainelDono && !$store.app.unidadeAtual">
+            <section class="cg-painel-dono mb-4" aria-labelledby="cg-painel-titulo">
+              <h2 class="cg-section-title mb-2" id="cg-painel-titulo"><i class="bi bi-speedometer2" aria-hidden="true"></i> Resumo do mês</h2>
+              <div class="cg-painel-geral">
+                <div><span>Vendas</span><strong x-text="cgFormat.formatCurrency(painelGeral.vendas)"></strong></div>
+                <div><span>Gastos</span><strong x-text="cgFormat.formatCurrency(painelGeral.gastos)"></strong></div>
+                <div><span>Resultado</span><strong :class="painelGeral.resultado < 0 ? 'text-danger' : 'text-success'" x-text="cgFormat.formatCurrency(painelGeral.resultado)"></strong></div>
+                <div><span>Vencidas</span><strong :class="painelGeral.vencidas.n && 'text-danger'" x-text="painelGeral.vencidas.n ? cgFormat.formatCurrency(painelGeral.vencidas.valor) : 'Nenhuma'"></strong></div>
+              </div>
+
+              <ul class="cg-sugestoes" x-show="painelSugestoes.length" aria-label="O que fazer agora">
+                <template x-for="(s, i) in painelSugestoes" :key="i">
+                  <li class="cg-sugestao" :class="'cg-sugestao--' + s.nivel">
+                    <i class="bi" :class="s.icone" aria-hidden="true"></i>
+                    <span x-text="s.texto"></span>
+                    <button type="button" class="btn btn-link p-0 ms-auto" x-show="s.unidadeId" @click="abrirFilial(s.unidadeId)">Abrir</button>
+                  </li>
+                </template>
+              </ul>
+
+              <h2 class="cg-section-title mt-3 mb-2"><i class="bi bi-shop" aria-hidden="true"></i> Suas filiais</h2>
+              <div class="cg-filiais">
+                <template x-for="f in painelFiliais" :key="f.id">
+                  <button type="button" class="cg-filial" :class="'cg-filial--' + f.status" @click="abrirFilial(f.id)"
+                    :aria-label="f.nome + ': ' + f.motivo + '. Resultado do mês ' + cgFormat.formatCurrency(f.resultado) + '. Toque para abrir.'">
+                    <span class="cg-filial__topo">
+                      <span class="cg-filial__nome" x-text="f.nome.replace(/^Padaria /, '')"></span>
+                      <span class="cg-filial__luz" aria-hidden="true"></span>
+                    </span>
+                    <span class="cg-filial__valor" :class="f.resultado < 0 && 'text-danger'" x-text="cgFormat.formatCurrencyCompact(f.resultado)"></span>
+                    <span class="cg-filial__rotulo">resultado do mês</span>
+                    <span class="cg-filial__vendas">Vendas <strong x-text="cgFormat.formatCurrencyCompact(f.vendas)"></strong></span>
+                    <span class="cg-filial__motivo" x-text="f.motivo"></span>
+                  </button>
+                </template>
+              </div>
+            </section>
+          </template>
+
+          <!-- Filial aberta: o Início inteiro mostra só ela -->
+          <template x-if="$store.app.linha === 'business' && filialAberta">
+            <div class="cg-filial-aberta mb-3" :class="'cg-filial-aberta--' + filialAberta.status">
+              <button type="button" class="btn btn-outline-secondary" @click="$store.app.trocarUnidade('')"><i class="bi bi-arrow-left" aria-hidden="true"></i> Todas as filiais</button>
+              <div>
+                <p class="cg-filial-aberta__nome mb-0" x-text="filialAberta.nome"></p>
+                <p class="cg-filial-aberta__motivo mb-0" x-text="filialAberta.motivo"></p>
+              </div>
+            </div>
+          </template>
+
           <!-- "Precisa de você" (fase 6): o que pede ação agora, antes de qualquer número -->
           <section class="cg-atencao mb-4" aria-labelledby="cg-atencao-titulo">
             <h2 class="cg-section-title mb-2" id="cg-atencao-titulo" x-text="atencao.length ? (atencao.length === 1 ? '1 coisa precisa de você' : atencao.length + ' coisas precisam de você') : 'Tudo em dia'"></h2>

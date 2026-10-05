@@ -2,6 +2,10 @@
 
 > 2026-10-05: o nome voltou a ser **BNTT** (decisão do usuário), com duas linhas: **BNTT Home** (verde) e **BNTT Business** (azul). As entradas abaixo citam "Palm" porque eram o nome na época.
 
+## Painel do dono e demonstração com todos os cenários — checkpoint/painel-dono
+- **Início do dono (Business):** resumo do mês (vendas, gastos, resultado, vencidas), **até 3 sugestões do que fazer** (pagar conta vencida, filial no vermelho, insumos caros, contas da semana, melhor filial) e **um bloco quadrado por filial** com semáforo (verde/amarelo/vermelho), resultado do mês, vendas e o motivo. Tocar no bloco (ou em "Abrir" na sugestão) abre a filial — o Início inteiro passa a mostrar só ela; "Todas as filiais" volta. Funcionário não vê o painel. Regras em `js/utils/painelNegocio.js` (testadas).
+- **Demonstração com todos os cenários:** Centro saudável, Vila Nova com aluguel vencido, Jardim gastou mais do que vendeu (conserto do forno), Shopping com insumos caros e contas da semana; estoque por depósito com itens acabando/vencendo, "Pedido do Moinho", reservas da empresa (capital de giro, 13º).
+
 ## Alinhamento de ícones e botões — checkpoint/alinhamento
 - Causa raiz: o Bootstrap Icons desce o desenho do ícone 0,125em; dentro de botões/chips/menus o ícone ficava mais baixo que o texto. Agora todo ícone é uma caixa centralizada e todo botão centraliza o conteúdo nas duas direções.
 - 43 botões só com ícone viraram círculos perfeitos de 44×44 (antes ficavam ovais pelo espaçamento lateral).

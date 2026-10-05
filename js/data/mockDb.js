@@ -315,6 +315,7 @@ function seedDatabase(nomes = NOMES_GENERICOS_PADRAO) {
     { id: 'catb-folha', nome: 'Folha de pagamento', cor: '#0EA5E9', icone: 'bi-people' },
     { id: 'catb-energia', nome: 'Energia', cor: '#EAB308', icone: 'bi-lightning-charge' },
     { id: 'catb-impostos', nome: 'Impostos', cor: '#DC2626', icone: 'bi-bank' },
+    { id: 'catb-manutencao', nome: 'Manutenção', cor: '#64748B', icone: 'bi-tools' },
   ].map((c) => ({ ...c, owner_id: matheusId, group_id: padariasId, criado_em: agoraIso }));
   categories.push(...categoriasNegocio);
 
@@ -335,6 +336,19 @@ function seedDatabase(nomes = NOMES_GENERICOS_PADRAO) {
       btx({ tipo: 'saida', titulo: `Energia — ${nome}`, categoria_id: 'catb-energia', tipo_despesa: 'variavel', valor: Math.round(aluguel * 0.18), data_vencimento: isoDaysFromNow(5), unidade_id: un }),
     );
   }
+  // Cada padaria conta uma história diferente (o dono decide olhando os blocos):
+  // Centro = saudável (tudo pago) · Vila Nova = aluguel vencido · Jardim =
+  // gastou mais do que vendeu (conserto do forno) · Shopping = insumos caros
+  // e contas da semana.
+  for (const t of transactions) {
+    if (t.unidade_id === 'un-centro' && t.tipo === 'saida' && !t.data_pagamento && t.titulo.startsWith('Farinha')) t.data_pagamento = isoDaysFromNow(-1);
+    if (t.unidade_id === 'un-centro' && t.tipo === 'saida' && t.titulo.startsWith('Energia')) { t.data_vencimento = isoDaysFromNow(-4); t.data_pagamento = isoDaysFromNow(-4); }
+    if (t.unidade_id === 'un-centro' && t.titulo.startsWith('Aluguel')) { t.data_vencimento = isoDaysFromNow(-5); t.data_pagamento = isoDaysFromNow(-5); }
+    if (t.unidade_id === 'un-shopping' && t.titulo.startsWith('Farinha')) t.valor = 2640;
+  }
+  transactions.push(
+    btx({ tipo: 'saida', titulo: 'Conserto do forno — Jardim', categoria_id: 'catb-manutencao', tipo_despesa: 'variavel', valor: 3800, empresa_servico: 'Fornos Brasa Viva', data_vencimento: isoDaysFromNow(-3), data_pagamento: isoDaysFromNow(-3), unidade_id: 'un-jardim' }),
+  );
   transactions.push(
     btx({ tipo: 'saida', titulo: 'Folha de pagamento', categoria_id: 'catb-folha', tipo_despesa: 'fixa', valor: 18400.00, data_vencimento: isoDaysFromNow(4) }),
     btx({ tipo: 'saida', titulo: 'Simples Nacional (DAS)', categoria_id: 'catb-impostos', tipo_despesa: 'fixa', valor: 3120.55, data_vencimento: isoDaysFromNow(15), owner_id: soniaId, responsavel_id: soniaId }),
@@ -508,6 +522,41 @@ function seedDatabase(nomes = NOMES_GENERICOS_PADRAO) {
     { id: uid('caixamov'), caixinha_id: 'caixa-beatriz-c6', tipo: 'guardado', valor: 1200, data: isoDaysFromNow(-15), observacoes: null },
     { id: uid('caixamov'), caixinha_id: 'caixa-wise', tipo: 'guardado', valor: 300, data: isoDaysFromNow(-25), observacoes: null },
   ].map((m) => ({ ...m, criado_em: new Date().toISOString() }));
+
+  // ── Business: estoque, pedido ao fornecedor e reservas da empresa ─────
+  const doNegocio = (r) => ({ ...r, owner_id: matheusId, group_id: padariasId, criado_em: agoraIso });
+  rooms.push(...[
+    { id: 'room-dep-centro', nome: 'Depósito Centro', icone: 'bi-shop', ordem: 11 },
+    { id: 'room-dep-vila', nome: 'Depósito Vila Nova', icone: 'bi-shop', ordem: 12 },
+    { id: 'room-dep-jardim', nome: 'Depósito Jardim', icone: 'bi-shop', ordem: 13 },
+    { id: 'room-dep-shopping', nome: 'Depósito Shopping', icone: 'bi-shop', ordem: 14 },
+  ].map(doNegocio));
+  roomCategories.push(...['centro', 'vila', 'jardim', 'shopping'].map((u, i) => ({ id: `rc-dep-${u}`, room_id: `room-dep-${u}`, nome: 'Insumos', ordem: 1, criado_em: agoraIso })));
+  resourceItems.push(...[
+    { room_id: 'room-dep-centro', category_id: 'rc-dep-centro', nome: 'Fermento biológico', quantidade: 2, data_validade: isoDaysFromNow(-1) },
+    { room_id: 'room-dep-centro', category_id: 'rc-dep-centro', nome: 'Farinha de trigo (saco 25 kg)', quantidade: 6, data_validade: null },
+    { room_id: 'room-dep-vila', category_id: 'rc-dep-vila', nome: 'Farinha de trigo (saco 25 kg)', quantidade: 0, data_validade: null },
+    { room_id: 'room-dep-vila', category_id: 'rc-dep-vila', nome: 'Açúcar (kg)', quantidade: 12, data_validade: null },
+    { room_id: 'room-dep-jardim', category_id: 'rc-dep-jardim', nome: 'Manteiga (kg)', quantidade: 3, data_validade: isoDaysFromNow(3) },
+    { room_id: 'room-dep-shopping', category_id: 'rc-dep-shopping', nome: 'Leite (litros)', quantidade: 0, data_validade: null },
+    { room_id: 'room-dep-shopping', category_id: 'rc-dep-shopping', nome: 'Ovos (dúzias)', quantidade: 8, data_validade: isoDaysFromNow(9) },
+  ].map((i) => doNegocio({ id: uid('res'), foto_url: null, ...i })));
+  shoppingLists.push(doNegocio({ id: 'demo-pedido-moinho', nome: 'Pedido do Moinho', status: 'planejando', iniciado_em: null, finalizado_em: null, transacao_id: null, nome_mercado: 'Moinho Bom Grão', limite_gasto: 4000 }));
+  shoppingListItems.push(...[
+    { nome: 'Farinha de trigo (saco 25 kg)', quantidade: 10, unidade: 'un', prioridade: 5 },
+    { nome: 'Fermento biológico', quantidade: 6, unidade: 'un', prioridade: 4 },
+    { nome: 'Leite (litros)', quantidade: 40, unidade: 'un', prioridade: 4 },
+    { nome: 'Açúcar (kg)', quantidade: 20, unidade: 'kg', prioridade: 2 },
+  ].map((i) => ({ id: uid('item'), list_id: 'demo-pedido-moinho', categoria_id: 'catb-insumos', preco_unitario: null, preco_por_kg: null, subtotal: 0, comprado: false, codigo_barras: null, foto_url: null, ...i })));
+  caixinhas.push(
+    doNegocio({ id: 'caixa-capital-giro', banco_nome: 'Itaú', moeda: 'BRL', meta: 30000, icone: 'bi-safe' }),
+    doNegocio({ id: 'caixa-13', banco_nome: 'Bradesco', moeda: 'BRL', meta: 20000, icone: 'bi-gift', nome: '13º salário da equipe' }),
+  );
+  caixinhaMovimentacoes.push(
+    { id: uid('caixamov'), caixinha_id: 'caixa-capital-giro', tipo: 'guardado', valor: 18000, data: isoDaysFromNow(-60), observacoes: 'Reserva inicial' },
+    { id: uid('caixamov'), caixinha_id: 'caixa-capital-giro', tipo: 'retirado', valor: 3800, data: isoDaysFromNow(-3), observacoes: 'Conserto do forno (Jardim)' },
+    { id: uid('caixamov'), caixinha_id: 'caixa-13', tipo: 'guardado', valor: 9500, data: isoDaysFromNow(-20), observacoes: null },
+  );
 
   return {
     profiles: [

@@ -71,3 +71,25 @@ test('demonstração: o dono tem 4 padarias (Business) e 2 casas (Home), cada li
   await expect.poll(() => page.evaluate(() => Alpine.store('app').group?.group?.nome)).toBe('Família');
   await expect.poll(() => page.evaluate(() => Alpine.store('app').unidades.map((u) => u.nome).sort().join(','))).toBe('Casa,Casa da praia');
 });
+
+test('painel do dono: um bloco por filial com semáforo; tocar abre a filial e "Todas as filiais" volta', async ({ page }) => {
+  await page.goto('/app?demo=1&tipo=business');
+  await page.getByText('Entrar como Lucas').click();
+  const blocos = page.locator('.cg-filial');
+  await expect(blocos).toHaveCount(4, { timeout: 10000 });
+  await expect(page.locator('.cg-filial--ok')).toContainText('Tudo em dia');
+  await expect(page.locator('.cg-filial--alerta').first()).toBeVisible();
+  await expect(page.locator('.cg-sugestao').first()).toContainText('Pague');
+  await page.locator('.cg-filial', { hasText: 'Vila Nova' }).click();
+  await expect(page.locator('.cg-filial-aberta')).toContainText('Padaria Vila Nova');
+  await expect(blocos).toHaveCount(0);
+  await page.getByRole('button', { name: /Todas as filiais/ }).click();
+  await expect(blocos).toHaveCount(4);
+});
+
+test('funcionário não vê o painel do dono', async ({ page }) => {
+  await page.goto('/app?demo=1&tipo=business');
+  await page.getByText('Entrar como Diego').click();
+  await expect(page.locator('.cg-hero-balance').first()).toBeVisible({ timeout: 10000 });
+  await expect(page.locator('.cg-painel-dono')).toHaveCount(0);
+});
