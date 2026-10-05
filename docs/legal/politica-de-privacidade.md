@@ -19,7 +19,9 @@ O BNTT ("nós") é um aplicativo de organização financeira e doméstica. O **c
 | Notificações | avisos do app e inscrição de push do aparelho | o app, com sua permissão |
 | Técnicos | endereço IP e dados do navegador nos registros dos provedores | automático |
 
-Não coletamos dados de localização. A ficha médica (alergias, remédios) da aba Primeiros Socorros só será lançada com criptografia ponta a ponta — hoje a aba tem apenas orientações gerais.
+Não coletamos dados de localização. As **fichas de saúde** (tipo sanguíneo, alergias, remédios, condições, contato de emergência) são **criptografadas no seu aparelho** antes de sair dele: o servidor guarda só texto embaralhado e ninguém do BNTT consegue ler.
+
+**Pagamento (planos pagos):** e-mail, nome e dados de cobrança são tratados pelo **Stripe**. O BNTT recebe só a confirmação do plano e um identificador do cliente — nunca o número do cartão.
 
 ## 3. Para que usamos (e com qual base legal — LGPD, art. 7º)
 - Prestar o serviço que você pediu: guardar, calcular e mostrar suas informações (execução de contrato, art. 7º, V).
@@ -33,6 +35,7 @@ Não vendemos seus dados. Não usamos seus dados para publicidade.
 ## 4. Com quem compartilhamos
 - **Supabase** (banco de dados, autenticação, arquivos, funções) — operador que guarda os dados.
 - **Google Firebase Hosting** — entrega o site (vê o IP de acesso).
+- **Stripe** — processa os pagamentos dos planos (operador; recebe e-mail e dados de cobrança).
 - Serviços consultados quando você usa um recurso específico (recebem só o que é necessário, sem identificar você):
   - **Open Food Facts**: o código de barras lido;
   - **BrasilAPI**: o CNPJ da loja da nota fiscal;
@@ -52,13 +55,14 @@ Enquanto sua conta existir. Ao excluir a conta, os dados são apagados em até [
 - Cada pessoa só acessa os próprios dados e os do seu grupo (regras de segurança no banco, RLS).
 - Política de segurança de conteúdo (CSP) no site.
 - Varredura para impedir que chaves secretas cheguem ao navegador.
-- **Em implantação:** criptografia ponta a ponta do conteúdo (valores, descrições, dados médicos), de forma que nem a equipe do BNTT consiga ler. **Atualizar esta seção quando estiver ativa.**
+- **Fichas de saúde com criptografia ponta a ponta** (AES-256-GCM): a chave nasce no seu aparelho e só vai ao servidor protegida pela senha da família ou pelo código de recuperação. Nem a equipe do BNTT consegue ler.
+- **Em implantação:** a mesma proteção para valores e descrições dos lançamentos.
 
 ## 8. Seus direitos (LGPD, art. 18)
 Confirmar o tratamento, acessar, corrigir, levar seus dados (portabilidade — já disponível: **Perfil → Exportar dados**), anonimizar ou excluir, saber com quem compartilhamos, revogar o consentimento e pedir revisão. Peça por [[e-mail do encarregado]]; respondemos em até 15 dias. Você também pode reclamar à ANPD (gov.br/anpd).
 
 ## 9. Crianças e adolescentes
-O BNTT é feito para maiores de 18 anos. Dados de crianças da casa (ex.: na futura ficha médica) só podem ser registrados pelo responsável legal, no melhor interesse da criança (art. 14).
+O BNTT é feito para maiores de 18 anos. Dados de crianças da casa (ex.: na ficha de saúde) só podem ser registrados pelo responsável legal, no melhor interesse da criança (art. 14).
 
 ## 10. Cookies e armazenamento local
 Usamos o armazenamento do navegador para manter você conectado e lembrar preferências (tema, tamanho do texto, lista aberta). Não usamos cookies de rastreamento nem de publicidade.

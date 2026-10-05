@@ -14,6 +14,7 @@ const CACHE_NAME = 'bntt-v19';
 const APP_SHELL = [
   './',
   './index.html',
+  './app.html',
   './manifest.webmanifest',
   './css/tokens.css',
   './css/components.css',
@@ -68,15 +69,20 @@ const APP_SHELL = [
   './js/components/primeirosSocorros.js',
   './js/data/primeirosSocorros.js',
   './js/components/fichasSaude.js',
+  './js/components/equipeBusiness.js',
+  './js/services/unidades.js',
+  './js/services/assinatura.js',
+  './js/data/planos.js',
+  './js/data/stripeLinks.js',
   './js/services/cofre.js',
   './js/services/saude.js',
   './js/utils/spotlight.js',
   './js/utils/dbFallback.js',
   './js/utils/image.js',
   './js/utils/money.js',
-  './assets/icons/icon.svg?v=3',
-  './assets/icons/icon-maskable.svg?v=3',
-  './assets/icons/apple-touch-icon.png?v=3',
+  './assets/icons/icon.svg?v=4',
+  './assets/icons/icon-maskable.svg?v=4',
+  './assets/icons/apple-touch-icon.png?v=4',
   './assets/icons/badge-mono.png',
   './assets/logos/logo-colorida.svg',
 ];
@@ -131,14 +137,14 @@ self.addEventListener('push', (event) => {
       // resto 100% transparente.
       badge: './assets/icons/badge-mono.png',
       tag: payload.tag || 'bonotto-generico',
-      data: { url: payload.url || './index.html' },
+      data: { url: payload.url || './app' },
     })
   );
 });
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const url = event.notification.data?.url || './index.html';
+  const url = event.notification.data?.url || './app';
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
       for (const client of clientList) {
@@ -177,7 +183,8 @@ self.addEventListener('fetch', (event) => {
   // esse cache do navegador sempre, indo na rede de verdade toda vez.
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(request, { cache: 'no-store' }).catch(() => caches.match('./index.html'))
+      // Sem internet: /app abre o app guardado; o resto, a LP guardada.
+      fetch(request, { cache: 'no-store' }).catch(() => caches.match(new URL(request.url).pathname.startsWith('/app') ? './app.html' : './index.html'))
     );
     return;
   }

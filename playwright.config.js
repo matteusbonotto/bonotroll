@@ -49,7 +49,10 @@ export default defineConfig({
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
   ],
   webServer: {
-    command: DIST ? `node scripts/servir-dist.mjs ${PORTA}` : `python -m http.server ${PORTA}`,
+    // Fonte: servidor do projeto (entende /app → app.html, como o Firebase),
+    // com SEM_BANCO=1 para nunca tocar o banco real.
+    command: DIST ? `node scripts/servir-dist.mjs ${PORTA}` : `node scripts/dev-server.mjs`,
+    env: { PORT: String(PORTA), SEM_BANCO: '1' },
     url: ORIGEM,
     reuseExistingServer: !process.env.CI,
     timeout: 20_000,

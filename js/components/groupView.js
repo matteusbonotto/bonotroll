@@ -49,6 +49,8 @@ export function groupView() {
       const store = this.$store.app;
       const codigo = store.group?.group?.codigo;
       if (!codigo) return;
+      const pessoas = store.group?.members?.length ?? 1;
+      if (!store.exigirLimite('pessoas', pessoas, `Seu plano permite ${store.limiteDoPlano('pessoas')} ${store.limiteDoPlano('pessoas') === 1 ? 'pessoa' : 'pessoas'}. Para convidar mais, mude de plano.`)) return;
       try {
         await navigator.clipboard.writeText(codigo);
         store.notify('Código copiado! Agora é só mandar pro seu par.');

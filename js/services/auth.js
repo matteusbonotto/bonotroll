@@ -32,9 +32,16 @@ export async function signInWithPassword(email, password) {
 
 // O perfil é criado automaticamente por um trigger no banco (ver supabase/schema.sql),
 // que lê o nome em raw_user_meta_data — por isso ele vai em options.data aqui.
-export async function signUp(email, password, nome) {
+// tipoConta: 'home' | 'business' — escolhido na LP; só define a "linha" do
+// app. Plano/assinatura nunca vêm daqui (o usuário poderia editar
+// user_metadata): ficam em app_metadata, escrito só pelo servidor/Stripe.
+export async function signUp(email, password, nome, tipoConta = 'home') {
   const supabase = await getSupabase();
-  const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { nome } } });
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: { data: { nome, tipo_conta: tipoConta === 'business' ? 'business' : 'home' }, emailRedirectTo: `${location.origin}/app` },
+  });
   if (error) throw error;
   return data.session;
 }
@@ -44,7 +51,7 @@ export async function signUp(email, password, nome) {
 // PASSWORD_RECOVERY (ver store.js), que abre a tela "Definir nova senha".
 export async function sendPasswordReset(email) {
   const supabase = await getSupabase();
-  const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${location.origin}/` });
+  const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${location.origin}/app` });
   if (error) throw error;
 }
 
@@ -123,4 +130,14 @@ export async function uploadAvatar(userId, file) {
   // cache-bust: o caminho é fixo por usuário, então uma nova foto reusa a
   // mesma URL — sem isso o navegador continuaria mostrando a imagem antiga.
   return updateProfile(userId, { avatar_url: `${pub.publicUrl}?t=${Date.now()}` });
+}
+
+// Busca a sessão de novo no servidor (ex.: depois do pagamento, quando o
+// webhook já gravou o plano em app_metadata).
+export async function atualizarSessao() {
+  if (isDemoMode()) return null;
+  const supabase = await getSupabase();
+  const { data, error } = await supabase.auth.refreshSession();
+  if (error) throw error;
+  return data.session;
 }

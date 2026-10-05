@@ -55,7 +55,7 @@ test.describe('primeira visita (storageState vazio)', () => {
     // também é refletido (mesmo texto) no painel de spotlight escondido do
     // passo de ação, sempre presente no DOM — um getByText solto encontraria
     // os dois "Bem-vindo(a)..." (um deles escondido) e violaria strict mode.
-    await expect(backdrop.getByText('Bem-vindo(a) ao Palm!')).toBeVisible();
+    await expect(backdrop.getByText('Bem-vindo(a) ao BNTT!')).toBeVisible();
 
     await page.getByRole('button', { name: 'Pular' }).click();
     await expect(backdrop).toBeHidden();
@@ -78,7 +78,7 @@ test.describe('primeira visita (storageState vazio)', () => {
       await page.goto('/?demo=1');
       await page.getByText('Entrar como', { exact: false }).first().click();
       const backdrop = page.locator('.cg-modal-backdrop', { has: page.locator('.cg-tour') });
-      await expect(backdrop.getByText('Bem-vindo(a) ao Palm!')).toBeVisible({ timeout: 5000 });
+      await expect(backdrop.getByText('Bem-vindo(a) ao BNTT!')).toBeVisible({ timeout: 5000 });
 
       await backdrop.getByRole('button', { name: 'Próximo' }).click();
       const balao = page.locator('.cg-tour-balloon');

@@ -12,6 +12,8 @@ import { gerarRecorrentesPendentes } from '../services/recurring.js';
 import { isDemoMode } from '../data/config.js';
 import { normalizarEscala, proximaEscala, podeAumentar, podeDiminuir, PADRAO } from '../utils/tamanhoTexto.js';
 import { ligarNarracao, vozDisponivel, falar } from '../utils/narracao.js';
+import * as assinatura from '../services/assinatura.js';
+import * as unidadesService from '../services/unidades.js';
 
 // Store global (Alpine.store('app')) — sessão, perfil, grupo, categorias e
 // navegação. Registrado em app.js.
@@ -21,6 +23,13 @@ export function appStore() {
     session: null,
     profile: null,
     demoProfiles: [],
+    // Linha e plano (BNTT Home / BNTT Business) — ver services/assinatura.js.
+    conta: { tipo: 'home', plano: null, assinaturaAtiva: false, cortesia: false, ciclo: null, criadaEm: null },
+    intencao: null, // o que a pessoa escolheu na LP (cadastro, plano, ciclo)
+    // BNTT Business: unidades (filiais) e a unidade em foco ('' = todas).
+    unidades: [],
+    unidadeAtual: (() => { try { return localStorage.getItem('bntt_unidade_atual') || ''; } catch { return ''; } })(),
+    pagamentoPendente: null, // { plano, ciclo, url, valor, teste } -> aviso "Continuar para o pagamento"
     group: null, // { group, members } | null — grupo é sempre opcional
     categories: [],
     companies: [],
@@ -61,6 +70,10 @@ export function appStore() {
 
     async init() {
       ligarNarracao(this.narracao);
+      this.intencao = assinatura.capturarIntencaoDaUrl();
+      this.conta = assinatura.contaDaSessao(null);
+      if (this.intencao) this.conta = { ...this.conta, tipo: this.intencao.tipo };
+      this.aplicarLinha();
       window.addEventListener('online', () => { this.online = true; });
       window.addEventListener('offline', () => { this.online = false; });
       // Cobre voltar/avançar do navegador e edição manual da URL — o clique
@@ -117,12 +130,15 @@ export function appStore() {
       const cartoes = await cartoesService.listCartoes({ ownerId: profile.id, groupId }).catch(() => []);
 
       this.session = session;
+      this.conta = assinatura.contaDaSessao(session);
+      this.aplicarLinha();
       this.profile = profile;
       this.group = group;
       this.categories = categories;
       this.companies = companies;
       this.banks = banks;
       this.cartoes = cartoes;
+      await this.carregarUnidades();
 
       // Best-effort: varredura de notificações não deve travar o login se
       // falhar (ex.: tabela ainda não migrada no Supabase do usuário).
@@ -152,6 +168,167 @@ export function appStore() {
           window.dispatchEvent(new CustomEvent('cg:transactions-changed'));
         })
         .catch(() => {});
+
+      this.depoisDoLogin();
+    },
+
+    // ── Linha e plano (BNTT Home / BNTT Business) ────────────────────────
+    get linha() {
+      return this.conta.tipo;
+    },
+    get nomeDaLinha() {
+      return this.conta.tipo === 'business' ? 'Business' : 'Home';
+    },
+    get planoAtual() {
+      return assinatura.planoDaConta(this.conta);
+    },
+    aplicarLinha() {
+      document.documentElement.dataset.linha = this.conta.tipo;
+      document.title = `BNTT ${this.nomeDaLinha}`;
+      const cor = document.querySelector('meta[name="theme-color"]');
+      if (cor) cor.content = this.conta.tipo === 'business' ? '#1F5FAF' : '#0E9F6E';
+    },
+    // Recurso do plano (ex.: 'saude', 'importar', 'divisao'). Durante o teste
+    // grátis o plano em vigor já é o mais completo da linha.
+    recursoLiberado(nome) {
+      return (this.planoAtual.recursos || {})[nome] !== false;
+    },
+    // Limite numérico do plano (null = sem limite).
+    limiteDoPlano(nome) {
+      return this.planoAtual.limites?.[nome] ?? null;
+    },
+    // Planos da linha atual, com o preço já calculado para o ciclo escolhido.
+    cicloEscolhido: 'mensal',
+    get planosDaLinha() {
+      return assinatura.planosDaLinha(this.conta.tipo, this.cicloEscolhido);
+    },
+    get resumoDoPlano() {
+      const p = this.planoAtual;
+      if (this.conta.cortesia && this.conta.assinaturaAtiva) return `${p.nome} — cortesia (sem cobrança)`;
+      if (p.emTeste) return `Teste grátis do ${p.nome}: ${p.diasRestantes} ${p.diasRestantes === 1 ? 'dia' : 'dias'} restantes`;
+      if (this.conta.assinaturaAtiva) return `${p.nome} — ${this.conta.ciclo === 'anual' ? 'anual' : 'mensal'}`;
+      return `${p.nome} — com limites`;
+    },
+    // Aviso "isso é de outro plano" — nunca um erro seco. motivo = frase curta.
+    upgrade: null, // { motivo } | null
+    pedirUpgrade(motivo) {
+      this.upgrade = { motivo };
+    },
+    verPlanos() {
+      this.upgrade = null;
+      this.setView('perfil');
+      window.dispatchEvent(new CustomEvent('cg:abrir-planos'));
+    },
+    // true = pode seguir; false = mostrou o aviso de plano.
+    exigirRecurso(nome, motivo) {
+      if (this.recursoLiberado(nome)) return true;
+      this.pedirUpgrade(motivo);
+      return false;
+    },
+    exigirLimite(nome, usados, motivo) {
+      const limite = this.limiteDoPlano(nome);
+      if (limite === null || usados < limite) return true;
+      this.pedirUpgrade(motivo);
+      return false;
+    },
+    get urlDosPlanos() {
+      return assinatura.urlDosPlanos(this.conta.tipo);
+    },
+    // Depois de entrar: (1) voltou do Stripe -> busca o plano novo;
+    // (2) escolheu um plano pago na LP -> oferece seguir para o pagamento.
+    async depoisDoLogin() {
+      const url = new URL(location.href);
+      if (url.searchParams.get('assinatura') === 'ok') {
+        url.searchParams.delete('assinatura');
+        url.searchParams.delete('plano');
+        const busca = url.searchParams.toString();
+        history.replaceState(history.state, '', url.pathname + (busca ? `?${busca}` : '') + url.hash);
+        assinatura.limparIntencao();
+        this.notify('Pagamento recebido! Seu plano é ativado em instantes — pode continuar usando.');
+        if (!this.isDemoMode) {
+          setTimeout(async () => {
+            try {
+              const s = await authService.atualizarSessao();
+              if (s) { this.conta = assinatura.contaDaSessao(s); this.aplicarLinha(); }
+            } catch { /* tenta de novo no próximo login */ }
+          }, 8000);
+        }
+        return;
+      }
+      const i = assinatura.intencaoSalva();
+      if (i?.plano && !(this.conta.assinaturaAtiva && this.conta.plano === i.plano)) {
+        this.pagamentoPendente = assinatura.pagamentoDoPlano(i.plano, i.ciclo, { userId: this.profile?.id, email: this.session?.user?.email });
+      } else if (i && !i.plano) {
+        assinatura.limparIntencao();
+      }
+    },
+    escolherPlano(planoId, ciclo) {
+      this.pagamentoPendente = assinatura.pagamentoDoPlano(planoId, ciclo, { userId: this.profile?.id, email: this.session?.user?.email });
+    },
+    irParaPagamento() {
+      const destino = this.pagamentoPendente?.url;
+      if (!destino) return;
+      assinatura.limparIntencao();
+      location.href = destino;
+    },
+    adiarPagamento() {
+      assinatura.limparIntencao();
+      this.pagamentoPendente = null;
+      const dias = this.planoAtual.diasRestantes;
+      this.notify(dias ? `Tudo bem! Você continua no teste grátis por mais ${dias} dias.` : 'Tudo bem! Você pode assinar quando quiser, em Configurações.');
+    },
+    // ── BNTT Business: unidades e papéis ─────────────────────────────────
+    async carregarUnidades() {
+      const gid = this.group?.group?.id;
+      if (this.conta.tipo !== 'business' || !gid) { this.unidades = []; return; }
+      try {
+        this.unidades = await unidadesService.listarUnidades(gid);
+      } catch {
+        this.unidades = []; // banco ainda sem a migração: o app segue sem unidades
+      }
+      if (this.unidadeAtual && !this.unidades.some((u) => u.id === this.unidadeAtual)) this.trocarUnidade('');
+    },
+    trocarUnidade(id) {
+      this.unidadeAtual = id || '';
+      try { localStorage.setItem('bntt_unidade_atual', this.unidadeAtual); } catch { /* só nesta sessão */ }
+      window.dispatchEvent(new CustomEvent('cg:transactions-changed'));
+    },
+    // Lançamento entra na visão atual? (sem unidade escolhida = todas)
+    naUnidade(t) {
+      return !this.unidadeAtual || t.unidade_id === this.unidadeAtual;
+    },
+    nomeDaUnidade(id) {
+      return this.unidades.find((u) => u.id === id)?.nome || '';
+    },
+    // Papel de quem está usando (Home: sempre pode tudo).
+    get meuPapel() {
+      if (this.conta.tipo !== 'business') return 'dono';
+      const eu = this.group?.members?.find((m) => m.id === this.profile?.id);
+      return eu ? unidadesService.papelEfetivo(eu.papel) : 'dono';
+    },
+    get podeLancar() {
+      return this.meuPapel !== 'contador';
+    },
+    get podeGerirUnidades() {
+      return ['dono', 'gerente'].includes(this.meuPapel);
+    },
+    get podeMudarPapeis() {
+      return this.meuPapel === 'dono';
+    },
+    // Funcionário só mexe no que ele lançou; contador em nada.
+    podeEditarLancamento(t) {
+      if (this.meuPapel === 'contador') return false;
+      if (this.meuPapel === 'funcionario') return t?.owner_id === this.profile?.id;
+      return true;
+    },
+
+    // Só no modo demonstração: ver o app como Home ou Business.
+    trocarLinhaDemo(tipo) {
+      assinatura.trocarTipoDemo(tipo);
+      this.conta = { ...this.conta, tipo };
+      this.aplicarLinha();
+      this.carregarUnidades();
+      if (!this.AREAS.some((a) => a.abas.some((t) => t.view === this.view))) this.setView('home');
     },
 
     clearSession() {
@@ -283,7 +460,7 @@ export function appStore() {
     },
 
     async signup(email, password, nome) {
-      const session = await authService.signUp(email, password, nome);
+      const session = await authService.signUp(email, password, nome, this.intencao?.tipo || this.conta.tipo);
       if (session) await this.loadSession(session);
       return session;
     },
@@ -371,12 +548,23 @@ export function appStore() {
     // Navegação por intenção (Palm Business, fase 5 — docs/palm/NAVIGATION.md):
     // 4 áreas + Adicionar. As telas antigas (view) continuam existindo e são
     // as sub-abas de cada área; rotas antigas (#/transacoes etc.) seguem válidas.
-    AREAS: [
-      { id: 'home', rotulo: 'Início', icone: 'bi-house-door', abas: [{ view: 'home', rotulo: 'Início' }] },
-      { id: 'dinheiro', rotulo: 'Dinheiro', icone: 'bi-cash-stack', abas: [{ view: 'transacoes', rotulo: 'Movimentações' }, { view: 'caixinhas', rotulo: 'Reservas' }] },
-      { id: 'casa', rotulo: 'Casa', icone: 'bi-house-heart', abas: [{ view: 'compras', rotulo: 'Lista de compras' }, { view: 'recursos', rotulo: 'Inventário' }] },
-      { id: 'pessoas', rotulo: 'Pessoas', icone: 'bi-people', abas: [{ view: 'grupo', rotulo: 'Membros' }, { view: 'socorros', rotulo: 'Saúde' }] },
-    ],
+    // Mesmas telas, vocabulário de cada linha (Home: casa; Business: empresa).
+    get AREAS() {
+      if (this.conta.tipo === 'business') {
+        return [
+          { id: 'home', rotulo: 'Início', icone: 'bi-speedometer2', abas: [{ view: 'home', rotulo: 'Início' }] },
+          { id: 'dinheiro', rotulo: 'Financeiro', icone: 'bi-cash-coin', abas: [{ view: 'transacoes', rotulo: 'Contas' }, { view: 'caixinhas', rotulo: 'Reservas' }] },
+          { id: 'casa', rotulo: 'Estoque', icone: 'bi-box-seam', abas: [{ view: 'compras', rotulo: 'Compras' }, { view: 'recursos', rotulo: 'Estoque' }] },
+          { id: 'pessoas', rotulo: 'Equipe', icone: 'bi-person-badge', abas: [{ view: 'grupo', rotulo: 'Equipe' }] },
+        ];
+      }
+      return [
+        { id: 'home', rotulo: 'Início', icone: 'bi-house-door', abas: [{ view: 'home', rotulo: 'Início' }] },
+        { id: 'dinheiro', rotulo: 'Dinheiro', icone: 'bi-cash-stack', abas: [{ view: 'transacoes', rotulo: 'Movimentações' }, { view: 'caixinhas', rotulo: 'Reservas' }] },
+        { id: 'casa', rotulo: 'Casa', icone: 'bi-house-heart', abas: [{ view: 'compras', rotulo: 'Lista de compras' }, { view: 'recursos', rotulo: 'Inventário' }] },
+        { id: 'pessoas', rotulo: 'Pessoas', icone: 'bi-people', abas: [{ view: 'grupo', rotulo: 'Membros' }, { view: 'socorros', rotulo: 'Saúde' }] },
+      ];
+    },
     ultimaAbaPorArea: {},
     adicionarAberto: false,
 
@@ -386,7 +574,7 @@ export function appStore() {
     get tituloTela() {
       if (this.view === 'perfil') return 'Configurações';
       const area = this.areaAtual;
-      return area ? area.rotulo : 'Palm Business';
+      return area ? area.rotulo : 'BNTT';
     },
     irParaArea(id) {
       const area = this.AREAS.find((a) => a.id === id);

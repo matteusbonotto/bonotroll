@@ -1010,7 +1010,7 @@ export function onboardingStore() {
           id: 'boas-vindas',
           tipo: 'info',
           icone: 'bi-house-heart-fill',
-          titulo: 'Bem-vindo(a) ao Palm!',
+          titulo: 'Bem-vindo(a) ao BNTT!',
           texto: 'Em menos de 1 minuto você vê onde fica cada coisa. Você pode pular quando quiser.',
         },
         {

@@ -18,7 +18,7 @@ export async function getMyGroup(profileId) {
     const group = await mockDb.get('groups', membership.group_id);
     const memberRows = await mockDb.list('group_members', (m) => m.group_id === membership.group_id);
     const members = [];
-    for (const m of memberRows) members.push(await mockDb.get('profiles', m.profile_id));
+    for (const m of memberRows) members.push({ ...(await mockDb.get('profiles', m.profile_id)), papel: m.papel, unidade_id: m.unidade_id ?? null });
     return { group, members };
   }
   const supabase = await getSupabase();
@@ -33,13 +33,18 @@ export async function getMyGroup(profileId) {
   const { data: group, error: gErr } = await supabase.from('groups').select('*').eq('id', membership.group_id).single();
   if (gErr) throw gErr;
 
-  const { data: memberRows, error: memErr } = await supabase
+  // papel/unidade de cada pessoa (BNTT Business). Se a coluna unidade_id
+  // ainda não existe no banco, cai para só o papel.
+  let { data: memberRows, error: memErr } = await supabase
     .from('group_members')
-    .select('profiles(*)')
+    .select('papel, unidade_id, profiles(*)')
     .eq('group_id', membership.group_id);
+  if (memErr && /unidade_id/.test(memErr.message || '')) {
+    ({ data: memberRows, error: memErr } = await supabase.from('group_members').select('papel, profiles(*)').eq('group_id', membership.group_id));
+  }
   if (memErr) throw memErr;
 
-  return { group, members: memberRows.map((r) => r.profiles) };
+  return { group, members: memberRows.map((r) => ({ ...r.profiles, papel: r.papel, unidade_id: r.unidade_id ?? null })) };
 }
 
 // No modo real, criar e entrar em grupo passam por funções "security

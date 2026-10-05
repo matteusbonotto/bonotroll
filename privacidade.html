@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Política de privacidade — BNTT</title>
+  <link rel="icon" href="./assets/icons/icon.svg?v=4" type="image/svg+xml" />
+  <link rel="stylesheet" href="./landing-assets/legal.css" />
+</head>
+<body>
+  <main>
+    <p><a href="./">← Voltar para o BNTT</a></p>
+    <p class="aviso">Versão preliminar: alguns dados do responsável ainda estão sendo preenchidos.</p>
+    <h1>Política de Privacidade — BNTT</h1>
+<p><strong>Última atualização:</strong> <mark title="Ainda não preenchido">a preencher: data da publicação</mark></p>
+<h2>1. Quem somos</h2>
+<p>O BNTT ("nós") é um aplicativo de organização financeira e doméstica. O <strong>controlador</strong> dos seus dados é <mark title="Ainda não preenchido">a preencher: nome completo ou razão social</mark>, <mark title="Ainda não preenchido">a preencher: CPF/CNPJ</mark>, <mark title="Ainda não preenchido">a preencher: endereço</mark>. <strong>Encarregado de dados (DPO):</strong> <mark title="Ainda não preenchido">a preencher: nome</mark> — <mark title="Ainda não preenchido">a preencher: e-mail de contato</mark>.</p>
+<h2>2. Quais dados tratamos</h2>
+<table><thead><tr><th>Dado</th><th>Exemplo</th><th>De onde vem</th></tr></thead><tbody>
+<tr><td>Conta</td><td>nome, e-mail, senha (guardada só como hash pelo provedor de autenticação)</td><td>você, no cadastro</td></tr>
+<tr><td>Perfil</td><td>foto, cor</td><td>você</td></tr>
+<tr><td>Finanças</td><td>lançamentos (título, valor, datas, categoria, empresa, observações), parcelas, cartões, caixinhas</td><td>você ou importação de planilha</td></tr>
+<tr><td>Compras e inventário</td><td>itens, quantidades, preços, validade, fotos</td><td>você, câmera ou código de barras</td></tr>
+<tr><td>Comprovantes e notas</td><td>foto ou PDF do comprovante, código do boleto/Pix, link e chave da nota fiscal (NFC-e)</td><td>você</td></tr>
+<tr><td>Grupo (casa)</td><td>quem faz parte, papel (admin/membro)</td><td>você e quem convidou</td></tr>
+<tr><td>Notificações</td><td>avisos do app e inscrição de push do aparelho</td><td>o app, com sua permissão</td></tr>
+<tr><td>Técnicos</td><td>endereço IP e dados do navegador nos registros dos provedores</td><td>automático</td></tr>
+</tbody></table>
+<p>Não coletamos dados de localização. As <strong>fichas de saúde</strong> (tipo sanguíneo, alergias, remédios, condições, contato de emergência) são <strong>criptografadas no seu aparelho</strong> antes de sair dele: o servidor guarda só texto embaralhado e ninguém do BNTT consegue ler.</p>
+<p><strong>Pagamento (planos pagos):</strong> e-mail, nome e dados de cobrança são tratados pelo <strong>Stripe</strong>. O BNTT recebe só a confirmação do plano e um identificador do cliente — nunca o número do cartão.</p>
+<h2>3. Para que usamos (e com qual base legal — LGPD, art. 7º)</h2>
+<ul>
+<li>Prestar o serviço que você pediu: guardar, calcular e mostrar suas informações (execução de contrato, art. 7º, V).</li>
+<li>Compartilhar com as pessoas do <strong>seu</strong> grupo o que pertence ao grupo (execução de contrato).</li>
+<li>Enviar notificações push (consentimento, art. 7º, I — você pode desligar a qualquer momento).</li>
+<li>Segurança, prevenção de fraude e abuso (legítimo interesse, art. 7º, IX).</li>
+<li>Cumprir obrigações legais (art. 7º, II).</li>
+</ul>
+<p>Não vendemos seus dados. Não usamos seus dados para publicidade.</p>
+<h2>4. Com quem compartilhamos</h2>
+<ul>
+<li><strong>Supabase</strong> (banco de dados, autenticação, arquivos, funções) — operador que guarda os dados.</li>
+<li><strong>Google Firebase Hosting</strong> — entrega o site (vê o IP de acesso).</li>
+<li><strong>Stripe</strong> — processa os pagamentos dos planos (operador; recebe e-mail e dados de cobrança).</li>
+<li>Serviços consultados quando você usa um recurso específico (recebem só o que é necessário, sem identificar você):</li>
+<li><strong>Open Food Facts</strong>: o código de barras lido;</li>
+<li><strong>BrasilAPI</strong>: o CNPJ da loja da nota fiscal;</li>
+<li><strong>Frankfurter / CoinGecko</strong>: só a cotação da moeda;</li>
+<li><strong>esm.sh / jsDelivr / Google Fonts</strong>: bibliotecas e fontes (veem o IP).</li>
+<li>Autoridades, quando a lei exigir.</li>
+</ul>
+<h2>5. Transferência internacional</h2>
+<p>Os provedores acima podem armazenar ou processar dados fora do Brasil (<mark title="Ainda não preenchido">a preencher: região do projeto Supabase</mark>). Isso ocorre com as garantias do art. 33 da LGPD (cláusulas contratuais dos provedores).</p>
+<h2>6. Por quanto tempo guardamos</h2>
+<p>Enquanto sua conta existir. Ao excluir a conta, os dados são apagados em até <mark title="Ainda não preenchido">a preencher: 30</mark> dias, salvo o que a lei obrigar a guardar.</p>
+<h2>7. Como protegemos</h2>
+<ul>
+<li>Conexão sempre criptografada (HTTPS/TLS).</li>
+<li>Dados criptografados em repouso pelo provedor.</li>
+<li>Cada pessoa só acessa os próprios dados e os do seu grupo (regras de segurança no banco, RLS).</li>
+<li>Política de segurança de conteúdo (CSP) no site.</li>
+<li>Varredura para impedir que chaves secretas cheguem ao navegador.</li>
+<li><strong>Fichas de saúde com criptografia ponta a ponta</strong> (AES-256-GCM): a chave nasce no seu aparelho e só vai ao servidor protegida pela senha da família ou pelo código de recuperação. Nem a equipe do BNTT consegue ler.</li>
+<li><strong>Em implantação:</strong> a mesma proteção para valores e descrições dos lançamentos.</li>
+</ul>
+<h2>8. Seus direitos (LGPD, art. 18)</h2>
+<p>Confirmar o tratamento, acessar, corrigir, levar seus dados (portabilidade — já disponível: <strong>Perfil → Exportar dados</strong>), anonimizar ou excluir, saber com quem compartilhamos, revogar o consentimento e pedir revisão. Peça por <mark title="Ainda não preenchido">a preencher: e-mail do encarregado</mark>; respondemos em até 15 dias. Você também pode reclamar à ANPD (gov.br/anpd).</p>
+<h2>9. Crianças e adolescentes</h2>
+<p>O BNTT é feito para maiores de 18 anos. Dados de crianças da casa (ex.: na ficha de saúde) só podem ser registrados pelo responsável legal, no melhor interesse da criança (art. 14).</p>
+<h2>10. Cookies e armazenamento local</h2>
+<p>Usamos o armazenamento do navegador para manter você conectado e lembrar preferências (tema, tamanho do texto, lista aberta). Não usamos cookies de rastreamento nem de publicidade.</p>
+<h2>11. Mudanças nesta política</h2>
+<p>Avisaremos no app antes de mudanças relevantes.</p>
+  </main>
+</body>
+</html>

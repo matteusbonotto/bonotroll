@@ -293,6 +293,7 @@ export function shoppingView() {
       const store = this.$store.app;
       const nome = this.novaListaNome.trim();
       if (!nome) return;
+      if (!store.exigirLimite('listas', this.listasAbertas.length, 'No seu plano cabe 1 lista de compras. Para ter várias, mude de plano.')) return;
       try {
         const anterior = this.listasAbertas.find((l) => l.list.limite_gasto)?.list.limite_gasto ?? null;
         const nova = await sl.createList({ ownerId: store.profile.id, groupId: store.group?.group?.id, nome, limiteGasto: anterior });

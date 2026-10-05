@@ -220,3 +220,50 @@
 :root[data-bs-theme="light"] {
   --bs-emphasis-color-rgb: 26, 29, 27;
 }
+
+/* ── BNTT Business (azul) ─────────────────────────────────────────────────
+   O <html> recebe data-linha="business" quando a conta é de empresa (ver
+   store.aplicarLinha). Só a cor da marca muda; semânticas (sucesso/perigo)
+   continuam as mesmas. Seletor composto para vencer os blocos de tema acima. */
+:root[data-linha="business"] {
+  --color-primary: #1F5FAF;
+  --color-primary-rgb: 31, 95, 175;
+  --color-primary-dark: #174A89;
+  --color-primary-soft: #E5EEFA;
+}
+
+:root[data-linha="business"][data-bs-theme="dark"] {
+  --color-primary: #3B7DD8;
+  --color-primary-rgb: 59, 125, 216;
+  --color-primary-soft: #16263D;
+  --color-primary-dark: #8EB8F2;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-linha="business"]:not([data-bs-theme="light"]) {
+    --color-primary: #3B7DD8;
+    --color-primary-rgb: 59, 125, 216;
+    --color-primary-soft: #16263D;
+    --color-primary-dark: #8EB8F2;
+  }
+}
+
+/* Botões "principais" do app usam btn-success: no Business ficam azuis. */
+:root[data-linha="business"] .btn-success {
+  --bs-btn-bg: var(--color-primary);
+  --bs-btn-border-color: var(--color-primary);
+  --bs-btn-hover-bg: var(--color-primary-dark);
+  --bs-btn-hover-border-color: var(--color-primary-dark);
+  --bs-btn-active-bg: var(--color-primary-dark);
+  --bs-btn-active-border-color: var(--color-primary-dark);
+  --bs-btn-disabled-bg: var(--color-primary);
+  --bs-btn-disabled-border-color: var(--color-primary);
+}
+
+:root[data-linha="business"] .btn-outline-success {
+  --bs-btn-color: var(--color-primary);
+  --bs-btn-border-color: var(--color-primary);
+  --bs-btn-hover-bg: var(--color-primary);
+  --bs-btn-hover-border-color: var(--color-primary);
+  --bs-btn-active-bg: var(--color-primary);
+}

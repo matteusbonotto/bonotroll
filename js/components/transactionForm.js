@@ -1,4 +1,4 @@
-import { createTransaction, updateTransaction, deleteTransaction, uploadComprovante, getComprovanteUrl, listPayers, setPayers, splitEqually, guessCategoryByTitle } from '../services/transactions.js';
+import { createTransaction, contarLancamentosDoMes, updateTransaction, deleteTransaction, uploadComprovante, getComprovanteUrl, listPayers, setPayers, splitEqually, guessCategoryByTitle } from '../services/transactions.js';
 import { createCompany, updateCompany, uploadCompanyLogo } from '../services/companies.js';
 import { notifyPayment } from '../services/notifications.js';
 import { recognizeText, parseReceiptText } from '../services/ocr.js';
@@ -63,6 +63,7 @@ const emptyForm = () => ({
   categoria_id: '',
   tipo_despesa: 'variavel',
   responsavel_id: '',
+  unidade_id: '',
   valor: '',
   data_cadastro: todayIso(),
   data_vencimento: '',
@@ -144,6 +145,7 @@ export function txModalStore() {
       this.form.tipo = tipo;
       this.form.tipo_despesa = tipoDespesa;
       this.form.responsavel_id = Alpine.store('app').profile?.id || '';
+      this.form.unidade_id = Alpine.store('app').unidadeAtual || '';
       this.showMore = tipoDespesa === 'fixa';
       this.comprovantePreviewUrl = null;
       this.pagadores = [];
@@ -247,6 +249,7 @@ export function txModalStore() {
         categoria_id: tx.categoria_id || '',
         tipo_despesa: tx.tipo_despesa,
         responsavel_id: tx.responsavel_id || '',
+        unidade_id: tx.unidade_id || '',
         valor: tx.valor,
         data_cadastro: tx.data_cadastro,
         data_vencimento: tx.data_vencimento || '',
@@ -574,6 +577,14 @@ export function txModalStore() {
 
     async save() {
       const store = Alpine.store('app');
+      if (!store.podeLancar) {
+        store.notify('Com o papel de contador você consulta e exporta, mas não lança.', 'danger');
+        return;
+      }
+      if (this.form.id && !store.podeEditarLancamento(this.originalTx)) {
+        store.notify('Como funcionário, você só muda os lançamentos que você mesmo fez.', 'danger');
+        return;
+      }
       if (!this.form.titulo.trim() || !this.form.valor) {
         store.notify('Preencha ao menos o título e o valor.', 'danger');
         return;
@@ -581,6 +592,11 @@ export function txModalStore() {
       if (!this.divisaoValida) {
         store.notify('A soma da divisão entre pagadores precisa bater com o valor total.', 'danger');
         return;
+      }
+      if (!this.form.id && store.limiteDoPlano('lancamentosMes') !== null) {
+        const usados = await contarLancamentosDoMes(store.profile.id);
+        const limite = store.limiteDoPlano('lancamentosMes');
+        if (!store.exigirLimite('lancamentosMes', usados, `Seu plano permite ${limite} lançamentos por mês e você já usou todos. Para lançar sem limite, mude de plano.`)) return;
       }
       this.saving = true;
       try {
@@ -612,6 +628,9 @@ export function txModalStore() {
           categoria_id: this.form.categoria_id || null,
           tipo_despesa: this.form.tipo_despesa,
           responsavel_id: this.form.responsavel_id || store.profile.id,
+          // Só contas Business com unidades mandam o campo (banco sem a coluna
+          // ainda? comFallbackDeColuna salva sem ele).
+          ...(store.unidades.length ? { unidade_id: this.form.unidade_id || null } : {}),
           valor: Number(this.form.valor),
           data_cadastro: this.form.data_cadastro || todayIso(),
           data_vencimento: dataVencimento,
@@ -637,7 +656,8 @@ export function txModalStore() {
           // mantém a marcação mas não grava cartao_id nenhum.
           cartao_credito: this.form.tipo === 'saida' && (this.form.cartao_id === '__legado__' || !!this.form.cartao_id),
           cartao_id: this.form.tipo === 'saida' && this.form.cartao_id && this.form.cartao_id !== '__legado__' ? this.form.cartao_id : null,
-          owner_id: store.profile.id,
+          // Editar não muda quem lançou (antes virava de quem editou).
+          owner_id: this.form.id ? (this.originalTx?.owner_id ?? store.profile.id) : store.profile.id,
           group_id: store.group?.group?.id ?? null,
         };
 

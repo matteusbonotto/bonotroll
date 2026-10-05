@@ -24,6 +24,7 @@ export function csvModalStore() {
     IMPORT_TARGETS,
 
     openFor(target, listId = null) {
+      if (!Alpine.store('app').exigirRecurso('importar', 'Importar planilha faz parte dos planos pagos.')) return;
       this.target = target;
       this.listId = listId;
       this.step = 'upload';

@@ -11,6 +11,8 @@ export function profileView() {
     saving: false,
     uploadingAvatar: false,
     pushSuportado: isPushSupported(),
+    // Aberto pelo app instalado (PWA): as instruções de desbloqueio são outras.
+    appInstalado: window.matchMedia?.('(display-mode: standalone)').matches || navigator.standalone === true,
     pushEstado: 'verificando',
     pushErro: '',
     pushErroTecnico: '',

@@ -29,7 +29,13 @@ Quem você convida para o seu grupo vê e pode editar os dados do grupo. O admin
 - **Preços e notas fiscais:** os dados lidos de QR code e de serviços públicos podem ter erros. Confira antes de usar.
 
 ## 6. Planos e pagamento
-[[Descrever quando houver: período grátis de 30 dias, planos, renovação, cancelamento, reembolso e direito de arrependimento (CDC, art. 49)]]
+- **Linhas:** BNTT Home (para a casa) e BNTT Business (para empresas). Os planos, preços e limites atuais estão na página inicial (bnttapp.web.app/#planos).
+- **Período grátis:** toda conta nova usa por 30 dias, sem cartão, tudo do plano Família (Home) ou Expansão (Business). Depois, a conta continua no plano Grátis/Largada, com limites, até a pessoa escolher um plano pago.
+- **Cobrança:** mensal ou anual (o anual tem 20% de desconto), paga com cartão pelo **Stripe**, que processa o pagamento. O BNTT não recebe nem guarda o número do cartão.
+- **Renovação:** a assinatura renova automaticamente ao fim de cada período, pelo mesmo valor, até ser cancelada.
+- **Cancelamento:** a qualquer momento, sem multa; o plano continua ativo até o fim do período já pago e depois volta ao plano gratuito. Seus dados não são apagados por causa do cancelamento.
+- **Direito de arrependimento (CDC, art. 49):** você pode desistir em até 7 dias da primeira contratação e recebe o valor de volta integralmente.
+- **Mudança de preço:** avisamos com pelo menos 30 dias de antecedência; o novo valor só vale no próximo período.
 
 ## 7. Disponibilidade
 Trabalhamos para o app estar sempre no ar, mas pode haver interrupções para manutenção ou por falhas de terceiros. Recomendamos exportar seus dados de tempos em tempos (Perfil → Exportar dados).
@@ -38,7 +44,7 @@ Trabalhamos para o app estar sempre no ar, mas pode haver interrupções para ma
 Na medida permitida por lei, não respondemos por decisões tomadas com base nas informações do app nem por danos causados pelo uso indevido da conta pelo próprio usuário.
 
 ## 9. Encerramento
-Você pode excluir sua conta a qualquer momento. Podemos suspender contas que violem estes termos.
+Você pode excluir sua conta a qualquer momento (cancele antes a assinatura, se houver). Podemos suspender contas que violem estes termos.
 
 ## 10. Lei e foro
 Lei brasileira. Foro do domicílio do consumidor.

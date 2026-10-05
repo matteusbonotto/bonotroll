@@ -1,4 +1,18 @@
-# CHANGELOG — Palm Business
+# CHANGELOG — BNTT (reconstrução "Palm")
+
+> 2026-10-05: o nome voltou a ser **BNTT** (decisão do usuário), com duas linhas: **BNTT Home** (verde) e **BNTT Business** (azul). As entradas abaixo citam "Palm" porque eram o nome na época.
+
+## BNTT Home / Business, LP, planos e Stripe — checkpoint/linhas
+- **Nome e marca de volta para BNTT** (logo, ícones v=4, cor do tema).
+- **Acessibilidade no menu do avatar:** texto A−/A+, Narração e Tema escuro como chaves liga/desliga.
+- **Configurações enxutas:** linhas só com título; acessibilidade saiu de lá; grupo "Seu plano".
+- **Push no app instalado:** instruções certas para PWA (Informações do app → Notificações; e o bloqueio herdado do Chrome).
+- **LP na raiz** (`/`), app em **`/app`**: escolha Casa/Negócio, 4 planos por linha, **Mensal/Anual (−20%)**, FAQ, Termos e Privacidade (`termos.html`, `privacidade.html`, gerados de docs/legal). Quem já usa (app instalado, sessão salva, link de demo/e-mail) vai direto para `/app`.
+- **Planos** (fonte única `js/data/planos.js`): Home — Grátis, Solteiro, Casal, Família; Business — Largada, Balcão, Expansão, Rede. 30 dias com o plano mais completo da linha; depois, grátis com limites. Contas existentes: **Home Família por cortesia** (backup em backups/bntt/2026-10-05-antes-planos).
+- **Stripe (modo teste):** 6 produtos, 12 preços e 12 links de pagamento criados por `scripts/stripe-planos.mjs` (idempotente). O pagamento abre depois do cadastro já com a conta identificada. Ativação do plano: `supabase/functions/stripe-webhook` (pronto, precisa ser publicado) e `scripts/stripe-sincronizar.mjs` (funciona já).
+- **Limites do plano no app:** lançamentos por mês, listas de compras, pessoas, unidades, fichas de saúde e importação — sempre com aviso "Disponível em outro plano", nunca erro seco.
+- **BNTT Business:** vocabulário de empresa (Financeiro, Contas, Estoque, Equipe), **unidades (filiais)** com seletor no topo e campo no lançamento, **papéis** dono/gerente/funcionário/contador (regras também no banco: `supabase/business-2026-10.sql`).
+- **Correções de causa raiz:** editar lançamento de outra pessoa trocava o "dono" do lançamento; criar duas unidades seguidas apagava o nome digitado; a varredura de segredos não conhecia o nome novo da chave do Stripe.
 
 ## Fase 13 (polimento) — checkpoint/polish
 - **Símbolo novo do Palm:** folha de palmeira branca sobre o Verde Palm, no lugar do "B" do BNTT — logo da entrada e da barra lateral, favicon, ícone do app (Android adaptável e iPhone), selo das notificações. Mesmos caminhos de arquivo (dá para trocar por um logo profissional sem mexer em código). Versão dos ícones v=3 para os celulares atualizarem.

@@ -27,6 +27,8 @@ export function fichasSaude() {
     },
 
     async init() {
+      // Fichas de saúde são do plano Família (Home). Fora dele, a tela explica.
+      if (!this.$store.app.recursoLiberado('saude')) { this.etapa = 'plano'; return; }
       try {
         this.cofreAtual = await cofre.buscarCofre(this.escopo);
         if (!this.cofreAtual) { this.etapa = 'sem-cofre'; return; }

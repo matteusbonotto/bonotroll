@@ -119,6 +119,19 @@ export async function listTransactions({ ownerId, groupId, filters = {} } = {}) 
   return rows.sort((a, b) => (b.data_cadastro || '').localeCompare(a.data_cadastro || ''));
 }
 
+// Quantos lançamentos a pessoa CRIOU neste mês (limite do plano Grátis).
+export async function contarLancamentosDoMes(ownerId) {
+  const hoje = new Date();
+  const inicio = new Date(hoje.getFullYear(), hoje.getMonth(), 1).toISOString();
+  if (isDemoMode()) {
+    return (await mockDb.list('transactions', (t) => t.owner_id === ownerId && (t.criado_em || '') >= inicio)).length;
+  }
+  const supabase = await getSupabase();
+  const { count, error } = await supabase.from('transactions').select('id', { count: 'exact', head: true }).eq('owner_id', ownerId).gte('criado_em', inicio);
+  if (error) return 0; // na dúvida, não bloqueia ninguém
+  return count ?? 0;
+}
+
 export async function createTransaction(data) {
   const row = { data_cadastro: todayIso(), ...data };
   if (isDemoMode()) return mockDb.insert('transactions', row);

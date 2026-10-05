@@ -577,6 +577,12 @@ export const mockDb = {
     persist();
     return rows[idx];
   },
+  // Para tabelas de chave composta (ex.: group_members), sem coluna id.
+  async updateWhere(table, predicate, patch) {
+    await delay();
+    db[table] = (db[table] || []).map((r) => (predicate(r) ? { ...r, ...patch } : r));
+    persist();
+  },
   async remove(table, id) {
     await delay();
     db[table] = (db[table] || []).filter((r) => r.id !== id);

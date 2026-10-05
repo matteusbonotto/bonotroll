@@ -18,7 +18,7 @@ import { fileURLToPath } from 'node:url';
 
 export const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
-const VARIAVEIS_SECRETAS = ['SB_SK', 'STRIP_TOKEN'];
+const VARIAVEIS_SECRETAS = ['SB_SK', 'STRIP_TOKEN', 'STRIP_STOKEN', 'STRIPE_WEBHOOK_SECRET'];
 
 // Aceita tanto CHAVE=valor quanto CHAVE = "valor" (o .env atual usa espaços e
 // aspas, formato que o `source` do shell não entende).
@@ -32,7 +32,7 @@ export function lerEnv(arquivo = path.join(RAIZ, '.env')) {
     }
   }
   // Variável de ambiente real (ex.: CI) tem prioridade sobre o arquivo.
-  for (const nome of ['SB_PROJ_ID', 'SB_PB', 'SB_SK', 'STRIP_TOKEN']) {
+  for (const nome of ['SB_PROJ_ID', 'SB_PB', 'SB_SK', 'STRIP_TOKEN', 'STRIP_PTOKEN', 'STRIP_STOKEN', 'STRIPE_WEBHOOK_SECRET']) {
     if (process.env[nome]) env[nome] = process.env[nome];
   }
   return env;

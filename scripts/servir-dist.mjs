@@ -30,7 +30,7 @@ const TIPOS = {
 
 createServer(async (req, res) => {
   const caminho = decodeURIComponent(new URL(req.url, 'http://x').pathname);
-  let arquivo = normalize(join(RAIZ, caminho));
+  let arquivo = normalize(join(RAIZ, caminho === '/app' ? '/app.html' : caminho)); // mesma regra do firebase.json
   if (!arquivo.startsWith(RAIZ)) {
     res.writeHead(403).end();
     return;

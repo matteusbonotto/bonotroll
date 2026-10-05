@@ -12,6 +12,11 @@ export function authView() {
     error: '',
     info: '',
 
+    // Veio da LP com "Começar grátis" ou "Assinar": abre já no cadastro.
+    init() {
+      if (this.$store.app.intencao?.cadastro) this.mode = 'signup';
+    },
+
     async submit() {
       this.error = '';
       this.info = '';

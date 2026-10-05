@@ -1814,3 +1814,190 @@ img.cg-company-logo { display: block; }
 .cg-cartao-toggle {
   min-height: 28px;
 }
+
+/* Menu do avatar: acessibilidade à mão, com chaves liga/desliga reais. */
+.cg-menu-a11y__titulo {
+  margin: 0 0 4px;
+  font-size: var(--font-size-caption);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--color-text-muted);
+}
+
+.cg-menu-a11y__linha {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  width: 100%;
+  min-height: 48px;
+  padding: 4px 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-weight: 600;
+  text-align: left;
+}
+
+.cg-texto-controle.cg-texto-controle--compacto {
+  flex-wrap: nowrap;
+  gap: 4px;
+}
+
+.cg-texto-controle--compacto > .btn-outline-secondary {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 6px;
+}
+
+.cg-toggle__trilho {
+  position: relative;
+  flex-shrink: 0;
+  width: 48px;
+  height: 28px;
+  border-radius: 999px;
+  background: var(--color-border-strong, #9aa5a1);
+  transition: background .15s;
+}
+
+.cg-toggle__bolinha {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgb(0 0 0 / .3);
+  transition: transform .15s;
+}
+
+.cg-toggle[aria-checked="true"] .cg-toggle__trilho {
+  background: var(--color-primary);
+}
+
+.cg-toggle[aria-checked="true"] .cg-toggle__bolinha {
+  transform: translateX(20px);
+}
+
+.cg-toggle:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cg-toggle__trilho,
+  .cg-toggle__bolinha {
+    transition: none;
+  }
+}
+
+/* Linha (Home/Business) e planos dentro do app. */
+.cg-linha-nome { color: var(--color-primary); }
+
+.cg-plano-chip {
+  display: block;
+  margin: 0 0 12px;
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  background: var(--color-primary-soft);
+  font-weight: 600;
+}
+
+.cg-ciclo {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  margin-bottom: 12px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-alt);
+}
+
+.cg-ciclo button {
+  flex: 1;
+  min-height: 44px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-weight: 700;
+}
+
+.cg-ciclo button[aria-checked="true"] {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.cg-ciclo__desconto {
+  margin-left: 4px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: #FFE7A3;
+  color: #5A4300;
+  font-size: var(--font-size-caption);
+}
+
+.cg-planos {
+  display: grid;
+  gap: 8px;
+}
+
+.cg-plano-op {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.cg-plano-op--atual {
+  border: 2px solid var(--color-primary);
+}
+
+.cg-plano-lista {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0;
+  display: grid;
+  gap: 6px;
+}
+
+.cg-plano-lista i { color: var(--color-primary); }
+
+.cg-plano-chip i { margin-right: 6px; }
+.cg-plano-chip .btn { margin-left: 8px; }
+
+/* BNTT Business: unidade no topo, papel e unidades na Equipe. */
+.cg-unidade-seletor {
+  width: auto;
+  max-width: 200px;
+}
+
+.cg-papel-seletor {
+  width: auto;
+  max-width: 160px;
+}
+
+.cg-unidades__lista {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.cg-papeis-ajuda summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+@media (max-width: 575.98px) {
+  .cg-topbar .cg-unidade-seletor { max-width: 140px; }
+}

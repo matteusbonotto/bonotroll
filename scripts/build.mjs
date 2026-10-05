@@ -25,7 +25,9 @@ const DIST = path.join(RAIZ, 'dist');
 // .claude/, prompts etc. nunca vão pro Hosting.
 const PUBLICAR = [
   'index.html',
-  'landing.html',
+  'app.html',
+  'termos.html',
+  'privacidade.html',
   'manifest.webmanifest',
   'sw.js',
   'css',

@@ -71,10 +71,10 @@ export function explicarErroPush(e) {
   const msg = String(e?.message || e || '');
   const tecnico = [nome, msg, e?.code].filter(Boolean).join(' · ');
   let mensagem = 'Não deu para ativar agora. Tente de novo em alguns minutos.';
-  if (e?.codigoPalm === 'sw-nao-pronto') mensagem = 'O app ainda está terminando de instalar. Feche o Palm, abra de novo e tente outra vez.';
+  if (e?.codigoPalm === 'sw-nao-pronto') mensagem = 'O app ainda está terminando de instalar. Feche o BNTT, abra de novo e tente outra vez.';
   else if (e?.codigoPalm === 'sem-resposta') mensagem = 'O celular não respondeu ao pedido. Verifique a internet, feche e abra o Palm e tente de novo.';
   else if (/failed to fetch|network/i.test(msg)) mensagem = 'Sem conexão com a internet. Conecte e tente de novo.';
-  else if (nome === 'NotAllowedError') mensagem = 'O navegador não deixou ativar. Confira se as notificações do Palm estão permitidas nas configurações do celular.';
+  else if (nome === 'NotAllowedError') mensagem = 'O navegador não deixou ativar. Confira se as notificações do BNTT estão permitidas nas configurações do celular.';
   else if (nome === 'AbortError' || /push service/i.test(msg)) mensagem = 'O serviço de avisos do celular não respondeu. No Android, confira se o Google Play Services está atualizado e tente de novo.';
   else if (e?.code === '42501' || /row-level security|permission denied/i.test(msg)) mensagem = 'Sua sessão expirou. Saia e entre de novo na conta e tente outra vez.';
   return { mensagem, tecnico };

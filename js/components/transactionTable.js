@@ -225,6 +225,8 @@ export function transactionsView() {
             dataFim: this.filtro.dataFim || undefined,
           },
         });
+        // BNTT Business: só a unidade escolhida no topo (vazia = todas).
+        this.rows = this.rows.filter((t) => store.naUnidade(t));
         const payersMap = await listPayersFor(this.rows.map((r) => r.id));
         this.payersByTx = Object.fromEntries(payersMap);
       } catch (e) {

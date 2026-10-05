@@ -31,7 +31,8 @@ const publica = configPublica();
 http
   .createServer((req, res) => {
     const caminhoUrl = decodeURIComponent(new URL(req.url, 'http://localhost').pathname);
-    let arquivo = path.normalize(path.join(RAIZ, caminhoUrl));
+    // /app é o app (app.html); a raiz é a LP — mesma regra do firebase.json.
+    let arquivo = path.normalize(path.join(RAIZ, caminhoUrl === '/app' ? '/app.html' : caminhoUrl));
     // Nada fora da raiz, e nunca .env/.git/node_modules.
     const relativo = path.relative(RAIZ, arquivo);
     if (relativo.startsWith('..') || /(^|[\\/])(\.env|\.git|node_modules)([\\/.]|$)/.test(relativo)) {
@@ -44,7 +45,8 @@ http
       return;
     }
     let corpo = fs.readFileSync(arquivo);
-    if (path.relative(RAIZ, arquivo).replace(/\\/g, '/') === 'js/data/config.js') {
+    // SEM_BANCO=1 (testes e2e): nunca injeta o banco real — o app fica em modo demonstração.
+    if (!process.env.SEM_BANCO && path.relative(RAIZ, arquivo).replace(/\\/g, '/') === 'js/data/config.js') {
       corpo = injetarConfig(corpo.toString('utf8'), publica);
     }
     res.writeHead(200, {

@@ -110,6 +110,7 @@ export function dashboardView() {
       const logo = minhas.filter((t) => t._status === 'a_vencer' && (t.data_vencimento || '') <= em7);
       const soma = (l) => l.reduce((s, t) => s + (Number(t.valor) || 0), 0);
       const itens = [];
+      const negocio = this.$store.app.linha === 'business';
       if (vencidas.length) {
         itens.push({ id: 'vencidas', nivel: 'perigo', icone: 'bi-exclamation-triangle-fill',
           texto: `${vencidas.length} ${vencidas.length === 1 ? 'conta vencida' : 'contas vencidas'}`,
@@ -123,8 +124,8 @@ export function dashboardView() {
       const faltando = this.recursosSugestoes.length;
       if (faltando) {
         itens.push({ id: 'inventario', nivel: 'atencao', icone: 'bi-box-seam',
-          texto: `${faltando} ${faltando === 1 ? 'item acabando ou vencendo' : 'itens acabando ou vencendo'} em casa`,
-          detalhe: 'No inventário', acao: 'Ver itens', view: 'recursos' });
+          texto: `${faltando} ${faltando === 1 ? 'item acabando ou vencendo' : 'itens acabando ou vencendo'} ${negocio ? 'no estoque' : 'em casa'}`,
+          detalhe: negocio ? 'No estoque' : 'No inventário', acao: 'Ver itens', view: 'recursos' });
       }
       if (this.orcamentoAlerta?.estourado) {
         itens.push({ id: 'orcamento', nivel: 'perigo', icone: 'bi-pie-chart-fill',
@@ -154,7 +155,7 @@ export function dashboardView() {
 
       try {
         const groupId = store.group?.group?.id;
-        this.escopo = await listTransactions({ ownerId: store.profile.id, groupId });
+        this.escopo = (await listTransactions({ ownerId: store.profile.id, groupId })).filter((t) => store.naUnidade(t));
         const payersMap = await listPayersFor(this.escopo.map((t) => t.id));
         this.payersByTx = Object.fromEntries(payersMap);
 
