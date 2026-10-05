@@ -74,9 +74,9 @@ const APP_SHELL = [
   './js/utils/dbFallback.js',
   './js/utils/image.js',
   './js/utils/money.js',
-  './assets/icons/icon.svg?v=2',
-  './assets/icons/icon-maskable.svg?v=2',
-  './assets/icons/apple-touch-icon.png?v=2',
+  './assets/icons/icon.svg?v=3',
+  './assets/icons/icon-maskable.svg?v=3',
+  './assets/icons/apple-touch-icon.png?v=3',
   './assets/icons/badge-mono.png',
   './assets/logos/logo-colorida.svg',
 ];

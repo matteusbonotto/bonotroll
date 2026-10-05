@@ -7,23 +7,23 @@
   "display": "standalone",
   "orientation": "portrait-primary",
   "background_color": "#F6F8F7",
-  "theme_color": "#0E9F6E",
+  "theme_color": "#126B5C",
   "lang": "pt-BR",
   "icons": [
     {
-      "src": "./assets/icons/icon.svg?v=2",
+      "src": "./assets/icons/icon.svg?v=3",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
     },
     {
-      "src": "./assets/icons/apple-touch-icon.png?v=2",
+      "src": "./assets/icons/apple-touch-icon.png?v=3",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "./assets/icons/icon-maskable.svg?v=2",
+      "src": "./assets/icons/icon-maskable.svg?v=3",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "maskable"

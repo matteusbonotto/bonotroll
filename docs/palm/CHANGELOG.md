@@ -1,11 +1,17 @@
 # CHANGELOG — Palm Business
 
+## Fase 13 (polimento) — checkpoint/polish
+- **Símbolo novo do Palm:** folha de palmeira branca sobre o Verde Palm, no lugar do "B" do BNTT — logo da entrada e da barra lateral, favicon, ícone do app (Android adaptável e iPhone), selo das notificações. Mesmos caminhos de arquivo (dá para trocar por um logo profissional sem mexer em código). Versão dos ícones v=3 para os celulares atualizarem.
+- Cor do tema do navegador/app instalado: Verde Palm `#126B5C`.
+- Tela de entrada sem jargão técnico ("Supabase").
+- `scripts/gerar-png.mjs`: regenera os PNG a partir de HTML/SVG.
+
 ## Fases 7, 11 e 12 (fluxos, QA, hardening) — checkpoint/qa
 - **Fluxo A (adicionar despesa):** ao salvar, aviso "Despesa salva." com **Desfazer** (5 s) que apaga o lançamento de verdade — antes, salvar sem querer obrigava a procurar e excluir. Ícone de confirmação (não lixeira).
 - **45 rótulos de formulário ligados aos campos** (`for`/`id`): leitor de tela e narração agora dizem "Valor (R$)" em vez de só "campo de edição"; tocar no rótulo foca o campo.
 - Linguagem: "Fixa (todo mês)" / "Variável (muda)"; "Previsto" → "Esperado" (o nome que o cartão de saldo usa).
 - **Segurança:** SRI (integridade) em Bootstrap, Bootstrap Icons e Alpine vindos do CDN; dependências sem vulnerabilidades (`npm audit`); cabeçalhos conferidos em produção (HSTS com preload, CSP, X-Frame-Options, nosniff, Permissions-Policy).
-- **QA:** 129 unitários + 65 e2e no fonte + mesma suíte e2e no build de produção ofuscado (`npm run test:dist`); auditoria de telas sem problemas nas 5 larguras.
+- **QA:** 129 unitários + 64 e2e no fonte + mesma suíte e2e no build de produção ofuscado (`npm run test:dist`); auditoria de telas sem problemas nas 5 larguras.
 
 ## Fase 4 + 10 (componentes e acessibilidade) — checkpoint/componentes
 - **Auditoria automática** `npm run auditar` (scripts/auditar-telas.mjs; precisa do app servido em :5511): 8 telas × 320/375/768/1280/1920 px medindo alvo de toque, rolagem lateral, nome acessível, imagens sem alt, texto < 12 px e inglês na interface. **90 problemas → 0.**

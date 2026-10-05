@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#0E9F6E" />
+  <meta name="theme-color" content="#126B5C" />
   <meta name="description" content="BNTT — Controle Financeiro Doméstico. Seu dinheiro, sua casa, sob controle." />
   <title>Palm Business</title>
 
@@ -12,7 +12,7 @@
        resto da lógica (toggle, persistência) fica em store.js::applyTheme. -->
   <script src="./js/tema-inicial.js"></script>
 
-  <!-- ?v=2 nos 3 ícones (aqui e em manifest.webmanifest): navegador/SO
+  <!-- ?v=3 nos 3 ícones (aqui e em manifest.webmanifest): navegador/SO
        cacheia ícone de PWA instalada de forma agressiva e separada do cache
        normal — só um deploy de novo arquivo, mesma URL, não é suficiente
        pra forçar a atualização (relatado: mobile pegou o ícone novo, desktop
@@ -20,12 +20,12 @@
        o navegador a buscar de novo. Bumpar esse número de novo se o ícone
        mudar outra vez no futuro. -->
   <link rel="manifest" href="./manifest.webmanifest" />
-  <link rel="icon" href="./assets/icons/icon.svg?v=2" type="image/svg+xml" />
+  <link rel="icon" href="./assets/icons/icon.svg?v=3" type="image/svg+xml" />
   <!-- iOS não renderiza favicon/apple-touch-icon em SVG de forma confiável
        (mesmo em versões recentes) — precisa de um PNG raster de verdade,
        tanto pro ícone da tela de início quanto pra splash screen que o
        iOS gera sozinho a partir dele + o theme-color acima. -->
-  <link rel="apple-touch-icon" href="./assets/icons/apple-touch-icon.png?v=2" />
+  <link rel="apple-touch-icon" href="./assets/icons/apple-touch-icon.png?v=3" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="BNTT" />
@@ -78,7 +78,7 @@
     <div x-data="authView()" class="d-flex align-items-center justify-content-center p-3" style="min-height:100vh;">
       <div class="cg-card" style="max-width: 420px; width:100%;">
         <div class="text-center mb-4">
-          <img src="./assets/logos/logo-colorida.svg" width="72" height="78" alt="" class="mb-2" />
+          <img src="./assets/logos/logo-colorida.svg" width="72" height="72" alt="" class="mb-2" />
           <h1 class="h4 fw-bold mb-1">Palm Business</h1>
           <p class="cg-muted mb-0">Seu dinheiro, sua casa, sob controle.</p>
         </div>
@@ -97,7 +97,7 @@
                 </button>
               </template>
             </div>
-            <p class="cg-muted small mt-3 mb-2">Os dados são fictícios e ficam só no seu navegador. Quando o Supabase for configurado, essa seção some.</p>
+            <p class="cg-muted small mt-3 mb-2">Os dados são de exemplo e ficam só neste aparelho.</p>
             <button type="button" class="btn btn-link btn-sm px-0" @click="$store.app.exitDemoMode()">Sair do modo demonstração</button>
           </div>
         </template>
@@ -167,7 +167,7 @@
       <!-- Sidebar (desktop) -->
       <aside class="cg-sidebar">
         <div class="d-flex align-items-center gap-2 mb-4 px-1">
-          <img src="./assets/logos/logo-colorida.svg" width="30" height="33" alt="" />
+          <img src="./assets/logos/logo-colorida.svg" width="32" height="32" alt="" />
           <span class="fw-bold">Palm Business</span>
         </div>
         <button type="button" class="cg-btn btn btn-success w-100 mb-3 cg-sidebar__adicionar" @click="$store.app.adicionarAberto = true">
