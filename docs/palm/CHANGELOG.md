@@ -2,6 +2,11 @@
 
 > 2026-10-05: o nome voltou a ser **BNTT** (decisão do usuário), com duas linhas: **BNTT Home** (verde) e **BNTT Business** (azul). As entradas abaixo citam "Palm" porque eram o nome na época.
 
+## Alinhamento de ícones e botões — checkpoint/alinhamento
+- Causa raiz: o Bootstrap Icons desce o desenho do ícone 0,125em; dentro de botões/chips/menus o ícone ficava mais baixo que o texto. Agora todo ícone é uma caixa centralizada e todo botão centraliza o conteúdo nas duas direções.
+- 43 botões só com ícone viraram círculos perfeitos de 44×44 (antes ficavam ovais pelo espaçamento lateral).
+- "Ajuda" no topo virou só o ícone, igual ao sininho.
+
 ## Business simples: tutoriais, demonstração realista e casas — checkpoint/demo-negocio
 - **Tutoriais do Business** (Central mostra só os da linha em uso): "Crie sua empresa", "Cadastre suas filiais", "Chame sua equipe", "Escolha o papel de cada pessoa". No Home: "Cadastre suas casas".
 - **"Comece aqui"** na Equipe do Business: 3 passos (empresa → filiais → equipe e papéis), com "Me mostre"; some quando tudo está feito.

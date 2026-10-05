@@ -223,8 +223,8 @@
                  ícones sem texto no topo confundiam idoso e iniciante). O tema
                  foi para Perfil → Preferências. -->
             <div x-data="{ ajuda: false }" class="position-relative" @click.outside="ajuda = false" @keydown.escape.window="ajuda = false">
-              <button type="button" class="btn btn-outline-secondary btn-sm cg-topbar-ajuda" aria-label="Ajuda" @click="ajuda = !ajuda" :aria-expanded="ajuda" aria-haspopup="menu">
-                <i class="bi bi-question-circle" aria-hidden="true"></i> <span>Ajuda</span>
+              <button type="button" class="btn p-0 border-0 bg-transparent cg-touch cg-topbar-ajuda" aria-label="Ajuda" title="Ajuda" @click="ajuda = !ajuda" :aria-expanded="ajuda" aria-haspopup="menu">
+                <i class="bi bi-question-circle fs-5" aria-hidden="true"></i>
               </button>
               <div class="cg-card cg-topbar-ajuda__menu" x-show="ajuda" x-cloak x-transition role="menu">
                 <button type="button" class="cg-topbar-ajuda__item" role="menuitem" @click="ajuda = false; $store.onboarding.abrirCentral()" aria-label="Central de tutoriais">
@@ -999,7 +999,7 @@
                 <template x-for="row in linhasComFilhos(secao.linhas)" :key="row.id">
                   <tr :class="{ 'cg-tx-filho': row._filhoCartao }">
                     <td>
-                      <button type="button" class="btn btn-sm p-0 border-0 bg-transparent" @click="toggleTipoDespesa(row)" :aria-label="row.tipo_despesa === 'fixa' ? 'Fixa — clique para marcar como variável' : 'Variável — clique para marcar como fixa'">
+                      <button type="button" class="btn btn-sm p-0 border-0 bg-transparent cg-btn-icone" @click="toggleTipoDespesa(row)" :aria-label="row.tipo_despesa === 'fixa' ? 'Fixa — clique para marcar como variável' : 'Variável — clique para marcar como fixa'">
                         <i class="bi fs-5" :class="row.tipo_despesa === 'fixa' ? 'bi-pin-angle-fill text-warning' : 'bi-pin-angle cg-muted'"></i>
                       </button>
                     </td>
@@ -1125,7 +1125,7 @@
                       </div>
                     </td>
                     <td class="text-end">
-                      <button type="button" class="btn btn-sm btn-outline-secondary" @click="editar(row)" aria-label="Editar"><i class="bi bi-pencil"></i></button>
+                      <button type="button" class="btn btn-sm btn-outline-secondary cg-btn-icone" @click="editar(row)" aria-label="Editar"><i class="bi bi-pencil"></i></button>
                     </td>
                   </tr>
                 </template>
@@ -1329,7 +1329,7 @@
               <button type="button" class="cg-back" @click="voltarParaListas()" aria-label="Voltar para Minhas listas"><i class="bi bi-chevron-left" aria-hidden="true"></i> Minhas listas</button>
               <div class="ms-auto d-flex gap-2">
                 <button type="button" class="btn btn-sm btn-outline-secondary" @click="renomearLista()" aria-label="Renomear lista"><i class="bi bi-pencil"></i> Renomear</button>
-                <button type="button" class="btn btn-sm btn-outline-danger" @click="excluirLista()" aria-label="Excluir lista"><i class="bi bi-trash"></i></button>
+                <button type="button" class="btn btn-sm btn-outline-danger cg-btn-icone" @click="excluirLista()" aria-label="Excluir lista"><i class="bi bi-trash"></i></button>
               </div>
             </div>
           <div class="cg-card cg-shopping-panel mb-2 mb-md-3" x-show="list">
@@ -1404,7 +1404,7 @@
                 <label class="form-label small">Limite de gasto (opcional)</label>
                 <div class="d-flex align-items-center gap-2 flex-wrap">
                   <span class="fw-bold fs-5 text-truncate" x-text="list?.limite_gasto ? cgFormat.formatCurrency(list.limite_gasto) : 'Sem limite'"></span>
-                  <button type="button" class="cg-btn-icon btn btn-outline-secondary" @click="abrirLimiteGasto()" title="Editar limite de gasto" aria-label="Editar limite de gasto"><i class="bi bi-pencil"></i></button>
+                  <button type="button" class="cg-btn-icon btn btn-outline-secondary cg-btn-icone" @click="abrirLimiteGasto()" title="Editar limite de gasto" aria-label="Editar limite de gasto"><i class="bi bi-pencil"></i></button>
                   <template x-if="statusLimiteGasto">
                     <div class="cg-limite-kpi" :class="'cg-limite-kpi--' + statusLimiteGasto.nivel">
                       <i class="bi" :class="statusLimiteGasto.nivel === 'passou' ? 'bi-exclamation-triangle-fill' : 'bi-circle-fill'"></i>
@@ -1456,7 +1456,7 @@
                   <label class="form-label small" for="cg-campo-novoitem-nome">Nome</label>
                   <div class="d-flex gap-2">
                     <input id="cg-campo-novoitem-nome" type="text" class="form-control" x-ref="inputNovoItem" x-model="novoItem.nome" @input="onNomeInput()" placeholder="Ex: Arroz 5kg" required />
-                    <button type="button" class="cg-btn btn btn-outline-secondary flex-shrink-0" @click="abrirScanner()" title="Ler código de barras"><i class="bi bi-upc-scan"></i></button>
+                    <button type="button" class="cg-btn btn btn-outline-secondary flex-shrink-0 cg-btn-icone" @click="abrirScanner()" title="Ler código de barras"><i class="bi bi-upc-scan"></i></button>
                     <button type="button" class="cg-btn btn btn-outline-secondary mb-0 flex-shrink-0" title="Tirar foto do item" aria-label="Tirar foto do item" :disabled="lendoFotoItem"
                       @click="$store.camera.capturar('Foto do item').then((f) => f && onFotoItem(cgEventoDeArquivo(f)))">
                       <span x-show="!lendoFotoItem"><i class="bi bi-camera"></i></span>
@@ -1661,13 +1661,13 @@
                              contra exclusão acidental é o "Desfazer" (5s) em
                              removeItem() (shoppingList.js), que não depende
                              de posição de botão nenhuma. -->
-                        <button type="button" class="btn btn-sm btn-outline-secondary" @click="abrirEdicao(item)" title="Editar" aria-label="Editar"><i class="bi bi-pencil"></i></button>
-                        <button type="button" class="btn btn-sm btn-link cg-acao-discreta" @click="removeItem(item.id)" title="Remover" aria-label="Remover"><i class="bi bi-trash"></i></button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary cg-btn-icone" @click="abrirEdicao(item)" title="Editar" aria-label="Editar"><i class="bi bi-pencil"></i></button>
+                        <button type="button" class="btn btn-sm btn-link cg-acao-discreta cg-btn-icone" @click="removeItem(item.id)" title="Remover" aria-label="Remover"><i class="bi bi-trash"></i></button>
                         <template x-if="emCompra && itemEmEdicaoId !== item.id && !item.comprado">
                           <button type="button" class="cg-btn btn btn-success btn-sm" @click="abrirPreco(item)">Comprar</button>
                         </template>
                         <template x-if="emCompra && item.comprado">
-                          <button type="button" class="cg-btn btn btn-outline-secondary btn-sm" @click="desmarcarComprado(item)" aria-label="Desmarcar como comprado"><i class="bi bi-arrow-counterclockwise"></i></button>
+                          <button type="button" class="cg-btn btn btn-outline-secondary btn-sm cg-btn-icone" @click="desmarcarComprado(item)" aria-label="Desmarcar como comprado"><i class="bi bi-arrow-counterclockwise"></i></button>
                         </template>
                       </div>
                     </div>
@@ -1706,13 +1706,13 @@
                      o @click do card inteiro (abrir editor / marcar comprado)
                      logo acima. -->
                 <div class="cg-grid-view__actions" @click.stop>
-                  <button type="button" class="btn btn-sm btn-outline-secondary" @click="abrirEdicao(item)" title="Editar" aria-label="Editar"><i class="bi bi-pencil"></i></button>
-                  <button type="button" class="btn btn-sm btn-link cg-acao-discreta" @click="removeItem(item.id)" title="Remover" aria-label="Remover"><i class="bi bi-trash"></i></button>
+                  <button type="button" class="btn btn-sm btn-outline-secondary cg-btn-icone" @click="abrirEdicao(item)" title="Editar" aria-label="Editar"><i class="bi bi-pencil"></i></button>
+                  <button type="button" class="btn btn-sm btn-link cg-acao-discreta cg-btn-icone" @click="removeItem(item.id)" title="Remover" aria-label="Remover"><i class="bi bi-trash"></i></button>
                   <template x-if="emCompra && itemEmEdicaoId !== item.id && !item.comprado">
                     <button type="button" class="cg-btn btn btn-success btn-sm" @click="abrirPreco(item)">Comprar</button>
                   </template>
                   <template x-if="emCompra && item.comprado">
-                    <button type="button" class="cg-btn btn btn-outline-secondary btn-sm" @click="desmarcarComprado(item)" aria-label="Desmarcar como comprado"><i class="bi bi-arrow-counterclockwise"></i></button>
+                    <button type="button" class="cg-btn btn btn-outline-secondary btn-sm cg-btn-icone" @click="desmarcarComprado(item)" aria-label="Desmarcar como comprado"><i class="bi bi-arrow-counterclockwise"></i></button>
                   </template>
                 </div>
               </div>
@@ -1784,7 +1784,7 @@
                 </div>
               </div>
               <div class="d-flex gap-2">
-                <button type="button" class="btn btn-outline-danger" @click="removeItem(edicaoForm.id); fecharEdicao()" title="Excluir"><i class="bi bi-trash"></i></button>
+                <button type="button" class="btn btn-outline-danger cg-btn-icone" @click="removeItem(edicaoForm.id); fecharEdicao()" title="Excluir"><i class="bi bi-trash"></i></button>
                 <button type="button" class="cg-btn btn btn-outline-secondary flex-fill" @click="fecharEdicao()">Cancelar</button>
                 <button type="button" class="cg-btn btn btn-success flex-fill" @click="salvarEdicao()">Salvar</button>
               </div>
@@ -2160,7 +2160,7 @@
                               <input type="number" min="0" class="cg-qty-stepper__value" :value="item.quantidade" @input="definirQuantidade(item, $event.target.value)" aria-label="Quantidade" />
                               <button type="button" data-repeat @click="ajustar(item, 1)" aria-label="Aumentar quantidade"><i class="bi bi-plus"></i></button>
                             </div>
-                            <button type="button" class="btn btn-sm btn-outline-secondary" @click="abrirEditarItem(item)" aria-label="Editar"><i class="bi bi-pencil"></i></button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary cg-btn-icone" @click="abrirEditarItem(item)" aria-label="Editar"><i class="bi bi-pencil"></i></button>
                           </div>
                         </div>
                       </div>
@@ -2182,7 +2182,7 @@
                 <label class="form-label small" for="cg-campo-itemform-nome">Nome</label>
                 <div class="d-flex gap-2">
                   <input id="cg-campo-itemform-nome" type="text" class="form-control" x-model="itemForm.nome" placeholder="Ex: Arroz, Papel higiênico…" required />
-                  <button type="button" class="cg-btn btn btn-outline-secondary flex-shrink-0" @click="abrirScanner()" title="Ler código de barras"><i class="bi bi-upc-scan"></i></button>
+                  <button type="button" class="cg-btn btn btn-outline-secondary flex-shrink-0 cg-btn-icone" @click="abrirScanner()" title="Ler código de barras"><i class="bi bi-upc-scan"></i></button>
                   <button type="button" class="cg-btn btn btn-outline-secondary mb-0 flex-shrink-0" title="Tirar foto do item" aria-label="Tirar foto do item" :disabled="lendoFotoItem"
                     @click="$store.camera.capturar('Foto do item').then((f) => f && onFotoNomeItem(cgEventoDeArquivo(f)))">
                     <span x-show="!lendoFotoItem"><i class="bi bi-camera"></i></span>
@@ -2226,7 +2226,7 @@
               </div>
               <div class="d-flex gap-2">
                 <template x-if="itemForm.id">
-                  <button type="button" class="btn btn-outline-danger" @click="removeItem(itemForm.id)" title="Excluir"><i class="bi bi-trash"></i></button>
+                  <button type="button" class="btn btn-outline-danger cg-btn-icone" @click="removeItem(itemForm.id)" title="Excluir"><i class="bi bi-trash"></i></button>
                 </template>
                 <button type="button" class="cg-btn btn btn-outline-secondary flex-fill" @click="fecharModalItem()">Cancelar</button>
                 <button type="button" class="cg-btn btn btn-success flex-fill" data-tour-alvo="campo-salvar-recurso" :disabled="salvandoItem" @click="salvarItem()">Salvar</button>
@@ -2259,7 +2259,7 @@
                 <label class="form-label small d-block">Ícone</label>
                 <div class="d-flex flex-wrap gap-2">
                   <template x-for="icone in roomIconPresets" :key="icone">
-                    <button type="button" class="cg-btn-icon" :class="roomForm.icone === icone ? 'btn btn-success' : 'btn btn-outline-secondary'" @click="roomForm.icone = icone">
+                    <button type="button" class="cg-btn-icon cg-btn-icone" :class="roomForm.icone === icone ? 'btn btn-success' : 'btn btn-outline-secondary'" @click="roomForm.icone = icone">
                       <i class="bi" :class="icone"></i>
                     </button>
                   </template>
@@ -2267,7 +2267,7 @@
               </div>
               <div class="d-flex gap-2">
                 <template x-if="roomForm.id">
-                  <button type="button" class="btn btn-outline-danger" @click="excluirRoom()" title="Excluir"><i class="bi bi-trash"></i></button>
+                  <button type="button" class="btn btn-outline-danger cg-btn-icone" @click="excluirRoom()" title="Excluir"><i class="bi bi-trash"></i></button>
                 </template>
                 <button type="button" class="cg-btn btn btn-outline-secondary flex-fill" @click="fecharRoomModal()">Cancelar</button>
                 <button type="button" class="cg-btn btn btn-success flex-fill" :disabled="salvandoRoom" @click="salvarRoom()">Salvar</button>
@@ -2291,7 +2291,7 @@
               </div>
               <div class="d-flex gap-2">
                 <template x-if="categoriaForm.id">
-                  <button type="button" class="btn btn-outline-danger" @click="excluirSubcategoria()" title="Excluir"><i class="bi bi-trash"></i></button>
+                  <button type="button" class="btn btn-outline-danger cg-btn-icone" @click="excluirSubcategoria()" title="Excluir"><i class="bi bi-trash"></i></button>
                 </template>
                 <button type="button" class="cg-btn btn btn-outline-secondary flex-fill" @click="fecharCategoriaModal()">Cancelar</button>
                 <button type="button" class="cg-btn btn btn-success flex-fill" :disabled="salvandoCategoria" @click="salvarSubcategoria()">Salvar</button>
@@ -2431,7 +2431,7 @@
                         </div>
                       </div>
                     </div>
-                    <button type="button" class="btn btn-sm btn-outline-secondary flex-shrink-0" @click.stop="$store.caixinhaModal.openEdit(c)" aria-label="Editar caixinha"><i class="bi bi-pencil"></i></button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary flex-shrink-0 cg-btn-icone" @click.stop="$store.caixinhaModal.openEdit(c)" aria-label="Editar caixinha"><i class="bi bi-pencil"></i></button>
                   </div>
                 </template>
                 <!-- Equivalente ao tile tracejado "Nova caixinha" da grade —
@@ -2527,7 +2527,7 @@
                         <div class="cg-muted small text-truncate" x-text="cgFormat.formatDate(mov.data) + (mov.observacoes ? ' · ' + mov.observacoes : '')"></div>
                       </div>
                       <div class="fw-semibold flex-shrink-0" :class="mov.tipo === 'guardado' ? 'text-success' : 'text-danger'" x-text="(mov.tipo === 'guardado' ? '+ ' : '- ') + formatMoeda(mov.valor, caixinhaAtiva.moeda)"></div>
-                      <button type="button" class="btn btn-sm btn-link text-danger p-0" @click="removerMovimentacao(mov)" title="Remover"><i class="bi bi-x-circle"></i></button>
+                      <button type="button" class="btn btn-sm btn-link text-danger p-0 cg-btn-icone" @click="removerMovimentacao(mov)" title="Remover"><i class="bi bi-x-circle"></i></button>
                     </div>
                   </template>
                 </div>
@@ -2578,7 +2578,7 @@
           <!-- Primeiros socorros (2026-10-05): menu de 3 caminhos em vez de tudo
                empilhado. Ligar 192 fica sempre à mão, em qualquer tela daqui. -->
           <div class="cg-socorros-topo">
-            <button type="button" class="btn btn-outline-secondary cg-socorros-voltar" x-show="secao !== 'menu'" @click="voltar()" aria-label="Voltar">
+            <button type="button" class="btn btn-outline-secondary cg-socorros-voltar cg-btn-icone" x-show="secao !== 'menu'" @click="voltar()" aria-label="Voltar">
               <i class="bi bi-arrow-left" aria-hidden="true"></i>
             </button>
             <h2 class="h5 fw-bold mb-0 flex-fill" id="cg-socorros-titulo" x-text="tituloAtual"></h2>
@@ -2853,15 +2853,15 @@
                 <div class="d-flex align-items-center gap-2 mb-1">
                   <h2 class="h6 fw-bold mb-0" x-text="$store.app.group.group.nome"></h2>
                   <template x-if="souAdmin()">
-                    <button type="button" class="btn btn-sm btn-link p-0" @click="iniciarEdicaoNome()" title="Renomear grupo" aria-label="Renomear grupo"><i class="bi bi-pencil"></i></button>
+                    <button type="button" class="btn btn-sm btn-link p-0 cg-btn-icone" @click="iniciarEdicaoNome()" title="Renomear grupo" aria-label="Renomear grupo"><i class="bi bi-pencil"></i></button>
                   </template>
                 </div>
               </template>
               <template x-if="editandoNome">
                 <div class="input-group input-group-sm mb-2" style="max-width: 320px;">
                   <input type="text" class="form-control" x-model="novoNome" @keydown.enter="salvarNome()" @keydown.escape="editandoNome = false" />
-                  <button type="button" class="btn btn-success" @click="salvarNome()" aria-label="Salvar nome"><i class="bi bi-check2"></i></button>
-                  <button type="button" class="btn btn-outline-secondary" @click="editandoNome = false" aria-label="Cancelar"><i class="bi bi-x"></i></button>
+                  <button type="button" class="btn btn-success cg-btn-icone" @click="salvarNome()" aria-label="Salvar nome"><i class="bi bi-check2"></i></button>
+                  <button type="button" class="btn btn-outline-secondary cg-btn-icone" @click="editandoNome = false" aria-label="Cancelar"><i class="bi bi-x"></i></button>
                 </div>
               </template>
               <p class="cg-muted small d-flex align-items-center gap-2 flex-wrap">
@@ -2926,8 +2926,8 @@
                       <template x-if="editandoId !== u.id">
                         <div class="d-flex align-items-center gap-2">
                           <span class="flex-fill fw-semibold" x-text="u.nome"></span>
-                          <button type="button" class="btn btn-outline-secondary" x-show="$store.app.podeGerirUnidades" @click="editar(u)" :aria-label="'Renomear ' + u.nome"><i class="bi bi-pencil" aria-hidden="true"></i></button>
-                          <button type="button" class="btn btn-link cg-acao-discreta" x-show="$store.app.podeGerirUnidades" @click="excluir(u)" :aria-label="'Excluir ' + u.nome"><i class="bi bi-trash3" aria-hidden="true"></i></button>
+                          <button type="button" class="btn btn-outline-secondary cg-btn-icone" x-show="$store.app.podeGerirUnidades" @click="editar(u)" :aria-label="'Renomear ' + u.nome"><i class="bi bi-pencil" aria-hidden="true"></i></button>
+                          <button type="button" class="btn btn-link cg-acao-discreta cg-btn-icone" x-show="$store.app.podeGerirUnidades" @click="excluir(u)" :aria-label="'Excluir ' + u.nome"><i class="bi bi-trash3" aria-hidden="true"></i></button>
                         </div>
                       </template>
                       <template x-if="editandoId === u.id">
@@ -3536,7 +3536,7 @@
                       <span x-show="$store.txModal.uploadingEmpresaLogo" class="spinner-border spinner-border-sm"></span>
                       <input type="file" accept="image/*" class="d-none" @click.stop @change="$store.txModal.onEmpresaLogoChange($event)" :disabled="$store.txModal.uploadingEmpresaLogo" />
                     </label>
-                    <button type="button" class="btn btn-outline-secondary" title="Logo por URL" :class="$store.txModal.empresaLogoModoUrl ? 'active' : ''" @click="$store.txModal.empresaLogoModoUrl = !$store.txModal.empresaLogoModoUrl"><i class="bi bi-link-45deg"></i></button>
+                    <button type="button" class="btn btn-outline-secondary cg-btn-icone" title="Logo por URL" :class="$store.txModal.empresaLogoModoUrl ? 'active' : ''" @click="$store.txModal.empresaLogoModoUrl = !$store.txModal.empresaLogoModoUrl"><i class="bi bi-link-45deg"></i></button>
                   </div>
                 </template>
               </div>
@@ -3580,7 +3580,7 @@
                 </select>
               </div>
               <div class="position-relative flex-shrink-0" x-show="($store.app.group?.members || []).length">
-                <button type="button" class="cg-btn-icon btn btn-outline-success" @click="open = !open" :disabled="!$store.txModal.candidatosPagador.length" title="Dividir com mais alguém"><i class="bi bi-plus-lg"></i></button>
+                <button type="button" class="cg-btn-icon btn btn-outline-success cg-btn-icone" @click="open = !open" :disabled="!$store.txModal.candidatosPagador.length" title="Dividir com mais alguém"><i class="bi bi-plus-lg"></i></button>
                 <div class="cg-card cg-pill-menu" style="position: absolute; top: 100%; right: 0; margin-top: 4px; z-index: 5;" x-show="open" x-cloak x-transition>
                   <template x-for="m in $store.txModal.candidatosPagador" :key="m.id">
                     <button type="button" class="cg-pill-option" @click="$store.txModal.adicionarPagador(m.id); open = false">
@@ -3600,7 +3600,7 @@
               <div class="d-flex align-items-center justify-content-between mb-2">
                 <label class="form-label mb-0">Dividindo entre <span x-text="$store.txModal.pagadores.length"></span> pessoas</label>
                 <div class="position-relative flex-shrink-0">
-                  <button type="button" class="cg-btn-icon btn btn-outline-success" style="width: 30px; height: 30px;" @click="open = !open" :disabled="!$store.txModal.candidatosPagador.length" title="Adicionar mais um pagador"><i class="bi bi-plus-lg"></i></button>
+                  <button type="button" class="cg-btn-icon btn btn-outline-success cg-btn-icone" style="width: 30px; height: 30px;" @click="open = !open" :disabled="!$store.txModal.candidatosPagador.length" title="Adicionar mais um pagador"><i class="bi bi-plus-lg"></i></button>
                   <div class="cg-card cg-pill-menu" style="position: absolute; top: 100%; right: 0; margin-top: 4px; z-index: 5;" x-show="open" x-cloak x-transition>
                     <template x-for="m in $store.txModal.candidatosPagador" :key="m.id">
                       <button type="button" class="cg-pill-option" @click="$store.txModal.adicionarPagador(m.id); open = false">
@@ -3630,7 +3630,7 @@
                       <span class="input-group-text">R$</span>
                       <input type="number" min="0" step="0.01" class="form-control" :value="p.valor" @change="$store.txModal.onValorPagadorChange(p.profile_id, $event.target.value)" />
                     </div>
-                    <button type="button" class="btn btn-sm btn-link text-danger p-0" @click="$store.txModal.removerPagador(p.profile_id)" title="Remover pagador"><i class="bi bi-x-circle"></i></button>
+                    <button type="button" class="btn btn-sm btn-link text-danger p-0 cg-btn-icone" @click="$store.txModal.removerPagador(p.profile_id)" title="Remover pagador"><i class="bi bi-x-circle"></i></button>
                   </div>
                 </template>
                 <p class="small mb-0" :class="$store.txModal.divisaoValida ? 'cg-muted' : 'text-danger fw-semibold'">
@@ -3794,11 +3794,11 @@
                 <span x-show="$store.txModal.lendoComprovante" class="spinner-border spinner-border-sm"></span>
                 <input type="file" accept="application/pdf" class="d-none" @change="$store.txModal.onComprovantePdfChange($event)" :disabled="$store.txModal.lendoComprovante" />
               </label>
-              <button type="button" class="cg-btn-icon btn btn-outline-secondary flex-shrink-0" @click="$store.txModal.abrirScannerComprovante()" title="Ler código de barras do boleto ou QR do Pix/nota fiscal" aria-label="Escanear código de barras ou QR">
+              <button type="button" class="cg-btn-icon btn btn-outline-secondary flex-shrink-0 cg-btn-icone" @click="$store.txModal.abrirScannerComprovante()" title="Ler código de barras do boleto ou QR do Pix/nota fiscal" aria-label="Escanear código de barras ou QR">
                 <i class="bi bi-upc-scan"></i>
               </button>
               <a :href="$store.txModal.comprovantePreviewUrl" target="_blank" rel="noopener" class="small text-truncate" x-show="$store.txModal.comprovantePreviewUrl">Ver anexo</a>
-              <button type="button" class="btn btn-sm btn-outline-danger flex-shrink-0" @click="$store.txModal.removerComprovante()" x-show="$store.txModal.form.comprovante_url" aria-label="Remover comprovante">
+              <button type="button" class="btn btn-sm btn-outline-danger flex-shrink-0 cg-btn-icone" @click="$store.txModal.removerComprovante()" x-show="$store.txModal.form.comprovante_url" aria-label="Remover comprovante">
                 <i class="bi bi-trash"></i>
               </button>
             </div>
@@ -3819,7 +3819,7 @@
 
         <div class="d-flex gap-2 mt-2">
           <template x-if="$store.txModal.form.id">
-            <button type="button" class="cg-btn btn btn-outline-danger" @click="$store.txModal.remove()" aria-label="Excluir lançamento"><i class="bi bi-trash"></i></button>
+            <button type="button" class="cg-btn btn btn-outline-danger cg-btn-icone" @click="$store.txModal.remove()" aria-label="Excluir lançamento"><i class="bi bi-trash"></i></button>
           </template>
           <button type="button" class="cg-btn btn btn-outline-secondary flex-fill" @click="$store.txModal.close()">Cancelar</button>
           <button type="submit" class="cg-btn btn btn-success flex-fill" data-tour-alvo="campo-salvar" :disabled="$store.txModal.saving">
@@ -3859,8 +3859,8 @@
               <template x-if="!c.icone_url"><i :class="'bi ' + (c.icone || 'bi-tag')"></i></template>
             </span>
             <span class="flex-fill text-truncate" x-text="c.nome"></span>
-            <button type="button" class="btn btn-sm btn-outline-secondary" @click="$store.categoryModal.editCategory(c)" :aria-label="'Editar ' + c.nome"><i class="bi bi-pencil"></i></button>
-            <button type="button" class="btn btn-sm btn-outline-danger" @click="$store.categoryModal.excluir(c)" :aria-label="'Excluir ' + c.nome"><i class="bi bi-trash"></i></button>
+            <button type="button" class="btn btn-sm btn-outline-secondary cg-btn-icone" @click="$store.categoryModal.editCategory(c)" :aria-label="'Editar ' + c.nome"><i class="bi bi-pencil"></i></button>
+            <button type="button" class="btn btn-sm btn-outline-danger cg-btn-icone" @click="$store.categoryModal.excluir(c)" :aria-label="'Excluir ' + c.nome"><i class="bi bi-trash"></i></button>
           </div>
         </template>
         <p class="cg-muted small mb-0" x-show="!$store.app.categories.length">Nenhuma categoria ainda.</p>
@@ -3889,7 +3889,7 @@
       <template x-if="$store.categoryModal.modoIcone === 'preset'">
         <div class="d-flex flex-wrap gap-1 mb-2">
           <template x-for="ic in $store.categoryModal.iconePresets" :key="ic">
-            <button type="button" class="btn btn-sm p-0" style="width:34px;height:34px;" :class="$store.categoryModal.icone === ic ? 'btn-success' : 'btn-outline-secondary'" @click="$store.categoryModal.icone = ic" :aria-label="'Usar ícone ' + ic">
+            <button type="button" class="btn btn-sm p-0 cg-btn-icone" style="width:34px;height:34px;" :class="$store.categoryModal.icone === ic ? 'btn-success' : 'btn-outline-secondary'" @click="$store.categoryModal.icone = ic" :aria-label="'Usar ícone ' + ic">
               <i :class="'bi ' + ic"></i>
             </button>
           </template>
@@ -3938,8 +3938,8 @@
               <i class="bi bi-buildings" x-show="!company.logo_url"></i>
             </span>
             <span class="flex-fill text-truncate fw-semibold" x-text="company.nome"></span>
-            <button type="button" class="btn btn-sm btn-outline-secondary" @click="$store.companyModal.edit(company)" :aria-label="'Editar ' + company.nome"><i class="bi bi-pencil"></i></button>
-            <button type="button" class="btn btn-sm btn-outline-danger" @click="$store.companyModal.remove(company)" :aria-label="'Excluir ' + company.nome"><i class="bi bi-trash"></i></button>
+            <button type="button" class="btn btn-sm btn-outline-secondary cg-btn-icone" @click="$store.companyModal.edit(company)" :aria-label="'Editar ' + company.nome"><i class="bi bi-pencil"></i></button>
+            <button type="button" class="btn btn-sm btn-outline-danger cg-btn-icone" @click="$store.companyModal.remove(company)" :aria-label="'Excluir ' + company.nome"><i class="bi bi-trash"></i></button>
           </div>
         </template>
         <p class="cg-muted small mb-0" x-show="!$store.app.companies.length">Nenhuma empresa cadastrada ainda.</p>
@@ -4023,7 +4023,7 @@
       </div>
       <div class="d-flex gap-2">
         <template x-if="$store.caixinhaModal.editingId">
-          <button type="button" class="btn btn-outline-danger" @click="$store.caixinhaModal.excluir()" title="Excluir"><i class="bi bi-trash"></i></button>
+          <button type="button" class="btn btn-outline-danger cg-btn-icone" @click="$store.caixinhaModal.excluir()" title="Excluir"><i class="bi bi-trash"></i></button>
         </template>
         <button type="button" class="cg-btn btn btn-outline-secondary flex-fill" @click="$store.caixinhaModal.close()">Cancelar</button>
         <button type="button" class="cg-btn btn btn-success flex-fill" data-tour-alvo="campo-criar-caixinha" :disabled="$store.caixinhaModal.saving || !$store.caixinhaModal.bancoId || $store.caixinhaModal.bancoId === '__novo__'" @click="$store.caixinhaModal.salvar()">
@@ -4055,8 +4055,8 @@
               <template x-if="!b.logo_url"><i class="bi bi-bank2"></i></template>
             </span>
             <span class="flex-fill text-truncate fw-semibold" x-text="b.nome"></span>
-            <button type="button" class="btn btn-sm btn-outline-secondary" @click="$store.bankModal.edit(b)" :aria-label="'Editar ' + b.nome"><i class="bi bi-pencil"></i></button>
-            <button type="button" class="btn btn-sm btn-outline-danger" @click="$store.bankModal.excluir(b)" :aria-label="'Excluir ' + b.nome"><i class="bi bi-trash"></i></button>
+            <button type="button" class="btn btn-sm btn-outline-secondary cg-btn-icone" @click="$store.bankModal.edit(b)" :aria-label="'Editar ' + b.nome"><i class="bi bi-pencil"></i></button>
+            <button type="button" class="btn btn-sm btn-outline-danger cg-btn-icone" @click="$store.bankModal.excluir(b)" :aria-label="'Excluir ' + b.nome"><i class="bi bi-trash"></i></button>
           </div>
         </template>
         <p class="cg-muted small mb-0" x-show="!$store.bankModal.items.length">Nenhum banco cadastrado ainda.</p>
@@ -4123,8 +4123,8 @@
             </span>
             <span class="flex-fill text-truncate fw-semibold" x-text="c.nome"></span>
             <span class="cg-muted small text-truncate" x-text="$store.app.bankById(c.banco_id)?.nome || ''"></span>
-            <button type="button" class="btn btn-sm btn-outline-secondary" @click="$store.cartaoModal.edit(c)" :aria-label="'Editar ' + c.nome"><i class="bi bi-pencil"></i></button>
-            <button type="button" class="btn btn-sm btn-outline-danger" @click="$store.cartaoModal.excluir(c)" :aria-label="'Excluir ' + c.nome"><i class="bi bi-trash"></i></button>
+            <button type="button" class="btn btn-sm btn-outline-secondary cg-btn-icone" @click="$store.cartaoModal.edit(c)" :aria-label="'Editar ' + c.nome"><i class="bi bi-pencil"></i></button>
+            <button type="button" class="btn btn-sm btn-outline-danger cg-btn-icone" @click="$store.cartaoModal.excluir(c)" :aria-label="'Excluir ' + c.nome"><i class="bi bi-trash"></i></button>
           </div>
         </template>
         <p class="cg-muted small mb-0" x-show="!$store.cartaoModal.items.length">Nenhum cartão cadastrado ainda.</p>

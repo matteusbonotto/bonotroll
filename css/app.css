@@ -2286,3 +2286,42 @@ section[x-data^="dashboardView"] .cg-quick-actions .cg-btn i { font-size: 1.25re
   .cg-topbar .cg-unidade-seletor { max-width: 130px; font-size: var(--font-size-body-sm); }
   .cg-topbar__titulo { font-size: var(--font-size-title-sm); }
 }
+
+/* ── Alinhamento de ícone e texto (causa raiz, 2026-10-05) ────────────────
+   O Bootstrap Icons desce o desenho 0,125em (vertical-align no ::before),
+   pensando em ícone no meio de texto corrido. Dentro de botões, chips e
+   menus isso deixava o ícone mais baixo que o texto. Com o ícone como caixa
+   flexível centralizada, o deslocamento deixa de valer em qualquer lugar. */
+.bi {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+/* Todo botão centraliza o conteúdo nas duas direções. */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .45em;
+  line-height: 1.2;
+}
+.btn.text-start { justify-content: flex-start; }
+.btn.w-100 { display: flex; }
+
+/* Botão só com ícone: círculo (ou quadrado) perfeito — nunca oval. */
+.btn.cg-btn-icone {
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  gap: 0;
+}
+.cg-table .btn.cg-btn-icone { width: 32px; height: 32px; min-width: 32px; min-height: 32px; }
+
+/* Ajuda no topo: mesmo formato do sininho. */
+.cg-topbar .cg-topbar-ajuda { width: 44px; height: 44px; border-radius: 50%; color: inherit; }
+.cg-topbar .cg-topbar-ajuda:hover, .cg-topbar .cg-topbar-ajuda[aria-expanded="true"] { background: var(--color-surface-alt) !important; }
