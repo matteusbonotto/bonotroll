@@ -45,10 +45,39 @@ export async function estadoPush() {
   return (await inscricaoNoServidor(sub.endpoint).catch(() => false)) ? 'ativo' : 'so-no-aparelho';
 }
 
+// Promessa com prazo: em alguns aparelhos o navegador nunca responde (e a
+// tela ficava presa em "Ativando…"). Vira um erro com estado conhecido.
+function comPrazo(promessa, ms, codigo) {
+  return Promise.race([
+    promessa,
+    new Promise((_, rej) => setTimeout(() => rej(Object.assign(new Error(codigo), { codigoPalm: codigo })), ms)),
+  ]);
+}
+
+async function registroDoApp() {
+  return comPrazo(navigator.serviceWorker.ready, 10000, 'sw-nao-pronto');
+}
+
 export async function getExistingSubscription() {
   if (!isPushSupported()) return null;
-  const reg = await navigator.serviceWorker.ready;
+  const reg = await registroDoApp();
   return reg.pushManager.getSubscription();
+}
+
+// Erro técnico (geralmente em inglês, vindo do navegador ou do banco) ->
+// frase curta em português. O texto original vai só em "Detalhes técnicos".
+export function explicarErroPush(e) {
+  const nome = e?.name || '';
+  const msg = String(e?.message || e || '');
+  const tecnico = [nome, msg, e?.code].filter(Boolean).join(' · ');
+  let mensagem = 'Não deu para ativar agora. Tente de novo em alguns minutos.';
+  if (e?.codigoPalm === 'sw-nao-pronto') mensagem = 'O app ainda está terminando de instalar. Feche o Palm, abra de novo e tente outra vez.';
+  else if (e?.codigoPalm === 'sem-resposta') mensagem = 'O celular não respondeu ao pedido. Verifique a internet, feche e abra o Palm e tente de novo.';
+  else if (/failed to fetch|network/i.test(msg)) mensagem = 'Sem conexão com a internet. Conecte e tente de novo.';
+  else if (nome === 'NotAllowedError') mensagem = 'O navegador não deixou ativar. Confira se as notificações do Palm estão permitidas nas configurações do celular.';
+  else if (nome === 'AbortError' || /push service/i.test(msg)) mensagem = 'O serviço de avisos do celular não respondeu. No Android, confira se o Google Play Services está atualizado e tente de novo.';
+  else if (e?.code === '42501' || /row-level security|permission denied/i.test(msg)) mensagem = 'Sua sessão expirou. Saia e entre de novo na conta e tente outra vez.';
+  return { mensagem, tecnico };
 }
 
 // Pede permissão, inscreve no push do navegador e salva o endpoint/chaves
@@ -71,30 +100,47 @@ export async function subscribeToPush(profileId) {
     throw e;
   }
 
-  const reg = await navigator.serviceWorker.ready;
+  const reg = await registroDoApp();
+  const chave = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
+  const inscrever = () => comPrazo(reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: chave }), 20000, 'sem-resposta');
+
   let subscription = await reg.pushManager.getSubscription();
   if (!subscription) {
-    subscription = await reg.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
-    });
+    try {
+      subscription = await inscrever();
+    } catch (e) {
+      // Inscrição antiga presa com outra chave (InvalidStateError) ou falha
+      // passageira do serviço de push: limpa e tenta UMA vez de novo.
+      if (e.codigoPalm) throw e;
+      await (await reg.pushManager.getSubscription())?.unsubscribe().catch(() => {});
+      subscription = await inscrever();
+    }
   }
 
-  const json = subscription.toJSON();
-  const row = {
-    profile_id: profileId,
-    endpoint: json.endpoint,
-    p256dh: json.keys.p256dh,
-    auth: json.keys.auth,
-  };
-
-  if (isDemoMode()) {
-    const existentes = await mockDb.list('push_subscriptions', (s) => s.endpoint === row.endpoint);
-    if (!existentes.length) await mockDb.insert('push_subscriptions', row);
-  } else {
+  const salvar = async (sub) => {
+    const json = sub.toJSON();
+    const row = { profile_id: profileId, endpoint: json.endpoint, p256dh: json.keys.p256dh, auth: json.keys.auth };
+    if (isDemoMode()) {
+      const existentes = await mockDb.list('push_subscriptions', (s) => s.endpoint === row.endpoint);
+      if (!existentes.length) await mockDb.insert('push_subscriptions', row);
+      return;
+    }
     const supabase = await getSupabase();
     const { error } = await supabase.from('push_subscriptions').upsert(row, { onConflict: 'endpoint' });
     if (error) throw error;
+  };
+
+  try {
+    await salvar(subscription);
+  } catch (e) {
+    // Causa raiz real: no mesmo aparelho, outra pessoa da casa já tinha
+    // ativado com a conta dela. O endereço de push é do APARELHO, então o
+    // banco (RLS) recusava trocar o dono da linha. Gera um endereço novo
+    // para esta conta e salva de novo.
+    if (e?.code !== '42501' && !/row-level security/i.test(e?.message || '')) throw e;
+    await subscription.unsubscribe().catch(() => {});
+    subscription = await inscrever();
+    await salvar(subscription);
   }
 
   return subscription;

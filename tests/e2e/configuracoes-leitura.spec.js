@@ -1,0 +1,52 @@
+import { test, expect } from '@playwright/test';
+
+// Configurações → Leitura: A−/A+ em passos, com limites, e narração.
+test('A+ e A− mudam o texto um passo por toque, dentro dos limites, e lembram a escolha', async ({ page }) => {
+  await page.goto('/?demo=1');
+  await page.getByText('Entrar como', { exact: false }).first().click();
+  await page.locator('.cg-sidebar__item', { hasText: 'Configurações' }).first().click();
+
+  const valor = page.locator('.cg-texto-controle__valor');
+  const mais = page.getByRole('button', { name: 'Aumentar o texto' });
+  const menos = page.getByRole('button', { name: 'Diminuir o texto' });
+  await expect(valor).toHaveText('100%');
+
+  await mais.click();
+  await expect(valor).toHaveText('113%');
+  for (let i = 0; i < 6; i++) if (await mais.isEnabled()) await mais.click();
+  await expect(valor).toHaveText('150%');
+  await expect(mais).toBeDisabled();
+  expect(await page.evaluate(() => getComputedStyle(document.documentElement).fontSize)).toBe('24px');
+
+  await page.reload();
+  await expect.poll(() => page.evaluate(() => document.documentElement.style.fontSize)).toBe('150%');
+
+  await page.locator('.cg-sidebar__item', { hasText: 'Configurações' }).first().click();
+  for (let i = 0; i < 8; i++) if (await menos.isEnabled()) await menos.click();
+  await expect(valor).toHaveText('88%');
+  await expect(menos).toBeDisabled();
+  await page.getByRole('button', { name: 'Voltar ao normal' }).click();
+  await expect(valor).toHaveText('100%');
+});
+
+test('narração liga, fala o que é tocado e desliga', async ({ page }) => {
+  await page.addInitScript(() => {
+    window.__falas = [];
+    window.speechSynthesis.speak = (u) => window.__falas.push(u.text);
+  });
+  await page.goto('/?demo=1');
+  await page.getByText('Entrar como', { exact: false }).first().click();
+  await page.locator('.cg-sidebar__item', { hasText: 'Configurações' }).first().click();
+
+  const botao = page.getByRole('button', { name: 'Narração' });
+  await botao.click();
+  await expect(botao).toHaveText('Ligada');
+  await page.getByRole('button', { name: 'Aumentar o texto' }).click();
+  await expect.poll(() => page.evaluate(() => window.__falas.join(' | '))).toContain('Aumentar o texto');
+
+  await botao.click();
+  await expect(botao).toHaveText('Desligada');
+  const antes = await page.evaluate(() => window.__falas.length);
+  await page.getByRole('button', { name: 'Diminuir o texto' }).click();
+  expect(await page.evaluate(() => window.__falas.length)).toBe(antes);
+});

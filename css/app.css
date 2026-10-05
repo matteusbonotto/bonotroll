@@ -1696,3 +1696,52 @@ img.cg-company-logo { display: block; }
     min-width: 44px;
   }
 }
+
+/* Configurações (Palm): grupos com título, controles à direita. */
+.cg-config__grupo {
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-body, 1rem);
+  font-weight: 800;
+  color: var(--color-text-muted);
+}
+
+.cg-config .cg-list-flat .btn {
+  min-height: 44px;
+  flex-shrink: 0;
+}
+
+.cg-texto-controle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.cg-texto-controle > .btn-outline-secondary {
+  min-width: 56px;
+  min-height: 48px;
+  font-weight: 800;
+  font-size: 1.05rem;
+}
+
+.cg-texto-controle > .cg-texto-controle__mais {
+  font-size: 1.35rem;
+}
+
+.cg-texto-controle__valor {
+  min-width: 4ch;
+  text-align: center;
+  font-weight: 800;
+}
+
+.cg-push-detalhes summary {
+  cursor: pointer;
+  color: var(--color-text-muted);
+}
+
+.cg-push-detalhes code {
+  display: block;
+  margin-top: 4px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}

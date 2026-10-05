@@ -11,7 +11,7 @@ import { test, expect } from '@playwright/test';
 test('Perfil → Bancos gerencia só nome/logo; caixinha (meta/moeda/responsável) só na tela de Caixinhas', async ({ page }) => {
   await page.goto('/?demo=1');
   await page.getByText('Entrar como', { exact: false }).first().click();
-  await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Perfil' }).first().click();
+  await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Configurações' }).first().click();
   await page.waitForTimeout(300);
 
   await page.locator('.cg-list-flat', { has: page.getByRole('heading', { name: 'Bancos' }) }).click();
@@ -19,7 +19,7 @@ test('Perfil → Bancos gerencia só nome/logo; caixinha (meta/moeda/responsáve
   const bankList = page.locator('.cg-modal-backdrop', { has: page.getByRole('heading', { name: 'Bancos', exact: true }) });
   await expect(bankList).toBeVisible();
   // Continua em Perfil — não navegou pra tela de Caixinhas.
-  await expect(page.locator('.cg-sidebar__item.is-active').first()).toHaveText(/Perfil/);
+  await expect(page.locator('.cg-sidebar__item.is-active').first()).toHaveText(/Configurações/);
   // Lista só tem nome+logo — nada de meta/moeda/responsável aqui.
   await expect(bankList.getByText('Meta')).toHaveCount(0);
   await expect(bankList.getByText('Responsável')).toHaveCount(0);

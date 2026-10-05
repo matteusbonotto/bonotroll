@@ -12,7 +12,7 @@ test('login demo + navega pelas telas sem erro de console', async ({ page }) => 
   await page.getByText('Entrar como', { exact: false }).first().click();
   await expect(page.locator('.cg-hero-balance, [class*="hero-balance"]').first()).toBeVisible({ timeout: 10000 });
 
-  const destinos = ['Movimentações', 'Lista de compras', 'Inventário', 'Reservas', 'Membros', 'Saúde', 'Perfil'];
+  const destinos = ['Movimentações', 'Lista de compras', 'Inventário', 'Reservas', 'Membros', 'Saúde', 'Configurações'];
   for (const destino of destinos) {
     const link = page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: destino }).first();
     if (await link.count()) {

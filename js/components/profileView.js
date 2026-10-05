@@ -1,6 +1,6 @@
 import { updateProfile, uploadAvatar } from '../services/auth.js';
 import { mockDb } from '../data/mockDb.js';
-import { isPushSupported, estadoPush, subscribeToPush, unsubscribeFromPush } from '../services/push.js';
+import { isPushSupported, estadoPush, subscribeToPush, unsubscribeFromPush, explicarErroPush } from '../services/push.js';
 import { resizeImage } from '../utils/image.js';
 import { exportarMeusDados, baixarComoJson } from '../services/dataExport.js';
 
@@ -13,6 +13,7 @@ export function profileView() {
     pushSuportado: isPushSupported(),
     pushEstado: 'verificando',
     pushErro: '',
+    pushErroTecnico: '',
     pushCarregando: false,
     exportando: false,
 
@@ -20,29 +21,43 @@ export function profileView() {
       this.nome = this.$store.app.profile?.nome || '';
       this.cor = this.$store.app.profile?.cor || '#0E9F6E';
       await this.verificarPush();
+      // A tela monta antes do login: confere de novo quando a conta chegar.
+      this.$watch('$store.app.profile?.id', () => this.verificarPush());
     },
 
     // Estado real (ver services/push.js::estadoPush) — a tela nunca finge.
     async verificarPush() {
       this.pushErro = '';
+      this.pushErroTecnico = '';
+      if (!this.$store.app.profile?.id) return; // ainda sem conta: não dá para conferir o servidor
       try {
         this.pushEstado = await estadoPush();
       } catch {
         this.pushEstado = 'nao-pedido';
       }
+      // Permitido no aparelho mas sem registro no servidor (ex.: trocou de
+      // conta, ou a ativação caiu no meio): conclui sozinho, sem novo pedido.
+      if (this.pushEstado === 'so-no-aparelho' && !this.pushCarregando) await this.ativarPush(true);
     },
 
-    async ativarPush() {
+    async ativarPush(silencioso = false) {
       const store = this.$store.app;
       this.pushCarregando = true;
       this.pushErro = '';
+      this.pushErroTecnico = '';
       try {
         await subscribeToPush(store.profile.id);
-        await this.verificarPush();
-        if (this.pushEstado === 'ativo') store.notify('Notificações ativadas neste aparelho.');
+        this.pushEstado = await estadoPush();
+        if (this.pushEstado === 'ativo' && !silencioso) store.notify('Notificações ativadas neste aparelho.');
       } catch (e) {
-        if (e.estado) this.pushEstado = e.estado;
-        this.pushErro = e.estado === 'bloqueado' ? '' : (e.message || 'Não foi possível ativar agora. Tente de novo.');
+        if (e.estado) {
+          this.pushEstado = e.estado;
+          if (e.estado === 'nao-pedido') this.pushErro = e.message;
+        } else if (!silencioso) {
+          const { mensagem, tecnico } = explicarErroPush(e);
+          this.pushErro = mensagem;
+          this.pushErroTecnico = tecnico;
+        }
       } finally {
         this.pushCarregando = false;
       }

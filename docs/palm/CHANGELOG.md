@@ -1,5 +1,12 @@
 # CHANGELOG — Palm Business
 
+## Configurações, leitura, push e tour — checkpoint/configuracoes
+- **Configurações** (antes "Perfil"): grupos curtos com título — Você · Leitura e aparência · Avisos · Ajuda · Cadastros · Seus dados — e descrições de uma linha.
+- **Tamanho do texto A− / A+:** cada toque muda um passo (87,5% → 150%), com o valor mostrado, botões desativados nos limites e "Voltar ao normal". Fica salvo no aparelho (escolhas antigas Grande/Muito grande são convertidas).
+- **Narração:** liga/desliga; o celular lê em voz alta o botão, campo ou texto tocado (voz do próprio aparelho, nada sai dele).
+- **Push — causas raiz corrigidas:** (1) no mesmo celular, se outra pessoa da casa já tivesse ativado, o banco recusava trocar o dono da inscrição e a ativação falhava — agora gera um endereço novo para a conta atual; (2) o pedido podia nunca responder e a tela ficava presa em "Ativando…" — agora há prazo e mensagem; (3) inscrição antiga presa com outra chave é limpa e refeita; (4) erros técnicos em inglês viraram frases em português, com o texto original só em "Detalhes técnicos"; (5) permitido no aparelho mas sem registro no servidor conclui sozinho ao abrir o app.
+- **Tour (7 passos)** atualizado para a navegação nova: O que precisa de você → saldo → Adicionar → as quatro áreas → Ajuda/Configurações → conclusão.
+
 ## Fase 5 (mobile-first, parte 2) — checkpoint/mobile
 - **Movimentações no celular:** cada lançamento virou **uma linha legível** (quem, nome, categoria · empresa, situação com data em palavras, valor) em vez de um mini-formulário com 2 campos de data, 2 seletores e 3 botões. Tocar abre o formulário completo (onde tudo continua editável); a única ação direta é **"Marcar como pago/recebido"** / "Desfazer", com 44 px.
 - Alvos de toque menores que 44 px na tela (375 px): **~293 → 0**. Barras de ferramenta (visualização, densidade, atalhos) com 44 px no celular/tablet.

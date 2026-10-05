@@ -13,6 +13,8 @@
   var salvo = localStorage.getItem('bonotto_theme');
   if (salvo === 'dark' || salvo === 'light') document.documentElement.setAttribute('data-bs-theme', salvo);
   // Tamanho do texto (Perfil → Preferências, 2026-10-04): escala o rem do app inteiro.
-  var escala = { grande: '112.5%', 'muito-grande': '125%' }[localStorage.getItem('bonotto_tamanho_texto')];
-  if (escala) document.documentElement.style.fontSize = escala;
+  // Valor em % (87,5 a 150) desde a versão A−/A+; nomes antigos ainda valem.
+  var bruto = localStorage.getItem('bonotto_tamanho_texto');
+  var escala = { grande: 112.5, 'muito-grande': 125 }[bruto] || Number(bruto);
+  if (escala >= 87.5 && escala <= 150 && escala !== 100) document.documentElement.style.fontSize = escala + '%';
 })();

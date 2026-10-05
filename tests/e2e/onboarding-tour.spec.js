@@ -73,7 +73,7 @@ test.describe('primeira visita (storageState vazio)', () => {
   // Tour novo (revisão com personas, 2026-10-04): 6 passos que só mostram
   // onde fica cada coisa — todos puláveis, nenhum cria dado de verdade.
   for (const viewport of [{ width: 1280, height: 800 }, { width: 375, height: 812 }]) {
-    test(`tour de 6 passos (${viewport.width}px): cada passo destaca um elemento visível, "Próximo" até o fim, sem criar lançamento`, async ({ page }) => {
+    test(`tour de 7 passos (${viewport.width}px): cada passo destaca um elemento visível, "Próximo" até o fim, sem criar lançamento`, async ({ page }) => {
       await page.setViewportSize(viewport);
       await page.goto('/?demo=1');
       await page.getByText('Entrar como', { exact: false }).first().click();
@@ -82,7 +82,7 @@ test.describe('primeira visita (storageState vazio)', () => {
 
       await backdrop.getByRole('button', { name: 'Próximo' }).click();
       const balao = page.locator('.cg-tour-balloon');
-      for (const titulo of ['Seu saldo', 'Anotar um gasto', 'Todas as telas', 'Ficou com dúvida?']) {
+      for (const titulo of ['O que precisa de você', 'Seu saldo', 'Adicionar qualquer coisa', 'As quatro áreas', 'Ficou com dúvida?']) {
         await expect(balao.getByText(titulo)).toBeVisible();
         const alvo = await page.evaluate(() => {
           const p = Alpine.store('onboarding').passo;
@@ -138,7 +138,7 @@ test.describe('Central de tutoriais', () => {
     await central.locator('.btn-close').click();
     await expect(central).toBeHidden();
 
-    await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Perfil' }).first().click();
+    await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Configurações' }).first().click();
     await page.locator('.cg-list-flat', { hasText: 'Central de tutoriais' }).click();
     await expect(central).toBeVisible();
 

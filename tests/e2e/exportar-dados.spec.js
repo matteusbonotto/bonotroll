@@ -6,7 +6,7 @@ import fs from 'node:fs';
 test('Perfil → Exportar meus dados baixa um JSON com transações/categorias/caixinhas', async ({ page }) => {
   await page.goto('/?demo=1');
   await page.getByText('Entrar como', { exact: false }).first().click();
-  await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Perfil' }).first().click();
+  await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Configurações' }).first().click();
   await page.waitForTimeout(400);
 
   const downloadPromise = page.waitForEvent('download');

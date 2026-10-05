@@ -10,6 +10,8 @@ import { findCartaoByName } from '../services/cartoes.js';
 import * as notificationsService from '../services/notifications.js';
 import { gerarRecorrentesPendentes } from '../services/recurring.js';
 import { isDemoMode } from '../data/config.js';
+import { normalizarEscala, proximaEscala, podeAumentar, podeDiminuir, PADRAO } from '../utils/tamanhoTexto.js';
+import { ligarNarracao, vozDisponivel, falar } from '../utils/narracao.js';
 
 // Store global (Alpine.store('app')) — sessão, perfil, grupo, categorias e
 // navegação. Registrado em app.js.
@@ -58,6 +60,7 @@ export function appStore() {
     theme: document.documentElement.getAttribute('data-bs-theme') || null,
 
     async init() {
+      ligarNarracao(this.narracao);
       window.addEventListener('online', () => { this.online = true; });
       window.addEventListener('offline', () => { this.online = false; });
       // Cobre voltar/avançar do navegador e edição manual da URL — o clique
@@ -303,16 +306,35 @@ export function appStore() {
     },
 
     // theme: 'dark' | 'light' | null (null = volta a seguir o sistema).
-    // Tamanho do texto (acessibilidade, 2026-10-04): normal | grande | muito-grande.
-    tamanhoTexto: (() => { try { return localStorage.getItem('bonotto_tamanho_texto') || 'normal'; } catch { return 'normal'; } })(),
-    setTamanhoTexto(tamanho) {
-      this.tamanhoTexto = tamanho;
-      const escala = { grande: '112.5%', 'muito-grande': '125%' }[tamanho] || '';
-      document.documentElement.style.fontSize = escala;
+    // Tamanho do texto (Configurações): A− / A+ em passos de 12,5%, de 87,5%
+    // a 150% (ver utils/tamanhoTexto.js). Guardado como número (%).
+    tamanhoTexto: (() => { try { return normalizarEscala(localStorage.getItem('bonotto_tamanho_texto') ?? PADRAO); } catch { return PADRAO; } })(),
+    setTamanhoTexto(valor) {
+      const escala = normalizarEscala(valor);
+      this.tamanhoTexto = escala;
+      document.documentElement.style.fontSize = escala === PADRAO ? '' : escala + '%';
       try {
-        if (tamanho === 'normal') localStorage.removeItem('bonotto_tamanho_texto');
-        else localStorage.setItem('bonotto_tamanho_texto', tamanho);
+        if (escala === PADRAO) localStorage.removeItem('bonotto_tamanho_texto');
+        else localStorage.setItem('bonotto_tamanho_texto', String(escala));
       } catch { /* sem armazenamento: vale só nesta sessão */ }
+    },
+    mudarTamanhoTexto(direcao) {
+      this.setTamanhoTexto(proximaEscala(this.tamanhoTexto, direcao));
+    },
+    get podeAumentarTexto() { return podeAumentar(this.tamanhoTexto); },
+    get podeDiminuirTexto() { return podeDiminuir(this.tamanhoTexto); },
+
+    // Narração (Configurações): lê em voz alta o que for tocado (utils/narracao.js).
+    vozDisponivel: vozDisponivel(),
+    narracao: (() => { try { return localStorage.getItem('bonotto_narracao') === '1'; } catch { return false; } })(),
+    setNarracao(on) {
+      this.narracao = !!on;
+      ligarNarracao(this.narracao);
+      try {
+        if (on) localStorage.setItem('bonotto_narracao', '1');
+        else localStorage.removeItem('bonotto_narracao');
+      } catch { /* vale só nesta sessão */ }
+      if (on) falar('Narração ligada. Toque em qualquer botão ou texto para ouvir.');
     },
 
     applyTheme(theme) {
@@ -362,7 +384,7 @@ export function appStore() {
       return this.AREAS.find((a) => a.abas.some((t) => t.view === this.view)) || null;
     },
     get tituloTela() {
-      if (this.view === 'perfil') return 'Perfil';
+      if (this.view === 'perfil') return 'Configurações';
       const area = this.areaAtual;
       return area ? area.rotulo : 'Palm Business';
     },

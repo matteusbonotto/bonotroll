@@ -192,7 +192,7 @@
             </div>
           </template>
           <a href="#" class="cg-sidebar__item" :class="{ 'is-active': $store.app.view === 'perfil' }" :aria-current="$store.app.view === 'perfil' ? 'page' : null" @click.prevent="$store.app.setView('perfil')">
-            <i class="bi bi-person-circle" aria-hidden="true"></i> Perfil
+            <i class="bi bi-gear" aria-hidden="true"></i> Configurações
           </a>
         </nav>
         <div class="mt-auto pt-4">
@@ -2838,13 +2838,15 @@
         </section>
 
         <!-- ===== PERFIL ===== -->
-        <section x-show="$store.app.view === 'perfil'" x-data="profileView()" x-init="init()">
-          <div class="cg-section-title"><i class="bi bi-person-circle"></i> Perfil</div>
-          <div class="row g-3 align-items-start">
+        <section x-show="$store.app.view === 'perfil'" x-data="profileView()" x-init="init()" class="cg-config">
+          <!-- Configurações (Palm, 2026-10-04): grupos curtos com título; cada
+               linha tem ícone, nome e o controle à direita. Ordem = o que mais
+               se procura primeiro (ler melhor, avisos, ajuda, cadastros, dados). -->
+          <div class="row g-4 align-items-start">
             <div class="col-12 col-lg-5">
+              <h2 class="cg-config__grupo">Você</h2>
               <div class="cg-card">
-                <div class="cg-muted small fw-semibold text-uppercase mb-2">Identidade</div>
-                <label class="form-label">Foto e cor</label>
+                                <label class="form-label">Foto e cor</label>
                 <div class="d-flex align-items-center gap-3 mb-3">
                   <span class="cg-avatar" style="width:72px;height:72px;font-size:1.4rem;" :style="{ borderColor: cor, background: cor }">
                     <template x-if="$store.app.profile?.avatar_url"><img :src="$store.app.profile.avatar_url" :alt="$store.app.profile.nome" /></template>
@@ -2870,167 +2872,182 @@
             </div>
 
             <div class="col-12 col-lg-7">
-              <div class="cg-muted small fw-semibold text-uppercase mb-2">Preferências</div>
-              <!-- Um único .cg-card com linhas .cg-list-flat dentro (2026-08-20,
-                   DESIGN-SYSTEM-2027.md §7) — antes eram 6 .cg-card empilhados,
-                   cada um com a própria borda+sombra ("card dentro de card"). -->
-              <div class="cg-card p-0">
+              <h2 class="cg-config__grupo">Leitura e aparência</h2>
+              <div class="cg-card p-0 mb-4">
                 <div class="cg-list-flat px-3">
-                  <div class="cg-icon-badge"><i class="bi bi-type"></i></div>
+                  <div class="cg-icon-badge"><i class="bi bi-type" aria-hidden="true"></i></div>
                   <div class="flex-fill">
-                    <h2 class="h6 fw-bold mb-1" id="cg-tamanho-texto-titulo">Tamanho do texto</h2>
-                    <p class="cg-muted small mb-2">Deixe as letras maiores para ler com mais conforto.</p>
-                    <div class="d-flex gap-2 flex-wrap" role="group" aria-labelledby="cg-tamanho-texto-titulo">
-                      <template x-for="op in [{ id: 'normal', rotulo: 'Normal', tam: '1rem' }, { id: 'grande', rotulo: 'Grande', tam: '1.15rem' }, { id: 'muito-grande', rotulo: 'Muito grande', tam: '1.3rem' }]" :key="op.id">
-                        <button type="button" class="btn btn-outline-secondary" :class="$store.app.tamanhoTexto === op.id && 'active'" :aria-pressed="$store.app.tamanhoTexto === op.id"
-                          @click="$store.app.setTamanhoTexto(op.id)"><span :style="'font-size:' + op.tam" x-text="'A'"></span> <span x-text="op.rotulo"></span></button>
-                      </template>
+                    <h3 class="h6 fw-bold mb-1" id="cg-tamanho-texto-titulo">Tamanho do texto</h3>
+                    <p class="cg-muted small mb-2">Toque em A+ para aumentar e em A− para diminuir.</p>
+                    <div class="cg-texto-controle" role="group" aria-labelledby="cg-tamanho-texto-titulo">
+                      <button type="button" class="btn btn-outline-secondary" @click="$store.app.mudarTamanhoTexto(-1)" :disabled="!$store.app.podeDiminuirTexto" aria-label="Diminuir o texto">A<span aria-hidden="true">−</span></button>
+                      <output class="cg-texto-controle__valor" aria-live="polite" x-text="Math.round($store.app.tamanhoTexto) + '%'"></output>
+                      <button type="button" class="btn btn-outline-secondary cg-texto-controle__mais" @click="$store.app.mudarTamanhoTexto(1)" :disabled="!$store.app.podeAumentarTexto" aria-label="Aumentar o texto">A<span aria-hidden="true">+</span></button>
+                      <button type="button" class="btn btn-link" x-show="$store.app.tamanhoTexto !== 100" @click="$store.app.setTamanhoTexto(100)">Voltar ao normal</button>
                     </div>
                   </div>
                 </div>
 
                 <div class="cg-list-flat px-3">
-                  <div class="cg-icon-badge"><i class="bi" :class="$store.app.isDarkNow() ? 'bi-moon-stars' : 'bi-sun'"></i></div>
+                  <div class="cg-icon-badge"><i class="bi bi-volume-up" aria-hidden="true"></i></div>
                   <div class="flex-fill">
-                    <h2 class="h6 fw-bold mb-1">Modo escuro</h2>
-                    <p class="cg-muted small mb-0">Fundo escuro, mais confortável à noite.</p>
+                    <h3 class="h6 fw-bold mb-1">Narração</h3>
+                    <p class="cg-muted small mb-0" x-show="$store.app.vozDisponivel">O celular lê em voz alta o botão ou texto que você tocar.</p>
+                    <p class="cg-muted small mb-0" x-show="!$store.app.vozDisponivel">Este aparelho não tem voz disponível para ler o app.</p>
                   </div>
-                  <button type="button" class="btn btn-outline-secondary" @click="$store.app.toggleTheme()" :aria-pressed="$store.app.isDarkNow()"
-                    x-text="$store.app.isDarkNow() ? 'Ligado' : 'Desligado'" aria-label="Modo escuro"></button>
-                </div>
-
-                <div class="cg-list-flat cg-list-flat--hoverable px-3" role="button" @click="$store.onboarding.abrirCentral()">
-                  <div class="cg-icon-badge"><i class="bi bi-signpost-2"></i></div>
-                  <div class="flex-fill">
-                    <h2 class="h6 fw-bold mb-1">Central de tutoriais</h2>
-                    <p class="cg-muted small mb-0">Escolha o que quer aprender a fazer no app — um guia rápido pra cada ação, ou o tour de boas-vindas completo de novo.</p>
-                  </div>
-                  <i class="bi bi-chevron-right cg-muted"></i>
-                </div>
-
-                <div class="cg-list-flat cg-list-flat--hoverable px-3" role="button" @click="$store.faq.abrir()">
-                  <div class="cg-icon-badge"><i class="bi bi-question-circle"></i></div>
-                  <div class="flex-fill">
-                    <h2 class="h6 fw-bold mb-1">Perguntas frequentes</h2>
-                    <p class="cg-muted small mb-0">Dúvidas rápidas sobre dados compartilhados, cartão de crédito, Caixinhas e mais — sem precisar refazer o tutorial.</p>
-                  </div>
-                  <i class="bi bi-chevron-right cg-muted"></i>
-                </div>
-
-                <div class="cg-list-flat cg-list-flat--hoverable px-3" role="button" @click="$store.companyModal.openManage()">
-                  <div class="cg-icon-badge"><i class="bi bi-buildings"></i></div>
-                  <div class="flex-fill">
-                    <h2 class="h6 fw-bold mb-1">Empresas e servi&ccedil;os</h2>
-                    <p class="cg-muted small mb-0">Gerencie nomes e logos usados nos seus lan&ccedil;amentos.</p>
-                  </div>
-                  <i class="bi bi-chevron-right cg-muted"></i>
-                </div>
-
-                <div class="cg-list-flat cg-list-flat--hoverable px-3" role="button" @click="$store.categoryModal.openManage()">
-                  <div class="cg-icon-badge"><i class="bi bi-tags"></i></div>
-                  <div class="flex-fill">
-                    <h2 class="h6 fw-bold mb-1">Categorias</h2>
-                    <p class="cg-muted small mb-0">Crie, edite ou exclua as categorias usadas em lançamentos e na lista de compras.</p>
-                  </div>
-                  <i class="bi bi-chevron-right cg-muted"></i>
-                </div>
-
-                <div class="cg-list-flat cg-list-flat--hoverable px-3" role="button" @click="$store.bankModal.openManage()">
-                  <div class="cg-icon-badge"><i class="bi bi-bank2"></i></div>
-                  <div class="flex-fill">
-                    <h2 class="h6 fw-bold mb-1">Bancos</h2>
-                    <p class="cg-muted small mb-0">Nomes e logos dos bancos usados nas Caixinhas.</p>
-                  </div>
-                  <i class="bi bi-chevron-right cg-muted"></i>
-                </div>
-
-                <div class="cg-list-flat cg-list-flat--hoverable px-3" role="button" @click="$store.cartaoModal.openManage()">
-                  <div class="cg-icon-badge"><i class="bi bi-credit-card"></i></div>
-                  <div class="flex-fill">
-                    <h2 class="h6 fw-bold mb-1">Cartões de crédito</h2>
-                    <p class="cg-muted small mb-0">Cada cartão é de uma pessoa e fica vinculado a um banco — as compras caem na fatura do cartão certo.</p>
-                  </div>
-                  <i class="bi bi-chevron-right cg-muted"></i>
-                </div>
-
-                <div class="cg-list-flat cg-list-flat--hoverable px-3" role="button" @click="$store.budgetModal.openManage()">
-                  <div class="cg-icon-badge"><i class="bi bi-piggy-bank"></i></div>
-                  <div class="flex-fill">
-                    <h2 class="h6 fw-bold mb-1">Orçamentos</h2>
-                    <p class="cg-muted small mb-0">Defina um limite mensal por categoria e acompanhe no Início.</p>
-                  </div>
-                  <i class="bi bi-chevron-right cg-muted"></i>
-                </div>
-
-                <div class="cg-list-flat cg-list-flat--hoverable px-3" x-show="$store.app.installPrompt" x-cloak role="button" @click="$store.app.promptInstall()">
-                  <div class="cg-icon-badge"><i class="bi bi-download"></i></div>
-                  <div class="flex-fill">
-                    <h2 class="h6 fw-bold mb-1">Instalar app</h2>
-                    <p class="cg-muted small mb-0">Adiciona o BNTT na tela de início pra abrir como app, mais rápido e recebendo notificações.</p>
-                  </div>
-                  <i class="bi bi-chevron-right cg-muted"></i>
+                  <button type="button" class="btn" :class="$store.app.narracao ? 'btn-success' : 'btn-outline-secondary'" x-show="$store.app.vozDisponivel"
+                    @click="$store.app.setNarracao(!$store.app.narracao)" :aria-pressed="$store.app.narracao ? 'true' : 'false'" aria-label="Narração"
+                    x-text="$store.app.narracao ? 'Ligada' : 'Desligada'"></button>
                 </div>
 
                 <div class="cg-list-flat px-3">
-                  <div class="cg-icon-badge"><i class="bi bi-bell"></i></div>
+                  <div class="cg-icon-badge"><i class="bi" :class="$store.app.isDarkNow() ? 'bi-moon-stars' : 'bi-sun'" aria-hidden="true"></i></div>
                   <div class="flex-fill">
-                    <h2 class="h6 fw-bold mb-1">Notificações push</h2>
-                    <p class="cg-muted small mb-0">Avisos de despesa a vencer/vencida, item do Inventário acabando/vencendo e pagamento de um membro — mesmo com o app fechado.</p>
-                    <!-- Estado real, em palavras (fase 9) — sem switch que finge -->
+                    <h3 class="h6 fw-bold mb-1">Modo escuro</h3>
+                    <p class="cg-muted small mb-0">Fundo escuro, mais confortável à noite.</p>
+                  </div>
+                  <button type="button" class="btn" :class="$store.app.isDarkNow() ? 'btn-success' : 'btn-outline-secondary'" @click="$store.app.toggleTheme()" :aria-pressed="$store.app.isDarkNow()"
+                    x-text="$store.app.isDarkNow() ? 'Ligado' : 'Desligado'" aria-label="Modo escuro"></button>
+                </div>
+              </div>
+
+              <h2 class="cg-config__grupo">Avisos</h2>
+              <div class="cg-card p-0 mb-4">
+                <div class="cg-list-flat px-3 align-items-start">
+                  <div class="cg-icon-badge"><i class="bi bi-bell" aria-hidden="true"></i></div>
+                  <div class="flex-fill">
+                    <h3 class="h6 fw-bold mb-1">Notificações no celular</h3>
+                    <p class="cg-muted small mb-0">Contas vencendo, itens acabando e pagamentos da casa, mesmo com o app fechado.</p>
+                    <!-- Estado real, em palavras (fase 9) — nunca um switch que finge -->
                     <div class="cg-push-estado mt-2" role="status" aria-live="polite">
-                      <p class="mb-1 fw-semibold" x-show="pushEstado === 'verificando'">Verificando…</p>
+                      <p class="mb-1 cg-muted" x-show="pushEstado === 'verificando'">Verificando…</p>
                       <template x-if="pushEstado === 'ativo'">
-                        <div><p class="mb-2 fw-semibold text-success"><i class="bi bi-check-circle-fill" aria-hidden="true"></i> Ativas neste aparelho</p>
-                          <button type="button" class="btn btn-outline-secondary" :disabled="pushCarregando" @click="desativarPush()">Desativar</button></div>
+                        <div class="d-flex flex-wrap align-items-center gap-2"><span class="fw-semibold text-success"><i class="bi bi-check-circle-fill" aria-hidden="true"></i> Ligadas neste aparelho</span>
+                          <button type="button" class="btn btn-outline-secondary ms-auto" :disabled="pushCarregando" @click="desativarPush()">Desligar</button></div>
                       </template>
-                      <template x-if="pushEstado === 'nao-pedido'">
-                        <div><p class="mb-2"><i class="bi bi-bell-slash" aria-hidden="true"></i> Desativadas neste aparelho.</p>
-                          <button type="button" class="cg-btn btn btn-success" :disabled="pushCarregando" @click="ativarPush()"><span x-show="!pushCarregando">Ativar notificações</span><span x-show="pushCarregando">Ativando…</span></button></div>
-                      </template>
-                      <template x-if="pushEstado === 'so-no-aparelho'">
-                        <div><p class="mb-2"><i class="bi bi-exclamation-circle text-warning" aria-hidden="true"></i> Permitidas, mas ainda não ligadas à sua conta.</p>
-                          <button type="button" class="cg-btn btn btn-success" :disabled="pushCarregando" @click="ativarPush()">Concluir ativação</button></div>
+                      <template x-if="pushEstado === 'nao-pedido' || pushEstado === 'so-no-aparelho'">
+                        <button type="button" class="cg-btn btn btn-success" :disabled="pushCarregando" @click="ativarPush()"><span x-show="!pushCarregando"><i class="bi bi-bell" aria-hidden="true"></i> Ativar notificações</span><span x-show="pushCarregando">Ativando…</span></button>
                       </template>
                       <template x-if="pushEstado === 'bloqueado'">
-                        <div class="cg-push-ajuda"><p class="mb-1 fw-semibold"><i class="bi bi-slash-circle text-danger" aria-hidden="true"></i> As notificações estão bloqueadas pelo navegador.</p>
-                          <p class="small mb-1">Para liberar no celular (Chrome): toque no <strong>cadeado</strong> ao lado do endereço → <strong>Permissões</strong> → <strong>Notificações</strong> → <strong>Permitir</strong>. No app instalado: segure o ícone → <strong>Informações do app</strong> → <strong>Notificações</strong>.</p>
-                          <button type="button" class="btn btn-outline-secondary" @click="verificarPush()">Já liberei — verificar de novo</button></div>
+                        <div class="cg-push-ajuda"><p class="mb-1 fw-semibold"><i class="bi bi-slash-circle text-danger" aria-hidden="true"></i> Bloqueadas no navegador.</p>
+                          <ol class="small mb-2 ps-3">
+                            <li>Toque no <strong>cadeado</strong> ao lado do endereço (no app instalado: segure o ícone → <strong>Informações do app</strong>).</li>
+                            <li>Abra <strong>Notificações</strong> e escolha <strong>Permitir</strong>.</li>
+                          </ol>
+                          <button type="button" class="btn btn-outline-secondary" @click="verificarPush()">Já liberei — conferir</button></div>
                       </template>
                       <template x-if="pushEstado === 'precisa-instalar'">
-                        <p class="small mb-0"><i class="bi bi-phone" aria-hidden="true"></i> No iPhone, as notificações só funcionam com o app instalado: toque em <strong>Compartilhar</strong> → <strong>Adicionar à Tela de Início</strong> e abra o Palm por lá.</p>
+                        <p class="small mb-0"><i class="bi bi-phone" aria-hidden="true"></i> No iPhone, instale primeiro: <strong>Compartilhar</strong> → <strong>Adicionar à Tela de Início</strong>, e abra o Palm por lá.</p>
                       </template>
                       <template x-if="pushEstado === 'nao-suportado'">
                         <p class="small mb-0"><i class="bi bi-x-circle" aria-hidden="true"></i> Este navegador não recebe notificações. Use o Chrome no Android ou instale o app.</p>
                       </template>
-                      <p class="small text-danger mb-0 mt-1" x-show="pushErro" x-text="pushErro" role="alert"></p>
+                      <p class="small text-danger mb-0 mt-2" x-show="pushErro" x-text="pushErro" role="alert"></p>
+                      <details class="cg-push-detalhes small mt-1" x-show="pushErroTecnico">
+                        <summary>Detalhes técnicos (para o suporte)</summary>
+                        <code x-text="pushErroTecnico"></code>
+                      </details>
                     </div>
                   </div>
                 </div>
+                <div class="cg-list-flat cg-list-flat--hoverable px-3" x-show="$store.app.installPrompt" x-cloak role="button" @click="$store.app.promptInstall()">
+                  <div class="cg-icon-badge"><i class="bi bi-download"></i></div>
+                  <div class="flex-fill">
+                    <h3 class="h6 fw-bold mb-1">Instalar app</h3>
+                    <p class="cg-muted small mb-0">Abre como app e recebe notificações.</p>
+                  </div>
+                  <i class="bi bi-chevron-right cg-muted"></i>
+                </div>
+              </div>
 
+              <h2 class="cg-config__grupo">Ajuda</h2>
+              <div class="cg-card p-0 mb-4">
+                <div class="cg-list-flat cg-list-flat--hoverable px-3" role="button" @click="$store.onboarding.abrirCentral()">
+                  <div class="cg-icon-badge"><i class="bi bi-signpost-2"></i></div>
+                  <div class="flex-fill">
+                    <h3 class="h6 fw-bold mb-1">Central de tutoriais</h3>
+                    <p class="cg-muted small mb-0">Guias passo a passo e o tour de boas-vindas.</p>
+                  </div>
+                  <i class="bi bi-chevron-right cg-muted"></i>
+                </div>
+                <div class="cg-list-flat cg-list-flat--hoverable px-3" role="button" @click="$store.faq.abrir()">
+                  <div class="cg-icon-badge"><i class="bi bi-question-circle"></i></div>
+                  <div class="flex-fill">
+                    <h3 class="h6 fw-bold mb-1">Perguntas frequentes</h3>
+                    <p class="cg-muted small mb-0">Respostas rápidas às dúvidas comuns.</p>
+                  </div>
+                  <i class="bi bi-chevron-right cg-muted"></i>
+                </div>
+              </div>
+
+              <h2 class="cg-config__grupo">Cadastros</h2>
+              <div class="cg-card p-0 mb-4">
+                <div class="cg-list-flat cg-list-flat--hoverable px-3" role="button" @click="$store.categoryModal.openManage()">
+                  <div class="cg-icon-badge"><i class="bi bi-tags"></i></div>
+                  <div class="flex-fill">
+                    <h3 class="h6 fw-bold mb-1">Categorias</h3>
+                    <p class="cg-muted small mb-0">Mercado, contas, lazer… do seu jeito.</p>
+                  </div>
+                  <i class="bi bi-chevron-right cg-muted"></i>
+                </div>
+                <div class="cg-list-flat cg-list-flat--hoverable px-3" role="button" @click="$store.budgetModal.openManage()">
+                  <div class="cg-icon-badge"><i class="bi bi-piggy-bank"></i></div>
+                  <div class="flex-fill">
+                    <h3 class="h6 fw-bold mb-1">Orçamentos</h3>
+                    <p class="cg-muted small mb-0">Limite por mês para cada categoria.</p>
+                  </div>
+                  <i class="bi bi-chevron-right cg-muted"></i>
+                </div>
+                <div class="cg-list-flat cg-list-flat--hoverable px-3" role="button" @click="$store.cartaoModal.openManage()">
+                  <div class="cg-icon-badge"><i class="bi bi-credit-card"></i></div>
+                  <div class="flex-fill">
+                    <h3 class="h6 fw-bold mb-1">Cartões de crédito</h3>
+                    <p class="cg-muted small mb-0">Cada compra cai na fatura certa.</p>
+                  </div>
+                  <i class="bi bi-chevron-right cg-muted"></i>
+                </div>
+                <div class="cg-list-flat cg-list-flat--hoverable px-3" role="button" @click="$store.bankModal.openManage()">
+                  <div class="cg-icon-badge"><i class="bi bi-bank2"></i></div>
+                  <div class="flex-fill">
+                    <h3 class="h6 fw-bold mb-1">Bancos</h3>
+                    <p class="cg-muted small mb-0">Bancos usados nas reservas.</p>
+                  </div>
+                  <i class="bi bi-chevron-right cg-muted"></i>
+                </div>
+                <div class="cg-list-flat cg-list-flat--hoverable px-3" role="button" @click="$store.companyModal.openManage()">
+                  <div class="cg-icon-badge"><i class="bi bi-buildings"></i></div>
+                  <div class="flex-fill">
+                    <h3 class="h6 fw-bold mb-1">Empresas e servi&ccedil;os</h3>
+                    <p class="cg-muted small mb-0">Nomes e logos das lojas e serviços.</p>
+                  </div>
+                  <i class="bi bi-chevron-right cg-muted"></i>
+                </div>
+              </div>
+
+              <h2 class="cg-config__grupo">Seus dados</h2>
+              <div class="cg-card p-0 mb-4">
                 <div class="cg-list-flat cg-list-flat--hoverable px-3" role="button" @click="exportarDados()">
                   <div class="cg-icon-badge"><i class="bi bi-download"></i></div>
                   <div class="flex-fill">
-                    <h2 class="h6 fw-bold mb-1">Exportar meus dados</h2>
-                    <p class="cg-muted small mb-0">Baixa um arquivo com tudo que você vê hoje no app (lançamentos, categorias, caixinhas, compras, inventário).</p>
+                    <h3 class="h6 fw-bold mb-1">Exportar meus dados</h3>
+                    <p class="cg-muted small mb-0">Baixa um arquivo com tudo o que você vê no app.</p>
                   </div>
                   <span x-show="exportando" class="spinner-border spinner-border-sm" aria-hidden="true"></span>
                   <i class="bi bi-chevron-right cg-muted" x-show="!exportando"></i>
                 </div>
-
                 <div class="cg-list-flat cg-list-flat--hoverable px-3" role="button" @click="confirm('Limpar todo o cache e recarregar o app? Útil se algo parecer desatualizado ou travado.') && $store.app.limparCache()">
                   <div class="cg-icon-badge"><i class="bi bi-trash3"></i></div>
                   <div class="flex-fill">
-                    <h2 class="h6 fw-bold mb-1">Limpar cache</h2>
-                    <p class="cg-muted small mb-0">Apaga os arquivos guardados no navegador e recarrega — use se algo parecer desatualizado.</p>
+                    <h3 class="h6 fw-bold mb-1">Limpar cache</h3>
+                    <p class="cg-muted small mb-0">Use se algo parecer desatualizado.</p>
                   </div>
                   <i class="bi bi-chevron-right cg-muted"></i>
                 </div>
-
                 <template x-if="$store.app.isDemoMode">
                   <div class="cg-list-flat px-3" style="align-items: flex-start;">
                     <div class="cg-icon-badge"><i class="bi bi-stars"></i></div>
                     <div class="flex-fill">
-                      <h2 class="h6 fw-bold mb-1">Modo demonstração</h2>
+                      <h3 class="h6 fw-bold mb-1">Modo demonstração</h3>
                       <p class="cg-muted small mb-2">Os dados aqui são de exemplo e ficam só neste navegador. Se você entrou com <code>?demo=1</code> ou pelo link "Ver demonstração", isso fica salvo — "Sair da conta" sozinho não tira daqui, é preciso sair do modo demonstração de fato.</p>
                       <div class="d-flex flex-wrap gap-2">
                         <button type="button" class="cg-btn btn btn-outline-secondary btn-sm" @click="resetarDemo()"><i class="bi bi-arrow-clockwise"></i> Restaurar dados de exemplo</button>
@@ -3041,10 +3058,8 @@
                 </template>
               </div>
 
-              <p class="text-center cg-muted small mt-3 mb-4">BNTT © 2026 — Criado por Matheus Bonotto</p>
-
-              <div class="cg-muted small fw-semibold text-uppercase mb-2">Conta</div>
-              <button type="button" class="cg-btn btn btn-outline-danger" @click="$store.app.logout()"><i class="bi bi-box-arrow-right"></i> Sair da conta</button>
+              <button type="button" class="cg-btn btn btn-outline-danger w-100" @click="$store.app.logout()"><i class="bi bi-box-arrow-right" aria-hidden="true"></i> Sair da conta</button>
+              <p class="text-center cg-muted small mt-3 mb-4">Palm Business © 2026</p>
             </div>
           </div>
         </section>
@@ -3881,7 +3896,7 @@
       <div class="d-flex align-items-center justify-content-between mb-3">
         <div>
           <h2 class="h6 fw-bold mb-1">Cartões de crédito</h2>
-          <p class="cg-muted small mb-0">Cada cartão é de uma pessoa e fica vinculado a um banco — as compras caem na fatura do cartão certo.</p>
+          <p class="cg-muted small mb-0">Cada compra cai na fatura certa.</p>
         </div>
         <button type="button" class="btn-close" @click="$store.cartaoModal.closeManage()" aria-label="Fechar"></button>
       </div>

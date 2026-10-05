@@ -46,7 +46,7 @@ test('FAQ também abre por Perfil → Preferências, e fecha no X e no clique fo
   await page.goto('/?demo=1');
   await page.getByText('Entrar como', { exact: false }).first().click();
 
-  await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Perfil' }).first().click();
+  await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Configurações' }).first().click();
   await page.locator('.cg-list-flat', { hasText: 'Perguntas frequentes' }).click();
 
   // Seletor pelo x-show exato (mesmo padrão de $store.txModal.open etc.),

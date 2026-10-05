@@ -9,7 +9,7 @@ import { test, expect } from '@playwright/test';
 test('Perfil → Cartões de crédito cria cartão vinculado a banco e ele aparece no seletor de despesa', async ({ page }) => {
   await page.goto('/?demo=1');
   await page.getByText('Entrar como', { exact: false }).first().click();
-  await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Perfil' }).first().click();
+  await page.locator('.cg-sidebar__item, .cg-drawer a', { hasText: 'Configurações' }).first().click();
   await page.waitForTimeout(300);
 
   await page.locator('.cg-list-flat', { has: page.getByRole('heading', { name: 'Cartões de crédito' }) }).click();
