@@ -127,6 +127,37 @@ function nextTick() {
 // pré-semear "já visto" e pular o tour nos testes que não são sobre ele.
 const CHAVE_VISTO = 'bonotto_onboarding_v2_seen';
 
+// Tour curto na 1ª vez que a pessoa abre cada tela (pedido do usuário,
+// 2026-10-05). 2–3 passos, só mostram onde está o essencial; passo cujo alvo
+// não está na tela agora é pulado sozinho (ver _entrarNoPasso). Aparece só
+// depois do tour de boas-vindas, uma vez por tela (CHAVE_TELAS).
+const CHAVE_TELAS = 'bntt_tours_telas_vistos';
+const TOURS_DA_TELA = {
+  transacoes: [
+    { alvoSeletor: 'section[x-data^="transactionsView"] .cg-quick-actions', icone: 'bi-lightning-charge-fill', titulo: 'Lançar em segundos', texto: 'Despesa ou entrada num toque. Vindo de planilha? Use "Importar CSV".' },
+    { alvoSeletor: 'section[x-data^="transactionsView"] .cg-tx-linha', icone: 'bi-hand-index-thumb-fill', titulo: 'Cada linha é um lançamento', texto: 'Toque para ver ou mudar tudo. O botão verde marca como pago.' },
+    { alvoSeletor: 'section[x-data^="transactionsView"] .cg-view-toggle', icone: 'bi-layout-three-columns', titulo: 'Do seu jeito', texto: 'Troque entre lista, tabela e grade, e deixe mais compacto se preferir.' },
+  ],
+  caixinhas: [
+    { alvoSeletor: '[data-tour-alvo="nova-caixinha"]', icone: 'bi-piggy-bank-fill', titulo: 'Reservas', texto: 'Crie uma reserva para cada objetivo ou banco e acompanhe quanto já guardou.' },
+  ],
+  compras: [
+    { alvoSeletor: 'section[x-data^="shoppingView"] .cg-room-grid', icone: 'bi-cart-fill', titulo: 'Suas listas', texto: 'Uma lista para cada ida ao mercado. Toque numa lista para abrir e ir marcando.' },
+  ],
+  recursos: [
+    { alvoSeletor: 'section[x-data^="resourcesView"] .cg-room-grid', icone: 'bi-box-seam-fill', titulo: 'O que tem em cada lugar', texto: 'Toque num cômodo para ver os itens. O número vermelho avisa o que está acabando ou vencendo.' },
+  ],
+  grupo: [
+    { alvoSeletor: '[data-tour-alvo="copiar-codigo-grupo"], [data-tour-alvo="campo-nome-grupo"]', icone: 'bi-people-fill', titulo: 'Junte quem mora com você', texto: 'Mande o código para a pessoa entrar. Cada um tem o próprio acesso.' },
+  ],
+  socorros: [
+    { alvoSeletor: '.cg-socorros .cg-socorro-menu', icone: 'bi-heart-pulse-fill', titulo: 'Tudo em 3 caminhos', texto: 'Emergência para agir já, Sintomas para entender o que fazer, e as fichas de cada pessoa.' },
+  ],
+  perfil: [
+    { alvoSeletor: '#cg-seu-plano', icone: 'bi-stars', titulo: 'Seu plano', texto: 'Veja o que está incluído e mude de plano quando quiser.' },
+  ],
+};
+
 // ---------- Helpers de "preparar" (plumbing de navegação ANTES de destacar
 // o alvo real) — funções livres, não métodos do store: só falam com OUTROS
 // componentes via Alpine.$data (o mesmo padrão já usado no app inteiro pra
@@ -978,6 +1009,40 @@ export function onboardingStore() {
     // preferência de conta nem dado de negócio (é só "já vi isso aqui"),
     // por isso localStorage direto, sem passar por services/ (CLAUDE.md:
     // essa regra é sobre DADO, esta flag não é dado do usuário).
+    // Chamado por store.setView. Abre o tour curto daquela tela na 1ª visita.
+    // Em teste automatizado (navigator.webdriver) não abre sozinho — a não
+    // ser com localStorage bntt_tours_forcar=1 (o teste deles usa isso).
+    talvezTourDaTela(view) {
+      try {
+        if (this.aberto || localStorage.getItem(CHAVE_VISTO) !== '1') return;
+        if (navigator.webdriver && localStorage.getItem('bntt_tours_forcar') !== '1') return;
+        const passos = TOURS_DA_TELA[view];
+        if (!passos) return;
+        if (JSON.parse(localStorage.getItem(CHAVE_TELAS) || '[]').includes(view)) return;
+      } catch {
+        return; // sem armazenamento: melhor não mostrar do que mostrar sempre
+      }
+      // Espera a tela desenhar (listas carregam depois da troca de tela).
+      // Só marca como visto quando o tour ABRE de fato — se a pessoa saiu da
+      // tela antes, ele aparece na próxima visita.
+      setTimeout(() => {
+        if (this.aberto || Alpine.store('app').view !== view) return;
+        try {
+          const vistos = JSON.parse(localStorage.getItem(CHAVE_TELAS) || '[]');
+          if (vistos.includes(view)) return;
+          localStorage.setItem(CHAVE_TELAS, JSON.stringify([...vistos, view]));
+        } catch { return; }
+        this.passos = TOURS_DA_TELA[view].map((p, i) => ({ id: `${view}-${i}`, tipo: 'campo', view, ...p }));
+        this.passoAtual = 0;
+        this.concluido = {};
+        this.pulado = {};
+        this.rectAlvo = null;
+        this.telaAoAbrir = view;
+        this.aberto = true;
+        this._entrarNoPasso();
+      }, 900);
+    },
+
     iniciarSeNecessario() {
       if (localStorage.getItem(CHAVE_VISTO) === '1') return;
       this.abrir();

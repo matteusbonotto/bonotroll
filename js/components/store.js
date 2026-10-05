@@ -592,6 +592,8 @@ export function appStore() {
       if (view === this.view) return;
       this.view = view;
       history.pushState({ view }, '', '#/' + view);
+      // Tutorial curto na 1ª vez em cada tela (ver onboarding.talvezTourDaTela).
+      Alpine.store('onboarding')?.talvezTourDaTela?.(view);
     },
 
     // Botão "Limpar cache" (Perfil) — escape hatch manual pra quando algo

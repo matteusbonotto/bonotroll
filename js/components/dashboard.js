@@ -102,6 +102,7 @@ export function dashboardView() {
     // "Precisa de você" (Palm Business, fase 6): o que pede ação AGORA, em
     // ordem de urgência. Reaproveita os mesmos dados da tela (nada novo no banco).
     analisesAbertas: false,
+    atencaoTodas: false,
     get atencao() {
       const hoje = new Date();
       const em7 = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() + 7).toISOString().slice(0, 10);

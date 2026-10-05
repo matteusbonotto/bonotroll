@@ -1,6 +1,6 @@
 import { updateProfile, uploadAvatar, excluirMinhaConta } from '../services/auth.js';
 import { mockDb } from '../data/mockDb.js';
-import { isPushSupported, estadoPush, subscribeToPush, unsubscribeFromPush, explicarErroPush } from '../services/push.js';
+import { isPushSupported, estadoPush, subscribeToPush, unsubscribeFromPush, explicarErroPush, diagnosticoPush, enviarPushDeTeste } from '../services/push.js';
 import { resizeImage } from '../utils/image.js';
 import { exportarMeusDados, baixarComoJson } from '../services/dataExport.js';
 
@@ -17,6 +17,26 @@ export function profileView() {
     pushErro: '',
     pushErroTecnico: '',
     pushCarregando: false,
+    pushDiagnostico: null,
+    pushTestando: false,
+    pushTesteResultado: '',
+
+    async verDiagnostico() {
+      this.pushDiagnostico = await diagnosticoPush();
+    },
+
+    async testarPush() {
+      this.pushTestando = true;
+      this.pushTesteResultado = '';
+      try {
+        const r = await enviarPushDeTeste();
+        this.pushTesteResultado = r?.ok ? 'Enviada! Ela deve aparecer em alguns segundos (mesmo com o app fechado).' : (r?.erro || 'Não foi possível enviar o teste.');
+      } catch (e) {
+        this.pushTesteResultado = explicarErroPush(e).mensagem;
+      } finally {
+        this.pushTestando = false;
+      }
+    },
     exportando: false,
     // Excluir conta (LGPD)
     excluirAberto: false,

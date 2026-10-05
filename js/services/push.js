@@ -88,7 +88,16 @@ export function explicarErroPush(e) {
 export async function subscribeToPush(profileId) {
   if (!isPushSupported()) throw new Error('Este navegador não suporta notificações push.');
 
-  const permissao = await Notification.requestPermission();
+  // Às vezes o Chrome NÃO mostra o pedido (já recusado antes, pedidos
+  // silenciosos, app instalado sem permissão no Android) e a promessa nunca
+  // volta — para quem usa, "não acontece nada". Com prazo, o app explica.
+  const permissao = await comPrazo(Notification.requestPermission(), 12000, 'pedido-sem-resposta')
+    .catch((e) => {
+      if (e.codigoPalm !== 'pedido-sem-resposta') throw e;
+      const erro = new Error('O celular não mostrou o pedido de permissão.');
+      erro.estado = 'sem-pedido';
+      throw erro;
+    });
   if (permissao === 'denied') {
     const e = new Error('As notificações estão bloqueadas neste navegador.');
     e.estado = 'bloqueado';
@@ -144,6 +153,42 @@ export async function subscribeToPush(profileId) {
   }
 
   return subscription;
+}
+
+// Retrato do que está acontecendo neste aparelho (para a pessoa e o suporte).
+export async function diagnosticoPush() {
+  const d = {
+    suportado: isPushSupported(),
+    permissao: typeof Notification !== 'undefined' ? Notification.permission : 'indisponível',
+    instalado: window.matchMedia?.('(display-mode: standalone)').matches || navigator.standalone === true,
+    serviceWorker: 'sem',
+    inscricao: 'não',
+    navegador: (navigator.userAgent.match(/(Chrome|CriOS|Firefox|Version)\/[\d.]+/) || [''])[0] + (/Android/.test(navigator.userAgent) ? ' · Android' : /iPhone|iPad/.test(navigator.userAgent) ? ' · iOS' : ''),
+  };
+  try {
+    const reg = await comPrazo(navigator.serviceWorker.getRegistration(), 3000, 'sw');
+    d.serviceWorker = reg?.active ? 'ativo' : reg ? 'instalando' : 'sem';
+    const sub = await reg?.pushManager?.getSubscription();
+    if (sub) d.inscricao = (await inscricaoNoServidor(sub.endpoint).catch(() => false)) ? 'ativa no servidor' : 'só no aparelho';
+  } catch { /* fica o que deu para saber */ }
+  return d;
+}
+
+// Pede ao servidor uma notificação de teste para os aparelhos desta conta.
+export async function enviarPushDeTeste() {
+  if (isDemoMode()) {
+    const reg = await registroDoApp();
+    await reg.showNotification('BNTT', { body: 'Notificações funcionando neste aparelho. ✅', icon: './assets/icons/apple-touch-icon.png' });
+    return { ok: true, enviadas: 1 };
+  }
+  const supabase = await getSupabase();
+  const { data, error } = await supabase.functions.invoke('push-teste', { method: 'POST' });
+  if (error && !data) {
+    let corpo = null;
+    try { corpo = await error.context?.json?.(); } catch { /* sem corpo */ }
+    return corpo || { ok: false, erro: 'Não consegui falar com o servidor agora.' };
+  }
+  return data;
 }
 
 export async function unsubscribeFromPush() {

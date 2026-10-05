@@ -160,3 +160,10 @@ export async function excluirMinhaConta(senha) {
   }
   await supabase.auth.signOut().catch(() => {});
 }
+
+// Reenvia o e-mail de confirmação de cadastro.
+export async function reenviarConfirmacao(email) {
+  const supabase = await getSupabase();
+  const { error } = await supabase.auth.resend({ type: 'signup', email, options: { emailRedirectTo: `${location.origin}/app` } });
+  if (error) throw error;
+}

@@ -41,3 +41,12 @@ test('erro do navegador vira frase em português; o texto técnico fica escondid
   await expect(estado.locator('details code')).toBeHidden(); // fechado até a pessoa abrir
   await expect(estado.getByRole('button', { name: 'Ativar notificações' })).toBeEnabled(); // não fica preso em "Ativando…"
 });
+
+test('quando o celular não mostra o pedido de permissão, o app explica em vez de ficar parado', async ({ page }) => {
+  test.slow();
+  const estado = await abrirPerfil(page, 'default');
+  await page.evaluate(() => { Notification.requestPermission = () => new Promise(() => {}); }); // nunca responde
+  await estado.getByRole('button', { name: 'Ativar notificações' }).click();
+  await expect(estado).toContainText('O celular não mostrou o pedido de permissão', { timeout: 20000 });
+  await expect(estado.getByRole('button', { name: 'Já liberei — conferir' })).toBeVisible();
+});

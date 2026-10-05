@@ -10,7 +10,10 @@ export function getSupabase() {
   }
   if (!clientPromise) {
     clientPromise = import('https://esm.sh/@supabase/supabase-js@2.112.3').then(({ createClient }) =>
-      createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+      // 'implicit': o link do e-mail (confirmação/recuperação) funciona mesmo
+      // aberto em OUTRO aparelho — no fluxo PKCE ele só funciona no mesmo
+      // navegador que pediu (o verificador fica guardado nele).
+      createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { flowType: 'implicit', detectSessionInUrl: true, persistSession: true } })
     );
   }
   return clientPromise;

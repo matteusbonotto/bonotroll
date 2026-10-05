@@ -3,4 +3,4 @@
 // entra neste repositório) consegue de fato assinar/enviar notificações; ela
 // vive só como secret da Edge Function no Supabase (ver
 // supabase/NOTIFICACOES.md pra gerar um par novo e configurar as duas).
-export const VAPID_PUBLIC_KEY = 'BP6sCx58hUU_pPD1H01CbiGb2PFwgMfn01J9TY-HYUrU4WHTxVB2qZPfCqx6goh0GIew1-g0Tz9D3o053akkH3M';
+export const VAPID_PUBLIC_KEY = 'BDi_55Mr2Xyz8lStlTcb52KJ_p7J2_0LsUqdT1aDR_fic0adF78RZY1crIlmlbFECcxBoigDaZ4HyRGDBtHIzvw';

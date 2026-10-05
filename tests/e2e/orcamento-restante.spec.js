@@ -14,6 +14,10 @@ test('linha de orçamento aparece com categoria estourada, formatada corretament
 
   // Palm (fase 6): estourado é pendência — vai pro "Precisa de você", não
   // fica repetido no card de saldo (lá só aparece o "Restam R$ X").
+  // "Precisa de você" mostra 3 itens; o resto fica em "Ver mais".
+  const verMais = page.locator('.cg-atencao').getByRole('button', { name: /Ver mais/ });
+  await expect(verMais).toBeVisible({ timeout: 10000 }); // inventário/orçamento carregam depois
+  await verMais.click();
   const linha = page.locator('.cg-atencao__item', { hasText: 'Orçamento de' });
   await expect(linha).toBeVisible({ timeout: 5000 });
   await expect(linha).toContainText('Passou do limite');

@@ -2010,3 +2010,260 @@ img.cg-company-logo { display: block; }
 @media (max-width: 575.98px) {
   .cg-topbar .cg-unidade-seletor { max-width: 140px; }
 }
+
+/* ── Primeiros socorros: menu de 3 caminhos (2026-10-05) ───────────────── */
+.cg-socorros-topo {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-3);
+  padding: var(--space-2) 0;
+  background: var(--color-bg);
+}
+.cg-socorros-voltar { flex-shrink: 0; }
+.cg-socorros-192 { flex-shrink: 0; font-weight: 800; padding-inline: 18px; }
+
+.cg-socorro-menu {
+  display: grid;
+  gap: var(--space-3);
+}
+.cg-socorro-opcao {
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  grid-template-rows: auto auto;
+  column-gap: var(--space-3);
+  align-items: center;
+  width: 100%;
+  min-height: 96px;
+  padding: var(--space-3) var(--space-4, 20px);
+  text-align: left;
+  border: 1px solid var(--color-border);
+  border-left: 6px solid var(--cg-opcao-cor);
+  border-radius: var(--radius-lg, 16px);
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--shadow-sm);
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.cg-socorro-opcao:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.cg-socorro-opcao > i {
+  grid-row: 1 / 3;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  font-size: 1.6rem;
+  color: var(--cg-opcao-cor);
+  background: color-mix(in srgb, var(--cg-opcao-cor) 14%, transparent);
+}
+.cg-socorro-opcao__titulo { font-size: 1.15rem; font-weight: 800; }
+.cg-socorro-opcao__texto { color: var(--color-text-muted); }
+.cg-socorro-opcao--emergencia { --cg-opcao-cor: var(--color-danger); }
+.cg-socorro-opcao--sintomas { --cg-opcao-cor: #D97706; }
+.cg-socorro-opcao--membros { --cg-opcao-cor: var(--color-primary); }
+
+.cg-socorros-subtitulo {
+  margin: var(--space-4, 20px) 0 var(--space-2);
+  font-size: var(--font-size-body, 1rem);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--color-text-muted);
+}
+.cg-socorros-lista {
+  display: grid;
+  gap: var(--space-2);
+}
+.cg-socorros-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: 56px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-weight: 700;
+  text-align: left;
+}
+.cg-socorros-item > .bi:first-child { font-size: 1.3rem; color: var(--color-primary); }
+.cg-socorros-item--urgente > .bi:first-child { color: var(--color-danger); }
+
+.cg-socorros-alerta {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-danger) 12%, transparent);
+  color: var(--color-danger);
+  font-weight: 800;
+}
+.cg-socorros-guia .cg-socorros-passos { font-size: 1.1rem; }
+.cg-socorros-guia .cg-socorros-passos li { margin-bottom: 10px; line-height: 1.5; }
+.cg-socorros-naofaca {
+  margin-top: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  border: 1px solid color-mix(in srgb, var(--color-danger) 35%, transparent);
+  background: color-mix(in srgb, var(--color-danger) 6%, transparent);
+}
+.cg-socorros-naofaca .cg-socorros-nao-faca { margin-bottom: 0; }
+
+@media (min-width: 768px) {
+  .cg-socorro-menu { grid-template-columns: repeat(3, 1fr); }
+  .cg-socorro-opcao {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+    row-gap: 8px;
+    min-height: 200px;
+    align-content: start;
+  }
+  .cg-socorro-opcao > i { grid-row: auto; }
+  .cg-socorros-lista { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* Lista de compras em grade/compacta: cada item é uma fichinha de papel
+   (mesma identidade da "folha de caderno" do modo lista). */
+.cg-view-compras .cg-grid-view__card {
+  position: relative;
+  padding-left: 30px;
+  background-color: #FFFDF2;
+  background-image: linear-gradient(transparent 27px, rgba(70, 110, 160, .16) 28px);
+  background-size: 100% 28px;
+  border: 1px solid #ECE6CC;
+  border-radius: 6px;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, .04), 0 6px 14px -8px rgba(60, 50, 20, .35);
+}
+.cg-view-compras .cg-grid-view__card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 18px;
+  width: 2px;
+  background: #E29AA0;
+  opacity: .7;
+}
+.cg-view-compras .cg-grid-view__card .cg-papel__nome {
+  font-family: 'Caveat', var(--font-family-hand, cursive);
+  font-size: 1.45rem;
+  font-weight: 700;
+  line-height: 1.1;
+  color: #23314A;
+}
+.cg-view-compras .cg-grid-view__card.is-comprado .cg-papel__nome {
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+  color: #6B7280;
+}
+.cg-view-compras .cg-grid-view--compact .cg-grid-view__card .cg-papel__nome { font-size: 1.25rem; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-bs-theme="light"]) .cg-view-compras .cg-grid-view__card { background-color: #26261C; border-color: #3A3A2A; }
+  :root:not([data-bs-theme="light"]) .cg-view-compras .cg-grid-view__card .cg-papel__nome { color: #F1EBD0; }
+}
+:root[data-bs-theme="dark"] .cg-view-compras .cg-grid-view__card { background-color: #26261C; border-color: #3A3A2A; }
+:root[data-bs-theme="dark"] .cg-view-compras .cg-grid-view__card .cg-papel__nome { color: #F1EBD0; }
+
+/* Fichinhas da lista: 2 por linha no celular (grade), 3 na compacta;
+   no computador, o auto-fill normal. Ações menores dentro da ficha. */
+@media (max-width: 767.98px) {
+  .cg-view-compras .cg-grid-view { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .cg-view-compras .cg-grid-view.cg-grid-view--compact { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .cg-view-compras .cg-grid-view__card { padding: 12px 10px 10px 26px; }
+  .cg-view-compras .cg-grid-view__card::before { left: 16px; }
+  .cg-view-compras .cg-grid-view__card .cg-chip { max-width: 100%; }
+  .cg-view-compras .cg-grid-view--compact .cg-grid-view__card .cg-chip span { display: none; }
+}
+
+/* ── Lote de distribuição/escala (auditoria de UX, 2026-10-05) ─────────── */
+/* Faixa de demonstração: uma linha discreta (era 3 linhas no celular). */
+.cg-demo-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  margin-bottom: var(--space-3);
+  font-size: var(--font-size-body-sm);
+}
+.cg-demo-banner span { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cg-demo-banner__sair { min-height: 32px !important; min-width: 0 !important; font-weight: 700; }
+.cg-demo-banner__sair::after { content: ''; position: absolute; inset: -8px; }
+.cg-demo-banner__sair { position: relative; }
+
+/* Abas da área: controle segmentado (navegação ≠ botão de ação). */
+.cg-abas {
+  display: inline-flex;
+  max-width: 100%;
+  gap: 4px;
+  padding: 4px;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-alt);
+}
+.cg-abas__aba {
+  border: 0;
+  border-radius: calc(var(--radius-md) - 4px);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-weight: 700;
+}
+.cg-abas__aba.is-active {
+  background: var(--color-surface);
+  color: var(--color-primary);
+  border-color: transparent;
+  box-shadow: var(--shadow-sm);
+}
+
+/* Saldo: sempre na cor da marca; negativo em destaque. */
+.cg-hero-balance--neg .cg-hero-balance__value { color: #FFD5D9; }
+@media (max-width: 767.98px) {
+  .cg-hero-balance__row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .cg-hero-balance__row .cg-hero-stat { flex: none; }
+  .cg-hero-balance__row .cg-hero-stat:nth-child(3) { grid-column: 1 / -1; }
+}
+
+/* Ações rápidas do Início: cartões de 2 linhas (não "bolhas"). */
+section[x-data^="dashboardView"] .cg-quick-actions .cg-btn {
+  border-radius: var(--radius-md);
+  min-height: 64px;
+  font-size: var(--font-size-body-sm);
+  font-weight: 700;
+}
+section[x-data^="dashboardView"] .cg-quick-actions .cg-btn i { font-size: 1.25rem; }
+
+/* Cartões lado a lado não esticam até a altura do vizinho. */
+.cg-grid-dashboard { align-items: start; }
+
+/* Escala: título da página > título de seção > texto. */
+.cg-topbar__titulo { font-size: var(--font-size-title); }
+.cg-section-title { font-size: var(--font-size-body-lg); }
+
+/* Ação destrutiva repetida em cada linha: discreta (a confirmação/Desfazer protege). */
+.cg-acao-discreta { color: var(--color-text-muted); }
+.cg-acao-discreta:hover, .cg-acao-discreta:focus-visible { color: var(--color-danger); }
+
+/* "+" flutuante na cor da marca (era a única peça laranja do app). */
+.cg-fab { background: var(--color-primary) !important; border-color: var(--color-primary) !important; }
+
+/* Barra inferior: o "+" flutua e todos os rótulos alinham na mesma linha. */
+.cg-nav-inferior__item i { height: 28px; display: inline-flex; align-items: center; }
+.cg-nav-inferior__item.cg-nav-inferior__adicionar i {
+  margin-top: -18px;
+  width: 48px;
+  height: 48px;
+  border: 3px solid var(--color-surface);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, .18);
+}
+
+/* Largura de leitura confortável em telas grandes. */
+.cg-main > section { max-width: 1200px; margin-inline: auto; }
+
+/* Configurações: uma coluna central (era 1 coluna curta + 1 enorme). */
+.cg-config { max-width: 760px; }
+.cg-config > .row > [class*="col-lg-"] { flex: 0 0 100%; max-width: 100%; }

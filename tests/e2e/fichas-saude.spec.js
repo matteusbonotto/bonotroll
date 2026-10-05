@@ -5,6 +5,8 @@ test('cria a senha da família, cadastra pessoa com alergia e tipo sanguíneo, d
   await page.goto('/?demo=1');
   await page.getByText('Entrar como', { exact: false }).first().click();
   await page.locator('.cg-sidebar__item', { hasText: 'Saúde' }).first().click();
+  // Fichas ficam em Primeiros socorros → "Informações dos membros".
+  await page.locator('section[x-data^="primeirosSocorrosView"]').getByRole('button', { name: /Informações dos membros/ }).click();
   const fichas = page.locator('section.cg-fichas');
   await fichas.getByLabel('Crie a senha da família (mínimo 8 caracteres)').fill('familia segura 2026');
   await fichas.getByLabel('Repita a senha').fill('familia segura 2026');

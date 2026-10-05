@@ -2,6 +2,16 @@
 
 > 2026-10-05: o nome voltou a ser **BNTT** (decisão do usuário), com duas linhas: **BNTT Home** (verde) e **BNTT Business** (azul). As entradas abaixo citam "Palm" porque eram o nome na época.
 
+## Tutoriais por tela, push consertado, e-mail, Primeiros socorros e acabamento — checkpoint/acabamento
+- **Push — causa raiz do servidor:** o projeto novo do Supabase nunca recebeu as chaves do push (VAPID) nem o segredo do agendador; as funções de aviso recusavam toda chamada (401 a cada 5 min). Chaves novas geradas e configuradas (cofre do banco + funções); chamada do banco → função agora 200.
+- **Push — celular:** pedido de permissão com prazo (o Chrome às vezes não mostra o pedido e nada acontecia); estado "o celular não mostrou o pedido" com o caminho para liberar; **Diagnóstico deste aparelho**; botão **Enviar notificação de teste** (função `push-teste`).
+- **Tutorial na 1ª visita a cada tela** (Movimentações, Reservas, Compras, Inventário, Pessoas, Saúde, Configurações) — curto, pulável, uma vez por tela.
+- **Primeiros socorros:** menu de 3 caminhos (Emergência, Sintomas, Informações dos membros), cada situação em página própria com passos grandes, "Não faça" e o 192 sempre à mão.
+- **Lista de compras:** grade e compacta viraram fichinhas de papel (pauta, margem, letra de mão), 2 por linha no celular.
+- **E-mail:** link de confirmação/recuperação funciona aberto em outro aparelho (fluxo implicit), botão "Reenviar e-mail de confirmação", modelos em português e guia `docs/CONFIGURAR-EMAIL.md` (o Supabase só envia para a equipe sem SMTP próprio).
+- **Distribuição e escala (auditoria de UX por agente):** faixa de demonstração em 1 linha, abas como controle segmentado, saldo sempre na cor da marca (negativo em destaque), números do saldo lado a lado no celular, ações rápidas legíveis, "Precisa de você" com até 3 itens + "Ver mais", sem rolagem dentro de rolagem, títulos em escala, "Marcar como pago" e "Remover" discretos, "+" e barra inferior alinhados, Configurações em coluna única, largura de leitura em telas grandes.
+- Tutorial só é marcado como visto quando aparece de fato (antes, sair da tela no meio segundo de espera fazia ele nunca aparecer).
+
 ## Segurança no servidor, exclusão de conta e cartões quadrados — checkpoint/seguranca
 - **Limites dos planos no banco** (`supabase/seguranca-planos-2026-10.sql`): lançamentos/mês, listas abertas, fichas de saúde, unidades e pessoas são recusados pelo servidor ("BNTT_LIMITE"), não só na tela — chamar a API direto não passa mais por cima. Plano que vale = o melhor entre o da pessoa e o de quem criou a casa/empresa. O app lê o plano do servidor (`bntt_meu_plano`) e transforma a recusa no aviso "Disponível em outro plano". Teste unitário garante app e banco com os mesmos limites.
 - **Permissões mínimas:** sem login não se toca em tabela nem função nenhuma; logado não tem TRUNCATE/TRIGGER/REFERENCES; funções do banco liberadas só as que o app usa. Anexos: até 10 MB, só imagem e PDF.
