@@ -824,7 +824,7 @@ button, input, select, textarea { -webkit-tap-highlight-color: transparent; }
    visual nenhum — dead code depois da remoção da borda. */
 .cg-card--hoverable:hover { box-shadow: 0 10px 25px rgba(18, 45, 36, .08); transform: translateY(-2px); }
 .cg-card--stat { border-top: 3px solid var(--color-primary); padding-top: 15px; }
-.cg-card--stat .cg-card__label { font-size: .67rem; letter-spacing: .08em; }
+.cg-card--stat .cg-card__label { font-size: var(--font-size-caption); letter-spacing: .08em; }
 .cg-card--stat .cg-card__value { font-size: clamp(1.2rem, 3vw, 1.75rem); }
 .cg-list-flat { min-height: 64px; padding: 14px var(--space-3); transition: background-color .15s ease, padding-left .15s ease; }
 .cg-list-flat--hoverable:hover, .cg-list-flat--hoverable:focus-visible { background: color-mix(in srgb, var(--color-primary-soft) 55%, var(--color-surface)); padding-left: calc(var(--space-3) + 3px); }
@@ -853,8 +853,8 @@ button, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 .cg-drawer { width: min(320px, 88vw); padding: 18px 14px; border-right: 1px solid var(--color-border); box-shadow: 14px 0 38px rgba(7, 21, 16, .18); }
 .cg-drawer .cg-sidebar__item { min-height: 48px; margin-bottom: 2px; }
 
-.cg-badge { padding: 4px 9px; font-size: .7rem; font-weight: 750; letter-spacing: .02em; }
-.cg-chip { border-radius: var(--radius-sm); padding: 5px 9px; font-size: .72rem; }
+.cg-badge { padding: 4px 9px; font-size: var(--font-size-caption); font-weight: 750; letter-spacing: .02em; }
+.cg-chip { border-radius: var(--radius-sm); padding: 5px 9px; font-size: var(--font-size-caption); }
 .cg-pill-trigger { min-height: 34px; border-radius: var(--radius-sm); box-shadow: none; }
 .cg-pill-menu { border: 1px solid var(--color-border); box-shadow: var(--shadow-md); }
 
@@ -876,7 +876,7 @@ button, input, select, textarea { -webkit-tap-highlight-color: transparent; }
    de mudança estrutural (trocar o input sempre-editável por um texto
    formatado que só vira input ao clicar) em vez de CSS — não forcei uma
    solução malfeita só pra marcar como "resolvido". */
-.cg-table thead th { padding: 11px 12px; background: var(--color-surface-alt); color: var(--color-text-muted); font-size: .66rem; font-weight: 800; letter-spacing: .08em; }
+.cg-table thead th { padding: 11px 12px; background: var(--color-surface-alt); color: var(--color-text-muted); font-size: var(--font-size-caption); font-weight: 800; letter-spacing: .08em; }
 .cg-table thead th:first-child { border-radius: 8px 0 0 8px; }
 .cg-table thead th:last-child { border-radius: 0 8px 8px 0; }
 .cg-table tbody td { padding: 13px 12px; }
@@ -1744,4 +1744,73 @@ img.cg-company-logo { display: block; }
   margin-top: 4px;
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+/* ── Design system (Palm, fase 4): alvo de toque e texto mínimos ──────────
+   Causa raiz dos ~90 avisos da auditoria (scripts/auditar-telas.mjs): os
+   tamanhos "sm" do Bootstrap (36px) e ícones-botão de 20–22px espalhados.
+   Regra única: todo botão/campo tem ≥ 44px, em qualquer tela. Exceção
+   consciente: a tabela densa do computador (mouse; ≥ 24px, WCAG 2.5.8). */
+.btn,
+.form-control,
+.form-select {
+  min-height: 44px;
+}
+
+.btn {
+  min-width: 44px;
+}
+
+.btn-close {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.input-group > .btn,
+.input-group > .form-control {
+  min-height: 44px;
+}
+
+.cg-table .btn,
+.cg-table .form-control,
+.cg-table .form-select {
+  min-height: 28px;
+  min-width: 0;
+}
+
+/* Ícones-botão pequenos: o desenho continua pequeno, a área de toque não. */
+.cg-help__trigger {
+  width: 44px;
+  height: 44px;
+  margin: -12px;
+}
+
+.cg-room-tile__edit {
+  width: 44px;
+  height: 44px;
+  top: 0;
+  left: 0;
+  padding: 0;
+  border: 6px solid transparent;
+  background-clip: padding-box;
+}
+
+/* Contador de notificações legível (era 9,6px). */
+.cg-topbar .badge.rounded-pill {
+  font-size: var(--font-size-caption) !important;
+  min-width: 20px;
+}
+
+/* Tabela densa (computador): controles da linha com ≥ 24px (WCAG 2.5.8). */
+.cg-table .form-check-input {
+  width: 24px;
+  height: 24px;
+}
+
+.cg-table .btn.btn-sm {
+  min-width: 28px;
+}
+
+.cg-cartao-toggle {
+  min-height: 28px;
 }

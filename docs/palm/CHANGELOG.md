@@ -1,5 +1,14 @@
 # CHANGELOG — Palm Business
 
+## Fase 4 + 10 (componentes e acessibilidade) — checkpoint/componentes
+- **Auditoria automática** `npm run auditar` (scripts/auditar-telas.mjs; precisa do app servido em :5511): 8 telas × 320/375/768/1280/1920 px medindo alvo de toque, rolagem lateral, nome acessível, imagens sem alt, texto < 12 px e inglês na interface. **90 problemas → 0.**
+- Regra única do design system: todo botão/campo ≥ 44 px (tabela densa do computador ≥ 24 px, WCAG 2.5.8). Ícones-botão (ajuda, editar cômodo/caixinha) mantêm o desenho pequeno com área de toque de 44 px.
+- Nenhum texto abaixo de 12 px (badges, chips, cabeçalhos de tabela, iniciais, contador de notificações).
+- Tablet (768–991 px) usa as linhas legíveis do celular em Movimentações, não a tabela densa feita para mouse.
+- 26 imagens sem `alt` (decorativas) e campos sem nome (cor da foto, nome no perfil, renomear grupo) corrigidos.
+- Títulos das telas iguais aos da navegação: Movimentações, Reservas, Membros da casa.
+- **Tour:** a altura do balão e do painel era medida sem padding/borda — o balão podia passar da borda de baixo do celular. Corrigido na medição (borderBoxSize).
+
 ## Configurações, leitura, push e tour — checkpoint/configuracoes
 - **Configurações** (antes "Perfil"): grupos curtos com título — Você · Leitura e aparência · Avisos · Ajuda · Cadastros · Seus dados — e descrições de uma linha.
 - **Tamanho do texto A− / A+:** cada toque muda um passo (87,5% → 150%), com o valor mostrado, botões desativados nos limites e "Voltar ao normal". Fica salvo no aparelho (escolhas antigas Grande/Muito grande são convertidas).

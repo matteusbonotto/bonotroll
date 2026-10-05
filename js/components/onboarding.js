@@ -1330,7 +1330,7 @@ export function onboardingStore() {
       const el = document.querySelector('.cg-tour-painel');
       if (!el || typeof ResizeObserver === 'undefined') return;
       const obs = new ResizeObserver(([entry]) => {
-        this.painelAltura = entry.contentRect.height;
+        this.painelAltura = entry.borderBoxSize?.[0]?.blockSize ?? el.offsetHeight; // com padding e borda (ver _observarBalao)
       });
       obs.observe(el);
       this._pararObservarPainel = () => obs.disconnect();
@@ -1342,8 +1342,11 @@ export function onboardingStore() {
     _observarBalao() {
       const el = document.querySelector('.cg-tour-balloon');
       if (!el || typeof ResizeObserver === 'undefined') return;
+      // Altura REAL ocupada na tela (com padding e borda). contentRect conta
+      // só o conteúdo — o balão ficava ~30px mais alto do que o cálculo
+      // achava e podia passar da borda de baixo do celular.
       const obs = new ResizeObserver(([entry]) => {
-        this.balloonAltura = entry.contentRect.height;
+        this.balloonAltura = entry.borderBoxSize?.[0]?.blockSize ?? el.offsetHeight;
       });
       obs.observe(el);
       this._pararObservarBalao = () => obs.disconnect();

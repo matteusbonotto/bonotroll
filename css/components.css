@@ -1452,7 +1452,7 @@ body { font-size: var(--font-size-body); }
 }
 .cg-room-tile { min-height: 100px; }
 .cg-resource-item { border-color: var(--color-border); }
-.cg-table th { background: transparent; font-size: .67rem; letter-spacing: .08em; }
+.cg-table th { background: transparent; font-size: var(--font-size-caption); letter-spacing: .08em; }
 .cg-table td { border-color: var(--color-border); vertical-align: middle; }
 
 .cg-modal { border-radius: var(--radius-lg) var(--radius-lg) 0 0; box-shadow: var(--shadow-lg); }

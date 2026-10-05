@@ -10,7 +10,8 @@
     "deploy": "npm run build && firebase deploy --only hosting",
     "test": "playwright test",
     "test:unit": "node --test --import ./tests/unit/_setup.js tests/unit/*.test.js",
-    "test:dist": "node scripts/build.mjs --demo && node scripts/test-dist.mjs"
+    "test:dist": "node scripts/build.mjs --demo && node scripts/test-dist.mjs",
+    "auditar": "node scripts/auditar-telas.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.62.1",
