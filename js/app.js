@@ -1,4 +1,5 @@
 import { appStore } from './components/store.js';
+import { atalhoInvestimentos } from './services/investimentos.js';
 import { txModalStore } from './components/transactionForm.js';
 import { csvModalStore } from './components/csvImportModal.js';
 import { categoryModalStore } from './components/categoryManager.js';
@@ -57,6 +58,7 @@ document.addEventListener('alpine:init', () => {
   Alpine.store('camera', cameraStore());
   window.cgEventoDeArquivo = eventoDeArquivo;
 
+  Alpine.data('atalhoInvestimentos', atalhoInvestimentos);
   Alpine.data('authView', authView);
   Alpine.data('cgHelp', cgHelp);
   Alpine.data('dashboardView', dashboardView);

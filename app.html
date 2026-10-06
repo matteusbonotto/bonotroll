@@ -194,6 +194,12 @@
               </template>
             </div>
           </template>
+          <!-- Atalho do BNTT Investimentos (experimental): só contas autorizadas veem. -->
+          <div x-data="atalhoInvestimentos" x-show="liberado" x-cloak>
+            <a href="https://bntt-investimentos.web.app/" class="cg-sidebar__item" target="_blank" rel="noopener" @click.prevent="abrir()" :aria-busy="abrindo">
+              <i class="bi bi-graph-up-arrow" aria-hidden="true"></i> BNTT Investimentos <span class="badge text-bg-warning ms-1" style="font-size:0.65rem;">beta</span>
+            </a>
+          </div>
           <a href="#" class="cg-sidebar__item" :class="{ 'is-active': $store.app.view === 'perfil' }" :aria-current="$store.app.view === 'perfil' ? 'page' : null" @click.prevent="$store.app.setView('perfil')">
             <i class="bi bi-gear" aria-hidden="true"></i> Configurações
           </a>
@@ -310,6 +316,11 @@
                   </button>
                 </section>
                 <hr class="my-2" />
+                <div x-data="atalhoInvestimentos" x-show="liberado" x-cloak>
+                  <button type="button" class="btn btn-sm btn-outline-success w-100 text-start mb-1" @click="abrir(); menuOpen = false" :disabled="abrindo">
+                    <i class="bi bi-graph-up-arrow"></i> BNTT Investimentos <span class="badge text-bg-warning ms-1" style="font-size:0.65rem;">beta</span>
+                  </button>
+                </div>
                 <button type="button" class="btn btn-sm btn-outline-secondary w-100 text-start mb-1" @click="$store.app.setView('perfil'); menuOpen = false">
                   <i class="bi bi-gear"></i> Configurações
                 </button>
