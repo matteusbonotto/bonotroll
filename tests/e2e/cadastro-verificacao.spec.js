@@ -8,6 +8,9 @@ import { test, expect } from '@playwright/test';
 
 const SB = 'https://testebnttfalso00000.supabase.co';
 test.use({ serviceWorkers: 'block' });
+// No dist (npm run test:dist) o config.js é minificado/obfuscado e o texto
+// do placeholder não existe mais para trocar — o Supabase falso não liga.
+test.skip(!!process.env.PW_DIST, 'Supabase falso depende do config.js legível (só no fonte).');
 
 async function prepararSupabaseFalso(page, respostas = {}) {
   const chamadas = [];

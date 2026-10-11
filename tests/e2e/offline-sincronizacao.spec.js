@@ -9,6 +9,9 @@ const REF = 'testebnttfalso00000';
 const SB = `https://${REF}.supabase.co`;
 const UID = '11111111-1111-4111-8111-111111111111';
 test.use({ serviceWorkers: 'block' });
+// No dist (npm run test:dist) o config.js é minificado/obfuscado e o texto
+// do placeholder não existe mais para trocar — o Supabase falso não liga.
+test.skip(!!process.env.PW_DIST, 'Supabase falso depende do config.js legível (só no fonte).');
 
 function servidorFalso() {
   return {
