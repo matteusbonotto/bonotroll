@@ -1841,3 +1841,45 @@ body { font-size: var(--font-size-body); }
 
 /* Código de confirmação: dígitos grandes e espaçados, fáceis de conferir. */
 .cg-campo-codigo { font-size: 1.25rem; letter-spacing: .3em; text-align: center; font-variant-numeric: tabular-nums; }
+
+/* ---------- Badge de categoria (cgCategoria, 2026-10-11) ----------
+   Uma implementação só (js/components/categoriaBadge.js). Cor do texto/ícone
+   vem do JS (contraste calculado). Seletores compostos .cg-chip.cg-chip--cat
+   para não depender da ordem do arquivo (armadilha conhecida, CLAUDE.md). */
+.cg-chip.cg-chip--cat { position: relative; box-shadow: none; }
+.cg-chip.cg-chip--cat:focus-visible { outline: 3px solid var(--color-primary); outline-offset: 2px; }
+.cg-chip.cg-chip--cat .bi { font-size: 0.95em; line-height: 1; }
+.cg-chip.cg-chip--cat .cg-chip__balao {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1060;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--color-ink, #0F172A);
+  color: var(--color-on-ink, #FFFFFF);
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .18);
+}
+/* Nome escondido só visualmente: continua no nome acessível. */
+.cg-chip.cg-chip--cat.cg-chip--so-icone .cg-chip__nome {
+  position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+}
+.cg-chip.cg-chip--cat.cg-chip--so-icone { width: 28px; height: 28px; padding: 0; justify-content: center; flex-shrink: 0; }
+
+/* Celular: só o ícone, num círculo — o nome vai para o balão ao tocar. */
+@media (max-width: 575.98px) {
+  .cg-chip.cg-chip--cat .cg-chip__nome {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+  }
+  .cg-chip.cg-chip--cat { width: 32px; height: 32px; padding: 0; justify-content: center; flex-shrink: 0; }
+}
+@media (max-width: 575.98px) and (pointer: coarse) {
+  /* área de toque de 44 px sem aumentar o círculo visível */
+  .cg-chip.cg-chip--cat { min-height: 32px; }
+  .cg-chip.cg-chip--cat::after { content: ''; position: absolute; inset: -6px; }
+}

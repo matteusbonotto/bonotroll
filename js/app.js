@@ -12,6 +12,7 @@ import { onboardingStore } from './components/onboarding.js';
 import { faqStore } from './components/faq.js';
 import { cameraStore, eventoDeArquivo } from './components/camera.js';
 import { cgHelp } from './components/help.js';
+import { cgCategoria } from './components/categoriaBadge.js';
 import { authView } from './components/auth.js';
 import { dashboardView } from './components/dashboard.js';
 import { transactionsView } from './components/transactionTable.js';
@@ -61,6 +62,7 @@ document.addEventListener('alpine:init', () => {
   Alpine.data('atalhoInvestimentos', atalhoInvestimentos);
   Alpine.data('authView', authView);
   Alpine.data('cgHelp', cgHelp);
+  Alpine.data('cgCategoria', cgCategoria);
   Alpine.data('dashboardView', dashboardView);
   Alpine.data('transactionsView', transactionsView);
   Alpine.data('shoppingView', shoppingView);

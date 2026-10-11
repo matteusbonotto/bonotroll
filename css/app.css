@@ -2179,7 +2179,7 @@ img.cg-company-logo { display: block; }
   .cg-view-compras .cg-grid-view__card { padding: 12px 10px 10px 26px; }
   .cg-view-compras .cg-grid-view__card::before { left: 16px; }
   .cg-view-compras .cg-grid-view__card .cg-chip { max-width: 100%; }
-  .cg-view-compras .cg-grid-view--compact .cg-grid-view__card .cg-chip span { display: none; }
+  .cg-view-compras .cg-grid-view--compact .cg-grid-view__card .cg-chip .cg-chip__nome { display: none; }
 }
 
 /* ── Lote de distribuição/escala (auditoria de UX, 2026-10-05) ─────────── */

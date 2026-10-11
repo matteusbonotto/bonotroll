@@ -7,7 +7,7 @@ export const DEFAULT_CATEGORIES = [
   { nome: 'Curso', cor: '#22C55E', icone: 'bi-mortarboard' },
   { nome: 'Casa', cor: '#A855F7', icone: 'bi-house-door' },
   { nome: 'Carro', cor: '#6366F1', icone: 'bi-car-front' },
-  { nome: 'Pet', cor: '#EF4444', icone: 'bi-heart' },
+  { nome: 'Pet', cor: '#A16207', icone: 'bi-heart' },
   { nome: 'Delivery', cor: '#F97316', icone: 'bi-bicycle' },
   { nome: 'Mercado', cor: '#16A34A', icone: 'bi-basket' },
   { nome: 'Outro', cor: '#64748B', icone: 'bi-three-dots' },
@@ -18,10 +18,10 @@ export const DEFAULT_CATEGORIES = [
   { nome: 'Padaria', cor: '#B45309', icone: 'bi-basket2-fill' },
   { nome: 'Açougue', cor: '#DC2626', icone: 'bi-shop' },
   { nome: 'Hortifruti', cor: '#65A30D', icone: 'bi-apple' },
-  { nome: 'Limpeza', cor: '#06B6D4', icone: 'bi-droplet' },
+  { nome: 'Limpeza', cor: '#06B6D4', icone: 'bi-bucket' },
   { nome: 'Higiene', cor: '#EC4899', icone: 'bi-droplet-half' },
   { nome: 'Bebidas', cor: '#D97706', icone: 'bi-cup-straw' },
-  { nome: 'Saúde', cor: '#F43F5E', icone: 'bi-heart-pulse' },
+  { nome: 'Saúde', cor: '#F43F5E', icone: 'bi-bandaid' },
   { nome: 'Beleza', cor: '#D946EF', icone: 'bi-magic' },
   // A fatura do cartão é reconhecida pelo NOME desta categoria (não por um
   // campo próprio na transação) — ver isCartaoCreditoBill em

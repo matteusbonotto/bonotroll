@@ -164,7 +164,7 @@ function seedDatabase(nomes = NOMES_GENERICOS_PADRAO) {
     { id: 'cat-curso', nome: 'Curso', cor: '#22C55E', icone: 'bi-mortarboard' },
     { id: 'cat-casa', nome: 'Casa', cor: '#A855F7', icone: 'bi-house-door' },
     { id: 'cat-carro', nome: 'Carro', cor: '#6366F1', icone: 'bi-car-front' },
-    { id: 'cat-pet', nome: 'Pet', cor: '#EF4444', icone: 'bi-heart' },
+    { id: 'cat-pet', nome: 'Pet', cor: '#A16207', icone: 'bi-heart' },
     { id: 'cat-delivery', nome: 'Delivery', cor: '#F97316', icone: 'bi-bicycle' },
     { id: 'cat-outro', nome: 'Outro', cor: '#64748B', icone: 'bi-three-dots' },
     { id: 'cat-salario', nome: 'Salário', cor: '#EAB308', icone: 'bi-cash-coin' },
@@ -174,14 +174,14 @@ function seedDatabase(nomes = NOMES_GENERICOS_PADRAO) {
     // categoria aqui, o modo demo nunca demonstrava a associação nem o
     // orçamento/aviso de estouro (2026-09-01).
     { id: 'cat-mercado', nome: 'Mercado', cor: '#16A34A', icone: 'bi-basket' },
-    { id: 'cat-limpeza', nome: 'Limpeza', cor: '#06B6D4', icone: 'bi-droplet' },
+    { id: 'cat-limpeza', nome: 'Limpeza', cor: '#06B6D4', icone: 'bi-bucket' },
     { id: 'cat-higiene', nome: 'Higiene', cor: '#EC4899', icone: 'bi-droplet-half' },
     { id: 'cat-bebidas', nome: 'Bebidas', cor: '#D97706', icone: 'bi-cup-straw' },
     { id: 'cat-hortifruti', nome: 'Hortifruti', cor: '#65A30D', icone: 'bi-apple' },
     { id: 'cat-laticinios', nome: 'Laticínios', cor: '#38BDF8', icone: 'bi-cup-fill' },
     { id: 'cat-padaria', nome: 'Padaria', cor: '#B45309', icone: 'bi-basket2-fill' },
     { id: 'cat-acougue', nome: 'Açougue', cor: '#DC2626', icone: 'bi-shop' },
-    { id: 'cat-saude', nome: 'Saúde', cor: '#F43F5E', icone: 'bi-heart-pulse' },
+    { id: 'cat-saude', nome: 'Saúde', cor: '#F43F5E', icone: 'bi-bandaid' },
     { id: 'cat-beleza', nome: 'Beleza', cor: '#D946EF', icone: 'bi-magic' },
     // É o NOME desta categoria que faz uma saída virar "fatura" (pai do
     // accordion) — ver isCartaoCreditoBill em js/services/transactions.js.
