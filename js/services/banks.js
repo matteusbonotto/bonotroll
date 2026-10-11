@@ -1,6 +1,7 @@
 import { isDemoMode } from '../data/config.js';
 import { mockDb } from '../data/mockDb.js';
 import { getSupabase } from '../data/supabaseClient.js';
+import * as offline from '../data/offline.js';
 
 // Bancos das Caixinhas: mesmo problema que "empresa/serviço" resolvia em
 // companies.js — antes cada caixinha guardava banco_nome + icone/icone_url
@@ -15,12 +16,15 @@ export async function listBanks({ ownerId, groupId }) {
   if (isDemoMode()) {
     return mockDb.list('banks', (b) => mockDb.noEscopo(b, ownerId, groupId));
   }
-  const supabase = await getSupabase();
-  let query = supabase.from('banks').select('*');
-  query = groupId ? query.or(`owner_id.eq.${ownerId},group_id.eq.${groupId}`) : query.eq('owner_id', ownerId);
-  const { data, error } = await query;
-  if (error) throw error;
-  return data;
+  // Cópia local para abrir o app sem internet (js/data/offline.js).
+  return offline.comCacheOffline(null, `banks:${ownerId}:${groupId || ''}`, async () => {
+    const supabase = await getSupabase();
+    let query = supabase.from('banks').select('*');
+    query = groupId ? query.or(`owner_id.eq.${ownerId},group_id.eq.${groupId}`) : query.eq('owner_id', ownerId);
+    const { data, error } = await query;
+    if (error) throw error;
+    return data;
+  });
 }
 
 export async function createBank({ nome, logoUrl, ownerId, groupId }) {

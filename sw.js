@@ -9,7 +9,7 @@
 // terminar (skipWaiting() + controllerchange recarrega a página — ver
 // js/app.js e o comentário do evento "install" abaixo; não existe mais
 // banner manual desde a correção de auto-atualização de 2026-09-01).
-const CACHE_NAME = 'bntt-v19';
+const CACHE_NAME = 'bntt-v20';
 
 const APP_SHELL = [
   './',
@@ -25,6 +25,12 @@ const APP_SHELL = [
   './js/data/vapid.js',
   './js/data/mockDb.js',
   './js/data/supabaseClient.js',
+  './js/data/offline.js',
+  './js/data/filaSync.js',
+  './js/data/offlineIdb.js',
+  './js/utils/cor.js',
+  './js/services/sincronizacao.js',
+  './js/components/categoriaBadge.js',
   './js/utils/format.js',
   './js/utils/status.js',
   './js/services/auth.js',

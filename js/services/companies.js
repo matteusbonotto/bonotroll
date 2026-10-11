@@ -1,6 +1,7 @@
 import { isDemoMode } from '../data/config.js';
 import { mockDb } from '../data/mockDb.js';
 import { getSupabase } from '../data/supabaseClient.js';
+import * as offline from '../data/offline.js';
 
 // "Empresa/Serviço" deixou de ser só texto livre: cada nome distinto vira uma
 // linha em `companies` (criada sob demanda), que pode carregar um logo — daí
@@ -9,12 +10,15 @@ export async function listCompanies({ ownerId, groupId }) {
   if (isDemoMode()) {
     return mockDb.list('companies', (c) => mockDb.noEscopo(c, ownerId, groupId));
   }
-  const supabase = await getSupabase();
-  let query = supabase.from('companies').select('*');
-  query = groupId ? query.or(`owner_id.eq.${ownerId},group_id.eq.${groupId}`) : query.eq('owner_id', ownerId);
-  const { data, error } = await query;
-  if (error) throw error;
-  return data;
+  // Cópia local para abrir o app sem internet (js/data/offline.js).
+  return offline.comCacheOffline(null, `companies:${ownerId}:${groupId || ''}`, async () => {
+    const supabase = await getSupabase();
+    let query = supabase.from('companies').select('*');
+    query = groupId ? query.or(`owner_id.eq.${ownerId},group_id.eq.${groupId}`) : query.eq('owner_id', ownerId);
+    const { data, error } = await query;
+    if (error) throw error;
+    return data;
+  });
 }
 
 export async function createCompany({ nome, logoUrl, ownerId, groupId }) {

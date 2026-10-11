@@ -1,6 +1,7 @@
 import { isDemoMode } from '../data/config.js';
 import { mockDb, mockSession } from '../data/mockDb.js';
 import { getSupabase } from '../data/supabaseClient.js';
+import * as offline from '../data/offline.js';
 
 // Perfis disponíveis para acesso rápido no modo demonstração (tela de login).
 export async function getDemoProfiles() {
@@ -244,10 +245,12 @@ export function onAuthStateChange(callback) {
 
 export async function getProfile(userId) {
   if (isDemoMode()) return mockDb.get('profiles', userId);
-  const supabase = await getSupabase();
-  const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
-  if (error) throw error;
-  return data;
+  return offline.comCacheOffline(null, `perfil:${userId}`, async () => {
+    const supabase = await getSupabase();
+    const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
+    if (error) throw error;
+    return data;
+  });
 }
 
 export async function updateProfile(userId, patch) {

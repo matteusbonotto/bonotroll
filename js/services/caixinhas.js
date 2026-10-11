@@ -1,6 +1,7 @@
 import { isDemoMode } from '../data/config.js';
 import { mockDb } from '../data/mockDb.js';
 import { getSupabase } from '../data/supabaseClient.js';
+import * as offline from '../data/offline.js';
 import { somar, subtrair } from '../utils/money.js';
 
 // Caixinhas: dinheiro guardado em bancos/corretoras, uma linha por banco
@@ -14,12 +15,14 @@ export async function listCaixinhas({ ownerId, groupId }) {
   if (isDemoMode()) {
     return mockDb.list('caixinhas', (c) => mockDb.noEscopo(c, ownerId, groupId));
   }
-  const supabase = await getSupabase();
-  let query = supabase.from('caixinhas').select('*');
-  query = groupId ? query.or(`owner_id.eq.${ownerId},group_id.eq.${groupId}`) : query.eq('owner_id', ownerId);
-  const { data, error } = await query.order('criado_em');
-  if (error) throw error;
-  return data;
+  return offline.comCacheOffline('caixinhas', `caixinhas:${ownerId}:${groupId || ''}`, async () => {
+    const supabase = await getSupabase();
+    let query = supabase.from('caixinhas').select('*');
+    query = groupId ? query.or(`owner_id.eq.${ownerId},group_id.eq.${groupId}`) : query.eq('owner_id', ownerId);
+    const { data, error } = await query.order('criado_em');
+    if (error) throw error;
+    return data;
+  });
 }
 
 export async function createCaixinha({ bancoNome, moeda, meta, icone, iconeUrl, ownerId, groupId }) {
@@ -75,6 +78,7 @@ export async function deleteCaixinha(id) {
     for (const m of movs) await mockDb.remove('caixinha_movimentacoes', m.id);
     return mockDb.remove('caixinhas', id);
   }
+  offline.exigirConexao('excluir uma reserva');
   const supabase = await getSupabase();
   const { error } = await supabase.from('caixinhas').delete().eq('id', id);
   if (error) throw error;
@@ -107,10 +111,12 @@ export async function listMovimentacoesFor(caixinhaIds) {
   if (isDemoMode()) {
     rows = await mockDb.list('caixinha_movimentacoes', (m) => ids.includes(m.caixinha_id));
   } else {
-    const supabase = await getSupabase();
-    const { data, error } = await supabase.from('caixinha_movimentacoes').select('*').in('caixinha_id', ids);
-    if (error) throw error;
-    rows = data;
+    rows = await offline.comCacheOffline(null, `caixinha_movimentacoes:${[...ids].sort().join(',')}`, async () => {
+      const supabase = await getSupabase();
+      const { data, error } = await supabase.from('caixinha_movimentacoes').select('*').in('caixinha_id', ids);
+      if (error) throw error;
+      return data;
+    });
   }
   for (const row of rows) {
     const atual = map.get(row.caixinha_id) || [];
@@ -123,6 +129,7 @@ export async function listMovimentacoesFor(caixinhaIds) {
 export async function createMovimentacao({ caixinhaId, tipo, valor, data, observacoes }) {
   const row = { caixinha_id: caixinhaId, tipo, valor: Number(valor), data: data || new Date().toISOString().slice(0, 10), observacoes: observacoes || null };
   if (isDemoMode()) return mockDb.insert('caixinha_movimentacoes', row);
+  offline.exigirConexao('movimentar uma reserva');
   const supabase = await getSupabase();
   const { data: created, error } = await supabase.from('caixinha_movimentacoes').insert(row).select().single();
   if (error) throw error;
@@ -131,6 +138,7 @@ export async function createMovimentacao({ caixinhaId, tipo, valor, data, observ
 
 export async function deleteMovimentacao(id) {
   if (isDemoMode()) return mockDb.remove('caixinha_movimentacoes', id);
+  offline.exigirConexao('excluir uma movimentação');
   const supabase = await getSupabase();
   const { error } = await supabase.from('caixinha_movimentacoes').delete().eq('id', id);
   if (error) throw error;

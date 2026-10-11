@@ -1,6 +1,7 @@
 import { isDemoMode } from '../data/config.js';
 import { mockDb } from '../data/mockDb.js';
 import { getSupabase } from '../data/supabaseClient.js';
+import * as offline from '../data/offline.js';
 
 function generateGroupCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // sem caracteres ambíguos (0/O, 1/I)
@@ -26,6 +27,10 @@ export async function getMyGroup(profileId, linha = null) {
     for (const m of memberRows) members.push({ ...(await mockDb.get('profiles', m.profile_id)), papel: m.papel, unidade_id: m.unidade_id ?? null });
     return { group, members };
   }
+  return offline.comCacheOffline(null, `grupo:${profileId}`, () => buscarMeuGrupo(profileId));
+}
+
+async function buscarMeuGrupo(profileId) {
   const supabase = await getSupabase();
   const { data: membership, error: mErr } = await supabase
     .from('group_members')

@@ -2,6 +2,7 @@ import { isDemoMode } from '../data/config.js';
 import { mockDb } from '../data/mockDb.js';
 import { getSupabase } from '../data/supabaseClient.js';
 import { comFallbackDeColuna } from '../utils/dbFallback.js';
+import * as offline from '../data/offline.js';
 
 // Cômodos e subcategorias são listas FIXAS (o usuário não cria/exclui
 // cômodo) — só os produtos dentro delas são livres. Escritório/Sala/
@@ -181,13 +182,15 @@ export async function listItems({ roomId, categoryId } = {}) {
       return true;
     });
   }
-  const supabase = await getSupabase();
-  let query = supabase.from('resource_items').select('*');
-  if (roomId) query = query.eq('room_id', roomId);
-  if (categoryId) query = query.eq('category_id', categoryId);
-  const { data, error } = await query;
-  if (error) throw error;
-  return data;
+  return offline.comCacheOffline('resource_items', `resource_items:${roomId || ''}:${categoryId || ''}`, async () => {
+    const supabase = await getSupabase();
+    let query = supabase.from('resource_items').select('*');
+    if (roomId) query = query.eq('room_id', roomId);
+    if (categoryId) query = query.eq('category_id', categoryId);
+    const { data, error } = await query;
+    if (error) throw error;
+    return data;
+  });
 }
 
 // Todos os itens do usuário/grupo, pra "Sugestões" (em falta/vencendo) — não
@@ -197,12 +200,14 @@ export async function listAllItems({ ownerId, groupId }) {
   if (isDemoMode()) {
     return mockDb.list('resource_items', (i) => mockDb.noEscopo(i, ownerId, groupId));
   }
-  const supabase = await getSupabase();
-  let query = supabase.from('resource_items').select('*');
-  query = groupId ? query.or(`owner_id.eq.${ownerId},group_id.eq.${groupId}`) : query.eq('owner_id', ownerId);
-  const { data, error } = await query;
-  if (error) throw error;
-  return data;
+  return offline.comCacheOffline('resource_items', `resource_items_todos:${ownerId}:${groupId || ''}`, async () => {
+    const supabase = await getSupabase();
+    let query = supabase.from('resource_items').select('*');
+    query = groupId ? query.or(`owner_id.eq.${ownerId},group_id.eq.${groupId}`) : query.eq('owner_id', ownerId);
+    const { data, error } = await query;
+    if (error) throw error;
+    return data;
+  });
 }
 
 export async function createItem(data) {
@@ -218,12 +223,20 @@ export async function createItem(data) {
 
 export async function updateItem(id, patch) {
   if (isDemoMode()) return mockDb.update('resource_items', id, patch);
-  const supabase = await getSupabase();
-  return comFallbackDeColuna((obj) => supabase.from('resource_items').update(obj).eq('id', id).select().single(), patch);
+  const salvo = await offline.escreverOuEnfileirar(
+    { tabela: 'resource_items', tipo: 'update', registroId: id, dados: patch, base: offline.baseDaEdicao('resource_items', id, patch), otimista: { ...offline.versaoConhecida('resource_items', id), ...patch } },
+    async () => {
+      const supabase = await getSupabase();
+      return comFallbackDeColuna((obj) => supabase.from('resource_items').update(obj).eq('id', id).select().single(), patch);
+    }
+  );
+  if (!salvo._pendente) offline.lembrarRegistro('resource_items', salvo);
+  return salvo;
 }
 
 export async function deleteItem(id) {
   if (isDemoMode()) return mockDb.remove('resource_items', id);
+  offline.exigirConexao('excluir um item');
   const supabase = await getSupabase();
   const { error } = await supabase.from('resource_items').delete().eq('id', id);
   if (error) throw error;

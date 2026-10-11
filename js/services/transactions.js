@@ -5,6 +5,7 @@ import { computeStatus } from '../utils/status.js';
 import { todayIso, semAcento } from '../utils/format.js';
 import * as format from '../utils/format.js';
 import { comFallbackDeColuna } from '../utils/dbFallback.js';
+import * as offline from '../data/offline.js';
 import { somar, subtrair, iguais, dividirIgualmente, percentual as calcPercentual } from '../utils/money.js';
 
 export function withStatus(rows) {
@@ -89,12 +90,15 @@ export async function listTransactions({ ownerId, groupId, filters = {} } = {}) 
   if (isDemoMode()) {
     rows = await mockDb.list('transactions', (t) => mockDb.noEscopo(t, ownerId, groupId));
   } else {
-    const supabase = await getSupabase();
-    let query = supabase.from('transactions').select('*');
-    query = groupId ? query.or(`owner_id.eq.${ownerId},group_id.eq.${groupId}`) : query.eq('owner_id', ownerId);
-    const { data, error } = await query;
-    if (error) throw error;
-    rows = data;
+    // Sem internet: a última cópia deste aparelho + o que está na fila.
+    rows = await offline.comCacheOffline('transactions', `transactions:${ownerId}:${groupId || ''}`, async () => {
+      const supabase = await getSupabase();
+      let query = supabase.from('transactions').select('*');
+      query = groupId ? query.or(`owner_id.eq.${ownerId},group_id.eq.${groupId}`) : query.eq('owner_id', ownerId);
+      const { data, error } = await query;
+      if (error) throw error;
+      return data;
+    });
   }
 
   rows = withStatus(rows);
@@ -132,21 +136,40 @@ export async function contarLancamentosDoMes(ownerId) {
   return count ?? 0;
 }
 
+// O id nasce aqui, no aparelho (2026-10-11): é a chave de idempotência do
+// modo offline — se a inclusão for reenviada, o banco recusa o id repetido
+// em vez de criar um lançamento duplicado.
 export async function createTransaction(data) {
-  const row = { data_cadastro: todayIso(), ...data };
+  const row = { id: data.id || crypto.randomUUID(), data_cadastro: todayIso(), ...data };
   if (isDemoMode()) return mockDb.insert('transactions', row);
-  const supabase = await getSupabase();
-  return comFallbackDeColuna((obj) => supabase.from('transactions').insert(obj).select().single(), row);
+  const salvo = await offline.escreverOuEnfileirar(
+    { tabela: 'transactions', tipo: 'insert', registroId: row.id, dados: row, otimista: { criado_em: new Date().toISOString(), ...row } },
+    async () => {
+      const supabase = await getSupabase();
+      return comFallbackDeColuna((obj) => supabase.from('transactions').insert(obj).select().single(), row);
+    }
+  );
+  offline.lembrarRegistro('transactions', salvo._pendente ? null : salvo);
+  return salvo;
 }
 
 export async function updateTransaction(id, patch) {
   if (isDemoMode()) return mockDb.update('transactions', id, patch);
-  const supabase = await getSupabase();
-  return comFallbackDeColuna((obj) => supabase.from('transactions').update(obj).eq('id', id).select().single(), patch);
+  const conhecida = offline.versaoConhecida('transactions', id);
+  const salvo = await offline.escreverOuEnfileirar(
+    { tabela: 'transactions', tipo: 'update', registroId: id, dados: patch, base: offline.baseDaEdicao('transactions', id, patch), otimista: { ...conhecida, ...patch } },
+    async () => {
+      const supabase = await getSupabase();
+      return comFallbackDeColuna((obj) => supabase.from('transactions').update(obj).eq('id', id).select().single(), patch);
+    }
+  );
+  if (!salvo._pendente) offline.lembrarRegistro('transactions', salvo);
+  return salvo;
 }
 
 export async function deleteTransaction(id) {
   if (isDemoMode()) return mockDb.remove('transactions', id);
+  offline.exigirConexao('excluir um lançamento');
   const supabase = await getSupabase();
   const { error } = await supabase.from('transactions').delete().eq('id', id);
   if (error) throw error;

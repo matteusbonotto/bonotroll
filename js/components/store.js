@@ -14,6 +14,7 @@ import { normalizarEscala, proximaEscala, podeAumentar, podeDiminuir, PADRAO } f
 import { ligarNarracao, vozDisponivel, falar } from '../utils/narracao.js';
 import * as assinatura from '../services/assinatura.js';
 import * as unidadesService from '../services/unidades.js';
+import * as sincronizacao from '../services/sincronizacao.js';
 
 // Store global (Alpine.store('app')) — sessão, perfil, grupo, categorias e
 // navegação. Registrado em app.js.
@@ -50,6 +51,9 @@ export function appStore() {
     view: location.hash.replace('#/', '') || 'home',
     online: navigator.onLine,
     isDemoMode: isDemoMode(),
+    // Modo offline (js/data/offline.js): estado mostrado na topbar.
+    sync: { estado: 'online', pendentes: 0, conflitos: [], erros: [], dadosDe: null, ultimaSync: null },
+    syncPainelAberto: false,
     erroRetornoAuth: '', // mensagem do link de e-mail/Google que voltou com erro
     erroRetornoCodigo: '',
     toasts: [],
@@ -96,6 +100,13 @@ export function appStore() {
       this.conta = assinatura.contaDaSessao(null);
       if (this.intencao) this.conta = { ...this.conta, tipo: this.intencao.tipo };
       this.aplicarLinha();
+      sincronizacao.aoMudarEstado((s) => {
+        this.sync = s;
+        // "Sincronizado" fica alguns segundos na topbar e some sozinho.
+        if (s.estado === 'sincronizado') {
+          setTimeout(() => { if (this.sync.estado === 'sincronizado') this.sync = { ...this.sync, estado: 'online' }; }, 6000);
+        }
+      });
       window.addEventListener('online', () => { this.online = true; });
       window.addEventListener('offline', () => { this.online = false; });
       // Cobre voltar/avançar do navegador e edição manual da URL — o clique
@@ -139,6 +150,9 @@ export function appStore() {
       // e o nome — o OAuth não leva o options.data do cadastro. Best-effort:
       // falhar aqui só deixa a conta como Home, nunca trava o login.
       let nomeDoGoogle = null;
+      // Offline liga ANTES de buscar o perfil: é a cópia local que permite
+      // abrir o app sem internet (perfil, grupo, categorias, listas).
+      if (!this.isDemoMode) await sincronizacao.iniciarOffline(session.user.id);
       if (!this.isDemoMode) {
         try {
           const r = await authService.completarCadastroOAuth(session, this.intencao?.tipo || this.conta.tipo);
@@ -397,6 +411,25 @@ export function appStore() {
       this.notifications = [];
       this.view = 'home';
       history.replaceState(null, '', location.pathname + location.search);
+      // Sessão encerrada (inclusive em outra aba): nada fica no aparelho.
+      if (!this.isDemoMode) sincronizacao.encerrarOffline({ apagar: true }).catch(() => {});
+    },
+
+    // Texto do indicador de sincronização na topbar ('' = não mostra nada).
+    get rotuloSync() {
+      const s = this.sync;
+      const n = s.pendentes;
+      if (s.estado === 'sincronizando') return `Sincronizando (${n})`;
+      if (s.estado === 'conflito') return `Conflito (${s.conflitos.length})`;
+      if (s.estado === 'erro') return 'Erro de sincronização';
+      if (s.estado === 'offline') return n ? `Offline · ${n} a enviar` : 'Offline';
+      if (s.estado === 'sincronizado') return 'Sincronizado';
+      return n ? `${n} a enviar` : '';
+    },
+    get dadosDeTexto() {
+      if (!this.sync.dadosDe) return '';
+      const d = new Date(this.sync.dadosDe);
+      return `${d.toLocaleDateString('pt-BR')} às ${d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
     },
 
     async refreshNotifications() {
@@ -533,8 +566,30 @@ export function appStore() {
     },
 
     async logout() {
+      // Sair apaga a cópia local (dados financeiros não ficam no aparelho) —
+      // e com ela o que ainda não foi enviado. Avisa antes.
+      const naoEnviadas = this.sync.pendentes + this.sync.conflitos.length + this.sync.erros.length;
+      if (naoEnviadas && !confirm(`Você tem ${naoEnviadas} alteração(ões) feitas sem internet que ainda não foram enviadas. Se sair agora, elas serão perdidas. Sair mesmo assim?`)) return;
+      await sincronizacao.encerrarOffline({ apagar: true });
       await authService.signOut();
       this.clearSession();
+    },
+
+    async sincronizarAgora() {
+      await sincronizacao.sincronizar();
+    },
+    async resolverConflitoSync(id, escolha) {
+      await sincronizacao.resolverConflito(id, escolha);
+    },
+    async tentarDeNovoSync(id) {
+      await sincronizacao.tentarDeNovo(id);
+    },
+    async descartarSync(id) {
+      if (!confirm('Descartar esta alteração? Ela não será enviada.')) return;
+      await sincronizacao.descartarOperacao(id);
+    },
+    descreverOperacaoSync(op) {
+      return sincronizacao.descreverOperacao(op);
     },
 
     // "Sair do modo demonstração" (Perfil) — sem isso, quem visitou com

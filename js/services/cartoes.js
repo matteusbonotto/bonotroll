@@ -1,6 +1,7 @@
 import { isDemoMode } from '../data/config.js';
 import { mockDb } from '../data/mockDb.js';
 import { getSupabase } from '../data/supabaseClient.js';
+import * as offline from '../data/offline.js';
 
 // Cartões de crédito como entidade própria (2026-08-22) — ver
 // .claude/discussions/001-cartao-credito-multi-cartao.md. Antes "isso é uma
@@ -21,12 +22,15 @@ export async function listCartoes({ ownerId, groupId }) {
   if (isDemoMode()) {
     return mockDb.list('cartoes', (c) => mockDb.noEscopo(c, ownerId, groupId));
   }
-  const supabase = await getSupabase();
-  let query = supabase.from('cartoes').select('*');
-  query = groupId ? query.or(`owner_id.eq.${ownerId},group_id.eq.${groupId}`) : query.eq('owner_id', ownerId);
-  const { data, error } = await query;
-  if (error) throw error;
-  return data;
+  // Cópia local para abrir o app sem internet (js/data/offline.js).
+  return offline.comCacheOffline(null, `cartoes:${ownerId}:${groupId || ''}`, async () => {
+    const supabase = await getSupabase();
+    let query = supabase.from('cartoes').select('*');
+    query = groupId ? query.or(`owner_id.eq.${ownerId},group_id.eq.${groupId}`) : query.eq('owner_id', ownerId);
+    const { data, error } = await query;
+    if (error) throw error;
+    return data;
+  });
 }
 
 export async function createCartao({ nome, bancoId, ownerId, groupId }) {

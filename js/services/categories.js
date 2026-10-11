@@ -1,6 +1,7 @@
 import { isDemoMode } from '../data/config.js';
 import { mockDb } from '../data/mockDb.js';
 import { getSupabase } from '../data/supabaseClient.js';
+import * as offline from '../data/offline.js';
 
 export const DEFAULT_CATEGORIES = [
   { nome: 'Assinaturas', cor: '#0EA5E9', icone: 'bi-collection-play' },
@@ -35,12 +36,15 @@ export async function listCategories({ ownerId, groupId }) {
   if (isDemoMode()) {
     return mockDb.list('categories', (c) => mockDb.noEscopo(c, ownerId, groupId));
   }
-  const supabase = await getSupabase();
-  let query = supabase.from('categories').select('*');
-  query = groupId ? query.or(`owner_id.eq.${ownerId},group_id.eq.${groupId}`) : query.eq('owner_id', ownerId);
-  const { data, error } = await query.order('nome');
-  if (error) throw error;
-  return data;
+  // Cópia local para abrir o app sem internet (js/data/offline.js).
+  return offline.comCacheOffline(null, `categories:${ownerId}:${groupId || ''}`, async () => {
+    const supabase = await getSupabase();
+    let query = supabase.from('categories').select('*');
+    query = groupId ? query.or(`owner_id.eq.${ownerId},group_id.eq.${groupId}`) : query.eq('owner_id', ownerId);
+    const { data, error } = await query.order('nome');
+    if (error) throw error;
+    return data;
+  });
 }
 
 export async function createCategory({ nome, cor, icone, iconeUrl, ownerId, groupId }) {

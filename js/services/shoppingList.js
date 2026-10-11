@@ -2,6 +2,7 @@ import { isDemoMode } from '../data/config.js';
 import { mockDb } from '../data/mockDb.js';
 import { getSupabase } from '../data/supabaseClient.js';
 import { comFallbackDeColuna } from '../utils/dbFallback.js';
+import * as offline from '../data/offline.js';
 import { semAcento } from '../utils/format.js';
 import { somar } from '../utils/money.js';
 import { agruparPorAnoMes } from '../utils/periodo.js';
@@ -26,12 +27,14 @@ export async function listLists({ ownerId, groupId }) {
     const rows = await mockDb.list('shopping_lists', (l) => mockDb.noEscopo(l, ownerId, groupId));
     return rows.sort((a, b) => (b.criado_em || '').localeCompare(a.criado_em || ''));
   }
-  const supabase = await getSupabase();
-  let query = supabase.from('shopping_lists').select('*');
-  query = groupId ? query.or(`owner_id.eq.${ownerId},group_id.eq.${groupId}`) : query.eq('owner_id', ownerId);
-  const { data, error } = await query.order('criado_em', { ascending: false });
-  if (error) throw error;
-  return data;
+  return offline.comCacheOffline('shopping_lists', `shopping_lists:${ownerId}:${groupId || ''}`, async () => {
+    const supabase = await getSupabase();
+    let query = supabase.from('shopping_lists').select('*');
+    query = groupId ? query.or(`owner_id.eq.${ownerId},group_id.eq.${groupId}`) : query.eq('owner_id', ownerId);
+    const { data, error } = await query.order('criado_em', { ascending: false });
+    if (error) throw error;
+    return data;
+  });
 }
 
 // Retorna a lista ativa mais recente (não finalizada) ou cria uma nova em
@@ -171,10 +174,14 @@ export function computeListLimitStatus(total, limite) {
 
 export async function listItems(listId) {
   if (isDemoMode()) return mockDb.list('shopping_list_items', (i) => i.list_id === listId);
-  const supabase = await getSupabase();
-  const { data, error } = await supabase.from('shopping_list_items').select('*').eq('list_id', listId).order('criado_em');
-  if (error) throw error;
-  return data;
+  const linhas = await offline.comCacheOffline('shopping_list_items', `shopping_list_items:${listId}`, async () => {
+    const supabase = await getSupabase();
+    const { data, error } = await supabase.from('shopping_list_items').select('*').eq('list_id', listId).order('criado_em');
+    if (error) throw error;
+    return data;
+  });
+  // Itens incluídos offline em OUTRA lista não aparecem nesta.
+  return linhas.filter((i) => i.list_id === listId);
 }
 
 // Preço já é aceito aqui (opcional) — antes só dava pra preencher durante
@@ -182,6 +189,7 @@ export async function listItems(listId) {
 // sabe o valor (etiqueta, app do mercado, lembrança de compra anterior).
 export async function addItem(listId, { nome, categoria_id, unidade = 'un', quantidade = 1, prioridade = 3, preco_unitario, preco_por_kg, data_validade, codigo_barras, foto_url }) {
   const row = {
+    id: crypto.randomUUID(), // chave de idempotência do modo offline (ver transactions.js)
     list_id: listId,
     nome,
     // "|| null" (não "?? null"): categoria_id é uma coluna uuid — string
@@ -204,10 +212,12 @@ export async function addItem(listId, { nome, categoria_id, unidade = 'un', quan
   };
   row.subtotal = computeItemSubtotal(row);
   if (isDemoMode()) return mockDb.insert('shopping_list_items', row);
-  const supabase = await getSupabase();
-  return comFallbackDeColuna(
-    (obj) => supabase.from('shopping_list_items').insert(obj).select().single(),
-    row
+  return offline.escreverOuEnfileirar(
+    { tabela: 'shopping_list_items', tipo: 'insert', registroId: row.id, dados: row, otimista: { criado_em: new Date().toISOString(), ...row } },
+    async () => {
+      const supabase = await getSupabase();
+      return comFallbackDeColuna((obj) => supabase.from('shopping_list_items').insert(obj).select().single(), row);
+    }
   );
 }
 
@@ -254,19 +264,31 @@ export async function updateItem(id, patch) {
     const merged = { ...current, ...patch };
     return mockDb.update('shopping_list_items', id, { ...patch, subtotal: computeItemSubtotal(merged) });
   }
-  const supabase = await getSupabase();
-  const { data: current, error: getErr } = await supabase.from('shopping_list_items').select('*').eq('id', id).single();
-  if (getErr) throw getErr;
-  const merged = { ...current, ...patch };
-  const patchCompleto = { ...patch, subtotal: computeItemSubtotal(merged) };
-  return comFallbackDeColuna(
-    (obj) => supabase.from('shopping_list_items').update(obj).eq('id', id).select().single(),
-    patchCompleto
+  // Offline (marcar comprado no mercado sem sinal): o subtotal sai da última
+  // versão conhecida do item; a edição vai para a fila com a base dela.
+  const conhecida = offline.versaoConhecida('shopping_list_items', id);
+  const patchOffline = conhecida ? { ...patch, subtotal: computeItemSubtotal({ ...conhecida, ...patch }) } : patch;
+  const salvo = await offline.escreverOuEnfileirar(
+    { tabela: 'shopping_list_items', tipo: 'update', registroId: id, dados: patchOffline, base: offline.baseDaEdicao('shopping_list_items', id, patchOffline), otimista: { ...conhecida, ...patchOffline } },
+    async () => {
+      const supabase = await getSupabase();
+      const { data: current, error: getErr } = await supabase.from('shopping_list_items').select('*').eq('id', id).single();
+      if (getErr) throw getErr;
+      const merged = { ...current, ...patch };
+      const patchCompleto = { ...patch, subtotal: computeItemSubtotal(merged) };
+      return comFallbackDeColuna(
+        (obj) => supabase.from('shopping_list_items').update(obj).eq('id', id).select().single(),
+        patchCompleto
+      );
+    }
   );
+  if (!salvo._pendente) offline.lembrarRegistro('shopping_list_items', salvo);
+  return salvo;
 }
 
 export async function removeItem(id) {
   if (isDemoMode()) return mockDb.remove('shopping_list_items', id);
+  offline.exigirConexao('remover um item da lista');
   const supabase = await getSupabase();
   const { error } = await supabase.from('shopping_list_items').delete().eq('id', id);
   if (error) throw error;

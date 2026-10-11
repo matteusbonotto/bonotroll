@@ -3,6 +3,7 @@
 import { isDemoMode } from '../data/config.js';
 import { mockDb } from '../data/mockDb.js';
 import { getSupabase } from '../data/supabaseClient.js';
+import * as offline from '../data/offline.js';
 
 export const PAPEIS = [
   { id: 'dono', rotulo: 'Dono', descricao: 'Vê e muda tudo, inclusive papéis' },
@@ -35,10 +36,12 @@ export function mensagemDeUnidades(e) {
 export async function listarUnidades(groupId) {
   if (!groupId) return [];
   if (isDemoMode()) return (await mockDb.list('unidades', (u) => u.group_id === groupId)).sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
-  const supabase = await getSupabase();
-  const { data, error } = await supabase.from('unidades').select('*').eq('group_id', groupId).order('nome');
-  if (error) throw error;
-  return data;
+  return offline.comCacheOffline(null, `unidades:${groupId}`, async () => {
+    const supabase = await getSupabase();
+    const { data, error } = await supabase.from('unidades').select('*').eq('group_id', groupId).order('nome');
+    if (error) throw error;
+    return data;
+  });
 }
 
 export async function criarUnidade(groupId, nome, criadoPor) {

@@ -52,8 +52,8 @@
 <body x-data>
   <a href="#conteudo" class="visually-hidden-focusable cg-pular-conteudo">Pular para o conteúdo</a>
 
-  <div class="cg-offline-banner" x-show="!$store.app.online" x-cloak>
-    <i class="bi bi-wifi-off"></i> Sem conexão — algumas ações serão guardadas e enviadas depois
+  <div class="cg-offline-banner" x-show="!$store.app.online" x-cloak role="status">
+    <i class="bi bi-wifi-off" aria-hidden="true"></i> Sem conexão — lançamentos, itens de compra e quantidades ficam guardados e são enviados quando a internet voltar<span x-show="$store.app.dadosDeTexto" x-text="'. Mostrando dados de ' + $store.app.dadosDeTexto"></span>
   </div>
 
   <div class="cg-update-banner" x-show="$store.app.installPrompt" x-cloak x-transition>
@@ -253,6 +253,47 @@
             </select>
           </div>
           <div class="d-flex align-items-center gap-2">
+            <!-- Sincronização offline (2026-10-11): só aparece quando há algo a
+                 dizer — offline, enviando, enviado, conflito ou erro. -->
+            <div class="position-relative" x-show="$store.app.rotuloSync" x-cloak @click.outside="$store.app.syncPainelAberto = false" @keydown.escape.window="$store.app.syncPainelAberto = false">
+              <button type="button" class="cg-sync" :class="'cg-sync--' + $store.app.sync.estado" @click="$store.app.syncPainelAberto = !$store.app.syncPainelAberto" :aria-expanded="$store.app.syncPainelAberto" aria-haspopup="dialog" aria-live="polite">
+                <span class="spinner-border spinner-border-sm" x-show="$store.app.sync.estado === 'sincronizando'" aria-hidden="true"></span>
+                <i class="bi" aria-hidden="true" x-show="$store.app.sync.estado !== 'sincronizando'"
+                  :class="{ offline: 'bi-wifi-off', sincronizado: 'bi-check2-circle', erro: 'bi-exclamation-triangle', conflito: 'bi-exclamation-diamond' }[$store.app.sync.estado] || 'bi-cloud-arrow-up'"></i>
+                <span class="cg-sync__texto" x-text="$store.app.rotuloSync"></span>
+              </button>
+              <div class="cg-card cg-sync__painel" x-show="$store.app.syncPainelAberto" x-cloak x-transition role="dialog" aria-label="Sincronização">
+                <p class="small mb-2" x-show="$store.app.sync.estado === 'offline'">Sem conexão com o servidor. O que você fizer fica guardado neste aparelho e é enviado sozinho quando a conexão voltar.</p>
+                <p class="small cg-muted mb-2" x-show="$store.app.dadosDeTexto" x-text="'Dados mostrados: cópia de ' + $store.app.dadosDeTexto + '.'"></p>
+                <p class="small mb-2" x-show="$store.app.sync.pendentes" x-text="$store.app.sync.pendentes + ' alteração(ões) aguardando envio.'"></p>
+
+                <template x-for="op in $store.app.sync.conflitos" :key="op.id">
+                  <div class="cg-sync__item">
+                    <div class="small fw-semibold" x-text="$store.app.descreverOperacaoSync(op)"></div>
+                    <div class="small cg-muted mb-2" x-text="op.servidor ? 'Alguém mudou este registro depois de você. Qual versão vale?' : 'Este registro foi excluído no servidor enquanto você estava sem internet.'"></div>
+                    <div class="d-flex gap-2">
+                      <button type="button" class="btn btn-sm btn-success" @click="$store.app.resolverConflitoSync(op.id, 'minha')">Manter a minha</button>
+                      <button type="button" class="btn btn-sm btn-outline-secondary" @click="$store.app.resolverConflitoSync(op.id, 'servidor')" x-text="op.servidor ? 'Ficar com a do servidor' : 'Descartar a minha'"></button>
+                    </div>
+                  </div>
+                </template>
+
+                <template x-for="op in $store.app.sync.erros" :key="op.id">
+                  <div class="cg-sync__item">
+                    <div class="small fw-semibold" x-text="$store.app.descreverOperacaoSync(op)"></div>
+                    <div class="small text-danger mb-2" x-text="'Não foi possível enviar: ' + (op.erro || 'erro desconhecido')"></div>
+                    <div class="d-flex gap-2">
+                      <button type="button" class="btn btn-sm btn-outline-success" @click="$store.app.tentarDeNovoSync(op.id)">Tentar de novo</button>
+                      <button type="button" class="btn btn-sm btn-outline-danger" @click="$store.app.descartarSync(op.id)">Descartar</button>
+                    </div>
+                  </div>
+                </template>
+
+                <button type="button" class="btn btn-sm btn-outline-success w-100 mt-1" x-show="$store.app.sync.pendentes" :disabled="$store.app.sync.estado === 'sincronizando'" @click="$store.app.sincronizarAgora()">
+                  <i class="bi bi-arrow-repeat" aria-hidden="true"></i> Sincronizar agora
+                </button>
+              </div>
+            </div>
             <!-- Ajuda num botão só, COM texto (revisão com personas, 2026-10-04: 4
                  ícones sem texto no topo confundiam idoso e iniciante). O tema
                  foi para Perfil → Preferências. -->
