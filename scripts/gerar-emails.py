@@ -120,6 +120,19 @@ CODIGO = """              <tr>
                 <td align="center" style="padding:16px 0 0;font-size:13px;line-height:1.5;color:{mudo};">Digite este código no BNTT para continuar.</td>
               </tr>"""
 
+# Cadastro: além do link, o código de uso único. Antivírus e pré-visualização
+# de alguns provedores de e-mail "abrem" o link antes da pessoa — e o link só
+# vale uma vez. O código é digitado na tela "Confirmar e-mail" do app
+# (js/components/auth.js → verifyOtp), então funciona mesmo nesse caso.
+CODIGO_ALTERNATIVO = """              <tr>
+                <td align="center" style="padding:26px 0 8px;font-size:14px;line-height:1.5;color:{mudo};">Ou digite este código na tela <strong>Confirmar e-mail</strong> do BNTT:</td>
+              </tr>
+              <tr>
+                <td align="center">
+                  <div style="display:inline-block;padding:12px 22px;border-radius:12px;background:#E3F5EC;border:1px dashed {verde};font-family:'Courier New',Courier,monospace;font-size:26px;font-weight:700;letter-spacing:6px;color:{tinta};">{{{{ .Token }}}}</div>
+                </td>
+              </tr>"""
+
 MODELOS = [
     {
         "arquivo": "confirmar-cadastro.html",
@@ -128,8 +141,9 @@ MODELOS = [
         "preheader": "Falta só um toque para sua conta ficar pronta.",
         "emoji": "&#9993;&#65039;",
         "titulo": "Confirme seu e-mail",
-        "texto": "Que bom ter você no BNTT! Toque no botão abaixo para confirmar este e-mail e entrar na sua conta.",
+        "texto": "Que bom ter você no BNTT! Toque no botão abaixo para confirmar este e-mail e entrar na sua conta. O link e o código valem por 1 hora.",
         "botao": "Confirmar meu e-mail",
+        "codigo_alternativo": True,
         "aviso": "<strong>Não criou uma conta no BNTT?</strong> Pode ignorar este e-mail — nada será criado sem a confirmação.",
     },
     {
@@ -193,6 +207,8 @@ cores = dict(verde=VERDE, verde_escuro=VERDE_ESCURO, tinta=TINTA, mudo=MUDO, fun
 os.makedirs(DESTINO, exist_ok=True)
 for m in MODELOS:
     acao = CODIGO.format(**cores) if m.get("codigo") else BOTAO.format(rotulo=m["botao"], **cores)
-    html = LAYOUT.format(acao=acao, logo=LOGO, site=SITE, **cores, **{k: v for k, v in m.items() if k not in ("arquivo", "botao", "codigo")})
+    if m.get("codigo_alternativo"):
+        acao += "\n" + CODIGO_ALTERNATIVO.format(**cores)
+    html = LAYOUT.format(acao=acao, logo=LOGO, site=SITE, **cores, **{k: v for k, v in m.items() if k not in ("arquivo", "botao", "codigo", "codigo_alternativo")})
     io.open(os.path.join(DESTINO, m["arquivo"]), "w", encoding="utf-8", newline="\n").write(html)
     print(f"{m['arquivo']:<26} -> {m['nome_supabase']} | Assunto: {m['assunto']}")

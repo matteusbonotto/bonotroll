@@ -39,7 +39,7 @@
                 <td align="center" style="font-size:24px;line-height:1.25;font-weight:800;color:#10201A;padding:0 0 12px;">Confirme seu e-mail</td>
               </tr>
               <tr>
-                <td align="center" style="font-size:16px;line-height:1.6;color:#5B6B65;padding:0 0 28px;">Que bom ter você no BNTT! Toque no botão abaixo para confirmar este e-mail e entrar na sua conta.</td>
+                <td align="center" style="font-size:16px;line-height:1.6;color:#5B6B65;padding:0 0 28px;">Que bom ter você no BNTT! Toque no botão abaixo para confirmar este e-mail e entrar na sua conta. O link e o código valem por 1 hora.</td>
               </tr>
               <tr>
                 <td align="center">
@@ -56,6 +56,14 @@
                 <td align="center" style="padding:22px 0 0;font-size:13px;line-height:1.5;color:#5B6B65;">
                   O botão não funcionou? Copie e cole este endereço no navegador:<br>
                   <a href="{{ .ConfirmationURL }}" style="color:#0A6E4D;word-break:break-all;">{{ .ConfirmationURL }}</a>
+                </td>
+              </tr>
+              <tr>
+                <td align="center" style="padding:26px 0 8px;font-size:14px;line-height:1.5;color:#5B6B65;">Ou digite este código na tela <strong>Confirmar e-mail</strong> do BNTT:</td>
+              </tr>
+              <tr>
+                <td align="center">
+                  <div style="display:inline-block;padding:12px 22px;border-radius:12px;background:#E3F5EC;border:1px dashed #0E9F6E;font-family:'Courier New',Courier,monospace;font-size:26px;font-weight:700;letter-spacing:6px;color:#10201A;">{{ .Token }}</div>
                 </td>
               </tr>
               <tr>

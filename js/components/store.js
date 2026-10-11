@@ -50,6 +50,8 @@ export function appStore() {
     view: location.hash.replace('#/', '') || 'home',
     online: navigator.onLine,
     isDemoMode: isDemoMode(),
+    erroRetornoAuth: '', // mensagem do link de e-mail/Google que voltou com erro
+    erroRetornoCodigo: '',
     toasts: [],
     // installPrompt guarda o evento "beforeinstallprompt" capturado em
     // app.js (só o navegador consegue reabrir esse prompt, e só uma vez por
@@ -78,6 +80,17 @@ export function appStore() {
     theme: document.documentElement.getAttribute('data-bs-theme') || null,
 
     async init() {
+      // Voltou de um link de e-mail com erro (expirado, já usado) ou do Google
+      // cancelado: guarda a mensagem para a tela de entrada e limpa o endereço
+      // ANTES do supabase-js ler o hash (senão ele trata como erro dele e o
+      // roteamento por #/tela leria "error=…" como nome de tela).
+      const erroAuth = authService.erroDoRetornoAuth(location.hash);
+      if (erroAuth) {
+        this.erroRetornoAuth = authService.mensagemErroAuth(erroAuth);
+        this.erroRetornoCodigo = erroAuth.code;
+        history.replaceState(history.state, '', location.pathname + location.search);
+        this.view = 'home';
+      }
       ligarNarracao(this.narracao);
       this.intencao = assinatura.capturarIntencaoDaUrl();
       this.conta = assinatura.contaDaSessao(null);
@@ -122,7 +135,25 @@ export function appStore() {
     // logo no primeiro render — se a UI montasse antes desses dados chegarem,
     // os <option> criados por x-for depois não re-selecionam o valor já setado.
     async loadSession(session) {
-      const profile = await authService.getProfile(session.user.id);
+      // Conta criada pelo Google: grava o tipo (Home/Business) escolhido na LP
+      // e o nome — o OAuth não leva o options.data do cadastro. Best-effort:
+      // falhar aqui só deixa a conta como Home, nunca trava o login.
+      let nomeDoGoogle = null;
+      if (!this.isDemoMode) {
+        try {
+          const r = await authService.completarCadastroOAuth(session, this.intencao?.tipo || this.conta.tipo);
+          if (r) {
+            session = { ...session, user: r.user };
+            nomeDoGoogle = r.patch.nome || null;
+          }
+        } catch { /* segue com o que já tem */ }
+      }
+      let profile = await authService.getProfile(session.user.id);
+      // O gatilho do banco cria o perfil com a parte do e-mail antes do "@"
+      // quando não vem `nome` (caso do Google) — troca pelo nome real.
+      if (nomeDoGoogle && profile && profile.nome === (session.user.email || '').split('@')[0]) {
+        profile = await authService.updateProfile(profile.id, { nome: nomeDoGoogle }).catch(() => profile);
+      }
       const group = await groupsService.getMyGroup(profile.id, assinatura.contaDaSessao(session).tipo);
       const groupId = group?.group?.id;
       if (!this.isDemoMode) await categoriesService.ensureDefaultCategories(profile.id, groupId);
@@ -483,10 +514,22 @@ export function appStore() {
       await this.loadSession(session);
     },
 
+    // Devolve { session, situacao } — ver authService.situacaoDoCadastro.
     async signup(email, password, nome) {
-      const session = await authService.signUp(email, password, nome, this.intencao?.tipo || this.conta.tipo);
+      const r = await authService.signUp(email, password, nome, this.intencao?.tipo || this.conta.tipo);
+      if (r.session) await this.loadSession(r.session);
+      return r;
+    },
+
+    async confirmarCodigoCadastro(email, codigo) {
+      const session = await authService.verificarCodigoCadastro(email, codigo);
       if (session) await this.loadSession(session);
       return session;
+    },
+
+    // Sai da página para o Google; a volta cai em /app já com a sessão.
+    async loginGoogle() {
+      await authService.signInWithGoogle();
     },
 
     async logout() {

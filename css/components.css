@@ -1810,3 +1810,34 @@ body { font-size: var(--font-size-body); }
   outline: 3px solid var(--color-primary);
   outline-offset: 2px;
 }
+
+/* Botão "Continuar com o Google" (2026-10-11) — segue a orientação visual do
+   Google: fundo claro, borda neutra, logo colorido à esquerda, texto escuro.
+   Seletor composto para não perder para .cg-btn declarado acima. */
+.cg-btn.cg-btn-google {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: #FFFFFF;
+  color: #1F1F1F;
+  border: 1px solid #747775;
+  font-weight: 500;
+}
+.cg-btn.cg-btn-google:hover:not(:disabled) { background: #F2F2F2; color: #1F1F1F; }
+.cg-btn.cg-btn-google:disabled { opacity: .6; }
+
+/* Separador "ou com e-mail" entre o Google e o formulário. */
+.cg-divisor-ou {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0;
+  color: var(--color-text-muted);
+  font-size: .8125rem;
+}
+.cg-divisor-ou::before,
+.cg-divisor-ou::after { content: ''; flex: 1; border-top: 1px solid var(--color-border); }
+
+/* Código de confirmação: dígitos grandes e espaçados, fáceis de conferir. */
+.cg-campo-codigo { font-size: 1.25rem; letter-spacing: .3em; text-align: center; font-variant-numeric: tabular-nums; }

@@ -165,6 +165,7 @@ async function main() {
   const proibidos = [
     ...valoresSecretos(env).map(([nome, valor]) => [`valor de ${nome} (.env)`, valor]),
     ['secret key do Supabase', /sb_secret_[A-Za-z0-9_-]+/],
+    ['chave de API do Google/Gemini', /AIza[0-9A-Za-z_-]{35}/],
     ['chave privada', /-----BEGIN [A-Z ]*PRIVATE KEY-----/],
     ['JWT service_role', /eyJ[A-Za-z0-9_-]*\.eyJ[A-Za-z0-9_-]*\.[A-Za-z0-9_-]+/],
     ['projeto Supabase antigo', 'zkoxuafdcsfrdmlfckxz'],

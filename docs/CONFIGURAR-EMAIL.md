@@ -45,11 +45,26 @@ tudo e cole o conteúdo do arquivo. Salve.
 
 Para mudar texto ou cor de todos de uma vez: edite `scripts/gerar-emails.py` e rode `python scripts/gerar-emails.py`.
 
+> O modelo **Confirm signup** traz o link **e** um código de 6 dígitos
+> (`{{ .Token }}`). O código é digitado na tela "Confirmar e-mail" do app — é o
+> plano B quando o antivírus do provedor de e-mail "gasta" o link (que só vale
+> uma vez) antes da pessoa tocar nele. Depois de colar o modelo novo, confira em
+> **Authentication → Providers → Email** que "Email OTP Expiration" está em
+> 3600 s (1 hora, o que o e-mail promete).
+
+## Como saber se o e-mail está saindo (sem expor nada)
+
+- **Authentication → Emails → SMTP Settings**: "Enable custom SMTP" precisa estar **ligado**. Desligado = só membros da equipe do projeto recebem (é a causa nº 1 do "não chega").
+- **Logs → Auth** (filtro `mail`/`error`): procure `error sending confirmation email` (SMTP errado) ou `rate limit` (limite estourado).
+- Nada disso é variável do `.env` — é configuração do projeto no painel.
+
 ## Testar (5 minutos)
 
 1. Em bnttapp.web.app → Entrar → **Esqueci minha senha** → seu e-mail → deve chegar "Crie uma nova senha do BNTT".
 2. Toque no link → o app abre em "Definir nova senha".
 3. Em outra conta de e-mail: LP → Começar grátis → criar conta → deve chegar "Confirme seu e-mail no BNTT" → toque → entra no app.
+4. Repita com outro e-mail, mas digite o **código** na tela "Confirmar e-mail" em vez de tocar no link → entra no app.
+5. Tente criar conta de novo com um e-mail já cadastrado → a tela avisa "Já existe uma conta" (não promete um e-mail que não vai sair).
 
 ## Trocar a senha de alguém AGORA (sem e-mail)
 

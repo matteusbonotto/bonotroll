@@ -102,43 +102,71 @@
           </div>
         </template>
 
+        <template x-if="$store.app.isDemoMode">
+          <button type="button" class="cg-btn cg-btn-google btn w-100 mb-2" disabled title="Disponível na versão conectada (fora do modo demonstração)">
+            <img src="./assets/google-g.svg" width="18" height="18" alt="" /> Continuar com o Google
+          </button>
+        </template>
+
         <template x-if="!$store.app.isDemoMode">
-          <form @submit.prevent="submit">
-            <div class="mb-3" x-show="mode === 'signup'">
-              <label class="form-label" for="cg-campo-nome">Seu nome</label>
-              <input id="cg-campo-nome" type="text" class="form-control" x-model="nome" placeholder="Como podemos te chamar?" />
-            </div>
-            <div class="mb-3">
-              <label class="form-label" for="cg-campo-email">E-mail</label>
-              <input id="cg-campo-email" type="email" class="form-control" x-model="email" required placeholder="voce@email.com" />
-            </div>
-            <div class="mb-3" x-show="mode !== 'recuperar'">
-              <label class="form-label" for="cg-login-senha">Senha</label>
-              <input id="cg-login-senha" type="password" class="form-control" x-model="password" :required="mode !== 'recuperar'" minlength="6" placeholder="••••••••" autocomplete="current-password" />
-              <button type="button" class="btn btn-link btn-sm px-0 mt-1" x-show="mode === 'login'" @click="mode = 'recuperar'; error = ''; info = ''">Esqueci minha senha</button>
-            </div>
-            <p class="small cg-muted" x-show="mode === 'recuperar'">Digite o e-mail da sua conta. Vamos enviar um link para você criar uma nova senha.</p>
+          <div>
+            <!-- Google (2026-10-11): o mesmo botão entra ou cria a conta. -->
+            <template x-if="mode === 'login' || mode === 'signup'">
+              <div>
+                <button type="button" class="cg-btn cg-btn-google btn w-100" :disabled="loading" @click="entrarComGoogle()">
+                  <img src="./assets/google-g.svg" width="18" height="18" alt="" /> Continuar com o Google
+                </button>
+                <div class="cg-divisor-ou" role="separator"><span>ou com e-mail</span></div>
+              </div>
+            </template>
 
-            <template x-if="error"><div class="alert alert-danger py-2 small" x-text="error"></div></template>
-            <template x-if="info"><div class="alert alert-success py-2 small" x-text="info" role="status"></div></template>
-            <button type="button" class="btn btn-outline-secondary w-100 mb-2" x-show="podeReenviar && email" @click="reenviar()">
-              <i class="bi bi-envelope-arrow-up" aria-hidden="true"></i> Reenviar e-mail de confirmação
-            </button>
+            <form @submit.prevent="submit">
+              <h2 class="h6 fw-bold mb-2" x-show="mode === 'confirmar'">Confirmar e-mail</h2>
+              <div class="mb-3" x-show="mode === 'signup'">
+                <label class="form-label" for="cg-campo-nome">Seu nome</label>
+                <input id="cg-campo-nome" type="text" class="form-control" x-model="nome" placeholder="Como podemos te chamar?" autocomplete="name" />
+              </div>
+              <div class="mb-3">
+                <label class="form-label" for="cg-campo-email">E-mail</label>
+                <input id="cg-campo-email" type="email" class="form-control" x-model="email" required placeholder="voce@email.com" autocomplete="email" />
+              </div>
+              <div class="mb-3" x-show="mode === 'login' || mode === 'signup'">
+                <label class="form-label" for="cg-login-senha">Senha</label>
+                <input id="cg-login-senha" type="password" class="form-control" x-model="password" :required="mode === 'login' || mode === 'signup'" minlength="6" placeholder="••••••••" :autocomplete="mode === 'signup' ? 'new-password' : 'current-password'" />
+                <button type="button" class="btn btn-link btn-sm px-0 mt-1" x-show="mode === 'login'" @click="irPara('recuperar')">Esqueci minha senha</button>
+              </div>
+              <div class="mb-3" x-show="mode === 'confirmar'">
+                <label class="form-label" for="cg-campo-codigo">Código do e-mail</label>
+                <input id="cg-campo-codigo" type="text" class="form-control cg-campo-codigo" x-model="codigo" inputmode="numeric" autocomplete="one-time-code" maxlength="12" placeholder="000000" aria-describedby="cg-codigo-ajuda" />
+                <div id="cg-codigo-ajuda" class="form-text">Toque no link do e-mail <strong>ou</strong> digite aqui o código de 6 dígitos que veio nele.</div>
+              </div>
+              <p class="small cg-muted" x-show="mode === 'recuperar'">Digite o e-mail da sua conta. Vamos enviar um link para você criar uma nova senha.</p>
 
-            <button type="submit" class="cg-btn btn btn-success w-100" :disabled="loading">
-              <span x-show="!loading" x-text="mode === 'signup' ? 'Criar conta' : mode === 'recuperar' ? 'Enviar link' : 'Entrar'"></span>
-              <span x-show="loading"><span class="spinner-border spinner-border-sm"></span> Aguarde…</span>
-            </button>
+              <template x-if="error"><div class="alert alert-danger py-2 small" x-text="error" role="alert"></div></template>
+              <template x-if="info"><div class="alert alert-success py-2 small" x-text="info" role="status"></div></template>
 
-            <p class="text-center mt-3 mb-0 small">
-              <template x-if="mode === 'login'">
-                <span>Ainda não tem conta? <a href="#" @click.prevent="mode = 'signup'">Criar conta</a></span>
-              </template>
-              <template x-if="mode === 'signup' || mode === 'recuperar'">
-                <span><a href="#" @click.prevent="mode = 'login'; error = ''; info = ''">Voltar para entrar</a></span>
-              </template>
-            </p>
-          </form>
+              <button type="submit" class="cg-btn btn btn-success w-100" :disabled="loading">
+                <span x-show="!loading" x-text="{ signup: 'Criar conta', recuperar: 'Enviar link', confirmar: 'Confirmar código' }[mode] || 'Entrar'"></span>
+                <span x-show="loading"><span class="spinner-border spinner-border-sm"></span> Aguarde…</span>
+              </button>
+              <button type="button" class="btn btn-outline-secondary w-100 mt-2" x-show="mode === 'confirmar'" :disabled="!email || esperaReenvio > 0" @click="reenviar()">
+                <i class="bi bi-envelope-arrow-up" aria-hidden="true"></i>
+                <span x-text="esperaReenvio > 0 ? `Reenviar e-mail (aguarde ${esperaReenvio} s)` : 'Reenviar e-mail de confirmação'"></span>
+              </button>
+
+              <p class="text-center mt-3 mb-0 small">
+                <template x-if="mode === 'login'">
+                  <span>Ainda não tem conta? <a href="#" @click.prevent="irPara('signup')">Criar conta</a></span>
+                </template>
+                <template x-if="mode !== 'login'">
+                  <span><a href="#" @click.prevent="irPara('login')">Voltar para entrar</a></span>
+                </template>
+              </p>
+              <p class="text-center mt-2 mb-0 small" x-show="mode === 'login'">
+                <a href="#" @click.prevent="irPara('confirmar')">Tenho um código de confirmação</a>
+              </p>
+            </form>
+          </div>
         </template>
 
         <!-- "Ver demonstração" (pedido original desta rodada) — link
