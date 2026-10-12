@@ -2493,3 +2493,10 @@ section[x-data^="dashboardView"] .cg-quick-actions .cg-btn i { font-size: 1.25re
 .cg-irpf__guia-titulo { font-size: var(--font-size-body); font-weight: var(--font-weight-bold); margin: var(--space-3) 0 var(--space-1); }
 .cg-irpf__guia li { display: grid; grid-template-columns: 1fr auto; gap: 0 var(--space-2); padding: var(--space-2) 0; border-bottom: 1px solid var(--color-border); }
 .cg-irpf__guia li > .small { grid-column: 1 / -1; }
+
+/* Administração do BNTT — prévia visual (2026-10-12) */
+.cg-admin__previa { border-left: 3px solid var(--color-warning); border-radius: var(--radius-sm); padding: var(--space-2) var(--space-3); background: color-mix(in srgb, var(--color-warning) 12%, transparent); }
+.cg-admin__form[disabled] { opacity: 0.75; }
+.cg-admin__voucher { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-2) 0; border-bottom: 1px solid var(--color-border); }
+.cg-admin__voucher:last-child { border-bottom: 0; }
+.cg-admin__voucher code { color: inherit; }

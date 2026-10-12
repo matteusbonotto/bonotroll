@@ -85,7 +85,7 @@ A Fase 9 continua aberta: se a Receita publicar especificação e meio de valida
 ## 5. Gemini
 
 - Os termos da API do Gemini dizem que **dados da camada gratuita podem ser usados pelo Google para melhorar produtos e lidos por revisores humanos**. Na camada **paga** (projeto com faturamento ativo), prompts, arquivos e respostas **não** são usados para isso. Fonte: [Gemini API Additional Terms](https://ai.google.dev/gemini-api/terms).
-  → **Documento fiscal só com faturamento ativo.** A Edge Function recusa rodar se o secret `GEMINI_TIER_PAGO` não for `sim`, como lembrete operacional.
+  → **Decisão do dono (2026-10-12): usar a camada gratuita**, sem faturamento. Mitigação: a IA só roda com autorização explícita, a tela de autorização diz em linguagem simples o que o Google pode fazer com o texto, o CPF é mascarado no aparelho antes do envio e o leitor local continua sendo a primeira opção. (A trava `GEMINI_TIER_PAGO` existiu e foi removida.)
 - Modelo: configurável pelo secret `GEMINI_MODEL`. Padrão: **`gemini-3.5-flash`** (estável desde 19/05/2026, segundo o [ciclo de vida de modelos do Google Cloud](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/model-versions)). A família 2.5 é aposentada em 20/10/2026 e por isso não é usada. **Conferir a lista de modelos em ai.google.dev na Fase 8, antes do deploy.**
 - Uso: só extração e classificação, com **saída JSON validada por esquema** (`responseSchema`) e **sem ferramentas**. O texto do documento vai marcado como dado não confiável. O cálculo nunca é feito pela IA.
 

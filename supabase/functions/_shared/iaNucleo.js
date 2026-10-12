@@ -72,7 +72,7 @@ const INSTRUCAO_IRPF = [
 ].join('\n');
 
 export const TAREFAS = {
-  irpf_extrair: { apenasHome: true, exigeTierPago: true },
+  irpf_extrair: { apenasHome: true },
 };
 
 export class ErroIa extends Error {

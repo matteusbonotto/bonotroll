@@ -258,6 +258,9 @@ export function appStore() {
     get planosDaLinha() {
       return assinatura.planosDaLinha(this.conta.tipo, this.cicloEscolhido);
     },
+    planosDaLinhaAdmin(tipo) {
+      return assinatura.planosDaLinha(tipo, 'mensal');
+    },
     get resumoDoPlano() {
       const p = this.planoAtual;
       if (this.conta.cortesia && this.conta.assinaturaAtiva) return `${p.nome} — cortesia (sem cobrança)`;

@@ -2772,9 +2772,9 @@
               <button type="button" class="btn btn-link btn-sm px-0" x-show="usarIa" @click="definirIa(false)">Desligar a IA</button>
               <div class="cg-irpf__consentimento" x-show="consentimentoAberto" role="region" aria-label="Autorização da leitura com IA">
                 <ul class="small mb-2">
-                  <li><strong>O que é enviado:</strong> só o texto do documento que o aparelho não reconheceu. O arquivo em si não sai do aparelho.</li>
+                  <li><strong>O que é enviado:</strong> só o texto do documento que o aparelho não reconheceu, com o CPF escondido. O arquivo em si não sai do aparelho.</li>
                   <li><strong>Para quem:</strong> Google Gemini, por meio do servidor do BNTT. A chave da IA fica só no servidor.</li>
-                  <li><strong>Treinamento:</strong> a IA só é ativada na conta paga do Gemini, em que o Google não usa o conteúdo para treinar modelos.</li>
+                  <li><strong>Atenção:</strong> o BNTT usa a versão gratuita do Gemini. Nela, o Google pode guardar o texto enviado, usá-lo para melhorar os produtos dele e pessoas da equipe do Google podem lê-lo. Se não quiser isso, não autorize: você pode digitar os valores à mão.</li>
                   <li><strong>Resultado:</strong> aparece como "Sugerido pela IA" e só entra na conta depois que você conferir e confirmar.</li>
                   <li><strong>Como desfazer:</strong> desligue aqui quando quiser. Apagar um documento apaga os valores lidos dele.</li>
                 </ul>
@@ -3509,6 +3509,90 @@
                   <p class="cg-muted small mt-2 mb-0"><i class="bi bi-shield-lock" aria-hidden="true"></i> Pagamento pelo Stripe. Cancele quando quiser.</p>
                 </div>
               </div>
+
+              <!-- ===== ADMINISTRAÇÃO DO BNTT (2026-10-12) — PRÉVIA SÓ VISUAL =====
+                   Vouchers e edição de planos ainda não fazem nada: nenhum botão
+                   grava. Só aparece para a conta com app_metadata.admin_app
+                   (gravado pelo servidor). A versão de verdade precisa de tabela
+                   + RLS + Edge Function — fica para depois do teste em família. -->
+              <template x-if="$store.app.conta.adminApp">
+                <div x-data="{ aba: 'vouchers' }" data-testid="admin-bntt">
+                  <h2 class="cg-config__grupo">Administração do BNTT</h2>
+                  <div class="cg-card mb-4 cg-admin">
+                    <p class="cg-admin__previa small mb-3" role="note"><i class="bi bi-eye" aria-hidden="true"></i> <strong>Prévia visual.</strong> Nada aqui é salvo ainda. Os vouchers e a edição de planos vão funcionar numa próxima versão.</p>
+                    <div class="cg-ciclo mb-3" role="tablist" aria-label="Administração">
+                      <button type="button" role="tab" :aria-selected="aba === 'vouchers' ? 'true' : 'false'" @click="aba = 'vouchers'">Vouchers</button>
+                      <button type="button" role="tab" :aria-selected="aba === 'planos' ? 'true' : 'false'" @click="aba = 'planos'">Planos</button>
+                    </div>
+
+                    <div x-show="aba === 'vouchers'" role="tabpanel" aria-label="Vouchers">
+                      <h3 class="h6 fw-bold">Criar voucher</h3>
+                      <fieldset disabled class="cg-admin__form">
+                        <label class="form-label small mb-1" for="cg-admin-tipo">Tipo</label>
+                        <select id="cg-admin-tipo" class="form-select mb-2">
+                          <option>Gratuidade vitalícia</option>
+                          <option>Meses grátis</option>
+                          <option>Desconto (%)</option>
+                        </select>
+                        <div class="row g-2 mb-2">
+                          <div class="col-6">
+                            <label class="form-label small mb-1" for="cg-admin-plano">Plano liberado</label>
+                            <select id="cg-admin-plano" class="form-select"><option>Família</option><option>Casal</option><option>Expansão</option></select>
+                          </div>
+                          <div class="col-6">
+                            <label class="form-label small mb-1" for="cg-admin-usos">Quantas pessoas podem usar</label>
+                            <input id="cg-admin-usos" class="form-control" inputmode="numeric" value="5" />
+                          </div>
+                          <div class="col-6">
+                            <label class="form-label small mb-1" for="cg-admin-validade">Vale até</label>
+                            <input id="cg-admin-validade" class="form-control" value="Sem prazo" />
+                          </div>
+                          <div class="col-6">
+                            <label class="form-label small mb-1" for="cg-admin-codigo">Código</label>
+                            <input id="cg-admin-codigo" class="form-control" value="FAMILIA-VIP" />
+                          </div>
+                        </div>
+                        <button type="button" class="cg-btn btn btn-success w-100" title="Ainda não funciona: prévia visual">Criar voucher</button>
+                      </fieldset>
+
+                      <h3 class="h6 fw-bold mt-4">Vouchers (exemplo)</h3>
+                      <ul class="list-unstyled mb-0">
+                        <template x-for="v in [
+                          { codigo: 'FAMILIA-VIP', tipo: 'Gratuidade vitalícia', plano: 'Família', usos: '3 de 5 usados', estado: 'Ativo' },
+                          { codigo: 'AMIGOS-3M', tipo: '3 meses grátis', plano: 'Casal', usos: '1 de 10 usados', estado: 'Ativo' },
+                          { codigo: 'LANCAMENTO20', tipo: '20% de desconto', plano: 'Todos', usos: '12 usados', estado: 'Encerrado' },
+                        ]" :key="v.codigo">
+                          <li class="cg-admin__voucher">
+                            <div class="flex-fill">
+                              <p class="fw-bold mb-0"><code x-text="v.codigo"></code></p>
+                              <p class="cg-muted small mb-0" x-text="v.tipo + ' · ' + v.plano + ' · ' + v.usos"></p>
+                            </div>
+                            <span class="cg-badge" :class="v.estado === 'Ativo' ? 'cg-badge--success' : 'cg-badge--secondary'" x-text="v.estado"></span>
+                          </li>
+                        </template>
+                      </ul>
+                    </div>
+
+                    <div x-show="aba === 'planos'" role="tabpanel" aria-label="Planos">
+                      <template x-for="linha in [{ id: 'home', nome: 'BNTT Home' }, { id: 'business', nome: 'BNTT Business' }]" :key="linha.id">
+                        <div class="mb-3">
+                          <h3 class="h6 fw-bold" x-text="linha.nome"></h3>
+                          <template x-for="p in $store.app.planosDaLinhaAdmin(linha.id)" :key="p.id">
+                            <div class="cg-admin__voucher">
+                              <div class="flex-fill">
+                                <p class="fw-bold mb-0"><span x-text="p.nome"></span> <span class="cg-muted small" x-text="p.precoTexto + (p.gratis ? '' : '/mês')"></span></p>
+                                <p class="cg-muted small mb-0" x-text="'Até ' + p.limites.pessoas + (p.limites.pessoas === 1 ? ' pessoa' : ' pessoas') + ' · ' + (p.limites.lancamentosMes ? p.limites.lancamentosMes + ' lançamentos/mês' : 'lançamentos sem limite')"></p>
+                              </div>
+                              <button type="button" class="btn btn-outline-secondary btn-sm" disabled title="Ainda não funciona: prévia visual">Editar</button>
+                            </div>
+                          </template>
+                        </div>
+                      </template>
+                      <p class="cg-muted small mb-0">Hoje os preços e limites ficam no código (<code>js/data/planos.js</code>). Editar por aqui vem na versão de verdade.</p>
+                    </div>
+                  </div>
+                </div>
+              </template>
 
               <h2 class="cg-config__grupo">Avisos</h2>
               <div class="cg-card p-0 mb-4">

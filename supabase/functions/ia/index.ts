@@ -10,9 +10,11 @@
 // configura, nunca fica no repositório):
 //   GEMINI_API_KEY   obrigatório — sem ele a função responde 503 'ia_sem_chave'
 //   GEMINI_MODEL     opcional    — padrão abaixo
-//   GEMINI_TIER_PAGO 'sim'       — exigido para documento fiscal: na camada
-//                                  gratuita o Google pode usar o conteúdo para
-//                                  melhorar produtos (docs/IRPF-INVESTIGACAO.md §5)
+//
+// Funciona na camada GRATUITA do Gemini (decisão do dono, 2026-10-12). Nela o
+// Google pode usar o conteúdo para melhorar produtos — por isso a tela de
+// autorização avisa isso e o app mascara o CPF antes de enviar
+// (docs/IRPF-INVESTIGACAO.md §5).
 //
 // Publicar: npx supabase functions deploy ia --no-verify-jwt
 // (o token é conferido AQUI com auth.getUser, igual à excluir-conta).
@@ -64,9 +66,6 @@ Deno.serve(async (req) => {
 
     const linha = user.app_metadata?.tipo ?? user.user_metadata?.tipo_conta;
     if (regra.apenasHome && linha === 'business') throw new ErroIa(403, 'linha', 'Este recurso é do BNTT Home.');
-    if (regra.exigeTierPago && Deno.env.get('GEMINI_TIER_PAGO') !== 'sim') {
-      throw new ErroIa(503, 'ia_tier_gratuito', 'A leitura de documentos fiscais por IA só é ativada com a conta paga do Gemini (privacidade).');
-    }
 
     // Limite diário por pessoa — atômico no banco (supabase/ia-2026-10.sql).
     const { data: liberado, error: erroUso } = await admin.rpc('ia_consumir', { p_user: user.id, p_tarefa: pedido.tarefa, p_limite: LIMITES.chamadasPorDia });

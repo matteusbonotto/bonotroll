@@ -56,7 +56,7 @@ export function contaDaSessao(session) {
   // Demonstração: mostra a linha com o plano mais completo (o dono de
   // exemplo tem 4 padarias e 2 casas).
   if (isDemoMode()) {
-    return { tipo, plano: tipo === 'business' ? 'business_rede' : 'home_familia', assinaturaAtiva: true, cortesia: false, ciclo: 'mensal', criadaEm: u.created_at || null };
+    return { tipo, plano: tipo === 'business' ? 'business_rede' : 'home_familia', assinaturaAtiva: true, cortesia: false, ciclo: 'mensal', criadaEm: u.created_at || null, adminApp: true };
   }
   return {
     tipo,
@@ -65,6 +65,8 @@ export function contaDaSessao(session) {
     cortesia: app.cortesia === true,
     ciclo: app.ciclo || null,
     criadaEm: u.created_at || null,
+    // Só muda o que aparece (prévia de admin); quem grava é o servidor.
+    adminApp: app.admin_app === true,
   };
 }
 

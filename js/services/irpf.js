@@ -24,6 +24,15 @@ export const LIMITE_BYTES = 10 * 1024 * 1024;
 export const LIMITE_ARQUIVOS_POR_LOTE = 20;
 export const LIMITE_PAGINAS = 20;
 
+// Esconde CPFs antes de mandar texto para a IA: para extrair valores ela não
+// precisa deles (a camada gratuita do Gemini pode guardar o conteúdo).
+// CNPJ (14 dígitos) fica: identifica a fonte pagadora.
+export function mascararCpf(texto) {
+  return String(texto || '')
+    .replace(/(?<![\d./-])\d{3}\.\d{3}\.\d{3}-\d{2}(?![\d/-])/g, '***.***.***-**')
+    .replace(/(?<!\d)\d{11}(?!\d)/g, '***********');
+}
+
 const TIPOS = {
   pdf: { mimes: ['application/pdf'], ext: ['pdf'] },
   imagem: { mimes: ['image/png', 'image/jpeg', 'image/webp'], ext: ['png', 'jpg', 'jpeg', 'webp'] },
@@ -256,7 +265,7 @@ export async function importarArquivo({ declaracao, ownerId, file, existentes = 
   const localFalhou = bruto.tipo === 'nao_identificado' || (bruto.tipo !== 'extrato_bancario' && !bruto.itens.length);
   if (localFalhou && usarIa && paginas.some((p) => p.texto?.trim())) {
     try {
-      bruto = await (deps.chamarIa || chamarIa)('irpf_extrair', { paginas: paginas.map(({ pagina, texto }) => ({ pagina, texto })) });
+      bruto = await (deps.chamarIa || chamarIa)('irpf_extrair', { paginas: paginas.map(({ pagina, texto }) => ({ pagina, texto: mascararCpf(texto) })) });
       extraidoPor = 'ia';
     } catch (e) {
       aviso = [aviso, e instanceof FalhaIa ? e.message : 'A IA não respondeu.', 'Usei só o leitor do aparelho.'].filter(Boolean).join(' ');

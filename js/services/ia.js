@@ -19,7 +19,6 @@ const MENSAGENS = {
   sem_rede: 'Sem conexão com o servidor. A leitura por IA precisa de internet.',
   sessao: 'Sua sessão expirou. Entre de novo para usar a IA.',
   ia_sem_chave: 'A IA ainda não foi ativada no servidor.',
-  ia_tier_gratuito: 'A leitura de documentos fiscais por IA ainda não foi ativada (exige a conta paga do Gemini, por privacidade).',
   ia_config: 'A IA não está configurada corretamente no servidor.',
   ia_limite_diario: 'Você chegou ao limite diário de leituras por IA. Amanhã libera de novo.',
   ia_limite_provedor: 'A IA está no limite de uso agora. Tente de novo em alguns minutos.',

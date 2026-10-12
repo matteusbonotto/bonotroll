@@ -143,3 +143,11 @@ test('mensagem de tabela ausente (antes de ativar no servidor) é clara', () => 
   assert.match(irpf.mensagemErroIrpf(new Error('relation "irpf_itens" does not exist')), /sendo ativado/);
   assert.match(irpf.mensagemErroIrpf(new TypeError('Failed to fetch')), /Sem conexão/);
 });
+
+test('texto enviado à IA vai sem CPF (com ou sem pontuação), mas com o CNPJ da fonte', () => {
+  const t = irpf.mascararCpf('Beneficiário CPF 529.982.247-25 / 52998224725 — Fonte CNPJ 11.222.333/0001-81 (11222333000181) valor 48.000,00');
+  assert.doesNotMatch(t, /529\.982\.247-25|52998224725/);
+  assert.match(t, /11\.222\.333\/0001-81/);
+  assert.match(t, /11222333000181/);
+  assert.match(t, /48\.000,00/);
+});
