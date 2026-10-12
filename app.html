@@ -2715,6 +2715,306 @@
           </div>
         </section>
 
+        <!-- ============ IMPOSTO DE RENDA (BNTT Home, 2026-10) ============
+             Organiza documentos e valores; estimativa PRELIMINAR + guia de
+             preenchimento. Não transmite nada nem gera arquivo da Receita.
+             A aba só existe na linha Home (store.AREAS). -->
+        <section x-show="$store.app.view === 'irpf' && $store.app.linha !== 'business'" x-data="irpfView()" x-init="init()" class="cg-irpf" aria-labelledby="cg-irpf-titulo">
+          <div class="cg-irpf__topo">
+            <h2 class="cg-irpf__titulo" id="cg-irpf-titulo">Imposto de Renda<span class="cg-irpf__exercicio-atual" x-show="declaracao" x-text="' · exercício ' + declaracao?.exercicio"></span></h2>
+            <button type="button" class="cg-back" x-show="declaracao" @click="trocarExercicio()" aria-label="Trocar o ano da declaração">
+              <i class="bi bi-arrow-left-right" aria-hidden="true"></i><span class="cg-back__label">Trocar ano</span>
+            </button>
+          </div>
+          <p class="cg-irpf__nota" role="note"><i class="bi bi-info-circle" aria-hidden="true"></i> O BNTT organiza seus documentos e valores e mostra uma <strong>estimativa preliminar</strong>. Ele não envia nada à Receita Federal e não substitui o programa oficial nem a sua conferência.</p>
+
+          <div class="alert alert-warning py-2" x-show="!$store.app.online" role="status">Sem internet: dá para consultar o que já está na tela, mas importar e salvar precisam de conexão.</div>
+          <div class="alert alert-danger py-2" x-show="erro" x-text="erro" role="alert"></div>
+          <p class="cg-muted" x-show="carregando">Carregando…</p>
+
+          <!-- INÍCIO: qual exercício -->
+          <div x-show="etapa === 'inicio' && !carregando">
+            <p class="mb-2 fw-semibold">Qual declaração você quer organizar?</p>
+            <div class="cg-irpf__exercicios">
+              <template x-for="ex in exercicios" :key="ex">
+                <button type="button" class="cg-irpf__exercicio" @click="abrir(ex)">
+                  <span class="cg-irpf__exercicio-ano" x-text="'Exercício ' + ex"></span>
+                  <span class="small cg-muted" x-text="descricaoExercicio(ex)"></span>
+                </button>
+              </template>
+            </div>
+          </div>
+
+          <!-- Etapas -->
+          <nav class="cg-irpf__etapas" x-show.important="declaracao && etapa !== 'inicio'" aria-label="Etapas da organização">
+            <template x-for="(e, n) in ETAPAS" :key="e.id">
+              <button type="button" class="cg-irpf__etapa" :class="{ 'is-ativa': etapa === e.id, 'is-feita': n < indiceEtapa }" :aria-current="etapa === e.id ? 'step' : null" @click="irPara(e.id)">
+                <span class="cg-irpf__etapa-num" aria-hidden="true" x-text="n + 1"></span><span x-text="e.rotulo"></span>
+              </button>
+            </template>
+          </nav>
+
+          <!-- 1. DOCUMENTOS -->
+          <div x-show="declaracao && etapa === 'documentos'">
+            <label class="cg-irpf__soltar" :class="{ 'is-arrastando': arrastando, 'is-ocupado': importando }" @dragover.prevent="arrastando = true" @dragleave.prevent="arrastando = false" @drop.prevent="aoSoltar($event)">
+              <i class="bi bi-cloud-arrow-up" aria-hidden="true"></i>
+              <span class="fw-bold" x-text="importando ? 'Lendo documentos…' : 'Escolher documentos'"></span>
+              <span class="small cg-muted">Informes de rendimentos (empresa, banco, corretora) e recibos de saúde e educação. PDF, foto ou a planilha CSV do BNTT. Até 20 arquivos de 10 MB por vez.</span>
+              <input type="file" class="visually-hidden" multiple :accept="ACEITA" :disabled="importando" data-testid="irpf-arquivos" @change="importar($event.target.files); $event.target.value = ''" />
+            </label>
+
+            <!-- IA: desligada por padrão; só com autorização -->
+            <div class="cg-irpf__ia">
+              <p class="fw-bold mb-1"><i class="bi bi-stars" aria-hidden="true"></i> Leitura com IA <span class="cg-badge" :class="usarIa ? 'cg-badge--success' : 'cg-badge--secondary'" x-text="usarIa ? 'Autorizada' : 'Desligada'"></span></p>
+              <p class="small mb-2">O BNTT lê os documentos <strong>no seu aparelho</strong>, sem enviar nada. Se ele não reconhecer um documento, a IA pode tentar, mas só com a sua autorização.</p>
+              <p class="small cg-muted mb-2" x-show="$store.app.isDemoMode">No modo demonstração a IA não funciona; o leitor do aparelho funciona normalmente.</p>
+              <button type="button" class="btn btn-outline-secondary btn-sm" x-show="!usarIa && !consentimentoAberto" @click="consentimentoAberto = true">Saber mais e autorizar</button>
+              <button type="button" class="btn btn-link btn-sm px-0" x-show="usarIa" @click="definirIa(false)">Desligar a IA</button>
+              <div class="cg-irpf__consentimento" x-show="consentimentoAberto" role="region" aria-label="Autorização da leitura com IA">
+                <ul class="small mb-2">
+                  <li><strong>O que é enviado:</strong> só o texto do documento que o aparelho não reconheceu. O arquivo em si não sai do aparelho.</li>
+                  <li><strong>Para quem:</strong> Google Gemini, por meio do servidor do BNTT. A chave da IA fica só no servidor.</li>
+                  <li><strong>Treinamento:</strong> a IA só é ativada na conta paga do Gemini, em que o Google não usa o conteúdo para treinar modelos.</li>
+                  <li><strong>Resultado:</strong> aparece como "Sugerido pela IA" e só entra na conta depois que você conferir e confirmar.</li>
+                  <li><strong>Como desfazer:</strong> desligue aqui quando quiser. Apagar um documento apaga os valores lidos dele.</li>
+                </ul>
+                <div class="d-flex gap-2 flex-wrap">
+                  <button type="button" class="cg-btn btn btn-success btn-sm" @click="definirIa(true)">Autorizar</button>
+                  <button type="button" class="btn btn-outline-secondary btn-sm" @click="consentimentoAberto = false">Agora não</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Resultado do último lote -->
+            <ul class="cg-irpf__lote" x-show="lote.length" aria-live="polite" aria-label="Resultado da importação">
+              <template x-for="(l, n) in lote" :key="n">
+                <li>
+                  <span class="text-truncate" x-text="l.nome"></span>
+                  <span class="cg-badge" :class="l.estado === 'lendo' || l.estado === 'recebido' ? 'cg-badge--secondary' : statusDoc({ status: l.estado }).classe" x-text="l.texto"></span>
+                  <span class="small cg-muted cg-irpf__lote-motivo" x-show="l.motivo || l.aviso" x-text="[l.motivo, l.aviso].filter(Boolean).join(' ')"></span>
+                </li>
+              </template>
+            </ul>
+
+            <h3 class="cg-irpf__subtitulo">Documentos importados <span class="cg-muted" x-text="'(' + documentos.length + ')'"></span></h3>
+            <p class="cg-estado" x-show="!documentos.length">Nenhum documento ainda. Comece pelo informe de rendimentos do seu empregador.</p>
+            <ul class="cg-irpf__docs">
+              <template x-for="d in documentos" :key="d.id">
+                <li class="cg-irpf__doc" data-testid="irpf-doc">
+                  <div class="cg-irpf__doc-topo">
+                    <i class="bi bi-file-earmark-text" aria-hidden="true"></i>
+                    <div class="cg-irpf__doc-nome">
+                      <p class="fw-semibold mb-0 text-truncate" x-text="d.nome"></p>
+                      <p class="small cg-muted mb-0" x-text="descricaoDoc(d)"></p>
+                    </div>
+                    <span class="cg-badge" :class="statusDoc(d).classe"><i class="bi" :class="statusDoc(d).icone" aria-hidden="true"></i> <span x-text="statusDoc(d).rotulo"></span></span>
+                  </div>
+                  <p class="small mb-1" x-show="d.motivo" x-text="d.motivo"></p>
+                  <ul class="small mb-1 cg-irpf__duvidas" x-show="d.duvidas.length">
+                    <template x-for="(q, k) in d.duvidas" :key="k"><li x-text="q"></li></template>
+                  </ul>
+                  <div class="d-flex gap-2 flex-wrap">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" x-show="d.status === 'duplicado' && docOriginal(d)" @click="usarEstaVersao(d)">Usar esta versão</button>
+                    <button type="button" class="btn btn-link btn-sm text-danger px-0" @click="excluirDocumento(d)" :aria-label="'Apagar ' + d.nome">Apagar</button>
+                  </div>
+                </li>
+              </template>
+            </ul>
+            <button type="button" class="cg-btn btn btn-success mt-3" @click="irPara('revisao')">Conferir os valores</button>
+          </div>
+
+          <!-- 2. CONFERIR -->
+          <div x-show="declaracao && etapa === 'revisao'">
+            <p class="mb-2">Compare cada valor com o documento. <strong>Só entra na estimativa o que você confirmar.</strong></p>
+            <p class="small mb-3" x-show="aConferir" x-text="aConferir + ' valor(es) aguardando sua conferência.'"></p>
+            <button type="button" class="btn btn-outline-secondary mb-3" x-show="!novo" @click="abrirNovo()"><i class="bi bi-plus-lg" aria-hidden="true"></i> Digitar um valor</button>
+
+            <form class="cg-irpf__novo" x-show.important="novo" @submit.prevent="salvarNovo()">
+              <template x-if="novo">
+                <div class="d-grid gap-2">
+                  <label class="form-label mb-0" for="cg-irpf-novo-campo">Campo da declaração</label>
+                  <select id="cg-irpf-novo-campo" class="form-select" x-model="novo.campo">
+                    <template x-for="f in FICHAS" :key="f.id">
+                      <optgroup :label="f.nome">
+                        <template x-for="[chave, def] in Object.entries(campos).filter(([, d]) => d.ficha === f.id)" :key="chave">
+                          <option :value="chave" x-text="def.campoOficial"></option>
+                        </template>
+                      </optgroup>
+                    </template>
+                  </select>
+                  <p class="small cg-muted mb-0" x-text="campos[novo.campo]?.ajuda?.simples"></p>
+                  <div class="row g-2">
+                    <div class="col-6">
+                      <label class="form-label mb-0" for="cg-irpf-novo-valor">Valor (R$)</label>
+                      <input id="cg-irpf-novo-valor" class="form-control" inputmode="decimal" x-model="novo.valor" placeholder="0,00" required />
+                    </div>
+                    <div class="col-6">
+                      <label class="form-label mb-0" for="cg-irpf-novo-ref">Referência</label>
+                      <input id="cg-irpf-novo-ref" class="form-control" x-model="novo.referencia" placeholder="Ex.: 31/12/2025" maxlength="20" />
+                    </div>
+                  </div>
+                  <label class="form-label mb-0" for="cg-irpf-novo-fonte">Quem pagou ou recebeu</label>
+                  <input id="cg-irpf-novo-fonte" class="form-control" x-model="novo.fonteNome" placeholder="Ex.: clínica, escola, banco" maxlength="120" />
+                  <label class="form-label mb-0" for="cg-irpf-novo-benef">Para quem</label>
+                  <select id="cg-irpf-novo-benef" class="form-select" x-model="novo.beneficiario">
+                    <option value="titular">Você (titular)</option>
+                    <template x-for="d in dependentes" :key="d.id"><option :value="d.id" x-text="d.nome"></option></template>
+                  </select>
+                  <div class="d-flex gap-2">
+                    <button type="submit" class="cg-btn btn btn-success flex-fill">Salvar</button>
+                    <button type="button" class="btn btn-outline-secondary" @click="novo = null">Cancelar</button>
+                  </div>
+                </div>
+              </template>
+            </form>
+
+            <p class="cg-estado" x-show="!fichasComItens.length">Nenhum valor ainda. Importe documentos ou digite um valor.</p>
+            <template x-for="f in fichasComItens" :key="f.id">
+              <section class="cg-irpf__ficha" :aria-label="f.nome">
+                <h3 class="cg-irpf__subtitulo" x-text="f.nome"></h3>
+                <ul class="cg-irpf__itens">
+                  <template x-for="i in f.itens" :key="i.id">
+                    <li class="cg-irpf__item" data-testid="irpf-item">
+                      <div class="cg-irpf__item-topo">
+                        <span class="fw-semibold" x-text="campos[i.campo].campoOficial"></span>
+                        <span class="cg-help" x-data="cgHelp(ajuda(i.campo))" @mouseenter="aoPassarMouse()" @mouseleave="fechar()" @click.outside="fechar()">
+                          <button type="button" class="cg-help__trigger" @click="aoClicar()" @keydown.escape.stop="fechar()" :aria-expanded="aberto ? 'true' : 'false'" :aria-describedby="id" :aria-label="'O que é ' + campos[i.campo].campoOficial">
+                            <i class="bi bi-question-circle-fill" aria-hidden="true"></i>
+                          </button>
+                          <div class="cg-help__popover" x-show.important="aberto" x-cloak x-transition.opacity.duration.120ms :id="id" role="tooltip" x-text="texto"></div>
+                        </span>
+                        <span class="small cg-muted" x-show="campos[i.campo].codigo" x-text="'Código ' + campos[i.campo].codigo"></span>
+                        <span class="cg-badge cg-badge--secondary" x-show="campos[i.campo].status === 'conferir'" title="Código confirmado só em guias de terceiros. Confira no programa oficial."><i class="bi bi-search" aria-hidden="true"></i> confira o código no programa</span>
+                      </div>
+                      <div class="cg-irpf__item-valor">
+                        <strong x-show="editandoId !== i.id" x-text="i.centavos == null ? 'Valor ilegível' : fmt(i.centavos)"></strong>
+                        <span class="cg-badge" :class="estadoItem(i).classe"><i class="bi" :class="estadoItem(i).icone" aria-hidden="true"></i> <span x-text="estadoItem(i).rotulo"></span></span>
+                      </div>
+                      <form class="cg-irpf__editar" x-show.important="editandoId === i.id" @submit.prevent="salvarEdicao(i)">
+                        <label class="visually-hidden" :for="'cg-irpf-v-' + i.id">Valor correto</label>
+                        <input :id="'cg-irpf-v-' + i.id" class="form-control" inputmode="decimal" x-model="valorEdicao" placeholder="0,00" />
+                        <button type="submit" class="cg-btn btn btn-success">Salvar</button>
+                        <button type="button" class="btn btn-outline-secondary" @click="editandoId = null">Cancelar</button>
+                      </form>
+                      <p class="small cg-muted mb-1" x-show="origem(i) || i.referencia">
+                        <i class="bi bi-paperclip" aria-hidden="true"></i> <span x-text="[origem(i), i.referencia ? 'ref. ' + i.referencia : '', i.beneficiario !== 'titular' ? 'dependente: ' + (dependentes.find((d) => d.id === i.beneficiario)?.nome || '?') : ''].filter(Boolean).join(' · ')"></span>
+                      </p>
+                      <p class="cg-irpf__trecho" x-show="i.trecho" x-text="'“' + i.trecho + '”'"></p>
+                      <div class="d-flex gap-2 flex-wrap" x-show.important="editandoId !== i.id">
+                        <button type="button" class="btn btn-success btn-sm" x-show="!['confirmado', 'corrigido'].includes(i.revisao) && i.origem !== 'manual'" @click="confirmar(i)" x-text="i.centavos == null ? 'Digitar o valor' : 'Está certo'"></button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" @click="editar(i)">Corrigir</button>
+                        <button type="button" class="btn btn-link btn-sm" x-show="i.revisao !== 'inconsistente' && i.origem !== 'manual'" @click="marcarInconsistente(i)">Não bate</button>
+                        <button type="button" class="btn btn-link btn-sm text-danger" @click="excluirItem(i)">Apagar</button>
+                      </div>
+                    </li>
+                  </template>
+                </ul>
+              </section>
+            </template>
+            <button type="button" class="cg-btn btn btn-success mt-3" @click="irPara('perguntas')">Continuar</button>
+          </div>
+
+          <!-- 3. PERGUNTAS -->
+          <div x-show="declaracao && etapa === 'perguntas'">
+            <fieldset class="cg-irpf__pergunta">
+              <legend class="fw-semibold">Você tem dependentes na declaração?</legend>
+              <p class="small cg-muted">Filhos, cônjuge sem renda própria, pais que você sustenta… Cada um deduz um valor fixo no modelo completo.</p>
+              <div class="d-flex gap-3">
+                <label class="form-check"><input type="radio" class="form-check-input" name="cg-irpf-dep" :checked="respostas.temDependentes === true" @change="responder('temDependentes', true)" /> <span class="form-check-label">Sim</span></label>
+                <label class="form-check"><input type="radio" class="form-check-input" name="cg-irpf-dep" :checked="respostas.temDependentes === false" @change="responder('temDependentes', false)" /> <span class="form-check-label">Não</span></label>
+              </div>
+              <div x-show="respostas.temDependentes === true" class="mt-2">
+                <ul class="cg-irpf__dependentes">
+                  <template x-for="d in dependentes" :key="d.id">
+                    <li><span x-text="d.nome + (d.relacao ? ' (' + d.relacao + ')' : '')"></span> <button type="button" class="btn btn-link btn-sm text-danger" @click="removerDependente(d)" :aria-label="'Remover ' + d.nome">Remover</button></li>
+                  </template>
+                </ul>
+                <form class="row g-2 align-items-end" @submit.prevent="adicionarDependente()">
+                  <div class="col-12 col-sm-5">
+                    <label class="form-label mb-0" for="cg-irpf-dep-nome">Nome</label>
+                    <input id="cg-irpf-dep-nome" class="form-control" x-model="novoDependente.nome" maxlength="80" />
+                  </div>
+                  <div class="col-12 col-sm-4">
+                    <label class="form-label mb-0" for="cg-irpf-dep-rel">Relação</label>
+                    <input id="cg-irpf-dep-rel" class="form-control" x-model="novoDependente.relacao" placeholder="Ex.: filho" maxlength="40" />
+                  </div>
+                  <div class="col-12 col-sm-3"><button type="submit" class="btn btn-outline-secondary w-100">Adicionar</button></div>
+                </form>
+                <p class="small cg-muted mt-1">O BNTT guarda só nome e relação. O CPF do dependente você informa direto no programa oficial.</p>
+              </div>
+            </fieldset>
+            <fieldset class="cg-irpf__pergunta">
+              <legend class="fw-semibold">Teve rendimentos sem documento importado aqui?</legend>
+              <p class="small cg-muted">Aluguel, pensão, trabalho como autônomo, rendimentos do exterior.</p>
+              <div class="d-flex gap-3">
+                <label class="form-check"><input type="radio" class="form-check-input" name="cg-irpf-outros" :checked="respostas.outrosRendimentos === true" @change="responder('outrosRendimentos', true)" /> <span class="form-check-label">Sim</span></label>
+                <label class="form-check"><input type="radio" class="form-check-input" name="cg-irpf-outros" :checked="respostas.outrosRendimentos === false" @change="responder('outrosRendimentos', false)" /> <span class="form-check-label">Não</span></label>
+              </div>
+            </fieldset>
+            <button type="button" class="cg-btn btn btn-success mt-2" @click="irPara('resumo')">Ver o resumo</button>
+          </div>
+
+          <!-- 4. RESUMO -->
+          <div x-show="declaracao && etapa === 'resumo'">
+            <template x-if="resumo">
+              <div>
+                <div class="cg-irpf__resultado" data-testid="irpf-resultado">
+                  <p class="cg-irpf__preliminar"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i> Estimativa preliminar, não é o cálculo oficial da Receita.</p>
+                  <p class="mb-0" x-text="resumo.resultado === 'restituir' ? 'Imposto a restituir (estimado)' : resumo.resultado === 'pagar' ? 'Imposto a pagar (estimado)' : 'Nada a pagar nem a restituir (estimado)'"></p>
+                  <p class="cg-irpf__valor" x-text="fmt(resumo.valor)"></p>
+                  <p class="small mb-0" x-text="'Melhor opção: ' + (resumo.melhor === 'simplificado' ? 'desconto simplificado' : 'deduções legais (modelo completo)')"></p>
+                  <p class="small mb-0" x-show="resumo.obrigacao === 'obrigado'">Pelos valores confirmados, você é obrigado(a) a declarar neste exercício.</p>
+                  <p class="small mb-0" x-show="resumo.obrigacao === 'talvez_nao'">Pelos valores confirmados, talvez você não seja obrigado(a) a declarar. Há outros critérios (bens, atividade rural, ganho de capital): confira na Receita.</p>
+                  <p class="small mb-0" x-show="resumo.obrigacao === 'indefinida'">As regras de quem é obrigado a declarar neste exercício ainda não foram publicadas.</p>
+                </div>
+
+                <div class="alert alert-warning" x-show="resumo.parcial" role="status">
+                  <p class="fw-bold mb-1" x-text="'Faltam ' + resumo.motivosParcial.length + ' ponto(s) para esta estimativa ficar confiável:'"></p>
+                  <ul class="mb-0 small"><template x-for="(m, k) in resumo.motivosParcial" :key="k"><li x-text="m"></li></template></ul>
+                </div>
+                <div class="alert alert-danger" x-show="resumo.divergencias.length">
+                  <p class="fw-bold mb-1">Divergências entre documentos</p>
+                  <ul class="mb-0 small"><template x-for="(d, k) in resumo.divergencias" :key="k"><li x-text="d.texto"></li></template></ul>
+                </div>
+                <ul class="cg-irpf__avisos small" x-show="resumo.avisos.length"><template x-for="(a, k) in resumo.avisos" :key="k"><li x-text="a"></li></template></ul>
+
+                <h3 class="cg-irpf__subtitulo">Simplificado x completo</h3>
+                <div class="table-responsive">
+                  <table class="table table-sm cg-irpf__tabela">
+                    <thead><tr><th scope="col"><span class="visually-hidden">Item</span></th><th scope="col" class="text-end">Simplificado</th><th scope="col" class="text-end">Completo</th></tr></thead>
+                    <tbody>
+                      <template x-for="l in comparacao" :key="l.rotulo">
+                        <tr><th scope="row" class="fw-normal" x-text="l.rotulo"></th><td class="text-end" x-text="fmt(l.simplificado)"></td><td class="text-end" x-text="fmt(l.completo)"></td></tr>
+                      </template>
+                    </tbody>
+                  </table>
+                </div>
+                <p class="small cg-muted">Rendimentos isentos (<span x-text="fmt(resumo.totais.isentos)"></span>) e de tributação exclusiva (<span x-text="fmt(resumo.totais.exclusivos)"></span>) são informados na declaração, mas não entram nessa conta.</p>
+
+                <h3 class="cg-irpf__subtitulo">Guia de preenchimento</h3>
+                <p class="small">Ficha por ficha, na ordem do programa oficial. Só aparecem os valores que você confirmou.</p>
+                <p class="cg-estado" x-show="!guia.length">Nada confirmado ainda.</p>
+                <template x-for="f in guia" :key="f.ficha">
+                  <section class="cg-irpf__guia-ficha" :aria-label="f.nome">
+                    <h4 class="cg-irpf__guia-titulo" x-text="f.nome"></h4>
+                    <ul class="cg-irpf__guia">
+                      <template x-for="l in f.linhas" :key="l.id">
+                        <li>
+                          <span class="cg-irpf__guia-campo"><span x-text="l.campoOficial"></span><span class="cg-muted" x-show="l.codigo" x-text="' · código ' + l.codigo + (l.codigoConfirmado ? '' : ' (confira)')"></span></span>
+                          <strong x-text="fmt(l.centavos)"></strong>
+                          <span class="small cg-muted" x-show="l.fonte || l.referencia" x-text="[l.fonte, l.referencia].filter(Boolean).join(' · ')"></span>
+                        </li>
+                      </template>
+                    </ul>
+                  </section>
+                </template>
+                <button type="button" class="btn btn-outline-secondary mt-2" @click="exportarCsv()" :disabled="!guia.length"><i class="bi bi-download" aria-hidden="true"></i> Baixar planilha (CSV)</button>
+                <p class="small cg-muted mt-1">Formato próprio do BNTT, para conferir ou mandar ao contador. Não é um arquivo para importar no programa da Receita.</p>
+              </div>
+            </template>
+          </div>
+        </section>
+
         <!-- ===== GRUPO ===== -->
         <!-- ============ PRIMEIROS SOCORROS (2026-10-04) ============ -->
         <section x-show="$store.app.view === 'socorros'" x-data="primeirosSocorrosView()" class="cg-socorros" aria-labelledby="cg-socorros-titulo">

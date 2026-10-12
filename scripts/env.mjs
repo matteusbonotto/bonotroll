@@ -12,7 +12,7 @@
 //   FIREBASE_API_KEY    PÚBLICO — não usada: o app só usa o Firebase Hosting, nenhum SDK do Firebase no navegador
 //   SB_SK               SECRETO — secret key (sb_secret_…), equivale à service_role: NUNCA no frontend
 //   STRIP_TOKEN         SECRETO — token do Stripe (futuro billing): NUNCA no frontend
-//   Gemini_API_KEY      SECRETO — chave do Gemini (IRPF): só como segredo da Edge Function irpf-extrair, NUNCA no frontend
+//   Gemini_API_KEY      SECRETO — chave do Gemini (IRPF): só como segredo GEMINI_API_KEY da Edge Function ia, NUNCA no frontend
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';

@@ -24,6 +24,7 @@
 <tr><td>Comprovantes e notas</td><td>foto ou PDF do comprovante, código do boleto/Pix, link e chave da nota fiscal (NFC-e)</td><td>você</td></tr>
 <tr><td>Grupo (casa)</td><td>quem faz parte, papel (admin/membro)</td><td>você e quem convidou</td></tr>
 <tr><td>Notificações</td><td>avisos do app e inscrição de push do aparelho</td><td>o app, com sua permissão</td></tr>
+<tr><td>Imposto de Renda (BNTT Home)</td><td>valores, datas, CNPJ da fonte pagadora e trechos lidos dos informes e recibos que você importa; respostas do questionário; nome e relação de dependentes. O arquivo original não é guardado.</td><td>você</td></tr>
 <tr><td>Técnicos</td><td>endereço IP e dados do navegador nos registros dos provedores</td><td>automático</td></tr>
 </tbody></table>
 <p>Não coletamos dados de localização. As <strong>fichas de saúde</strong> (tipo sanguíneo, alergias, remédios, condições, contato de emergência) são <strong>criptografadas no seu aparelho</strong> antes de sair dele: o servidor guarda só texto embaralhado e ninguém do BNTT consegue ler.</p>
@@ -46,6 +47,7 @@
 <li><strong>Open Food Facts</strong>: o código de barras lido;</li>
 <li><strong>BrasilAPI</strong>: o CNPJ da loja da nota fiscal;</li>
 <li><strong>Frankfurter / CoinGecko</strong>: só a cotação da moeda;</li>
+<li><strong>Google (Gemini)</strong>: <strong>só se você autorizar</strong> na área de Imposto de Renda, e só quando o leitor do aparelho não reconhecer um documento, o texto desse documento é enviado para a IA extrair os valores. O envio passa pelo nosso servidor (a chave nunca fica no seu aparelho), usa a modalidade paga da API, em que o Google não usa o conteúdo para treinar modelos, e você pode retirar a autorização a qualquer momento;</li>
 <li><strong>esm.sh / jsDelivr / Google Fonts</strong>: bibliotecas e fontes (veem o IP).</li>
 <li>Autoridades, quando a lei exigir.</li>
 </ul>

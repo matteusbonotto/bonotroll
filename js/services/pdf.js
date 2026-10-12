@@ -64,3 +64,30 @@ export async function extractTextFromPdf(file, { recognizeImage } = {}) {
   const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
   return recognizeImage(blob);
 }
+
+// Todas as páginas (até `maxPaginas`) — usado pelo IRPF, em que o informe
+// costuma ter 2+ páginas. Mesma regra da função acima, página a página:
+// texto nativo primeiro, OCR só na página que não tem texto de verdade.
+// Devolve [{ pagina, texto, ocr }] e `paginasTotal` (para avisar o corte).
+export async function extrairPaginasDoPdf(file, { recognizeImage, maxPaginas = 20 } = {}) {
+  const pdfjsLib = await getPdfjs();
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const doc = await pdfjsLib.getDocument({ data: bytes }).promise;
+  const paginas = [];
+  for (let n = 1; n <= Math.min(doc.numPages, maxPaginas); n++) {
+    const page = await doc.getPage(n);
+    const texto = reconstroiLinhas((await page.getTextContent()).items).trim();
+    if (texto.length > 20 || !recognizeImage) {
+      paginas.push({ pagina: n, texto, ocr: false });
+      continue;
+    }
+    const viewport = page.getViewport({ scale: 2 });
+    const canvas = document.createElement('canvas');
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+    await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+    const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+    paginas.push({ pagina: n, texto: await recognizeImage(blob), ocr: true });
+  }
+  return { paginas, paginasTotal: doc.numPages };
+}

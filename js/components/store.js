@@ -682,7 +682,7 @@ export function appStore() {
       }
       return [
         { id: 'home', rotulo: 'Início', icone: 'bi-house-door', abas: [{ view: 'home', rotulo: 'Início' }] },
-        { id: 'dinheiro', rotulo: 'Dinheiro', icone: 'bi-cash-stack', abas: [{ view: 'transacoes', rotulo: 'Movimentações' }, { view: 'caixinhas', rotulo: 'Reservas' }] },
+        { id: 'dinheiro', rotulo: 'Dinheiro', icone: 'bi-cash-stack', abas: [{ view: 'transacoes', rotulo: 'Movimentações' }, { view: 'caixinhas', rotulo: 'Reservas' }, { view: 'irpf', rotulo: 'Imposto de Renda' }] },
         { id: 'casa', rotulo: 'Casa', icone: 'bi-house-heart', abas: [{ view: 'compras', rotulo: 'Lista de compras' }, { view: 'recursos', rotulo: 'Inventário' }] },
         { id: 'pessoas', rotulo: 'Pessoas', icone: 'bi-people', abas: [{ view: 'grupo', rotulo: 'Membros' }, { view: 'socorros', rotulo: 'Saúde' }] },
       ];

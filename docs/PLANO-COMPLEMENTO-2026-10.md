@@ -133,7 +133,7 @@ Critérios da seção 4.11 do pedido, com dois ajustes de honestidade:
 
 > Branch: `feat/complemento-2026-10` (nunca em `main`). Um commit por fase. Deploy só quando você pedir.
 
-### Fase 1 — E-mail de verificação (código) `[ ]`
+### Fase 1 — E-mail de verificação (código) `[x]`
 1. `signUp` passa a devolver `{ session, user, situacao }`, com `situacao` = `'confirmar_email' | 'ja_existe' | 'logado'` (`identities.length === 0` → `'ja_existe'`).
 2. `verificarCodigo(email, codigo)` → `supabase.auth.verifyOtp({ email, token, type: 'signup' })`.
 3. `reenviarConfirmacao` com cooldown persistido (`bonotto_reenvio_<hash do e-mail>`) e contagem regressiva na tela. Tratar "já confirmado".
@@ -141,20 +141,20 @@ Critérios da seção 4.11 do pedido, com dois ajustes de honestidade:
 5. `store`: ler `error`/`error_description` do hash ao voltar para `/app` (link expirado) → abrir o cadastro com "Link expirado, peça outro código".
 6. Testes unitários + e2e com `page.route` simulando as respostas do Supabase.
 
-### Fase 2 — Google (código) `[ ]`
+### Fase 2 — Google (código) `[x]`
 1. `signInWithGoogle()` no service. Botões no login e no cadastro, com o logo oficial em SVG local.
 2. Primeiro login via OAuth sem `tipo_conta` → `updateUser({ data: { tipo_conta: intencao.tipo } })` (best-effort).
 3. Tratar o retorno com erro (`error_description`). No demo, botão desabilitado.
 4. E2E: o clique chama a URL `…/auth/v1/authorize?provider=google` (interceptada, sem sair do teste).
 
-### Fase 3 — Badges de categoria `[ ]`
+### Fase 3 — Badges de categoria `[x]`
 1. `js/utils/cor.js`: `corDoTexto(hex)` e `contraste(a, b)`, com testes.
 2. Um template único `cgCategoria(catId, { trocavel })` substitui as 5 cópias (as duas variantes: só exibir / botão que abre o menu de troca).
 3. CSS `.cg-chip.cg-chip--cat`: ícone sempre visível, nome oculto abaixo de 576 px (`visually-hidden` só no mobile, para continuar acessível ao leitor de tela), balão `cgHelp` ao tocar ou focar.
 4. Revisar `CATEGORY_ICON_PRESETS` e o seed do demo (ícones únicos, cores coerentes).
 5. E2E 390 px + navegação por teclado + `aria-label`.
 
-### Fase 4 — Offline (cliente) `[ ]`
+### Fase 4 — Offline (cliente) `[x]`
 1. `offlineStore.js`: IndexedDB `bntt-offline-<uid>`, stores `cache` (com `{ tabela, chave, dado cifrado, salvoEm, versao }`) e `fila`. Chave AES-GCM não extraível (padrão do `cofre.js`). TTL de 30 dias para leitura e invalidação ao trocar de versão do esquema.
 2. `conectividade.js`: `servidorDisponivel()` = `fetch` ao endpoint de health do Supabase com timeout de 5 s.
 3. `filaSync.js`: `enfileirar(op)`, `processar()` em ordem, backoff exponencial (1 s → 5 min, até 8 tentativas e depois "erro"), estados `pendente | enviando | feito | conflito | erro`, executor injetável (para testar sem rede).
@@ -164,7 +164,7 @@ Critérios da seção 4.11 do pedido, com dois ajustes de honestidade:
 7. `sw.js`: bump `CACHE_NAME` e cache dos módulos do esm.sh essenciais (supabase-js) para o app abrir offline.
 8. Testes unitários da fila + e2e com `setOffline`.
 
-### Fase 5 — IRPF: investigação tributária e técnica (só documento) `[ ]`
+### Fase 5 — IRPF: investigação tributária e técnica (só documento) `[x]`
 Gera `docs/IRPF-INVESTIGACAO.md`, com fonte oficial (gov.br/receitafederal) para cada afirmação:
 1. **Exercício x ano-calendário.** Hoje (out/2026) o próximo é o **exercício 2027 / ano-calendário 2026**, cuja Instrução Normativa e programa **ainda não foram publicados** (costumam sair em fev–mar). O ano-calendário 2026 tem mudanças grandes (Lei 15.270/2025: redução do imposto para quem ganha até R$ 5 mil/mês, tributação mínima de altas rendas, retenção sobre dividendos). **Isso precisa ser confirmado na fonte oficial, não presumido.** Proposta: implementar e testar com o **exercício 2026** (regras publicadas) e deixar o 2027 como módulo de regras separado, ativado quando a IN sair.
 2. Fichas oficiais do programa IRPF do exercício (nomes, códigos de rendimento, códigos de bens e direitos, códigos de pagamentos).
@@ -172,7 +172,7 @@ Gera `docs/IRPF-INVESTIGACAO.md`, com fonte oficial (gov.br/receitafederal) para
 4. Gemini: modelo atual com entrada de PDF/imagem + `responseSchema`, preço, limites e **termos de uso de dados** (a camada gratuita da API pode usar o conteúdo para melhorar o produto, por isso documentos fiscais exigem a camada paga ou o Vertex AI).
 5. Revisão de privacidade (LGPD: dado sensível, consentimento, retenção) e atualização de `privacidade.html`.
 
-### Fase 6 — IRPF: núcleo puro + tela (modo demo) `[ ]`
+### Fase 6 — IRPF: núcleo puro + tela (modo demo) `[x]`
 1. `regras/2026.js` (tabela progressiva anual, limite de dedução por dependente, teto de educação, desconto simplificado e seu teto, obrigatoriedade) com a fonte de cada número em comentário.
 2. `mapeamento.js`: campo interno → ficha/código oficial, versionado por exercício.
 3. `esquemaExtracao.js` + validador. `normalizar.js` (R$ "1.234,56", datas, CPF/CNPJ com dígito verificador). `deduplicar.js` (hash SHA-256 do arquivo + chave de conteúdo: CNPJ da fonte + ano + tipo).
@@ -180,7 +180,7 @@ Gera `docs/IRPF-INVESTIGACAO.md`, com fonte oficial (gov.br/receitafederal) para
 5. Tela `irpfView` (só na linha Home): escolher exercício → importar lote → processamento por arquivo (recebido / processado / parcial / rejeitado / duplicado, com o motivo) → revisão por ficha com origem clicável (arquivo, página, trecho) → perguntas complementares → pendências → resumo → guia de preenchimento.
 6. `scripts/gerar-docs-sinteticos.mjs`: informes de rendimentos, extrato, informe de corretora e um PDF "escaneado" (imagem), todos fictícios, para os testes.
 
-### Fase 7 — IRPF: testes de aceite + revisão `[ ]`
+### Fase 7 — IRPF: testes de aceite + revisão `[x]`
 1. Todos os testes da seção 4.11, exceto a exportação oficial.
 2. Revisão dos agentes `security`, `ux-ui` e `code-reviewer`. `npm run test:unit`, `npm test` e `npm run test:dist` verdes.
 3. **→ Aqui eu aviso: "fases de código concluídas, pode conectar o Supabase correto para a Fase 8."**

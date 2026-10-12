@@ -15,3 +15,7 @@ verify_jwt = false
 
 [functions.notify-payment]
 verify_jwt = false
+
+# IA (Gemini): valida o JWT dentro da função (auth.getUser), como as outras.
+[functions.ia]
+verify_jwt = false

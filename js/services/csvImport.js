@@ -47,7 +47,7 @@ export async function parseTextoPlanilha(texto) {
 // padrão de baixarComoJson em services/dataExport.js, só que pra CSV; usado
 // tanto por exportToCsv (dados de verdade) quanto por baixarTemplateCsv
 // (cabeçalho vazio).
-function baixarBlobCsv(csv, filename) {
+export function baixarBlobCsv(csv, filename) {
   const blob = new Blob([`﻿${csv}`], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');

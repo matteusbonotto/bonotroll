@@ -2415,3 +2415,81 @@ section[x-data^="dashboardView"] .cg-quick-actions .cg-btn i { font-size: 1.25re
 @media (min-width: 768px) {
   .cg-filial { aspect-ratio: auto; min-height: 168px; }
 }
+
+/* ============ Imposto de Renda (BNTT Home, 2026-10) ============ */
+.cg-irpf__topo { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); flex-wrap: wrap; margin-bottom: var(--space-2); }
+.cg-irpf__titulo { font-size: var(--font-size-title); font-weight: var(--font-weight-bold); margin: 0; }
+.cg-irpf__exercicio-atual { font-size: var(--font-size-body); font-weight: var(--font-weight-medium); color: var(--color-text-muted); }
+.cg-irpf__nota { font-size: var(--font-size-body-sm); color: var(--color-text-muted); margin-bottom: var(--space-4); }
+.cg-irpf__subtitulo { font-size: var(--font-size-body-lg); font-weight: var(--font-weight-bold); margin: var(--space-5) 0 var(--space-2); }
+
+.cg-irpf__exercicios { display: grid; gap: var(--space-3); grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.cg-irpf__exercicio {
+  display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-1); text-align: left;
+  min-height: var(--touch-target); padding: var(--space-4); border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg); background: var(--color-surface); color: var(--color-text);
+}
+.cg-irpf__exercicio:hover, .cg-irpf__exercicio:focus-visible { border-color: var(--color-primary); }
+.cg-irpf__exercicio-ano { font-size: var(--font-size-title-sm); font-weight: var(--font-weight-bold); }
+
+.cg-irpf__etapas { display: flex; gap: var(--space-1); overflow-x: auto; margin-bottom: var(--space-4); border-bottom: 1px solid var(--color-border); }
+.cg-irpf__etapa {
+  display: inline-flex; align-items: center; gap: var(--space-2); min-height: var(--touch-target);
+  padding: 0 var(--space-3); border: 0; border-bottom: 3px solid transparent; background: transparent;
+  color: var(--color-text-muted); font-weight: var(--font-weight-medium); white-space: nowrap;
+}
+.cg-irpf__etapa.is-ativa { color: var(--color-text); border-bottom-color: var(--color-primary); }
+.cg-irpf__etapa-num {
+  display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: var(--radius-pill);
+  background: var(--color-surface-alt); font-size: var(--font-size-caption);
+}
+.cg-irpf__etapa.is-ativa .cg-irpf__etapa-num, .cg-irpf__etapa.is-feita .cg-irpf__etapa-num { background: var(--color-primary); color: #fff; }
+
+.cg-irpf__soltar {
+  display: flex; flex-direction: column; align-items: center; gap: var(--space-1); text-align: center; cursor: pointer;
+  padding: var(--space-5) var(--space-4); border: 2px dashed var(--color-border); border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+.cg-irpf__soltar > .bi { font-size: 2rem; color: var(--color-primary); }
+.cg-irpf__soltar:focus-within { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+.cg-irpf__soltar.is-arrastando { border-color: var(--color-primary); background: var(--color-primary-soft); }
+.cg-irpf__soltar.is-ocupado { opacity: 0.7; cursor: progress; }
+
+.cg-irpf__ia { margin-top: var(--space-3); padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); background: var(--color-surface-alt); }
+.cg-irpf__consentimento { margin-top: var(--space-2); padding-top: var(--space-2); border-top: 1px solid var(--color-border); }
+.cg-irpf__consentimento ul { padding-left: var(--space-4); }
+
+.cg-irpf__lote, .cg-irpf__docs, .cg-irpf__itens, .cg-irpf__guia, .cg-irpf__dependentes { list-style: none; padding: 0; margin: 0; }
+.cg-irpf__lote { margin-top: var(--space-3); }
+.cg-irpf__lote li { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); padding: var(--space-2) 0; border-bottom: 1px solid var(--color-border); }
+.cg-irpf__lote li > .text-truncate { flex: 1 1 140px; min-width: 0; }
+.cg-irpf__lote-motivo { flex-basis: 100%; }
+
+.cg-irpf__doc, .cg-irpf__item { padding: var(--space-3) 0; border-bottom: 1px solid var(--color-border); }
+.cg-irpf__doc-topo { display: flex; align-items: flex-start; gap: var(--space-2); }
+.cg-irpf__doc-topo > .bi { font-size: 1.25rem; color: var(--color-text-muted); }
+.cg-irpf__doc-nome { flex: 1; min-width: 0; }
+.cg-irpf__duvidas { padding-left: var(--space-4); color: var(--color-text-muted); }
+
+.cg-irpf__item-topo { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-2); }
+.cg-irpf__item-valor { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin: var(--space-1) 0; font-size: var(--font-size-body-lg); }
+.cg-irpf__editar { display: flex; gap: var(--space-2); margin: var(--space-1) 0; }
+.cg-irpf__editar .form-control { max-width: 180px; }
+.cg-irpf__trecho {
+  font-size: var(--font-size-caption); color: var(--color-text-muted); font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  background: var(--color-surface-alt); padding: var(--space-1) var(--space-2); border-radius: var(--radius-sm); overflow-wrap: anywhere;
+}
+.cg-irpf__novo { margin-bottom: var(--space-4); padding: var(--space-4); border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+
+.cg-irpf__pergunta { margin-bottom: var(--space-4); padding: var(--space-4); border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+.cg-irpf__pergunta legend { font-size: var(--font-size-body-lg); float: none; margin-bottom: var(--space-1); }
+.cg-irpf__dependentes li { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--color-border); }
+
+.cg-irpf__resultado { padding: var(--space-4); border-radius: var(--radius-lg); background: var(--color-surface); border: 1px solid var(--color-border); margin-bottom: var(--space-3); }
+.cg-irpf__preliminar { font-size: var(--font-size-body-sm); font-weight: var(--font-weight-bold); color: var(--color-warning); margin-bottom: var(--space-2); }
+.cg-irpf__valor { font-size: var(--font-size-display); font-weight: var(--font-weight-bold); margin: 0; }
+.cg-irpf__avisos { padding-left: var(--space-4); color: var(--color-text-muted); }
+.cg-irpf__tabela { color: var(--color-text); }
+.cg-irpf__guia-titulo { font-size: var(--font-size-body); font-weight: var(--font-weight-bold); margin: var(--space-3) 0 var(--space-1); }
+.cg-irpf__guia li { display: grid; grid-template-columns: 1fr auto; gap: 0 var(--space-2); padding: var(--space-2) 0; border-bottom: 1px solid var(--color-border); }
+.cg-irpf__guia li > .small { grid-column: 1 / -1; }

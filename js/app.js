@@ -21,6 +21,7 @@ import { resourcesView } from './components/resourcesView.js';
 import { caixinhasView } from './components/caixinhasView.js';
 import { primeirosSocorrosView } from './components/primeirosSocorros.js';
 import { fichasSaude } from './components/fichasSaude.js';
+import { irpfView } from './components/irpfView.js';
 import { equipeBusiness } from './components/equipeBusiness.js';
 import { groupView } from './components/groupView.js';
 import { profileView } from './components/profileView.js';
@@ -70,6 +71,7 @@ document.addEventListener('alpine:init', () => {
   Alpine.data('caixinhasView', caixinhasView);
   Alpine.data('primeirosSocorrosView', primeirosSocorrosView);
   Alpine.data('fichasSaude', fichasSaude);
+  Alpine.data('irpfView', irpfView);
   Alpine.data('equipeBusiness', equipeBusiness);
   Alpine.data('groupView', groupView);
   Alpine.data('profileView', profileView);
