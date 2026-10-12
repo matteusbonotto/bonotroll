@@ -186,6 +186,9 @@ Gera `docs/IRPF-INVESTIGACAO.md`, com fonte oficial (gov.br/receitafederal) para
 3. **→ Aqui eu aviso: "fases de código concluídas, pode conectar o Supabase correto para a Fase 8."**
 
 ### Fase 8 — BANCO DE DADOS E CONFIGURAÇÃO DO SUPABASE (ÚLTIMA) `[ ]`
+
+> **2026-10-12, aplicado em produção (`appbntt`):** `supabase/irpf-2026-10.sql` (4 tabelas, RLS só do dono), `supabase/ia-2026-10.sql` (`ia_uso` + `ia_consumir`, executável só pelo `service_role`), `supabase/google-2026-10.sql` (`handle_new_user` lê `full_name`/`name`). Segredo `GEMINI_API_KEY` gravado (lido do `.env`, sem exibir); função `ia` publicada (sem login → 401; chave validada no `gemini-3.5-flash` → 200).
+> **Ainda `[ ]`, dependem do painel/conta:** `GEMINI_TIER_PAGO` (o projeto Google `bntt` está sem faturamento → IA não lê documento fiscal até ativar), SMTP próprio, Redirect URLs, cliente OAuth do Google + provedor no Supabase, `updated_at` condicional do offline.
 Só depois que você confirmar o projeto (`npx supabase projects list` → o que estiver com `linked: true`). Cada passo em produção é confirmado com você antes.
 
 **Feito por você no painel** (passo a passo em `docs/CONFIGURAR-EMAIL.md` e em `docs/CONFIGURAR-GOOGLE.md`):
