@@ -4742,10 +4742,11 @@
   </div>
 
   <!-- ============ MODAL: IMPORTAR CSV ============ -->
-  <div class="cg-modal-backdrop" x-show="$store.csvModal.open" x-cloak @click.self="$store.csvModal.close()">
+  <div class="cg-modal-backdrop" x-show="$store.csvModal.open" x-cloak @click.self="$store.csvModal.close()" data-testid="modal-importar">
     <div class="cg-modal" x-show="$store.csvModal.open" x-transition>
       <div class="d-flex align-items-center justify-content-between mb-3">
-        <h2 class="h6 fw-bold mb-0">Importar CSV — <span x-text="$store.csvModal.IMPORT_TARGETS[$store.csvModal.target].label"></span></h2>
+        <h2 class="h6 fw-bold mb-0" x-show="$store.csvModal.step !== 'openfinance' && !$store.csvModal.externos">Importar CSV — <span x-text="$store.csvModal.IMPORT_TARGETS[$store.csvModal.target].label"></span></h2>
+        <h2 class="h6 fw-bold mb-0" x-show="$store.csvModal.step === 'openfinance' || $store.csvModal.externos"><i class="bi bi-bank" aria-hidden="true"></i> Open Finance — suas contas</h2>
         <button type="button" class="btn-close" @click="$store.csvModal.close()"></button>
       </div>
 

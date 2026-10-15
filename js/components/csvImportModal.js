@@ -22,6 +22,8 @@ export function csvModalStore() {
     result: { ok: 0, pulados: 0, erros: [] },
     validacao: { ok: 0, erros: [] },
     textoColado: '',
+    // true quando as linhas vieram do Open Finance (título do modal na prévia/resultado).
+    externos: false,
     // Open Finance (Pluggy): conexões e período da busca — ver services/openFinance.js.
     of: { carregando: false, erro: '', aviso: '', conexoes: [], credenciais: undefined, clientId: '', clientSecret: '', de: '', ate: '', novoItem: '', apelido: '' },
     IMPORT_TARGETS,
@@ -35,6 +37,7 @@ export function csvModalStore() {
       this.rawRows = [];
       this.mapping = {};
       this.textoColado = '';
+      this.externos = false;
       this.validacao = { ok: 0, erros: [] };
       this.result = { ok: 0, pulados: 0, erros: [] };
       const hoje = todayIso();
@@ -159,6 +162,7 @@ export function csvModalStore() {
         return;
       }
       this._carregar({ headers, rows });
+      this.externos = true;
       // Colunas já vêm com o nome exato dos campos: pula a tela de mapeamento.
       this.avancarPreview();
     },
