@@ -91,6 +91,57 @@ export async function chamarOpenFinance(acao, dados = {}, deps = {}) {
   return corpo;
 }
 
+// ---- Pluggy Connect (janela oficial da Pluggy para conectar o banco) ----
+// Script fixo na versão + hash de integridade (SRI): se a Pluggy mudar o
+// arquivo, o navegador recusa e o app cai no modo manual (itemId). A CSP
+// (firebase.json) só libera este host para script e connect.pluggy.ai para frame.
+export const PLUGGY_CONNECT_SCRIPT = 'https://cdn.pluggy.ai/pluggy-connect/v2.7.0/pluggy-connect.js';
+export const PLUGGY_CONNECT_SRI = 'sha384-EfJtVYPBw2vssrS8cou8sSUccnxm72OwXqa4V+b1injWH0avP4mtCJr2XM6Sb2/7';
+let scriptPluggy = null;
+
+function carregarPluggyConnect() {
+  if (window.PluggyConnect) return Promise.resolve(window.PluggyConnect);
+  scriptPluggy ??= new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = PLUGGY_CONNECT_SCRIPT;
+    s.integrity = PLUGGY_CONNECT_SRI;
+    s.crossOrigin = 'anonymous';
+    s.referrerPolicy = 'no-referrer';
+    s.onload = () => (window.PluggyConnect ? resolve(window.PluggyConnect) : reject(new Error('sem PluggyConnect')));
+    s.onerror = () => reject(new Error('script recusado'));
+    document.head.appendChild(s);
+  }).catch((e) => {
+    scriptPluggy = null;
+    throw new FalhaOpenFinance('connect_indisponivel', 'Não consegui abrir a janela da Pluggy. Use "Tenho o código da conexão" ou tente de novo.');
+  });
+  return scriptPluggy;
+}
+
+// Abre o Pluggy Connect com um connect token (30 min, escopo reduzido,
+// gerado pela função). Resolve com o itemId criado, ou null se a pessoa fechou.
+export async function conectarBancoPluggy(connectToken) {
+  const PluggyConnect = await carregarPluggyConnect();
+  return new Promise((resolve, reject) => {
+    let terminou = false;
+    const widget = new PluggyConnect({
+      connectToken,
+      includeSandbox: false,
+      onSuccess: (dados) => {
+        terminou = true;
+        resolve(dados?.item?.id || null);
+      },
+      onError: () => {
+        terminou = true;
+        reject(new FalhaOpenFinance('connect_erro', 'A Pluggy não conseguiu concluir a conexão. Tente de novo.'));
+      },
+      onClose: () => {
+        if (!terminou) resolve(null);
+      },
+    });
+    widget.init();
+  });
+}
+
 // Conexões (ação 'status') -> lista plana para o card da Home. Saldo de
 // conta soma no total; cartão de crédito é fatura (dívida), fica à parte.
 export function resumoSaldos(conexoes) {

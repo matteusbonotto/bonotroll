@@ -141,3 +141,22 @@ test('cifragem: ida e volta, IV novo a cada vez, presa ao dono, chave errada fal
   await assert.rejects(importarChave('curta'), erroCom('of_config'));
   await assert.rejects(importarChave(undefined), erroCom('of_config'));
 });
+
+test('connect token: POST com clientUserId dentro de options; erros claros', async () => {
+  let visto = null;
+  const fetch = async (url, init = {}) => {
+    if (url.endsWith('/auth')) return { ok: true, status: 200, json: async () => ({ apiKey: 'k' }) };
+    visto = { url, init };
+    return { ok: true, status: 200, json: async () => ({ accessToken: 'tok-curto' }) };
+  };
+  const cli = criarClientePluggy({ clientId: 'x', clientSecret: 'y', fetch });
+  assert.equal(await cli.connectToken('user-1'), 'tok-curto');
+  assert.equal(visto.url, 'https://api.pluggy.ai/connect_token');
+  assert.equal(visto.init.method, 'POST');
+  assert.deepEqual(JSON.parse(visto.init.body), { options: { clientUserId: 'user-1' } });
+
+  const falha = criarClientePluggy({ clientId: 'x', clientSecret: 'y', fetch: async (url) => (url.endsWith('/auth')
+    ? { ok: true, status: 200, json: async () => ({ apiKey: 'k' }) }
+    : { ok: false, status: 500, json: async () => ({}) }) });
+  await assert.rejects(falha.connectToken('u'), erroCom('pluggy_erro'));
+});

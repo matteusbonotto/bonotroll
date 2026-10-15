@@ -6,7 +6,9 @@
 // Regras de segurança (docs/OPEN-FINANCE.md):
 //  - CLIENT_ID/CLIENT_SECRET e a apiKey (acesso total por 2h) só existem no
 //    servidor; o navegador nunca recebe nada disso.
-//  - A função só LÊ (GET) na Pluggy — nenhum endpoint de pagamento é chamado.
+//  - A função só LÊ na Pluggy (GET). O único POST é /connect_token, que gera
+//    um token de 30 min com escopo reduzido para abrir o Pluggy Connect no
+//    navegador — nenhum endpoint de pagamento é chamado.
 //  - itemId só é aceito no formato UUID e só depois de a Pluggy confirmar que
 //    ele pertence à aplicação configurada (GET /items/{id} = 200).
 //  - Plano grátis do Meu Pluggy = só contas do PRÓPRIO titular, até 5
@@ -24,7 +26,7 @@ export const LIMITES = {
   paginasPorConta: 20, // 20 × 500 = 10 mil transações por conta numa consulta
   tempoMs: 20_000,
 };
-export const ACOES = ['status', 'vincular', 'desvincular', 'transacoes', 'credenciais', 'remover_credenciais'];
+export const ACOES = ['status', 'vincular', 'desvincular', 'transacoes', 'credenciais', 'remover_credenciais', 'connect_token'];
 
 export class ErroOpenFinance extends Error {
   constructor(status, codigo, mensagem) {
@@ -130,6 +132,19 @@ export function criarClientePluggy({ clientId, clientSecret, fetch: fetcher = gl
 
   return {
     apiKey,
+    // Token do Pluggy Connect (widget): 30 min, escopo reduzido. clientUserId
+    // identifica a pessoa nos eventos da Pluggy (vai dentro de options).
+    async connectToken(clientUserId) {
+      const r = await chamar('/connect_token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-API-KEY': await apiKey() },
+        body: JSON.stringify({ options: { clientUserId } }),
+      });
+      const corpo = await r.json().catch(() => null);
+      if (r.status === 429) throw new ErroOpenFinance(429, 'pluggy_limite', 'Muitas consultas ao Open Finance agora. Espere um minuto.');
+      if (!r.ok || typeof corpo?.accessToken !== 'string') throw new ErroOpenFinance(502, 'pluggy_erro', 'Não foi possível abrir a conexão com a Pluggy agora.');
+      return corpo.accessToken;
+    },
     item: (itemId) => get(`/items/${encodeURIComponent(itemId)}`, { tolerar404: true }),
     contas: async (itemId) => (await get(`/accounts?itemId=${encodeURIComponent(itemId)}`)).results ?? [],
     // GET /v2/transactions (cursor) — o /transactions paginado por número

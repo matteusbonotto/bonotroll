@@ -8,6 +8,7 @@
 //   status       conexões do usuário + contas/saldos de cada uma
 //   vincular     guarda um itemId (depois de a Pluggy confirmar que existe)
 //   desvincular  apaga a conexão do usuário (não mexe nas transações já importadas)
+//   connect_token  token curto para abrir o Pluggy Connect no navegador
 //   transacoes   transações do período, normalizadas para o importador do app,
 //                marcando as que já foram importadas (transactions.externo_id)
 // Nada de banco é gravado aqui além de openfinance_conexoes; importar é o
@@ -159,7 +160,15 @@ Deno.serve(async (req) => {
       return data ?? [];
     };
 
+    if (pedido.acao === 'connect_token') {
+      return json({ ok: true, connectToken: await pluggy.connectToken(userId) });
+    }
+
     if (pedido.acao === 'vincular') {
+      // Erro comum: colar o Client ID da aplicação no lugar do código da conexão.
+      if ([cred?.client_id, idServidor].some((id) => id && id.toLowerCase() === pedido.itemId)) {
+        throw new ErroOpenFinance(400, 'item_e_client_id', 'Esse é o Client ID da sua aplicação, não o código da conexão. Use o botão "Conectar banco" — ele vincula sozinho.');
+      }
       const atuais = await conexoesDoUsuario();
       if (atuais.some((c) => c.item_id === pedido.itemId)) return json({ ok: true, jaExistia: true });
       if (atuais.length >= LIMITES.conexoesPorUsuario) throw new ErroOpenFinance(400, 'of_limite', `O plano grátis permite até ${LIMITES.conexoesPorUsuario} conexões.`);

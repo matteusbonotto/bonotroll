@@ -4785,7 +4785,7 @@
             <ol class="mt-2 mb-2 ps-3">
               <li class="mb-1">Crie sua conta grátis em <a href="https://meu.pluggy.ai" target="_blank" rel="noopener noreferrer">meu.pluggy.ai</a> e conecte seus bancos em <em>Conectar Minha Conta</em> (você autoriza no app do próprio banco).</li>
               <li class="mb-1">Entre em <a href="https://dashboard.pluggy.ai" target="_blank" rel="noopener noreferrer">dashboard.pluggy.ai</a> com a mesma conta, crie uma <strong>aplicação</strong> e, na aba <em>Aplicação</em>, copie o <strong>Client ID</strong> e o <strong>Client Secret</strong>. Cole aqui embaixo.</li>
-              <li class="mb-1">Ainda no dashboard, conecte o conector <strong>MeuPluggy</strong> na sua aplicação e escolha os bancos. Cada banco vira uma conexão com um código (<em>itemId</em>): copie e cole em <em>Adicionar conexão</em>.</li>
+              <li class="mb-1">Aqui no BNTT, toque em <strong>Conectar banco</strong>. Na janela da Pluggy, escolha <strong>MeuPluggy</strong>, entre com a sua conta do Meu Pluggy e marque os bancos. A conexão é vinculada sozinha.</li>
               <li>Pronto: escolha o período e toque em <em>Buscar transações</em>. Os saldos aparecem na tela inicial.</li>
             </ol>
             <p class="mb-1 cg-muted">O plano grátis vale só para as <strong>suas</strong> contas (até 5 bancos). Cada pessoa da casa faz a própria configuração.</p>
@@ -4796,21 +4796,23 @@
           </details>
 
           <!-- 1) Ainda sem credenciais: cadastrar as da própria Pluggy. -->
-          <template x-if="$store.csvModal.of.credenciais === null && !$store.csvModal.of.carregando">
+          <template x-if="($store.csvModal.of.credenciais === null || $store.csvModal.of.trocarCredenciais) && !$store.csvModal.of.carregando">
             <form class="d-flex flex-column gap-2 mb-2" @submit.prevent="$store.csvModal.ofSalvarCredenciais()">
               <h3 class="h6 fw-semibold mb-0">Sua Pluggy</h3>
               <input type="text" class="form-control form-control-sm" placeholder="Client ID" x-model="$store.csvModal.of.clientId" maxlength="36" autocomplete="off" spellcheck="false" aria-label="Client ID da Pluggy" />
               <input type="password" class="form-control form-control-sm" placeholder="Client Secret" x-model="$store.csvModal.of.clientSecret" maxlength="200" autocomplete="off" spellcheck="false" aria-label="Client Secret da Pluggy" />
               <p class="small cg-muted mb-0"><i class="bi bi-shield-lock"></i> O secret é conferido na Pluggy e guardado cifrado no servidor do BNTT — ninguém consegue lê-lo depois, nem pelo app.</p>
               <button type="submit" class="cg-btn btn btn-success btn-sm" :disabled="$store.csvModal.of.carregando || !$store.csvModal.of.clientId.trim() || !$store.csvModal.of.clientSecret.trim()">Salvar e continuar</button>
+              <button type="button" class="cg-btn btn btn-link btn-sm" x-show="$store.csvModal.of.trocarCredenciais" @click="$store.csvModal.of.trocarCredenciais = false">Cancelar</button>
             </form>
           </template>
 
           <!-- 2) Com credenciais: conexões + período. -->
-          <template x-if="$store.csvModal.of.credenciais">
+          <template x-if="$store.csvModal.of.credenciais && !$store.csvModal.of.trocarCredenciais">
             <div>
               <h3 class="h6 fw-semibold mt-2">Conexões</h3>
-              <p class="small cg-muted" x-show="!$store.csvModal.of.carregando && !$store.csvModal.of.conexoes.length">Nenhuma conexão ainda. Cole abaixo o código (<em>itemId</em>) de cada banco — passo 3 do "Como configurar".</p>
+              <p class="small cg-muted mb-1" x-show="$store.csvModal.of.credenciais === 'servidor'">Usando a aplicação da Pluggy configurada no servidor. <button type="button" class="btn btn-link btn-sm p-0 align-baseline" @click="$store.csvModal.of.trocarCredenciais = true">Usar outra aplicação</button></p>
+              <p class="small cg-muted" x-show="!$store.csvModal.of.carregando && !$store.csvModal.of.conexoes.length">Nenhuma conexão ainda. Toque em <strong>Conectar banco</strong>.</p>
               <ul class="list-unstyled mb-2">
                 <template x-for="c in $store.csvModal.of.conexoes" :key="c.item_id">
                   <li class="border rounded p-2 mb-2 small">
@@ -4828,8 +4830,9 @@
                   </li>
                 </template>
               </ul>
-              <details class="mb-3" :open="!$store.csvModal.of.conexoes.length">
-                <summary class="small fw-semibold">Adicionar conexão</summary>
+              <button type="button" class="cg-btn btn btn-primary w-100 mb-2" data-testid="of-conectar" :disabled="$store.csvModal.of.carregando || $store.csvModal.of.conexoes.length >= 5" @click="$store.csvModal.ofConectarBanco()"><i class="bi bi-plus-circle"></i> Conectar banco</button>
+              <details class="mb-3">
+                <summary class="small fw-semibold">Tenho o código da conexão (itemId)</summary>
                 <div class="d-flex flex-column gap-2 mt-2">
                   <input type="text" class="form-control form-control-sm" placeholder="itemId (ex.: 0b7f3a1e-2c4d-…)" x-model="$store.csvModal.of.novoItem" maxlength="36" autocomplete="off" spellcheck="false" aria-label="itemId da conexão" />
                   <input type="text" class="form-control form-control-sm" placeholder="Apelido (opcional, ex.: Nubank)" x-model="$store.csvModal.of.apelido" maxlength="60" aria-label="Apelido da conexão" />

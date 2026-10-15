@@ -6,7 +6,8 @@ import { todayIso, MOEDAS_SUPORTADAS } from '../utils/format.js';
 import * as sl from '../services/shoppingList.js';
 import * as res from '../services/resources.js';
 import * as cx from '../services/caixinhas.js';
-import { chamarOpenFinance, paraPlanilha } from '../services/openFinance.js';
+import { chamarOpenFinance, conectarBancoPluggy, paraPlanilha } from '../services/openFinance.js';
+import { isDemoMode } from '../data/config.js';
 
 // Modal global de importação de CSV (Alpine.store('csvModal')) — reaproveitado
 // para transações e para itens de lista de compras.
@@ -25,7 +26,7 @@ export function csvModalStore() {
     // true quando as linhas vieram do Open Finance (título do modal na prévia/resultado).
     externos: false,
     // Open Finance (Pluggy): conexões e período da busca — ver services/openFinance.js.
-    of: { carregando: false, erro: '', aviso: '', conexoes: [], credenciais: undefined, clientId: '', clientSecret: '', de: '', ate: '', novoItem: '', apelido: '' },
+    of: { carregando: false, erro: '', aviso: '', conexoes: [], credenciais: undefined, trocarCredenciais: false, clientId: '', clientSecret: '', de: '', ate: '', novoItem: '', apelido: '' },
     IMPORT_TARGETS,
 
     openFor(target, listId = null) {
@@ -42,7 +43,7 @@ export function csvModalStore() {
       this.result = { ok: 0, pulados: 0, erros: [] };
       const hoje = todayIso();
       const inicioMes = `${hoje.slice(0, 8)}01`;
-      this.of = { carregando: false, erro: '', aviso: '', conexoes: [], credenciais: undefined, clientId: '', clientSecret: '', de: inicioMes, ate: hoje, novoItem: '', apelido: '' };
+      this.of = { carregando: false, erro: '', aviso: '', conexoes: [], credenciais: undefined, trocarCredenciais: false, clientId: '', clientSecret: '', de: inicioMes, ate: hoje, novoItem: '', apelido: '' };
       // Cache de cômodos/subcategorias/itens já resolvidos NESTE import (ver
       // resolveComodo/resolveSubcategoria/itemDuplicado) — zerado a cada
       // abertura pra não arrastar estado de uma importação anterior na
@@ -118,6 +119,7 @@ export function csvModalStore() {
       this.of.clientSecret = '';
       if (r) {
         this.of.clientId = '';
+        this.of.trocarCredenciais = false;
         await this.abrirOpenFinance();
       }
     },
@@ -128,6 +130,30 @@ export function csvModalStore() {
         this.of.conexoes = [];
         this.of.credenciais = null;
         window.dispatchEvent(new CustomEvent('cg:openfinance-changed'));
+      }
+    },
+    // Janela oficial da Pluggy: a pessoa escolhe "MeuPluggy", entra e escolhe
+    // os bancos; o itemId volta sozinho e é vinculado. O modal do BNTT some
+    // enquanto a janela da Pluggy está aberta (não briga por cima dela).
+    async ofConectarBanco() {
+      if (isDemoMode()) {
+        this.of.erro = 'No modo demonstração a conexão com o banco é só ilustrativa.';
+        return;
+      }
+      const r = await this._of(() => chamarOpenFinance('connect_token'));
+      if (!r?.connectToken) return;
+      this.open = false;
+      let itemId = null;
+      try {
+        itemId = await conectarBancoPluggy(r.connectToken);
+      } catch (e) {
+        this.of.erro = e.message;
+      } finally {
+        this.open = true;
+      }
+      if (itemId) {
+        this.of.novoItem = itemId;
+        await this.ofVincular();
       }
     },
     async ofVincular() {
