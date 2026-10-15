@@ -10,7 +10,7 @@ test('open finance: busca, importa e não duplica na segunda vez', async ({ page
   await page.getByTestId('abrir-open-finance').click();
   const modal = page.getByTestId('modal-importar');
   await expect(modal.getByRole('heading', { name: /Open Finance — suas contas/ })).toBeVisible();
-  await expect(modal.getByText('Exemplo · Banco de Exemplo')).toBeVisible();
+  await expect(modal.locator('li', { hasText: 'Banco de Exemplo' }).first()).toBeVisible();
   await modal.getByRole('button', { name: /Buscar transações/ }).click();
   await expect(page.getByText('3 linha(s) prontas')).toBeVisible();
   await page.getByRole('button', { name: 'Importar agora' }).click();
@@ -28,15 +28,26 @@ test('open finance: busca, importa e não duplica na segunda vez', async ({ page
   expect(await importadas()).toHaveLength(3);
 });
 
-test('open finance: saldos das contas conectadas aparecem na Home', async ({ page }) => {
+test('open finance: card Seus bancos na Home — fechado mostra o resumo, abre e lembra', async ({ page }) => {
   await page.goto('/?demo=1');
   await page.getByText('Entrar como', { exact: false }).first().click();
   await expect.poll(() => page.evaluate(() => !!Alpine.store('app').profile)).toBe(true);
-  await page.evaluate(() => Alpine.store('app').setView('home'));
+  await page.evaluate(() => { localStorage.removeItem('bonotto_saldos_abertos'); Alpine.store('app').setView('home'); });
   const card = page.getByTestId('saldos-bancos');
   await expect(card).toBeVisible();
-  await expect(card).toContainText('Saldos nos bancos');
-  await expect(card).toContainText('Exemplo · Conta Corrente ••1234');
-  await expect(card).toContainText('2.450,90');
-  await expect(card).not.toContainText('Faturas de cartão');
+  const topo = card.getByRole('button', { name: /Seus bancos/ });
+  await expect(topo).toHaveAttribute('aria-expanded', 'false');
+  // Fechado: resumo por banco (nome + saldo), sem o detalhe das contas.
+  await expect(card.locator('.cg-bancos__chip')).toHaveCount(1);
+  await expect(card.locator('.cg-bancos__chip')).toContainText('Banco de Exemplo');
+  await expect(card.locator('.cg-bancos__chip')).toContainText('2.450,90');
+  await expect(card.getByText('Conta Corrente ••1234')).toBeHidden();
+  await expect(card).not.toContainText('MeuPluggy');
+  // Aberto: contas e fatura do cartão (fora do saldo em conta).
+  await topo.click();
+  await expect(topo).toHaveAttribute('aria-expanded', 'true');
+  await expect(card.getByText('Conta Corrente ••1234')).toBeVisible();
+  await expect(card.getByText('Fatura do cartão ••9876')).toBeVisible();
+  await expect(card.getByText(/Faturas de cartão: R\$\s?812,40/)).toBeVisible();
+  expect(await page.evaluate(() => localStorage.getItem('bonotto_saldos_abertos'))).toBe('1');
 });

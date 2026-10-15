@@ -86,6 +86,7 @@ export function validarPedido(corpo, hoje = new Date().toISOString().slice(0, 10
 // guardamos no escopo do módulo para não estourar o limite de /auth.
 export function criarClientePluggy({ clientId, clientSecret, fetch: fetcher = globalThis.fetch, agora = () => Date.now() }) {
   let cache = null;
+  let logosCache = null;
 
   async function chamar(caminho, init = {}) {
     const ctrl = new AbortController();
@@ -155,6 +156,18 @@ export function criarClientePluggy({ clientId, clientSecret, fetch: fetcher = gl
       const achado = (corpo.results || []).find((c) => norm(c.name) === 'meupluggy');
       return Number.isInteger(achado?.id) ? achado.id : null;
     },
+    // Logos oficiais dos bancos: lista de conectores da Pluggy (nome -> imageUrl
+    // https), guardada por 6h na instância. Falha = sem logo, nunca erro.
+    async logos() {
+      if (logosCache && logosCache.expira > agora()) return logosCache.mapa;
+      const corpo = await get('/connectors?countries=BR');
+      const mapa = new Map();
+      for (const c of corpo.results || []) {
+        if (typeof c?.imageUrl === 'string' && c.imageUrl.startsWith('https://') && c.name && !mapa.has(normNome(c.name))) mapa.set(normNome(c.name), c.imageUrl);
+      }
+      logosCache = { mapa, expira: agora() + 6 * 3600_000 };
+      return mapa;
+    },
     item: (itemId) => get(`/items/${encodeURIComponent(itemId)}`, { tolerar404: true }),
     contas: async (itemId) => (await get(`/accounts?itemId=${encodeURIComponent(itemId)}`)).results ?? [],
     // GET /v2/transactions (cursor) — o /transactions paginado por número
@@ -218,10 +231,65 @@ export function normalizarTransacao(t, conta) {
 }
 
 // Conta da Pluggy -> resumo seguro para a tela (sem número completo).
-export function resumoConta(c) {
+// ---- Nome e logo do banco ---------------------------------------------------
+// No Meu Pluggy a conexão se chama "MeuPluggy" (é um proxy); o banco de
+// verdade vem do nome da conta ("Nu Pagamentos S.A. - Instituição de
+// Pagamento"). Esta tabela traduz razão social -> nome conhecido, que também
+// é o nome do conector da Pluggy (de onde vem o logo).
+export const normNome = (t) => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
+const INSTITUICOES = [
+  ['Nubank', /\bnu\s*(pagamentos|financeira|invest)|\bnubank/i],
+  ['Itaú', /\bita[uú]/i],
+  ['Bradesco', /bradesco/i],
+  ['Banco do Brasil', /banco do brasil/i],
+  ['Caixa', /caixa econ[oô]mica|\bcaixa\b/i],
+  ['Santander', /santander/i],
+  ['Inter', /banco inter\b|\binter\s*(s\.?a|&|pag)/i],
+  ['C6 Bank', /\bc6\b/i],
+  ['BTG Pactual', /\bbtg\b/i],
+  ['XP Investimentos', /\bxp\b/i],
+  ['Mercado Pago', /mercado\s*pago/i],
+  ['PicPay', /picpay/i],
+  ['PagBank', /pagbank|pagseguro/i],
+  ['Sicoob', /sicoob/i],
+  ['Sicredi', /sicredi/i],
+  ['Banco Original', /banco original/i],
+  ['Neon', /\bneon\b/i],
+  ['Banrisul', /banrisul/i],
+  ['Safra', /\bsafra\b/i],
+  ['Banco Pan', /banco pan\b/i],
+  ['Will Bank', /will\s*bank/i],
+];
+const EH_PROXY = new Set(['meupluggy', 'meupluggyopenfinance']);
+export const conectorEhProxy = (nome) => EH_PROXY.has(normNome(nome));
+
+export function nomeDoBanco(textoConta) {
+  const t = texto(textoConta, 120);
+  const achado = INSTITUICOES.find(([, re]) => re.test(t));
+  if (achado) return achado[0];
+  // Sem tabela: razão social limpa ("Banco XYZ S.A. - Instituição de Pagamento" -> "Banco XYZ").
+  const limpo = t.split(' - ')[0].replace(/\b(s\.?\s?a\.?|ltda\.?|institui[cç][aã]o de pagamento)(?=\s|$)/gi, '').replace(/[\s,.-]+$/, '').trim();
+  return limpo || 'Banco';
+}
+
+export function logoDoBanco(nome, logos) {
+  if (!logos?.size) return '';
+  const alvo = normNome(nome);
+  if (logos.has(alvo)) return logos.get(alvo);
+  // Parcial só com nome específico ("caixa" -> "caixaeconomicafederal"); um
+  // genérico como "banco" pegaria o logo de outro banco. Entre os candidatos,
+  // o nome mais curto ("itau" antes de "itauempresas").
+  if (alvo.length < 4 || alvo === 'banco') return '';
+  const candidatos = [...logos.keys()].filter((chave) => chave.startsWith(alvo)).sort((a, b) => a.length - b.length);
+  return candidatos.length ? logos.get(candidatos[0]) : '';
+}
+
+export function resumoConta(c, banco = null) {
   const numero = texto(c?.number, 40);
   return {
     id: typeof c?.id === 'string' ? c.id : '',
+    banco: banco?.nome || '',
+    logo: banco?.logo || '',
     nome: texto(c?.name, 60) || 'Conta',
     tipo: c?.type === 'CREDIT' ? 'cartao' : 'conta',
     final: numero ? numero.slice(-4) : '',

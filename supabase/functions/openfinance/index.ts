@@ -24,7 +24,8 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { origemPermitida } from '../_shared/iaNucleo.js';
 import {
-  ErroOpenFinance, LIMITES, cifrarSegredo, criarClientePluggy, decifrarSegredo, importarChave, normalizarTransacao, resumoConta, resumoItem,
+  ErroOpenFinance, LIMITES, cifrarSegredo, conectorEhProxy, criarClientePluggy, decifrarSegredo, importarChave, logoDoBanco, nomeDoBanco,
+  normalizarTransacao, resumoConta, resumoItem,
   usuariosPermitidos, validarPedido,
 } from '../_shared/openfinanceNucleo.js';
 
@@ -193,14 +194,29 @@ Deno.serve(async (req) => {
     const conexoes = await conexoesDoUsuario();
 
     if (pedido.acao === 'status') {
+      const logos = await pluggy.logos().catch(() => new Map());
       const lista = [];
       for (const c of conexoes) {
         const item = await pluggy.item(c.item_id);
+        if (!item) {
+          lista.push({ item_id: c.item_id, apelido: c.apelido, banco: 'Conexão indisponível', logo: '', status: 'INDISPONIVEL', contas: [] });
+          continue;
+        }
+        const resumo = resumoItem(item);
+        const proxy = conectorEhProxy(item.connector?.name);
+        // Conexão "MeuPluggy": o banco de cada conta vem do nome da conta.
+        const contas = (await pluggy.contas(c.item_id)).map((conta) => {
+          const nome = proxy ? nomeDoBanco(conta.name || conta.marketingName) : resumo.banco;
+          return resumoConta(conta, { nome, logo: proxy ? logoDoBanco(nome, logos) : resumo.logo });
+        });
+        const bancos = [...new Set(contas.map((x) => x.banco).filter(Boolean))];
         lista.push({
           item_id: c.item_id,
           apelido: c.apelido,
-          ...(item ? resumoItem(item) : { banco: 'Conexão indisponível', status: 'INDISPONIVEL' }),
-          contas: item ? (await pluggy.contas(c.item_id)).map(resumoConta) : [],
+          ...resumo,
+          banco: proxy ? bancos.join(' · ') || 'Banco' : resumo.banco,
+          logo: proxy ? contas.find((x) => x.logo)?.logo || '' : resumo.logo,
+          contas,
         });
       }
       return json({ ok: true, credenciais: origem, conexoes: lista });

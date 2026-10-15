@@ -426,25 +426,59 @@
             <button type="button" class="btn btn-link p-0" @click="$store.app.verPlanos()">Ver planos</button>
           </p>
 
-          <!-- Saldos nos bancos (Open Finance) — só aparece para quem conectou. -->
-          <template x-if="saldosBancos.contas.length">
-            <section class="cg-card mb-4" aria-labelledby="cg-saldos-titulo" data-testid="saldos-bancos">
-              <div class="d-flex align-items-center justify-content-between mb-2">
-                <h2 class="cg-section-title mb-0" id="cg-saldos-titulo"><i class="bi bi-bank" aria-hidden="true"></i> Saldos nos bancos</h2>
-                <strong x-text="cgFormat.formatCurrency(saldosBancos.totalContas)" aria-label="Total em contas"></strong>
-              </div>
-              <ul class="list-unstyled mb-0 small">
-                <template x-for="c in saldosBancos.contas" :key="c.id">
-                  <li class="d-flex align-items-center gap-2 py-1">
-                    <img x-show="c.logo" :src="c.logo" alt="" width="20" height="20" style="border-radius:5px" referrerpolicy="no-referrer" />
-                    <span class="flex-grow-1" x-text="c.banco + ' · ' + (c.tipo === 'cartao' ? 'Fatura do cartão ' : '') + c.nome + (c.final ? ' ••' + c.final : '')"></span>
-                    <span :class="c.tipo === 'cartao' ? 'text-danger' : (c.saldo < 0 ? 'text-danger' : '')" x-text="c.saldo.toLocaleString('pt-BR', { style: 'currency', currency: c.moeda })"></span>
+          <!-- Seus bancos (Open Finance) — só aparece para quem conectou.
+               Accordion: fechado = resumo por banco; aberto = cada conta. -->
+          <template x-if="saldosBancos.bancos.length">
+            <section class="cg-card cg-bancos mb-4" data-testid="saldos-bancos">
+              <button type="button" class="cg-bancos__topo" @click="alternarSaldos()" :aria-expanded="saldosAbertos ? 'true' : 'false'" aria-controls="cg-bancos-detalhe">
+                <span class="cg-bancos__titulo"><i class="bi bi-bank" aria-hidden="true"></i> Seus bancos</span>
+                <span class="cg-bancos__total">
+                  <small>Saldo em conta</small>
+                  <strong x-text="cgFormat.formatCurrency(saldosBancos.totalContas)"></strong>
+                </span>
+                <i class="bi cg-bancos__seta" :class="saldosAbertos ? 'bi-chevron-up' : 'bi-chevron-down'" aria-hidden="true"></i>
+              </button>
+
+              <!-- Fechado: um chip por banco com o saldo dele -->
+              <ul class="cg-bancos__resumo" x-show="!saldosAbertos" aria-label="Resumo por banco">
+                <template x-for="b in saldosBancos.bancos" :key="b.banco">
+                  <li class="cg-bancos__chip">
+                    <span class="cg-bancos__logo" aria-hidden="true">
+                      <img x-show="b.logo" :src="b.logo" alt="" referrerpolicy="no-referrer" />
+                      <span x-show="!b.logo" x-text="b.banco.charAt(0)"></span>
+                    </span>
+                    <span class="cg-bancos__nome" x-text="b.banco"></span>
+                    <strong :class="b.total < 0 && 'text-danger'" x-text="cgFormat.formatCurrency(b.total)"></strong>
                   </li>
                 </template>
               </ul>
-              <template x-if="saldosBancos.totalCartoes">
-                <p class="small cg-muted mb-0 mt-1" x-text="'Faturas de cartão: ' + cgFormat.formatCurrency(saldosBancos.totalCartoes) + ' (fora do total)'"></p>
-              </template>
+
+              <!-- Aberto: cada banco com as contas e a fatura do cartão -->
+              <div id="cg-bancos-detalhe" x-show="saldosAbertos">
+                <template x-for="b in saldosBancos.bancos" :key="b.banco">
+                  <div class="cg-bancos__grupo">
+                    <div class="cg-bancos__grupo-topo">
+                      <span class="cg-bancos__logo" aria-hidden="true">
+                        <img x-show="b.logo" :src="b.logo" alt="" referrerpolicy="no-referrer" />
+                        <span x-show="!b.logo" x-text="b.banco.charAt(0)"></span>
+                      </span>
+                      <strong class="flex-grow-1" x-text="b.banco"></strong>
+                      <strong :class="b.total < 0 && 'text-danger'" x-text="cgFormat.formatCurrency(b.total)"></strong>
+                    </div>
+                    <ul class="list-unstyled mb-0">
+                      <template x-for="c in b.contas" :key="c.id">
+                        <li class="cg-bancos__conta">
+                          <span x-text="(c.tipo === 'cartao' ? 'Fatura do cartão' : c.nome) + (c.final ? ' ••' + c.final : '')"></span>
+                          <span :class="(c.tipo === 'cartao' || c.saldo < 0) && 'text-danger'" x-text="c.saldo.toLocaleString('pt-BR', { style: 'currency', currency: c.moeda })"></span>
+                        </li>
+                      </template>
+                    </ul>
+                  </div>
+                </template>
+                <template x-if="saldosBancos.totalCartoes">
+                  <p class="small cg-muted mb-0 mt-2" x-text="'Faturas de cartão: ' + cgFormat.formatCurrency(saldosBancos.totalCartoes) + ' (fora do saldo em conta)'"></p>
+                </template>
+              </div>
             </section>
           </template>
 
@@ -4819,8 +4853,11 @@
                 <template x-for="c in $store.csvModal.of.conexoes" :key="c.item_id">
                   <li class="border rounded p-2 mb-2 small">
                     <div class="d-flex align-items-center gap-2">
-                      <img x-show="c.logo" :src="c.logo" alt="" width="24" height="24" style="border-radius:6px" referrerpolicy="no-referrer" />
-                      <strong class="flex-grow-1" x-text="c.apelido ? c.apelido + ' · ' + c.banco : c.banco"></strong>
+                      <span class="cg-bancos__logo" aria-hidden="true">
+                        <img x-show="c.logo" :src="c.logo" alt="" referrerpolicy="no-referrer" />
+                        <span x-show="!c.logo" x-text="(c.banco || 'B').charAt(0)"></span>
+                      </span>
+                      <strong class="flex-grow-1" x-text="c.banco"></strong>
                       <button type="button" class="cg-btn btn btn-outline-danger btn-sm" title="Remover conexão" aria-label="Remover conexão" @click="$store.csvModal.ofDesvincular(c.item_id)"><i class="bi bi-x-lg"></i></button>
                     </div>
                     <template x-for="conta in c.contas" :key="conta.id">

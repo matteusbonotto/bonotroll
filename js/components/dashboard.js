@@ -84,7 +84,14 @@ export function dashboardView() {
     recursosSugestoesAbertas: false,
     budgets: [], // orçamentos pessoais (sempre owner_id, nunca de grupo — ver services/budgets.js)
     // Saldos das contas conectadas pelo Open Finance (só de quem configurou).
-    saldosBancos: { contas: [], totalContas: 0, totalCartoes: 0 },
+    saldosBancos: { contas: [], bancos: [], totalContas: 0, totalCartoes: 0 },
+    // Accordion do card de saldos: fechado mostra só o resumo por banco.
+    // Preferência por aparelho (prefixo bonotto_, ver CLAUDE.md).
+    saldosAbertos: (() => { try { return localStorage.getItem('bonotto_saldos_abertos') === '1'; } catch { return false; } })(),
+    alternarSaldos() {
+      this.saldosAbertos = !this.saldosAbertos;
+      try { localStorage.setItem('bonotto_saldos_abertos', this.saldosAbertos ? '1' : '0'); } catch { /* sem storage: só não lembra */ }
+    },
 
     init() {
       this.load();
@@ -104,7 +111,7 @@ export function dashboardView() {
         const r = await chamarOpenFinance('status');
         this.saldosBancos = resumoSaldos(r.conexoes);
       } catch {
-        this.saldosBancos = { contas: [], totalContas: 0, totalCartoes: 0 };
+        this.saldosBancos = { contas: [], bancos: [], totalContas: 0, totalCartoes: 0 };
       }
     },
 

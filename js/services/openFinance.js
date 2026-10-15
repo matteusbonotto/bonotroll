@@ -44,7 +44,7 @@ async function tokenAtual() {
 const DEMO_ITEM = '00000000-0000-4000-8000-000000000001';
 async function respostaDemo(acao, dados) {
   if (acao === 'status') {
-    return { credenciais: 'proprias', conexoes: [{ item_id: DEMO_ITEM, apelido: 'Exemplo', banco: 'Banco de Exemplo', logo: '', status: 'UPDATED', atualizado_em: new Date().toISOString(), contas: [{ id: 'demo', nome: 'Conta Corrente', tipo: 'conta', final: '1234', saldo: 2450.9, moeda: 'BRL' }] }] };
+    return { credenciais: 'proprias', conexoes: [{ item_id: DEMO_ITEM, apelido: 'Exemplo', banco: 'Banco de Exemplo', logo: '', status: 'UPDATED', atualizado_em: new Date().toISOString(), contas: [{ id: 'demo', banco: 'Banco de Exemplo', logo: '', nome: 'Conta Corrente', tipo: 'conta', final: '1234', saldo: 2450.9, moeda: 'BRL' }, { id: 'demo-cartao', banco: 'Banco de Exemplo', logo: '', nome: 'Cartão', tipo: 'cartao', final: '9876', saldo: 812.4, moeda: 'BRL' }] }] };
   }
   if (acao === 'transacoes') {
     const d = dados.ate || todayIso();
@@ -154,8 +154,9 @@ export function resumoSaldos(conexoes) {
       if (conta.saldo === null || conta.saldo === undefined) continue;
       contas.push({
         id: `${c.item_id}:${conta.id}`,
-        banco: c.apelido || c.banco,
-        logo: c.logo || '',
+        // Banco da CONTA (no Meu Pluggy a conexão se chama "MeuPluggy").
+        banco: conta.banco || c.apelido || c.banco || 'Banco',
+        logo: conta.logo || c.logo || '',
         nome: conta.nome,
         final: conta.final,
         tipo: conta.tipo,
@@ -164,8 +165,18 @@ export function resumoSaldos(conexoes) {
       });
     }
   }
-  const soma = (tipo) => Math.round(contas.filter((x) => x.tipo === tipo && x.moeda === 'BRL').reduce((t, x) => t + x.saldo, 0) * 100) / 100;
-  return { contas, totalContas: soma('conta'), totalCartoes: soma('cartao') };
+  const centavos = (n) => Math.round(n * 100) / 100;
+  const soma = (lista, tipo) => centavos(lista.filter((x) => x.tipo === tipo && x.moeda === 'BRL').reduce((t, x) => t + x.saldo, 0));
+  // Um grupo por banco, na ordem em que aparecem: é o resumo do card fechado.
+  const porBanco = new Map();
+  for (const conta of contas) {
+    if (!porBanco.has(conta.banco)) porBanco.set(conta.banco, { banco: conta.banco, logo: conta.logo, contas: [] });
+    const g = porBanco.get(conta.banco);
+    g.logo ||= conta.logo;
+    g.contas.push(conta);
+  }
+  const bancos = [...porBanco.values()].map((g) => ({ ...g, total: soma(g.contas, 'conta'), fatura: soma(g.contas, 'cartao') }));
+  return { contas, bancos, totalContas: soma(contas, 'conta'), totalCartoes: soma(contas, 'cartao') };
 }
 
 // Transações ainda não importadas -> { headers, rows } do importador.

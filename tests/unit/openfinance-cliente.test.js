@@ -60,5 +60,15 @@ test('resumoSaldos: soma só contas em BRL; cartão é fatura, fica à parte; se
   assert.equal(r.totalContas, 1200.3);
   assert.equal(r.totalCartoes, 350.5);
   assert.equal(r.contas.find((c) => c.nome === 'Corrente').banco, 'Salário');
-  assert.deepEqual(resumoSaldos(undefined), { contas: [], totalContas: 0, totalCartoes: 0 });
+  assert.deepEqual(resumoSaldos(undefined), { contas: [], bancos: [], totalContas: 0, totalCartoes: 0 });
+  // Um grupo por banco, com saldo em conta e fatura separados.
+  assert.deepEqual(r.bancos.map((b) => [b.banco, b.total, b.fatura]), [['Nubank', 1000.1, 350.5], ['Salário', 200.2, 0]]);
+});
+
+test('resumoSaldos: no Meu Pluggy o banco vem da conta, nunca "MeuPluggy"', () => {
+  const r = resumoSaldos([{ item_id: 'i', banco: 'Nubank · Itaú', apelido: null, logo: '', contas: [
+    { id: 'a', banco: 'Nubank', logo: 'https://x/nu.svg', nome: 'Conta', tipo: 'conta', saldo: 10, moeda: 'BRL' },
+    { id: 'b', banco: 'Itaú', logo: '', nome: 'Corrente', tipo: 'conta', saldo: 5, moeda: 'BRL' },
+  ] }]);
+  assert.deepEqual(r.bancos.map((b) => [b.banco, b.logo, b.total]), [['Nubank', 'https://x/nu.svg', 10], ['Itaú', '', 5]]);
 });
