@@ -2500,3 +2500,36 @@ section[x-data^="dashboardView"] .cg-quick-actions .cg-btn i { font-size: 1.25re
 .cg-admin__voucher { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-2) 0; border-bottom: 1px solid var(--color-border); }
 .cg-admin__voucher:last-child { border-bottom: 0; }
 .cg-admin__voucher code { color: inherit; }
+
+/* ===== Celular compacto (2026-10-15) ======================================
+   Pedido: "muitos botões no mobile, preenchendo quase a tela toda". No
+   celular, barras de botões viram UMA linha com rolagem lateral (sem
+   quebrar), e o título que só repete o nome da aba some (a aba já diz). */
+@media (max-width: 575.98px) {
+  .cg-titulo-repetido { display: none !important; }
+
+  .cg-rolagem-x,
+  .cg-quick-actions.cg-rolagem-x {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: var(--space-2);
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    /* encosta na borda da tela: o botão cortado mostra que dá pra rolar */
+    margin-inline: calc(-1 * var(--space-4));
+    padding-inline: var(--space-4);
+    scroll-padding-inline: var(--space-4);
+  }
+  /* dentro de um flex: sem min-width 0 a linha estoura a tela em vez de rolar */
+  .cg-rolagem-x { min-width: 0; flex: 1 1 100%; max-width: calc(100% + 2 * var(--space-4)); }
+  .cg-rolagem-x::-webkit-scrollbar { display: none; }
+  .cg-rolagem-x > *,
+  .cg-quick-actions.cg-rolagem-x .cg-btn { flex: none; width: auto; white-space: nowrap; }
+  .cg-quick-actions.cg-rolagem-x { margin-bottom: var(--space-2) !important; }
+
+  /* Card "Seus bancos": título inteiro, valor um pouco menor */
+  .cg-bancos__titulo { font-size: var(--font-size-body-lg); }
+  .cg-bancos__total strong { font-size: var(--font-size-body-lg); }
+}

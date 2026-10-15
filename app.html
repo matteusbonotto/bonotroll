@@ -945,7 +945,7 @@
         <!-- ===== TRANSAÇÕES ===== -->
         <section x-show="$store.app.view === 'transacoes'" x-data="transactionsView()" x-init="init()">
           <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-            <div class="cg-section-title mb-0"><i class="bi bi-arrow-left-right"></i> <span x-text="$store.app.linha === 'business' ? 'Contas' : 'Movimentações'"></span></div>
+            <div class="cg-section-title cg-titulo-repetido mb-0"><i class="bi bi-arrow-left-right"></i> <span x-text="$store.app.linha === 'business' ? 'Contas' : 'Movimentações'"></span></div>
             <!-- 2 grupos independentes (2026-08-20) — layout (lista/tabela/
                  grade) e densidade (normal/compacta) SEMPRE combináveis, no
                  lugar de 4 botões soltos sem relação clara entre si.
@@ -957,7 +957,11 @@
                  também no mobile (em vez do cards-stack), dentro de uma
                  caixa com scroll horizontal E vertical (ver .cg-scroll-xy em
                  css/app.css) — pedido explícito de "planilha" no celular. -->
-            <div class="d-flex flex-wrap gap-2">
+            <div class="d-flex flex-wrap gap-2 cg-rolagem-x" aria-label="Como ver as movimentações">
+              <!-- Filtros: só no celular (≥992px o painel fica sempre visível). -->
+              <button type="button" class="cg-btn btn btn-sm d-lg-none" :class="filtrosAbertos || filtrosAtivosCount ? 'btn-secondary' : 'btn-outline-secondary'" @click="filtrosAbertos = !filtrosAbertos" :aria-expanded="filtrosAbertos ? 'true' : 'false'">
+                <i class="bi bi-funnel"></i> Filtros <span class="badge rounded-pill text-bg-light" x-show="filtrosAtivosCount" x-text="filtrosAtivosCount"></span>
+              </button>
               <div class="cg-view-toggle">
                 <button type="button" :class="{ 'is-active': layout === 'lista' }" @click="setLayout('lista')" title="Lista"><i class="bi bi-list-ul"></i></button>
                 <button type="button" :class="{ 'is-active': layout === 'tabela' }" @click="setLayout('tabela')" title="Tabela"><i class="bi bi-table"></i></button>
@@ -984,22 +988,16 @@
             <button type="button" class="btn" :class="agrupamento === 'categoria' ? 'btn-secondary' : 'btn-outline-secondary'" @click="setAgrupamento('categoria')">Categoria</button>
           </div>
 
-          <div class="cg-quick-actions mb-3">
+          <div class="cg-quick-actions cg-rolagem-x mb-3" aria-label="Ações">
             <button type="button" class="cg-btn btn btn-danger btn-sm" @click="novaSaida()"><i class="bi bi-dash-circle"></i> Despesa</button>
             <button type="button" class="cg-btn btn btn-outline-success btn-sm" @click="novaEntrada()"><i class="bi bi-plus-circle"></i> Entrada</button>
-            <button type="button" class="cg-btn btn btn-outline-secondary btn-sm" @click="abrirImportacao()"><i class="bi bi-upload"></i> Importar CSV</button>
+            <button type="button" class="cg-btn btn btn-outline-secondary btn-sm" @click="abrirImportacao()" aria-label="Importar CSV"><i class="bi bi-upload"></i> Importar</button>
             <template x-if="$store.app.conta.openFinance">
-              <button type="button" class="cg-btn btn btn-outline-primary btn-sm" data-testid="abrir-open-finance" @click="$store.csvModal.abrirOpenFinanceDireto()"><i class="bi bi-bank"></i> Banco (Open Finance)</button>
+              <button type="button" class="cg-btn btn btn-outline-primary btn-sm" data-testid="abrir-open-finance" @click="$store.csvModal.abrirOpenFinanceDireto()" title="Open Finance: buscar do banco" aria-label="Banco (Open Finance)"><i class="bi bi-bank"></i> Banco</button>
             </template>
             <button type="button" class="cg-btn btn btn-outline-secondary btn-sm" @click="exportar()"><i class="bi bi-download"></i> Exportar</button>
           </div>
 
-          <!-- Botão de abrir/fechar filtros: só existe no mobile (≥992px o painel
-               já fica sempre visível, ver .cg-filter-panel em css/app.css) -->
-          <button type="button" class="cg-btn btn btn-outline-secondary btn-sm d-lg-none mb-2 w-100 justify-content-between" @click="filtrosAbertos = !filtrosAbertos">
-            <span><i class="bi bi-funnel"></i> Filtros <span class="badge rounded-pill text-bg-secondary" x-show="filtrosAtivosCount" x-text="filtrosAtivosCount"></span></span>
-            <i class="bi" :class="filtrosAbertos ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
-          </button>
 
           <template x-if="filtrosChips.length">
             <div class="d-flex flex-wrap gap-2 mb-2 d-lg-none">
@@ -2185,7 +2183,7 @@
         <!-- ===== RECURSOS ===== -->
         <section x-show="$store.app.view === 'recursos'" x-data="resourcesView()" x-init="init()">
           <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
-            <div class="cg-section-title mb-0"><i class="bi bi-box-seam"></i> <span x-text="$store.app.linha === 'business' ? 'Estoque' : 'Inventário'"></span></div>
+            <div class="cg-section-title cg-titulo-repetido mb-0"><i class="bi bi-box-seam"></i> <span x-text="$store.app.linha === 'business' ? 'Estoque' : 'Inventário'"></span></div>
             <button type="button" class="cg-btn btn btn-outline-secondary btn-sm" @click="$store.csvModal.openFor('recursos')"><i class="bi bi-upload"></i> Importar CSV</button>
           </div>
 
@@ -2505,7 +2503,7 @@
         <!-- ===== CAIXINHAS ===== -->
         <section x-show="$store.app.view === 'caixinhas'" x-data="caixinhasView()" x-init="init()">
           <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
-            <div class="cg-section-title mb-0"><i class="bi bi-piggy-bank"></i> Reservas</div>
+            <div class="cg-section-title cg-titulo-repetido mb-0"><i class="bi bi-piggy-bank"></i> Reservas</div>
             <div class="d-flex gap-2">
               <button type="button" class="cg-btn btn btn-outline-secondary btn-sm" @click="$store.csvModal.openFor('caixinhas')"><i class="bi bi-upload"></i> Importar CSV</button>
               <button type="button" class="cg-btn btn btn-outline-secondary btn-sm" @click="$store.bankModal.openManage()"><i class="bi bi-bank2"></i> Gerenciar bancos</button>
@@ -2556,7 +2554,8 @@
 
             <!-- Filtro por responsável — só faz sentido mostrar com 2+ pessoas
                  tendo caixinha (senão é um filtro pra ninguém escolher). -->
-            <div class="btn-group btn-group-sm mb-3" role="group" x-show="!activeId && responsaveisComCaixinha.length > 1">
+            <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
+            <div class="btn-group btn-group-sm" role="group" x-show="!activeId && responsaveisComCaixinha.length > 1">
               <button type="button" class="btn" :class="!filtroResponsavel ? 'btn-secondary' : 'btn-outline-secondary'" @click="filtroResponsavel = ''">Todos</button>
               <template x-for="m in responsaveisComCaixinha" :key="m.id">
                 <button type="button" class="btn" :class="filtroResponsavel === m.id ? 'btn-secondary' : 'btn-outline-secondary'" @click="filtroResponsavel = m.id" x-text="m.nome"></button>
@@ -2566,13 +2565,12 @@
             <!-- Grade (padrão) / Lista — única grade desta tela (sem
                  drill-down de categoria como em Recursos). -->
             <template x-if="!activeId && caixinhasFiltradas.length">
-              <div class="d-flex justify-content-end mb-2">
-                <div class="cg-view-toggle">
-                  <button type="button" :class="{ 'is-active': viewMode === 'grade' }" @click="setViewMode('grade')" title="Grade"><i class="bi bi-grid-3x3-gap"></i></button>
-                  <button type="button" :class="{ 'is-active': viewMode === 'lista' }" @click="setViewMode('lista')" title="Lista"><i class="bi bi-list-ul"></i></button>
-                </div>
+              <div class="cg-view-toggle ms-auto">
+                <button type="button" :class="{ 'is-active': viewMode === 'grade' }" @click="setViewMode('grade')" title="Grade"><i class="bi bi-grid-3x3-gap"></i></button>
+                <button type="button" :class="{ 'is-active': viewMode === 'lista' }" @click="setViewMode('lista')" title="Lista"><i class="bi bi-list-ul"></i></button>
               </div>
             </template>
+            </div>
 
             <!-- Grade de bancos -->
             <template x-if="!activeId && viewMode === 'grade'">
@@ -3320,7 +3318,7 @@
         </section>
 
         <section x-show="$store.app.view === 'grupo'" x-data="groupView()" x-init="init()">
-          <div class="cg-section-title"><i class="bi bi-people"></i> <span x-text="$store.app.linha === 'business' ? 'Equipe' : 'Membros da casa'"></span></div>
+          <div class="cg-section-title cg-titulo-repetido"><i class="bi bi-people"></i> <span x-text="$store.app.linha === 'business' ? 'Equipe' : 'Membros da casa'"></span></div>
 
           <template x-if="!$store.app.group">
             <div class="row g-3">
