@@ -6,10 +6,10 @@ test('open finance: busca, importa e não duplica na segunda vez', async ({ page
   await page.goto('/?demo=1');
   await page.getByText('Entrar como', { exact: false }).first().click();
   await expect.poll(() => page.evaluate(() => !!Alpine.store('app').profile)).toBe(true);
-  await page.evaluate(() => Alpine.store('csvModal').openFor('transacoes'));
+  await page.evaluate(() => Alpine.store('app').setView('transacoes'));
+  await page.getByTestId('abrir-open-finance').click();
   // O modal troca de conteúdo a cada passo — escopo pelo título fixo dele.
   const modal = page.locator('.cg-modal-backdrop').filter({ hasText: 'Importar CSV' });
-  await modal.getByRole('button', { name: /Buscar do banco/ }).click();
   await expect(modal.getByText('Exemplo · Banco de Exemplo')).toBeVisible();
   await modal.getByRole('button', { name: /Buscar transações/ }).click();
   await expect(page.getByText('3 linha(s) prontas')).toBeVisible();

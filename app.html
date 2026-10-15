@@ -932,6 +932,9 @@
             <button type="button" class="cg-btn btn btn-danger btn-sm" @click="novaSaida()"><i class="bi bi-dash-circle"></i> Despesa</button>
             <button type="button" class="cg-btn btn btn-outline-success btn-sm" @click="novaEntrada()"><i class="bi bi-plus-circle"></i> Entrada</button>
             <button type="button" class="cg-btn btn btn-outline-secondary btn-sm" @click="abrirImportacao()"><i class="bi bi-upload"></i> Importar CSV</button>
+            <template x-if="$store.app.conta.openFinance">
+              <button type="button" class="cg-btn btn btn-outline-primary btn-sm" data-testid="abrir-open-finance" @click="$store.csvModal.abrirOpenFinanceDireto()"><i class="bi bi-bank"></i> Banco (Open Finance)</button>
+            </template>
             <button type="button" class="cg-btn btn btn-outline-secondary btn-sm" @click="exportar()"><i class="bi bi-download"></i> Exportar</button>
           </div>
 
@@ -4739,7 +4742,7 @@
           <textarea id="cg-csv-colar" class="form-control mb-2" rows="4" x-model="$store.csvModal.textoColado" placeholder="Data	Descrição	Valor&#10;05/10/2026	Mercado	152,30"></textarea>
           <button type="button" class="cg-btn btn btn-outline-secondary w-100" :disabled="!$store.csvModal.textoColado.trim()" @click="$store.csvModal.usarTextoColado()">Usar o que colei</button>
           <!-- Open Finance (Pluggy): busca direto do banco, só para transações. -->
-          <template x-if="$store.csvModal.target === 'transacoes'">
+          <template x-if="$store.csvModal.target === 'transacoes' && $store.app.conta.openFinance">
             <div class="mt-3 pt-3 border-top">
               <button type="button" class="cg-btn btn btn-outline-primary w-100" @click="$store.csvModal.abrirOpenFinance()"><i class="bi bi-bank"></i> Buscar do banco (Open Finance)</button>
             </div>

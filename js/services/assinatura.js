@@ -54,9 +54,10 @@ export function contaDaSessao(session) {
   const tipoDemo = isDemoMode() ? lerJson(CHAVE_TIPO_DEMO) : null;
   const tipo = (app.tipo || usr.tipo_conta || tipoDemo) === 'business' ? 'business' : 'home';
   // Demonstração: mostra a linha com o plano mais completo (o dono de
-  // exemplo tem 4 padarias e 2 casas).
+  // exemplo tem 4 padarias e 2 casas). Sem área de admin: só existe um admin
+  // no BNTT e ele vem do servidor. Open Finance aparece com dados fictícios.
   if (isDemoMode()) {
-    return { tipo, plano: tipo === 'business' ? 'business_rede' : 'home_familia', assinaturaAtiva: true, cortesia: false, ciclo: 'mensal', criadaEm: u.created_at || null, adminApp: true };
+    return { tipo, plano: tipo === 'business' ? 'business_rede' : 'home_familia', assinaturaAtiva: true, cortesia: false, ciclo: 'mensal', criadaEm: u.created_at || null, adminApp: false, openFinance: true };
   }
   return {
     tipo,
@@ -67,6 +68,10 @@ export function contaDaSessao(session) {
     criadaEm: u.created_at || null,
     // Só muda o que aparece (prévia de admin); quem grava é o servidor.
     adminApp: app.admin_app === true,
+    // Open Finance no plano grátis do Meu Pluggy = só as contas do titular
+    // (o admin). Só esconde o botão de quem não pode; quem barra de verdade
+    // é a Edge Function (PLUGGY_USUARIOS).
+    openFinance: app.admin_app === true,
   };
 }
 

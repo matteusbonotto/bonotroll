@@ -92,6 +92,11 @@ export function csvModalStore() {
         this.of.carregando = false;
       }
     },
+    // Atalho da tela de Transações: abre o modal já no passo do Open Finance.
+    async abrirOpenFinanceDireto() {
+      this.openFor('transacoes');
+      if (this.open) await this.abrirOpenFinance();
+    },
     async abrirOpenFinance() {
       this.step = 'openfinance';
       const r = await this._of(() => chamarOpenFinance('status'));
