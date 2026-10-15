@@ -173,7 +173,7 @@ Deno.serve(async (req) => {
       if (atuais.some((c) => c.item_id === pedido.itemId)) return json({ ok: true, jaExistia: true });
       if (atuais.length >= LIMITES.conexoesPorUsuario) throw new ErroOpenFinance(400, 'of_limite', `O plano grátis permite até ${LIMITES.conexoesPorUsuario} conexões.`);
       const item = await pluggy.item(pedido.itemId);
-      if (!item) throw new ErroOpenFinance(404, 'item_nao_encontrado', 'A Pluggy não encontrou essa conexão nesta aplicação. Confira se ela foi vinculada ao conector MeuPluggy.');
+      if (!item) throw new ErroOpenFinance(404, 'item_nao_encontrado', 'Esse código não é de uma conexão da sua aplicação. O código do endereço do meu.pluggy.ai não serve: use o botão "Conectar banco".');
       const { error } = await admin.from('openfinance_conexoes').insert({ owner_id: userId, item_id: pedido.itemId, apelido: pedido.apelido });
       // 23505 = unique(item_id): a conexão já é de outra pessoa.
       if (error) throw new ErroOpenFinance(409, error.code === '23505' ? 'item_em_uso' : 'of_config', error.code === '23505' ? 'Essa conexão já está vinculada a outra conta.' : 'Não foi possível salvar a conexão.');

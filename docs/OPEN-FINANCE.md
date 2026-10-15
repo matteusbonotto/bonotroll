@@ -39,13 +39,25 @@ planilha, e reimportar o mesmo período nunca duplica.
 - Produto para outras pessoas ou uso comercial exige plano pago (a partir de
   R$ 2.500/mês).
 
-## Passo a passo para cada pessoa (está também dentro do app)
+## Passo a passo para cada pessoa (é o mesmo que aparece no app)
 
-1. Criar conta grátis em meu.pluggy.ai e conectar os bancos.
-2. Em dashboard.pluggy.ai, criar uma aplicação e copiar Client ID e Client
-   Secret para o app ("Sua Pluggy").
-3. No dashboard, conectar o conector MeuPluggy na aplicação e colar o
-   itemId de cada banco em "Adicionar conexão".
+1. Em meu.pluggy.ai, criar a conta grátis e conectar cada banco em Conexões.
+2. Em dashboard.pluggy.ai, com a mesma conta, ir em Aplicações → Novo e criar
+   a aplicação.
+3. No cartão da aplicação, copiar o Client ID (botão de copiar) e o Client
+   Secret (ícone de chave). Colar os dois no app, em "Sua Pluggy".
+4. No app, tocar em **Conectar banco**. Na janela da Pluggy, escolher
+   **MeuPluggy**, entrar com a conta do Meu Pluggy e marcar as contas. O
+   item é criado dentro da aplicação da pessoa e vinculado sozinho.
+
+Armadilhas que já aconteceram:
+
+- O código do endereço `meu.pluggy.ai/connections/<id>` **não** é o itemId
+  da aplicação. Ele é da conexão dentro do Meu Pluggy.
+- O Client ID também não é o itemId. A função recusa esse caso com uma
+  mensagem clara.
+- Plano B, se a janela não abrir: no dashboard, tocar em ▷ ao lado da
+  aplicação, escolher MeuPluggy e copiar o Item ID mostrado no final.
 
 ## Configuração do servidor (uma vez, quem administra)
 

@@ -4783,11 +4783,13 @@
           <details class="mb-3 border rounded p-2 small" :open="$store.csvModal.of.credenciais === null" data-testid="of-manual">
             <summary class="fw-semibold">Como configurar (uns 10 minutos, uma vez só)</summary>
             <ol class="mt-2 mb-2 ps-3">
-              <li class="mb-1">Crie sua conta grátis em <a href="https://meu.pluggy.ai" target="_blank" rel="noopener noreferrer">meu.pluggy.ai</a> e conecte seus bancos em <em>Conectar Minha Conta</em> (você autoriza no app do próprio banco).</li>
-              <li class="mb-1">Entre em <a href="https://dashboard.pluggy.ai" target="_blank" rel="noopener noreferrer">dashboard.pluggy.ai</a> com a mesma conta, crie uma <strong>aplicação</strong> e, na aba <em>Aplicação</em>, copie o <strong>Client ID</strong> e o <strong>Client Secret</strong>. Cole aqui embaixo.</li>
-              <li class="mb-1">Aqui no BNTT, toque em <strong>Conectar banco</strong>. Na janela da Pluggy, escolha <strong>MeuPluggy</strong>, entre com a sua conta do Meu Pluggy e marque os bancos. A conexão é vinculada sozinha.</li>
-              <li>Pronto: escolha o período e toque em <em>Buscar transações</em>. Os saldos aparecem na tela inicial.</li>
+              <li class="mb-2"><strong>Conecte seus bancos no Meu Pluggy.</strong> Crie a conta grátis em <a href="https://meu.pluggy.ai" target="_blank" rel="noopener noreferrer">meu.pluggy.ai</a>, vá em <em>Conexões</em> e conecte cada banco (a autorização é feita no app do próprio banco).</li>
+              <li class="mb-2"><strong>Crie a sua aplicação.</strong> Entre em <a href="https://dashboard.pluggy.ai/applications" target="_blank" rel="noopener noreferrer">dashboard.pluggy.ai</a> com a <strong>mesma conta</strong>, vá em <em>Aplicações</em> → botão <em>Novo</em> e dê um nome (ex.: BNTT).</li>
+              <li class="mb-2"><strong>Copie as duas chaves da aplicação.</strong> No cartão da aplicação: o <em>Client ID</em> tem o botão de copiar ao lado; o <em>Client Secret</em> aparece ao tocar no ícone de <strong>chave</strong> 🔑. Cole as duas aqui embaixo em <em>Sua Pluggy</em>.</li>
+              <li class="mb-2"><strong>Conecte o banco à aplicação.</strong> Aqui no BNTT, toque em <strong>Conectar banco</strong>. Na janela da Pluggy, procure <strong>MeuPluggy</strong> (não escolha o banco direto), entre com o e-mail e a senha do Meu Pluggy e marque as contas. A conexão aparece aqui sozinha.</li>
+              <li><strong>Pronto.</strong> Escolha o período e toque em <em>Buscar transações</em>. Os saldos aparecem na tela inicial.</li>
             </ol>
+            <p class="mb-1 small"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i> O código que aparece no endereço do meu.pluggy.ai (<code>meu.pluggy.ai/connections/…</code>) e o Client ID <strong>não</strong> são o código da conexão — não cole eles em "Tenho o código da conexão".</p>
             <p class="mb-1 cg-muted">O plano grátis vale só para as <strong>suas</strong> contas (até 5 bancos). Cada pessoa da casa faz a própria configuração.</p>
             <p class="mb-0">
               <a href="https://meu.pluggy.ai/api-guide" target="_blank" rel="noopener noreferrer"><i class="bi bi-book"></i> Guia oficial da Pluggy</a>
@@ -4833,6 +4835,7 @@
               <button type="button" class="cg-btn btn btn-primary w-100 mb-2" data-testid="of-conectar" :disabled="$store.csvModal.of.carregando || $store.csvModal.of.conexoes.length >= 5" @click="$store.csvModal.ofConectarBanco()"><i class="bi bi-plus-circle"></i> Conectar banco</button>
               <details class="mb-3">
                 <summary class="small fw-semibold">Tenho o código da conexão (itemId)</summary>
+                <p class="small cg-muted mt-2 mb-0">Só se "Conectar banco" não abrir: no <a href="https://dashboard.pluggy.ai/applications" target="_blank" rel="noopener noreferrer">dashboard</a>, toque no botão ▷ ao lado da sua aplicação, escolha <strong>MeuPluggy</strong>, entre e, no final, copie o <em>Item ID</em> mostrado.</p>
                 <div class="d-flex flex-column gap-2 mt-2">
                   <input type="text" class="form-control form-control-sm" placeholder="itemId (ex.: 0b7f3a1e-2c4d-…)" x-model="$store.csvModal.of.novoItem" maxlength="36" autocomplete="off" spellcheck="false" aria-label="itemId da conexão" />
                   <input type="text" class="form-control form-control-sm" placeholder="Apelido (opcional, ex.: Nubank)" x-model="$store.csvModal.of.apelido" maxlength="60" aria-label="Apelido da conexão" />
