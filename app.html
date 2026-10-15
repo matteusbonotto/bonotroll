@@ -426,6 +426,28 @@
             <button type="button" class="btn btn-link p-0" @click="$store.app.verPlanos()">Ver planos</button>
           </p>
 
+          <!-- Saldos nos bancos (Open Finance) — só aparece para quem conectou. -->
+          <template x-if="saldosBancos.contas.length">
+            <section class="cg-card mb-4" aria-labelledby="cg-saldos-titulo" data-testid="saldos-bancos">
+              <div class="d-flex align-items-center justify-content-between mb-2">
+                <h2 class="cg-section-title mb-0" id="cg-saldos-titulo"><i class="bi bi-bank" aria-hidden="true"></i> Saldos nos bancos</h2>
+                <strong x-text="cgFormat.formatCurrency(saldosBancos.totalContas)" aria-label="Total em contas"></strong>
+              </div>
+              <ul class="list-unstyled mb-0 small">
+                <template x-for="c in saldosBancos.contas" :key="c.id">
+                  <li class="d-flex align-items-center gap-2 py-1">
+                    <img x-show="c.logo" :src="c.logo" alt="" width="20" height="20" style="border-radius:5px" referrerpolicy="no-referrer" />
+                    <span class="flex-grow-1" x-text="c.banco + ' · ' + (c.tipo === 'cartao' ? 'Fatura do cartão ' : '') + c.nome + (c.final ? ' ••' + c.final : '')"></span>
+                    <span :class="c.tipo === 'cartao' ? 'text-danger' : (c.saldo < 0 ? 'text-danger' : '')" x-text="c.saldo.toLocaleString('pt-BR', { style: 'currency', currency: c.moeda })"></span>
+                  </li>
+                </template>
+              </ul>
+              <template x-if="saldosBancos.totalCartoes">
+                <p class="small cg-muted mb-0 mt-1" x-text="'Faturas de cartão: ' + cgFormat.formatCurrency(saldosBancos.totalCartoes) + ' (fora do total)'"></p>
+              </template>
+            </section>
+          </template>
+
           <!-- Painel do dono (Business): decidir só de olhar — resumo do mês,
                sugestões e um bloco por filial; tocar no bloco abre a filial. -->
           <template x-if="mostrarPainelDono && !$store.app.unidadeAtual">
@@ -4752,45 +4774,78 @@
 
       <template x-if="$store.csvModal.step === 'openfinance'">
         <div class="cg-of">
-          <p class="cg-muted small mb-2">Lê as transações das contas que você conectou no <strong>Meu Pluggy</strong> (Open Finance regulado pelo Banco Central, só leitura). Nada é importado sem você revisar antes.</p>
+          <p class="cg-muted small mb-2">Traz as transações das <strong>suas</strong> contas pelo Open Finance (regulado pelo Banco Central, só leitura), usando a sua conta grátis do <strong>Meu Pluggy</strong>. Nada é importado sem você revisar antes.</p>
           <div class="alert alert-danger py-2 small" role="alert" x-show="$store.csvModal.of.erro" x-text="$store.csvModal.of.erro"></div>
           <div class="text-center py-2" x-show="$store.csvModal.of.carregando" role="status"><span class="spinner-border spinner-border-sm"></span> <span class="small">Falando com o banco…</span></div>
 
-          <h3 class="h6 fw-semibold mt-2">Conexões</h3>
-          <p class="small cg-muted" x-show="!$store.csvModal.of.carregando && !$store.csvModal.of.conexoes.length">Nenhuma conexão ainda. Cole abaixo o <em>itemId</em> da conexão (veja o passo a passo em Ajuda → Open Finance).</p>
-          <ul class="list-unstyled mb-2">
-            <template x-for="c in $store.csvModal.of.conexoes" :key="c.item_id">
-              <li class="border rounded p-2 mb-2 small">
-                <div class="d-flex align-items-center gap-2">
-                  <img x-show="c.logo" :src="c.logo" alt="" width="24" height="24" style="border-radius:6px" referrerpolicy="no-referrer" />
-                  <strong class="flex-grow-1" x-text="c.apelido ? c.apelido + ' · ' + c.banco : c.banco"></strong>
-                  <button type="button" class="cg-btn btn btn-outline-danger btn-sm" title="Remover conexão" aria-label="Remover conexão" @click="$store.csvModal.ofDesvincular(c.item_id)"><i class="bi bi-x-lg"></i></button>
-                </div>
-                <template x-for="conta in c.contas" :key="conta.id">
-                  <div class="d-flex justify-content-between cg-muted mt-1">
-                    <span x-text="(conta.tipo === 'cartao' ? 'Cartão ' : '') + conta.nome + (conta.final ? ' ••' + conta.final : '')"></span>
-                    <span x-show="conta.saldo !== null" x-text="conta.saldo?.toLocaleString('pt-BR', { style: 'currency', currency: conta.moeda || 'BRL' })"></span>
-                  </div>
-                </template>
-              </li>
-            </template>
-          </ul>
-          <details class="mb-3" :open="!$store.csvModal.of.conexoes.length">
-            <summary class="small fw-semibold">Adicionar conexão</summary>
-            <div class="d-flex flex-column gap-2 mt-2">
-              <input type="text" class="form-control form-control-sm" placeholder="itemId (ex.: 0b7f3a1e-2c4d-…)" x-model="$store.csvModal.of.novoItem" maxlength="36" autocomplete="off" spellcheck="false" aria-label="itemId da conexão" />
-              <input type="text" class="form-control form-control-sm" placeholder="Apelido (opcional, ex.: Nubank)" x-model="$store.csvModal.of.apelido" maxlength="60" aria-label="Apelido da conexão" />
-              <button type="button" class="cg-btn btn btn-outline-secondary btn-sm" :disabled="$store.csvModal.of.carregando || !$store.csvModal.of.novoItem.trim()" @click="$store.csvModal.ofVincular()">Vincular</button>
-            </div>
+          <!-- Manual curto: sempre à mão, aberto enquanto falta configurar. -->
+          <details class="mb-3 border rounded p-2 small" :open="$store.csvModal.of.credenciais === null" data-testid="of-manual">
+            <summary class="fw-semibold">Como configurar (uns 10 minutos, uma vez só)</summary>
+            <ol class="mt-2 mb-2 ps-3">
+              <li class="mb-1">Crie sua conta grátis em <a href="https://meu.pluggy.ai" target="_blank" rel="noopener noreferrer">meu.pluggy.ai</a> e conecte seus bancos em <em>Conectar Minha Conta</em> (você autoriza no app do próprio banco).</li>
+              <li class="mb-1">Entre em <a href="https://dashboard.pluggy.ai" target="_blank" rel="noopener noreferrer">dashboard.pluggy.ai</a> com a mesma conta, crie uma <strong>aplicação</strong> e, na aba <em>Aplicação</em>, copie o <strong>Client ID</strong> e o <strong>Client Secret</strong>. Cole aqui embaixo.</li>
+              <li class="mb-1">Ainda no dashboard, conecte o conector <strong>MeuPluggy</strong> na sua aplicação e escolha os bancos. Cada banco vira uma conexão com um código (<em>itemId</em>): copie e cole em <em>Adicionar conexão</em>.</li>
+              <li>Pronto: escolha o período e toque em <em>Buscar transações</em>. Os saldos aparecem na tela inicial.</li>
+            </ol>
+            <p class="mb-1 cg-muted">O plano grátis vale só para as <strong>suas</strong> contas (até 5 bancos). Cada pessoa da casa faz a própria configuração.</p>
+            <p class="mb-0">
+              <a href="https://meu.pluggy.ai/api-guide" target="_blank" rel="noopener noreferrer"><i class="bi bi-book"></i> Guia oficial da Pluggy</a>
+              · <a href="https://www.youtube.com/results?search_query=meu+pluggy+api+client+id" target="_blank" rel="noopener noreferrer"><i class="bi bi-youtube"></i> Vídeos no YouTube</a>
+            </p>
           </details>
 
-          <h3 class="h6 fw-semibold">Período</h3>
-          <div class="d-flex gap-2 mb-2">
-            <label class="flex-fill small">De <input type="date" class="form-control form-control-sm" x-model="$store.csvModal.of.de" :max="$store.csvModal.of.ate" /></label>
-            <label class="flex-fill small">Até <input type="date" class="form-control form-control-sm" x-model="$store.csvModal.of.ate" /></label>
-          </div>
-          <p class="small cg-muted" x-show="$store.csvModal.of.aviso" x-text="$store.csvModal.of.aviso"></p>
-          <button type="button" class="cg-btn btn btn-success w-100" :disabled="$store.csvModal.of.carregando || !$store.csvModal.of.conexoes.length || !$store.csvModal.of.de || !$store.csvModal.of.ate" @click="$store.csvModal.ofBuscar()"><i class="bi bi-cloud-download"></i> Buscar transações</button>
+          <!-- 1) Ainda sem credenciais: cadastrar as da própria Pluggy. -->
+          <template x-if="$store.csvModal.of.credenciais === null && !$store.csvModal.of.carregando">
+            <form class="d-flex flex-column gap-2 mb-2" @submit.prevent="$store.csvModal.ofSalvarCredenciais()">
+              <h3 class="h6 fw-semibold mb-0">Sua Pluggy</h3>
+              <input type="text" class="form-control form-control-sm" placeholder="Client ID" x-model="$store.csvModal.of.clientId" maxlength="36" autocomplete="off" spellcheck="false" aria-label="Client ID da Pluggy" />
+              <input type="password" class="form-control form-control-sm" placeholder="Client Secret" x-model="$store.csvModal.of.clientSecret" maxlength="200" autocomplete="off" spellcheck="false" aria-label="Client Secret da Pluggy" />
+              <p class="small cg-muted mb-0"><i class="bi bi-shield-lock"></i> O secret é conferido na Pluggy e guardado cifrado no servidor do BNTT — ninguém consegue lê-lo depois, nem pelo app.</p>
+              <button type="submit" class="cg-btn btn btn-success btn-sm" :disabled="$store.csvModal.of.carregando || !$store.csvModal.of.clientId.trim() || !$store.csvModal.of.clientSecret.trim()">Salvar e continuar</button>
+            </form>
+          </template>
+
+          <!-- 2) Com credenciais: conexões + período. -->
+          <template x-if="$store.csvModal.of.credenciais">
+            <div>
+              <h3 class="h6 fw-semibold mt-2">Conexões</h3>
+              <p class="small cg-muted" x-show="!$store.csvModal.of.carregando && !$store.csvModal.of.conexoes.length">Nenhuma conexão ainda. Cole abaixo o código (<em>itemId</em>) de cada banco — passo 3 do "Como configurar".</p>
+              <ul class="list-unstyled mb-2">
+                <template x-for="c in $store.csvModal.of.conexoes" :key="c.item_id">
+                  <li class="border rounded p-2 mb-2 small">
+                    <div class="d-flex align-items-center gap-2">
+                      <img x-show="c.logo" :src="c.logo" alt="" width="24" height="24" style="border-radius:6px" referrerpolicy="no-referrer" />
+                      <strong class="flex-grow-1" x-text="c.apelido ? c.apelido + ' · ' + c.banco : c.banco"></strong>
+                      <button type="button" class="cg-btn btn btn-outline-danger btn-sm" title="Remover conexão" aria-label="Remover conexão" @click="$store.csvModal.ofDesvincular(c.item_id)"><i class="bi bi-x-lg"></i></button>
+                    </div>
+                    <template x-for="conta in c.contas" :key="conta.id">
+                      <div class="d-flex justify-content-between cg-muted mt-1">
+                        <span x-text="(conta.tipo === 'cartao' ? 'Cartão ' : '') + conta.nome + (conta.final ? ' ••' + conta.final : '')"></span>
+                        <span x-show="conta.saldo !== null" x-text="conta.saldo?.toLocaleString('pt-BR', { style: 'currency', currency: conta.moeda || 'BRL' })"></span>
+                      </div>
+                    </template>
+                  </li>
+                </template>
+              </ul>
+              <details class="mb-3" :open="!$store.csvModal.of.conexoes.length">
+                <summary class="small fw-semibold">Adicionar conexão</summary>
+                <div class="d-flex flex-column gap-2 mt-2">
+                  <input type="text" class="form-control form-control-sm" placeholder="itemId (ex.: 0b7f3a1e-2c4d-…)" x-model="$store.csvModal.of.novoItem" maxlength="36" autocomplete="off" spellcheck="false" aria-label="itemId da conexão" />
+                  <input type="text" class="form-control form-control-sm" placeholder="Apelido (opcional, ex.: Nubank)" x-model="$store.csvModal.of.apelido" maxlength="60" aria-label="Apelido da conexão" />
+                  <button type="button" class="cg-btn btn btn-outline-secondary btn-sm" :disabled="$store.csvModal.of.carregando || !$store.csvModal.of.novoItem.trim()" @click="$store.csvModal.ofVincular()">Vincular</button>
+                </div>
+              </details>
+
+              <h3 class="h6 fw-semibold">Período</h3>
+              <div class="d-flex gap-2 mb-2">
+                <label class="flex-fill small">De <input type="date" class="form-control form-control-sm" x-model="$store.csvModal.of.de" :max="$store.csvModal.of.ate" /></label>
+                <label class="flex-fill small">Até <input type="date" class="form-control form-control-sm" x-model="$store.csvModal.of.ate" /></label>
+              </div>
+              <p class="small cg-muted" x-show="$store.csvModal.of.aviso" x-text="$store.csvModal.of.aviso"></p>
+              <button type="button" class="cg-btn btn btn-success w-100" :disabled="$store.csvModal.of.carregando || !$store.csvModal.of.conexoes.length || !$store.csvModal.of.de || !$store.csvModal.of.ate" @click="$store.csvModal.ofBuscar()"><i class="bi bi-cloud-download"></i> Buscar transações</button>
+              <button type="button" class="cg-btn btn btn-link btn-sm w-100 mt-1 text-danger" x-show="$store.csvModal.of.credenciais === 'proprias'" @click="$store.csvModal.ofRemoverCredenciais()">Desligar Open Finance desta conta</button>
+            </div>
+          </template>
           <button type="button" class="cg-btn btn btn-link btn-sm w-100 mt-1" @click="$store.csvModal.step = 'upload'">Voltar</button>
         </div>
       </template>

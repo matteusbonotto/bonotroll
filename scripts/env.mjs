@@ -21,7 +21,7 @@ import { fileURLToPath } from 'node:url';
 
 export const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
-const VARIAVEIS_SECRETAS = ['SB_SK', 'STRIP_TOKEN', 'STRIP_STOKEN', 'STRIPE_WEBHOOK_SECRET', 'Gemini_API_KEY', 'GEMINI_API_KEY', 'PLUGGY_CLIENT_ID', 'PLUGGY_CLIENT_SECRET', 'PLUGGY_API_KEY'];
+const VARIAVEIS_SECRETAS = ['SB_SK', 'STRIP_TOKEN', 'STRIP_STOKEN', 'STRIPE_WEBHOOK_SECRET', 'Gemini_API_KEY', 'GEMINI_API_KEY', 'PLUGGY_CLIENT_ID', 'PLUGGY_CLIENT_SECRET', 'PLUGGY_API_KEY', 'OPENFINANCE_CHAVE'];
 
 // Aceita tanto CHAVE=valor quanto CHAVE = "valor" (o .env atual usa espaços e
 // aspas, formato que o `source` do shell não entende).

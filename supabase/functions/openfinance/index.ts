@@ -1,7 +1,10 @@
 // Edge Function "openfinance" — leitura de contas e transações bancárias via
 // Pluggy (plano grátis "Meu Pluggy"). Ver docs/OPEN-FINANCE.md.
 //
-// Fluxo: token de login → usuário na lista PLUGGY_USUARIOS → ação:
+// Fluxo: token de login → credenciais da Pluggy DA PESSOA (cadastradas por
+// ela, cifradas) ou, se ela está em PLUGGY_USUARIOS, as do servidor → ação:
+//   credenciais  valida na Pluggy e guarda CLIENT_ID + SECRET (cifrado)
+//   remover_credenciais  apaga as credenciais e as conexões da pessoa
 //   status       conexões do usuário + contas/saldos de cada uma
 //   vincular     guarda um itemId (depois de a Pluggy confirmar que existe)
 //   desvincular  apaga a conexão do usuário (não mexe nas transações já importadas)
@@ -11,18 +14,33 @@
 // app que faz, pela tela de revisão, com as políticas RLS de sempre.
 //
 // Segredos (npx supabase secrets set ...; valores nunca no repositório):
-//   PLUGGY_CLIENT_ID, PLUGGY_CLIENT_SECRET   obrigatórios (dashboard.pluggy.ai → Aplicação)
-//   PLUGGY_USUARIOS                          uuids (auth.users.id) liberados, separados por vírgula
+//   OPENFINANCE_CHAVE                        obrigatório — 32 bytes em base64 (cifra os secrets das pessoas)
+//   PLUGGY_CLIENT_ID, PLUGGY_CLIENT_SECRET   opcionais — aplicação do titular (dashboard.pluggy.ai → Aplicação)
+//   PLUGGY_USUARIOS                          uuids que usam as credenciais do servidor, separados por vírgula
 //
 // Publicar: npx supabase functions deploy openfinance --no-verify-jwt
 // (o token é conferido AQUI com auth.getUser, igual à ia/excluir-conta).
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { origemPermitida } from '../_shared/iaNucleo.js';
 import {
-  ErroOpenFinance, LIMITES, criarClientePluggy, normalizarTransacao, resumoConta, resumoItem, usuariosPermitidos, validarPedido,
+  ErroOpenFinance, LIMITES, cifrarSegredo, criarClientePluggy, decifrarSegredo, importarChave, normalizarTransacao, resumoConta, resumoItem,
+  usuariosPermitidos, validarPedido,
 } from '../_shared/openfinanceNucleo.js';
 
-let pluggy: ReturnType<typeof criarClientePluggy> | null = null;
+// Um cliente por aplicação da Pluggy, reaproveitando a apiKey de 2h entre
+// chamadas da mesma instância. A chave do mapa inclui o secret para que
+// trocar a credencial descarte o cliente antigo.
+const clientes = new Map<string, ReturnType<typeof criarClientePluggy>>();
+function clientePara(clientId: string, clientSecret: string) {
+  const chave = `${clientId}:${clientSecret}`;
+  let c = clientes.get(chave);
+  if (!c) {
+    if (clientes.size > 50) clientes.clear();
+    c = criarClientePluggy({ clientId, clientSecret });
+    clientes.set(chave, c);
+  }
+  return c;
+}
 
 async function lerCorpoLimitado(req: Request, limite: number): Promise<string> {
   if (!req.body) return '';
@@ -63,9 +81,8 @@ Deno.serve(async (req) => {
 
   let acao = '?';
   try {
-    const clientId = Deno.env.get('PLUGGY_CLIENT_ID');
-    const clientSecret = Deno.env.get('PLUGGY_CLIENT_SECRET');
-    if (!clientId || !clientSecret) throw new ErroOpenFinance(503, 'of_sem_chave', 'O Open Finance ainda não foi ativado no servidor.');
+    const chaveCifra = Deno.env.get('OPENFINANCE_CHAVE');
+    if (!chaveCifra) throw new ErroOpenFinance(503, 'of_sem_chave', 'O Open Finance ainda não foi ativado no servidor.');
 
     if (Number(req.headers.get('Content-Length') ?? '0') > LIMITES.bytesCorpo) throw new ErroOpenFinance(413, 'pedido_grande', 'Pedido grande demais.');
 
@@ -75,11 +92,6 @@ Deno.serve(async (req) => {
     const { data: quem, error: erroLogin } = await admin.auth.getUser(token);
     if (erroLogin || !quem?.user) throw new ErroOpenFinance(401, 'sessao', 'Entre na sua conta de novo e tente outra vez.');
     const userId = quem.user.id;
-
-    // Plano grátis do Meu Pluggy: só o titular das contas. Falha fechada.
-    if (!usuariosPermitidos(Deno.env.get('PLUGGY_USUARIOS')).has(userId.toLowerCase())) {
-      throw new ErroOpenFinance(403, 'of_nao_liberado', 'O Open Finance ainda não está liberado para a sua conta.');
-    }
 
     let corpo: unknown;
     try {
@@ -91,7 +103,53 @@ Deno.serve(async (req) => {
     const pedido = validarPedido(corpo);
     acao = pedido.acao;
 
-    pluggy ??= criarClientePluggy({ clientId, clientSecret });
+    const chave = await importarChave(chaveCifra);
+
+    if (pedido.acao === 'credenciais') {
+      // Só guarda o que a Pluggy aceitou de verdade.
+      try {
+        await criarClientePluggy({ clientId: pedido.clientId, clientSecret: pedido.clientSecret }).apiKey();
+      } catch (e) {
+        if (e instanceof ErroOpenFinance && e.codigo === 'pluggy_credencial') {
+          throw new ErroOpenFinance(400, 'credencial_recusada', 'A Pluggy não aceitou esse Client ID / Client Secret. Confira no painel e cole de novo.');
+        }
+        throw e;
+      }
+      const segredo = await cifrarSegredo(chave, pedido.clientSecret, userId);
+      const { error } = await admin.from('openfinance_credenciais')
+        .upsert({ owner_id: userId, client_id: pedido.clientId, segredo_cifrado: segredo, atualizado_em: new Date().toISOString() });
+      if (error) throw new ErroOpenFinance(503, 'of_config', 'Não foi possível salvar as credenciais.');
+      return json({ ok: true });
+    }
+
+    if (pedido.acao === 'remover_credenciais') {
+      // As conexões pertencem à aplicação removida: saem junto.
+      await admin.from('openfinance_conexoes').delete().eq('owner_id', userId);
+      const { error } = await admin.from('openfinance_credenciais').delete().eq('owner_id', userId);
+      if (error) throw new ErroOpenFinance(503, 'of_config', 'Não foi possível remover as credenciais.');
+      return json({ ok: true });
+    }
+
+    // Qual aplicação da Pluggy usar: a da própria pessoa; senão a do
+    // servidor, só para quem está em PLUGGY_USUARIOS. Falha fechada.
+    const { data: cred, error: erroCred } = await admin.from('openfinance_credenciais')
+      .select('client_id, segredo_cifrado').eq('owner_id', userId).maybeSingle();
+    if (erroCred) throw new ErroOpenFinance(503, 'of_config', 'O Open Finance não está configurado no banco.');
+    let pluggy: ReturnType<typeof criarClientePluggy> | null = null;
+    let origem: 'proprias' | 'servidor' | null = null;
+    const idServidor = Deno.env.get('PLUGGY_CLIENT_ID');
+    const segredoServidor = Deno.env.get('PLUGGY_CLIENT_SECRET');
+    if (cred) {
+      pluggy = clientePara(cred.client_id, await decifrarSegredo(chave, cred.segredo_cifrado, userId));
+      origem = 'proprias';
+    } else if (idServidor && segredoServidor && usuariosPermitidos(Deno.env.get('PLUGGY_USUARIOS')).has(userId.toLowerCase())) {
+      pluggy = clientePara(idServidor, segredoServidor);
+      origem = 'servidor';
+    }
+    if (!pluggy) {
+      if (pedido.acao === 'status') return json({ ok: true, credenciais: null, conexoes: [] });
+      throw new ErroOpenFinance(403, 'of_sem_credenciais', 'Cadastre primeiro as credenciais da sua Pluggy.');
+    }
 
     // Toda consulta abaixo é filtrada por owner_id = userId (service_role
     // ignora RLS, então o filtro é obrigatório em cada uma).
@@ -132,7 +190,7 @@ Deno.serve(async (req) => {
           contas: item ? (await pluggy.contas(c.item_id)).map(resumoConta) : [],
         });
       }
-      return json({ ok: true, conexoes: lista });
+      return json({ ok: true, credenciais: origem, conexoes: lista });
     }
 
     // transacoes

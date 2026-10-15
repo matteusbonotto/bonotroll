@@ -3,7 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  ErroOpenFinance, criarClientePluggy, normalizarTransacao, resumoConta, resumoItem, usuariosPermitidos, validarPedido,
+  ErroOpenFinance, cifrarSegredo, decifrarSegredo, importarChave, criarClientePluggy, normalizarTransacao, resumoConta, resumoItem, usuariosPermitidos, validarPedido,
 } from '../../supabase/functions/_shared/openfinanceNucleo.js';
 
 const ITEM = '0b7f3a1e-2c4d-4e5f-8a9b-1c2d3e4f5a6b';
@@ -115,4 +115,29 @@ test('cliente: credencial recusada, 429 e item inexistente viram erros claros', 
 
   const sem = criarClientePluggy({ clientId: 'x', clientSecret: 'y', fetch: fetchFalso([['/auth', () => [200, { apiKey: 'k' }]], ['/items', () => [404, {}]]]) });
   assert.equal(await sem.item(ITEM), null);
+});
+
+test('credenciais: Client ID em formato UUID e secret sem caracteres estranhos', () => {
+  assert.throws(() => validarPedido({ acao: 'credenciais', clientId: 'abc', clientSecret: 'x'.repeat(30) }), erroCom('credencial_invalida'));
+  assert.throws(() => validarPedido({ acao: 'credenciais', clientId: ITEM, clientSecret: 'curto' }), erroCom('credencial_invalida'));
+  assert.throws(() => validarPedido({ acao: 'credenciais', clientId: ITEM, clientSecret: 'a b<script>'.repeat(3) }), erroCom('credencial_invalida'));
+  const ok = validarPedido({ acao: 'credenciais', clientId: ` ${ITEM.toUpperCase()} `, clientSecret: ' wJ7HA4YCvNXoIFCTYQMER8o1kew ' });
+  assert.deepEqual(ok, { acao: 'credenciais', clientId: ITEM, clientSecret: 'wJ7HA4YCvNXoIFCTYQMER8o1kew' });
+});
+
+test('cifragem: ida e volta, IV novo a cada vez, presa ao dono, chave errada falha', async () => {
+  const bytes = crypto.getRandomValues(new Uint8Array(32));
+  const chave = await importarChave(Buffer.from(bytes).toString('base64'));
+  const a = await cifrarSegredo(chave, 'segredo-da-pluggy', 'dono-1');
+  const b = await cifrarSegredo(chave, 'segredo-da-pluggy', 'dono-1');
+  assert.notEqual(a, b);
+  assert.ok(a.startsWith('v1.') && !a.includes('segredo'));
+  assert.equal(await decifrarSegredo(chave, a, 'dono-1'), 'segredo-da-pluggy');
+  // Copiado para a linha de outra pessoa: não decifra (dono é dado autenticado).
+  await assert.rejects(decifrarSegredo(chave, a, 'dono-2'), erroCom('of_config'));
+  const outra = await importarChave(Buffer.from(crypto.getRandomValues(new Uint8Array(32))).toString('base64'));
+  await assert.rejects(decifrarSegredo(outra, a, 'dono-1'), erroCom('of_config'));
+  await assert.rejects(decifrarSegredo(chave, 'texto-puro', 'dono-1'), erroCom('of_config'));
+  await assert.rejects(importarChave('curta'), erroCom('of_config'));
+  await assert.rejects(importarChave(undefined), erroCom('of_config'));
 });

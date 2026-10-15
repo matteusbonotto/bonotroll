@@ -23,7 +23,7 @@ export function csvModalStore() {
     validacao: { ok: 0, erros: [] },
     textoColado: '',
     // Open Finance (Pluggy): conexões e período da busca — ver services/openFinance.js.
-    of: { carregando: false, erro: '', aviso: '', conexoes: [], de: '', ate: '', novoItem: '', apelido: '' },
+    of: { carregando: false, erro: '', aviso: '', conexoes: [], credenciais: undefined, clientId: '', clientSecret: '', de: '', ate: '', novoItem: '', apelido: '' },
     IMPORT_TARGETS,
 
     openFor(target, listId = null) {
@@ -39,7 +39,7 @@ export function csvModalStore() {
       this.result = { ok: 0, pulados: 0, erros: [] };
       const hoje = todayIso();
       const inicioMes = `${hoje.slice(0, 8)}01`;
-      this.of = { carregando: false, erro: '', aviso: '', conexoes: [], de: inicioMes, ate: hoje, novoItem: '', apelido: '' };
+      this.of = { carregando: false, erro: '', aviso: '', conexoes: [], credenciais: undefined, clientId: '', clientSecret: '', de: inicioMes, ate: hoje, novoItem: '', apelido: '' };
       // Cache de cômodos/subcategorias/itens já resolvidos NESTE import (ver
       // resolveComodo/resolveSubcategoria/itemDuplicado) — zerado a cada
       // abertura pra não arrastar estado de uma importação anterior na
@@ -100,7 +100,32 @@ export function csvModalStore() {
     async abrirOpenFinance() {
       this.step = 'openfinance';
       const r = await this._of(() => chamarOpenFinance('status'));
-      if (r) this.of.conexoes = r.conexoes || [];
+      if (r) {
+        this.of.conexoes = r.conexoes || [];
+        this.of.credenciais = r.credenciais ?? null;
+      }
+    },
+    // Credenciais da Pluggy DA PESSOA: o servidor testa na Pluggy, cifra o
+    // secret e nunca mais devolve. O campo é limpo logo depois de enviar.
+    async ofSalvarCredenciais() {
+      const clientId = this.of.clientId.trim();
+      const clientSecret = this.of.clientSecret.trim();
+      if (!clientId || !clientSecret) return;
+      const r = await this._of(() => chamarOpenFinance('credenciais', { clientId, clientSecret }));
+      this.of.clientSecret = '';
+      if (r) {
+        this.of.clientId = '';
+        await this.abrirOpenFinance();
+      }
+    },
+    async ofRemoverCredenciais() {
+      if (!confirm('Desligar o Open Finance desta conta? As credenciais e as conexões saem do BNTT; os lançamentos já importados continuam.')) return;
+      const r = await this._of(() => chamarOpenFinance('remover_credenciais'));
+      if (r) {
+        this.of.conexoes = [];
+        this.of.credenciais = null;
+        window.dispatchEvent(new CustomEvent('cg:openfinance-changed'));
+      }
     },
     async ofVincular() {
       const itemId = this.of.novoItem.trim();
@@ -110,12 +135,16 @@ export function csvModalStore() {
         this.of.novoItem = '';
         this.of.apelido = '';
         await this.abrirOpenFinance();
+        window.dispatchEvent(new CustomEvent('cg:openfinance-changed'));
       }
     },
     async ofDesvincular(itemId) {
       if (!confirm('Remover esta conexão do BNTT? Os lançamentos já importados continuam.')) return;
       const r = await this._of(() => chamarOpenFinance('desvincular', { itemId }));
-      if (r) this.of.conexoes = this.of.conexoes.filter((c) => c.item_id !== itemId);
+      if (r) {
+        this.of.conexoes = this.of.conexoes.filter((c) => c.item_id !== itemId);
+        window.dispatchEvent(new CustomEvent('cg:openfinance-changed'));
+      }
     },
     async ofBuscar() {
       const r = await this._of(() => chamarOpenFinance('transacoes', { de: this.of.de, ate: this.of.ate }));

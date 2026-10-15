@@ -4,6 +4,7 @@ import { listBudgets, computeBudgetProgress } from '../services/budgets.js';
 import { computeExpiryStatus, expiryStatusMeta } from '../utils/status.js';
 import { todayIso, formatCurrency } from '../utils/format.js';
 import { resumoDasFiliais, resumoGeral, sugestoesDoDia } from '../utils/painelNegocio.js';
+import { chamarOpenFinance, resumoSaldos } from '../services/openFinance.js';
 
 const QUEBRAS_STORAGE_KEY = 'bonotto_dashboard_quebras';
 function quebrasIniciais() {
@@ -82,13 +83,29 @@ export function dashboardView() {
     recursosAllItems: [],
     recursosSugestoesAbertas: false,
     budgets: [], // orçamentos pessoais (sempre owner_id, nunca de grupo — ver services/budgets.js)
+    // Saldos das contas conectadas pelo Open Finance (só de quem configurou).
+    saldosBancos: { contas: [], totalContas: 0, totalCartoes: 0 },
 
     init() {
       this.load();
+      this.carregarSaldosBancos();
+      window.addEventListener('cg:openfinance-changed', () => this.carregarSaldosBancos());
       window.addEventListener('cg:transactions-changed', () => this.load());
       window.addEventListener('cg:recursos-changed', () => this.carregarRecursosSugestoes());
       this.$watch('$store.app.group', () => this.load());
       this.$watch('quebras', (v) => localStorage.setItem(QUEBRAS_STORAGE_KEY, JSON.stringify(v)));
+    },
+
+    // Best-effort: sem Open Finance configurado, offline ou com a Pluggy fora
+    // do ar, o card simplesmente não aparece — a Home nunca trava por isso.
+    async carregarSaldosBancos() {
+      if (!this.$store.app.conta?.openFinance || !navigator.onLine) return;
+      try {
+        const r = await chamarOpenFinance('status');
+        this.saldosBancos = resumoSaldos(r.conexoes);
+      } catch {
+        this.saldosBancos = { contas: [], totalContas: 0, totalCartoes: 0 };
+      }
     },
 
     async carregarRecursosSugestoes() {

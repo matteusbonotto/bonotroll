@@ -21,6 +21,7 @@ const MENSAGENS = {
   sessao: 'Sua sessão expirou. Entre de novo para usar o Open Finance.',
   of_sem_chave: 'O Open Finance ainda não foi ativado no servidor.',
   of_nao_liberado: 'O Open Finance ainda não está liberado para a sua conta.',
+  of_sem_credenciais: 'Cadastre primeiro as credenciais da sua Pluggy.',
   of_config: 'O Open Finance não está configurado corretamente no servidor.',
   funcao_ausente: 'O Open Finance ainda não foi publicado no servidor.',
   pluggy_limite: 'Muitas consultas ao Open Finance agora. Espere um minuto.',
@@ -43,7 +44,7 @@ async function tokenAtual() {
 const DEMO_ITEM = '00000000-0000-4000-8000-000000000001';
 async function respostaDemo(acao, dados) {
   if (acao === 'status') {
-    return { conexoes: [{ item_id: DEMO_ITEM, apelido: 'Exemplo', banco: 'Banco de Exemplo', logo: '', status: 'UPDATED', atualizado_em: new Date().toISOString(), contas: [{ id: 'demo', nome: 'Conta Corrente', tipo: 'conta', final: '1234', saldo: 2450.9, moeda: 'BRL' }] }] };
+    return { credenciais: 'proprias', conexoes: [{ item_id: DEMO_ITEM, apelido: 'Exemplo', banco: 'Banco de Exemplo', logo: '', status: 'UPDATED', atualizado_em: new Date().toISOString(), contas: [{ id: 'demo', nome: 'Conta Corrente', tipo: 'conta', final: '1234', saldo: 2450.9, moeda: 'BRL' }] }] };
   }
   if (acao === 'transacoes') {
     const d = dados.ate || todayIso();
@@ -88,6 +89,29 @@ export async function chamarOpenFinance(acao, dados = {}, deps = {}) {
     throw new FalhaOpenFinance(codigo, MENSAGENS[codigo] || corpo?.erro || 'Não foi possível falar com o Open Finance agora.', r.status);
   }
   return corpo;
+}
+
+// Conexões (ação 'status') -> lista plana para o card da Home. Saldo de
+// conta soma no total; cartão de crédito é fatura (dívida), fica à parte.
+export function resumoSaldos(conexoes) {
+  const contas = [];
+  for (const c of conexoes || []) {
+    for (const conta of c.contas || []) {
+      if (conta.saldo === null || conta.saldo === undefined) continue;
+      contas.push({
+        id: `${c.item_id}:${conta.id}`,
+        banco: c.apelido || c.banco,
+        logo: c.logo || '',
+        nome: conta.nome,
+        final: conta.final,
+        tipo: conta.tipo,
+        saldo: Number(conta.saldo),
+        moeda: conta.moeda || 'BRL',
+      });
+    }
+  }
+  const soma = (tipo) => Math.round(contas.filter((x) => x.tipo === tipo && x.moeda === 'BRL').reduce((t, x) => t + x.saldo, 0) * 100) / 100;
+  return { contas, totalContas: soma('conta'), totalCartoes: soma('cartao') };
 }
 
 // Transações ainda não importadas -> { headers, rows } do importador.

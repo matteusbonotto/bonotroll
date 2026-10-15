@@ -27,3 +27,16 @@ test('open finance: busca, importa e não duplica na segunda vez', async ({ page
   await expect(modal.getByText('Tudo deste período já foi importado.')).toBeVisible();
   expect(await importadas()).toHaveLength(3);
 });
+
+test('open finance: saldos das contas conectadas aparecem na Home', async ({ page }) => {
+  await page.goto('/?demo=1');
+  await page.getByText('Entrar como', { exact: false }).first().click();
+  await expect.poll(() => page.evaluate(() => !!Alpine.store('app').profile)).toBe(true);
+  await page.evaluate(() => Alpine.store('app').setView('home'));
+  const card = page.getByTestId('saldos-bancos');
+  await expect(card).toBeVisible();
+  await expect(card).toContainText('Saldos nos bancos');
+  await expect(card).toContainText('Exemplo · Conta Corrente ••1234');
+  await expect(card).toContainText('2.450,90');
+  await expect(card).not.toContainText('Faturas de cartão');
+});

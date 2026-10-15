@@ -2183,3 +2183,16 @@ alter table public.transactions add column if not exists externo_id text
   check (externo_id is null or char_length(externo_id) <= 100);
 create unique index if not exists transactions_owner_externo_unico
   on public.transactions (owner_id, externo_id) where externo_id is not null;
+
+-- 3) Credenciais da Pluggy de cada pessoa (2026-10-15, "cada um com a sua
+--    Pluggy"). O Client Secret fica CIFRADO (AES-GCM, chave só na Edge
+--    Function) e nenhum papel da API lê esta tabela: só a função, com
+--    service_role. A tela só sabe se existe ou não (ação 'status').
+create table if not exists public.openfinance_credenciais (
+  owner_id uuid primary key references auth.users(id) on delete cascade,
+  client_id uuid not null,
+  segredo_cifrado text not null check (segredo_cifrado like 'v1.%' and char_length(segredo_cifrado) <= 600),
+  atualizado_em timestamptz not null default now()
+);
+alter table public.openfinance_credenciais enable row level security;
+revoke all on public.openfinance_credenciais from anon, authenticated;

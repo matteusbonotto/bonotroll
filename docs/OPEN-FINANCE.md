@@ -1,7 +1,8 @@
 # Open Finance no BNTT (Pluggy / Meu Pluggy)
 
-Importa transações das suas contas bancárias direto do banco, pela tela
-**Transações → Importar CSV → Buscar do banco (Open Finance)**. Nada é gravado
+Importa transações das suas contas bancárias direto do banco, pelo botão
+**Transações → Banco (Open Finance)**, e mostra os saldos das contas
+conectadas no card **Saldos nos bancos** da tela inicial. Nada é gravado
 sem você revisar: as transações entram na mesma prévia da importação de
 planilha, e reimportar o mesmo período nunca duplica.
 
@@ -20,19 +21,41 @@ planilha, e reimportar o mesmo período nunca duplica.
 - **O BNTT não guarda dado bancário.** O banco do app só tem o `itemId` de
   cada conexão (`openfinance_conexoes`) e o `externo_id` das transações que
   você importou.
-- Só a pessoa listada em `PLUGGY_USUARIOS` usa a função (falha fechada). Um
-  `itemId` só pode estar vinculado a **uma** conta do app.
+- **Cada pessoa usa a própria Pluggy.** Ela cadastra Client ID e Client
+  Secret uma vez, na própria tela. O servidor confere na Pluggy, cifra o
+  secret com AES-GCM (chave `OPENFINANCE_CHAVE`, que só existe na função, com o
+  id do dono como dado autenticado) e grava em `openfinance_credenciais`.
+  Nenhum papel da API lê essa tabela, e o secret nunca volta para o navegador.
+- Quem está em `PLUGGY_USUARIOS` pode usar as credenciais do servidor
+  (`PLUGGY_CLIENT_ID`/`SECRET`). Sem credencial própria nem lista, a função
+  recusa (falha fechada). Um `itemId` só pode estar vinculado a **uma** conta
+  do app.
 
 ## Limites do plano grátis (Meu Pluggy)
 
-- Só contas do **próprio titular**, em uso pessoal. Contas da Beatriz exigem
-  que ela tenha o Meu Pluggy e a aplicação dela, ou um plano pago.
-  Com o plano grátis, `PLUGGY_USUARIOS` deve ter só o seu id.
+- Só contas do **próprio titular**, em uso pessoal. Por isso cada pessoa da
+  casa cria o próprio Meu Pluggy e cadastra as credenciais dela no app.
 - Até 5 conexões. O banco atualiza a cada 24h.
 - Produto para outras pessoas ou uso comercial exige plano pago (a partir de
   R$ 2.500/mês).
 
-## Passo a passo (uma vez)
+## Passo a passo para cada pessoa (está também dentro do app)
+
+1. Criar conta grátis em meu.pluggy.ai e conectar os bancos.
+2. Em dashboard.pluggy.ai, criar uma aplicação e copiar Client ID e Client
+   Secret para o app ("Sua Pluggy").
+3. No dashboard, conectar o conector MeuPluggy na aplicação e colar o
+   itemId de cada banco em "Adicionar conexão".
+
+## Configuração do servidor (uma vez, quem administra)
+
+- Segredo `OPENFINANCE_CHAVE`: 32 bytes aleatórios em base64. Trocar essa
+  chave invalida todas as credenciais guardadas, e cada pessoa precisa
+  cadastrar de novo.
+- Tabelas: `supabase/openfinance-2026-10.sql`.
+- O titular pode usar as credenciais do servidor (passos abaixo).
+
+## Credenciais do servidor para o titular (opcional)
 
 1. Em **meu.pluggy.ai**, crie a conta e conecte seus bancos ("Conectar Minha
    Conta").

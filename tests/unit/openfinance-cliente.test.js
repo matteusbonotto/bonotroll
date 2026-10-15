@@ -2,7 +2,7 @@
 // simulado — nenhuma chamada real.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { chamarOpenFinance, FalhaOpenFinance, paraPlanilha, COLUNAS_OPEN_FINANCE } from '../../js/services/openFinance.js';
+import { chamarOpenFinance, FalhaOpenFinance, paraPlanilha, resumoSaldos, COLUNAS_OPEN_FINANCE } from '../../js/services/openFinance.js';
 import { IMPORT_TARGETS } from '../../js/services/csvImport.js';
 
 const deps = (status, corpo) => {
@@ -42,4 +42,23 @@ test('paraPlanilha deixa de fora o que já foi importado e mantém externo_id', 
   assert.equal(r.rows[0].externo_id, 'pluggy:b');
   assert.equal(r.rows[0].titulo, 'B');
   assert.deepEqual(r.headers, COLUNAS_OPEN_FINANCE);
+});
+
+test('resumoSaldos: soma só contas em BRL; cartão é fatura, fica à parte; sem saldo é ignorado', () => {
+  const r = resumoSaldos([
+    { item_id: 'i1', banco: 'Nubank', apelido: null, contas: [
+      { id: 'a', nome: 'Conta', tipo: 'conta', final: '1234', saldo: 1000.1, moeda: 'BRL' },
+      { id: 'b', nome: 'Cartão', tipo: 'cartao', final: '9999', saldo: 350.5, moeda: 'BRL' },
+      { id: 'c', nome: 'Sem saldo', tipo: 'conta', saldo: null },
+    ] },
+    { item_id: 'i2', banco: 'Itaú', apelido: 'Salário', contas: [
+      { id: 'd', nome: 'Corrente', tipo: 'conta', saldo: 200.2, moeda: 'BRL' },
+      { id: 'e', nome: 'Global', tipo: 'conta', saldo: 50, moeda: 'USD' },
+    ] },
+  ]);
+  assert.equal(r.contas.length, 4);
+  assert.equal(r.totalContas, 1200.3);
+  assert.equal(r.totalCartoes, 350.5);
+  assert.equal(r.contas.find((c) => c.nome === 'Corrente').banco, 'Salário');
+  assert.deepEqual(resumoSaldos(undefined), { contas: [], totalContas: 0, totalCartoes: 0 });
 });

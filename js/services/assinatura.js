@@ -68,10 +68,9 @@ export function contaDaSessao(session) {
     criadaEm: u.created_at || null,
     // Só muda o que aparece (prévia de admin); quem grava é o servidor.
     adminApp: app.admin_app === true,
-    // Open Finance no plano grátis do Meu Pluggy = só as contas do titular
-    // (o admin). Só esconde o botão de quem não pode; quem barra de verdade
-    // é a Edge Function (PLUGGY_USUARIOS).
-    openFinance: app.admin_app === true,
+    // Open Finance: cada pessoa usa a própria Pluggy (Meu Pluggy grátis só
+    // lê contas do titular), cadastrando as credenciais dela na tela.
+    openFinance: true,
   };
 }
 

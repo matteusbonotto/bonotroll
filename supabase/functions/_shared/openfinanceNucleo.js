@@ -10,7 +10,11 @@
 //  - itemId só é aceito no formato UUID e só depois de a Pluggy confirmar que
 //    ele pertence à aplicação configurada (GET /items/{id} = 200).
 //  - Plano grátis do Meu Pluggy = só contas do PRÓPRIO titular, até 5
-//    conexões. Por isso a função só atende quem está em PLUGGY_USUARIOS.
+//    conexões. Por isso cada pessoa usa a PRÓPRIA aplicação da Pluggy:
+//    cadastra CLIENT_ID/SECRET uma vez (ação 'credenciais'), o segredo é
+//    cifrado com AES-GCM (chave OPENFINANCE_CHAVE, só na função) e nunca mais
+//    sai do servidor. Quem está em PLUGGY_USUARIOS usa as credenciais do
+//    servidor (configuração original do titular).
 
 export const PLUGGY_API = 'https://api.pluggy.ai';
 export const LIMITES = {
@@ -20,7 +24,7 @@ export const LIMITES = {
   paginasPorConta: 20, // 20 × 500 = 10 mil transações por conta numa consulta
   tempoMs: 20_000,
 };
-export const ACOES = ['status', 'vincular', 'desvincular', 'transacoes'];
+export const ACOES = ['status', 'vincular', 'desvincular', 'transacoes', 'credenciais', 'remover_credenciais'];
 
 export class ErroOpenFinance extends Error {
   constructor(status, codigo, mensagem) {
@@ -56,6 +60,13 @@ export function validarPedido(corpo, hoje = new Date().toISOString().slice(0, 10
     if (!ehUuid(corpo.itemId)) throw new ErroOpenFinance(400, 'item_invalido', 'O código da conexão (itemId) não é válido.');
     const apelido = typeof corpo.apelido === 'string' ? corpo.apelido.trim().slice(0, 60) : '';
     return { acao, itemId: corpo.itemId.toLowerCase(), apelido: apelido || null };
+  }
+  if (acao === 'credenciais') {
+    const clientId = typeof corpo.clientId === 'string' ? corpo.clientId.trim() : '';
+    const clientSecret = typeof corpo.clientSecret === 'string' ? corpo.clientSecret.trim() : '';
+    if (!ehUuid(clientId)) throw new ErroOpenFinance(400, 'credencial_invalida', 'O Client ID tem o formato de um código com traços (ex.: 2339bf8a-…).');
+    if (!/^[A-Za-z0-9_\-.~+/=]{16,200}$/.test(clientSecret)) throw new ErroOpenFinance(400, 'credencial_invalida', 'O Client Secret não parece válido. Copie de novo do painel da Pluggy.');
+    return { acao, clientId: clientId.toLowerCase(), clientSecret };
   }
   if (acao === 'transacoes') {
     const { de, ate } = corpo;
@@ -118,6 +129,7 @@ export function criarClientePluggy({ clientId, clientSecret, fetch: fetcher = gl
   }
 
   return {
+    apiKey,
     item: (itemId) => get(`/items/${encodeURIComponent(itemId)}`, { tolerar404: true }),
     contas: async (itemId) => (await get(`/accounts?itemId=${encodeURIComponent(itemId)}`)).results ?? [],
     // GET /v2/transactions (cursor) — o /transactions paginado por número
@@ -200,4 +212,39 @@ export function resumoItem(item) {
     status: texto(item?.status, 30),
     atualizado_em: typeof item?.lastUpdatedAt === 'string' ? item.lastUpdatedAt : null,
   };
+}
+
+// ---- Cifragem do Client Secret de cada pessoa ------------------------------
+// AES-GCM 256, IV aleatório de 12 bytes a cada gravação; o owner_id entra
+// como dado adicional autenticado (AAD) — um segredo copiado para a linha
+// de outra pessoa não decifra. Formato: "v1.<iv base64>.<cifra base64>".
+const b64 = (bytes) => btoa(String.fromCharCode(...new Uint8Array(bytes)));
+const deB64 = (txt) => Uint8Array.from(atob(txt), (c) => c.charCodeAt(0));
+
+export async function importarChave(base64) {
+  let bytes;
+  try {
+    bytes = deB64(String(base64 || ''));
+  } catch {
+    bytes = new Uint8Array();
+  }
+  if (bytes.length !== 32) throw new ErroOpenFinance(503, 'of_config', 'O Open Finance não está configurado corretamente no servidor.');
+  return crypto.subtle.importKey('raw', bytes, 'AES-GCM', false, ['encrypt', 'decrypt']);
+}
+
+export async function cifrarSegredo(chave, texto, ownerId) {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const cifra = await crypto.subtle.encrypt({ name: 'AES-GCM', iv, additionalData: new TextEncoder().encode(ownerId) }, chave, new TextEncoder().encode(texto));
+  return `v1.${b64(iv)}.${b64(cifra)}`;
+}
+
+export async function decifrarSegredo(chave, guardado, ownerId) {
+  const [versao, iv, cifra] = String(guardado || '').split('.');
+  if (versao !== 'v1' || !iv || !cifra) throw new ErroOpenFinance(503, 'of_config', 'Credencial guardada em formato desconhecido. Cadastre de novo.');
+  try {
+    const claro = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: deB64(iv), additionalData: new TextEncoder().encode(ownerId) }, chave, deB64(cifra));
+    return new TextDecoder().decode(claro);
+  } catch {
+    throw new ErroOpenFinance(503, 'of_config', 'Não foi possível ler a credencial guardada. Cadastre de novo.');
+  }
 }
