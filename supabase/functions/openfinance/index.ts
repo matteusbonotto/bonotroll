@@ -161,7 +161,11 @@ Deno.serve(async (req) => {
     };
 
     if (pedido.acao === 'connect_token') {
-      return json({ ok: true, connectToken: await pluggy.connectToken(userId) });
+      const [connectToken, conectorId] = await Promise.all([
+        pluggy.connectToken(userId),
+        pluggy.conectorMeuPluggy().catch(() => null),
+      ]);
+      return json({ ok: true, connectToken, conectorId });
     }
 
     if (pedido.acao === 'vincular') {

@@ -145,7 +145,7 @@ export function csvModalStore() {
       this.open = false;
       let itemId = null;
       try {
-        itemId = await conectarBancoPluggy(r.connectToken);
+        itemId = await conectarBancoPluggy(r.connectToken, r.conectorId);
       } catch (e) {
         this.of.erro = e.message;
       } finally {

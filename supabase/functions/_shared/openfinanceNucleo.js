@@ -145,6 +145,16 @@ export function criarClientePluggy({ clientId, clientSecret, fetch: fetcher = gl
       if (!r.ok || typeof corpo?.accessToken !== 'string') throw new ErroOpenFinance(502, 'pluggy_erro', 'Não foi possível abrir a conexão com a Pluggy agora.');
       return corpo.accessToken;
     },
+    // Id do conector "MeuPluggy" na lista da Pluggy (procurado pelo nome, não
+    // fixo no código). No plano grátis só ele funciona: a janela abre direto
+    // nele, sem a lista de bancos (escolher o banco direto dá erro de
+    // "contas de teste só podem conectar sandbox").
+    async conectorMeuPluggy() {
+      const corpo = await get('/connectors?name=MeuPluggy');
+      const norm = (t) => String(t || '').toLowerCase().replace(/[^a-z]/g, '');
+      const achado = (corpo.results || []).find((c) => norm(c.name) === 'meupluggy');
+      return Number.isInteger(achado?.id) ? achado.id : null;
+    },
     item: (itemId) => get(`/items/${encodeURIComponent(itemId)}`, { tolerar404: true }),
     contas: async (itemId) => (await get(`/accounts?itemId=${encodeURIComponent(itemId)}`)).results ?? [],
     // GET /v2/transactions (cursor) — o /transactions paginado por número

@@ -119,13 +119,16 @@ function carregarPluggyConnect() {
 
 // Abre o Pluggy Connect com um connect token (30 min, escopo reduzido,
 // gerado pela função). Resolve com o itemId criado, ou null se a pessoa fechou.
-export async function conectarBancoPluggy(connectToken) {
+export async function conectarBancoPluggy(connectToken, conectorId = null) {
   const PluggyConnect = await carregarPluggyConnect();
   return new Promise((resolve, reject) => {
     let terminou = false;
     const widget = new PluggyConnect({
       connectToken,
       includeSandbox: false,
+      // Só o conector MeuPluggy, já selecionado: a pessoa não vê a lista de
+      // bancos (escolher o banco direto não funciona no plano grátis).
+      ...(Number.isInteger(conectorId) ? { connectorIds: [conectorId], selectedConnectorId: conectorId } : {}),
       onSuccess: (dados) => {
         terminou = true;
         resolve(dados?.item?.id || null);

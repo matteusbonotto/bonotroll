@@ -160,3 +160,13 @@ test('connect token: POST com clientUserId dentro de options; erros claros', asy
     : { ok: false, status: 500, json: async () => ({}) }) });
   await assert.rejects(falha.connectToken('u'), erroCom('pluggy_erro'));
 });
+
+test('conector MeuPluggy: achado pelo nome; ausente vira null', async () => {
+  const comAuth = (results) => async (url) => (url.endsWith('/auth')
+    ? { ok: true, status: 200, json: async () => ({ apiKey: 'k' }) }
+    : { ok: true, status: 200, json: async () => ({ results }) });
+  const achou = criarClientePluggy({ clientId: 'x', clientSecret: 'y', fetch: comAuth([{ id: 201, name: 'Nubank' }, { id: 200, name: 'MeuPluggy' }]) });
+  assert.equal(await achou.conectorMeuPluggy(), 200);
+  const nada = criarClientePluggy({ clientId: 'x', clientSecret: 'y', fetch: comAuth([{ id: 201, name: 'Nubank' }]) });
+  assert.equal(await nada.conectorMeuPluggy(), null);
+});
