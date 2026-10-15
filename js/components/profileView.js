@@ -3,6 +3,7 @@ import { mockDb } from '../data/mockDb.js';
 import { isPushSupported, estadoPush, subscribeToPush, unsubscribeFromPush, explicarErroPush, diagnosticoPush, enviarPushDeTeste } from '../services/push.js';
 import { resizeImage } from '../utils/image.js';
 import { exportarMeusDados, baixarComoJson } from '../services/dataExport.js';
+import { todayIso } from '../utils/format.js';
 
 export function profileView() {
   return {
@@ -172,7 +173,7 @@ export function profileView() {
           categories: store.categories,
           groupId: store.group?.group?.id,
         });
-        const dataIso = new Date().toISOString().slice(0, 10);
+        const dataIso = todayIso();
         baixarComoJson(dados, `bntt-meus-dados-${dataIso}.json`);
         store.notify('Dados exportados.');
       } catch (e) {

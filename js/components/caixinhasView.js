@@ -1,8 +1,9 @@
 import * as cx from '../services/caixinhas.js';
 import { taxaParaBRL } from '../services/fx.js';
-import { MOEDAS_SUPORTADAS, formatMoeda, moedaInfo } from '../utils/format.js';
+import { MOEDAS_SUPORTADAS, formatMoeda, moedaInfo, todayIso } from '../utils/format.js';
 
-const MOV_FORM_VAZIA = () => ({ tipo: 'guardado', valor: '', data: new Date().toISOString().slice(0, 10), observacoes: '' });
+// data: dia LOCAL (toISOString() é UTC e virava amanhã depois das 21h).
+const MOV_FORM_VAZIA = () => ({ tipo: 'guardado', valor: '', data: todayIso(), observacoes: '' });
 
 // Tela "Caixinhas": dinheiro guardado em bancos/corretoras. Mesma navegação
 // em 2 passos de Recursos (grade de bancos -> dentro de um, histórico +

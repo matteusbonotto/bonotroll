@@ -433,9 +433,11 @@ export function dashboardView() {
 
     get comparativoMesAnterior() {
       const hoje = new Date();
-      const mesAtual = hoje.toISOString().slice(0, 7);
-      const anterior = new Date(Date.UTC(hoje.getUTCFullYear(), hoje.getUTCMonth() - 1, 1));
-      const mesAnterior = anterior.toISOString().slice(0, 7);
+      // Mês pelo calendário LOCAL (em UTC, depois das 21h do último dia o
+      // "mês atual" já virava o seguinte).
+      const mesAtual = todayIso().slice(0, 7);
+      const anterior = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1);
+      const mesAnterior = `${anterior.getFullYear()}-${String(anterior.getMonth() + 1).padStart(2, '0')}`;
       const id = this.quemVer === 'grupo' ? null : this.idQuemVer;
       const atual = this.saidasNoMes(id, mesAtual);
       const passado = this.saidasNoMes(id, mesAnterior);

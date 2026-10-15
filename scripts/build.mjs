@@ -113,6 +113,45 @@ async function main() {
   const configPath = path.join(DIST, 'js/data/config.js');
   fs.writeFileSync(configPath, injetarConfig(fs.readFileSync(configPath, 'utf8'), publica));
 
+  // Lista do que NUNCA pode ir para o dist/. A varredura roda em dois
+  // momentos: no JS minificado ANTES da obfuscação (o obfuscador guarda as
+  // strings num array codificado em base64 com alfabeto próprio — depois
+  // dele, um segredo colado no código passaria invisível) e no dist/ final.
+  const proibidos = [
+    ...valoresSecretos(env).map(([nome, valor]) => [`valor de ${nome} (.env)`, valor]),
+    ['secret key do Supabase', /sb_secret_[A-Za-z0-9_-]+/],
+    ['chave de API do Google/Gemini', /AIza[0-9A-Za-z_-]{35}/],
+    ['chave secreta do Stripe', /\b[sr]k_(?:live|test)_[0-9A-Za-z]{16,}/],
+    ['segredo de webhook do Stripe', /whsec_[0-9A-Za-z]{16,}/],
+    ['chave privada', /-----BEGIN [A-Z ]*PRIVATE KEY-----/],
+    ['JWT service_role', /eyJ[A-Za-z0-9_-]*\.eyJ[A-Za-z0-9_-]*\.[A-Za-z0-9_-]+/],
+    ['projeto Supabase antigo', 'zkoxuafdcsfrdmlfckxz'],
+    ['sourcemap', /sourceMappingURL=/],
+  ];
+  const achados = [];
+  function procurarProibidos(nomeArquivo, conteudo) {
+    for (const [nome, padrao] of proibidos) {
+      if (padrao instanceof RegExp) {
+        for (const m of conteudo.matchAll(new RegExp(padrao.source, 'g'))) {
+          // JWT legado de anon é público por natureza; só barra se for service_role.
+          if (nome === 'JWT service_role') {
+            const role = (() => {
+              try {
+                return JSON.parse(Buffer.from(m[0].split('.')[1], 'base64url').toString()).role;
+              } catch {
+                return null;
+              }
+            })();
+            if (role !== 'service_role') continue;
+          }
+          achados.push(`${nomeArquivo}: ${nome}`);
+        }
+      } else if (conteudo.includes(padrao)) {
+        achados.push(`${nomeArquivo}: ${nome}`);
+      }
+    }
+  }
+
   // 2) Minificação + obfuscação do JS do app e da landing. O sw.js é tratado à
   //    parte (passo 4) porque precisa do carimbo de versão.
   const arquivos = listar(DIST);
@@ -132,6 +171,7 @@ async function main() {
       const minificado = (
         await transform(fonte, { loader: 'js', minify: true, target: 'es2020', legalComments: 'none', sourcemap: false })
       ).code;
+      procurarProibidos(`${r} (antes da obfuscação)`, minificado);
       saida = JavaScriptObfuscator.obfuscate(minificado, OPCOES_OBFUSCADOR).getObfuscatedCode();
     }
     fs.writeFileSync(arquivo, saida);
@@ -161,40 +201,11 @@ async function main() {
     (await transform(swCarimbado, { loader: 'js', minify: true, target: 'es2020', legalComments: 'none' })).code
   );
 
-  // 5) Varredura de segredos e resíduos no que vai ser publicado.
-  const proibidos = [
-    ...valoresSecretos(env).map(([nome, valor]) => [`valor de ${nome} (.env)`, valor]),
-    ['secret key do Supabase', /sb_secret_[A-Za-z0-9_-]+/],
-    ['chave de API do Google/Gemini', /AIza[0-9A-Za-z_-]{35}/],
-    ['chave privada', /-----BEGIN [A-Z ]*PRIVATE KEY-----/],
-    ['JWT service_role', /eyJ[A-Za-z0-9_-]*\.eyJ[A-Za-z0-9_-]*\.[A-Za-z0-9_-]+/],
-    ['projeto Supabase antigo', 'zkoxuafdcsfrdmlfckxz'],
-    ['sourcemap', /sourceMappingURL=/],
-  ];
-  const achados = [];
+  // 5) Varredura de segredos e resíduos no que vai ser publicado (o JS já
+  //    foi varrido ANTES da obfuscação no passo 2 — ver procurarProibidos).
   for (const arquivo of listar(DIST)) {
     if (!/\.(js|css|html|json|webmanifest|svg)$/.test(arquivo)) continue;
-    const conteudo = fs.readFileSync(arquivo, 'utf8');
-    for (const [nome, padrao] of proibidos) {
-      if (padrao instanceof RegExp) {
-        for (const m of conteudo.matchAll(new RegExp(padrao.source, 'g'))) {
-          // JWT legado de anon é público por natureza; só barra se for service_role.
-          if (nome === 'JWT service_role') {
-            const role = (() => {
-              try {
-                return JSON.parse(Buffer.from(m[0].split('.')[1], 'base64url').toString()).role;
-              } catch {
-                return null;
-              }
-            })();
-            if (role !== 'service_role') continue;
-          }
-          achados.push(`${rel(arquivo)}: ${nome}`);
-        }
-      } else if (conteudo.includes(padrao)) {
-        achados.push(`${rel(arquivo)}: ${nome}`);
-      }
-    }
+    procurarProibidos(rel(arquivo), fs.readFileSync(arquivo, 'utf8'));
   }
   if (achados.length) {
     fs.rmSync(DIST, { recursive: true, force: true });

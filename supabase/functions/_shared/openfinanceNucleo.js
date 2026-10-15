@@ -1,0 +1,203 @@
+// Núcleo puro da Edge Function "openfinance" (Pluggy / Meu Pluggy) —
+// validação de pedido, cliente da API da Pluggy e normalização de transação.
+// Sem Deno.* aqui: roda igual no Deno (função) e no node --test
+// (tests/unit/openfinance-nucleo.test.js), com fetch injetável.
+//
+// Regras de segurança (docs/OPEN-FINANCE.md):
+//  - CLIENT_ID/CLIENT_SECRET e a apiKey (acesso total por 2h) só existem no
+//    servidor; o navegador nunca recebe nada disso.
+//  - A função só LÊ (GET) na Pluggy — nenhum endpoint de pagamento é chamado.
+//  - itemId só é aceito no formato UUID e só depois de a Pluggy confirmar que
+//    ele pertence à aplicação configurada (GET /items/{id} = 200).
+//  - Plano grátis do Meu Pluggy = só contas do PRÓPRIO titular, até 5
+//    conexões. Por isso a função só atende quem está em PLUGGY_USUARIOS.
+
+export const PLUGGY_API = 'https://api.pluggy.ai';
+export const LIMITES = {
+  bytesCorpo: 4_096,
+  conexoesPorUsuario: 5,
+  diasPorConsulta: 366,
+  paginasPorConta: 20, // 20 × 500 = 10 mil transações por conta numa consulta
+  tempoMs: 20_000,
+};
+export const ACOES = ['status', 'vincular', 'desvincular', 'transacoes'];
+
+export class ErroOpenFinance extends Error {
+  constructor(status, codigo, mensagem) {
+    super(mensagem);
+    this.status = status;
+    this.codigo = codigo;
+  }
+}
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const DATA = /^\d{4}-\d{2}-\d{2}$/;
+
+export const ehUuid = (v) => typeof v === 'string' && UUID.test(v);
+
+function dataValida(v) {
+  if (typeof v !== 'string' || !DATA.test(v)) return false;
+  const d = new Date(`${v}T00:00:00Z`);
+  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === v;
+}
+
+// Lista de usuários liberados (uuids separados por vírgula/espaço). Lista
+// vazia = ninguém (falha fechada).
+export function usuariosPermitidos(texto) {
+  return new Set(String(texto || '').split(/[\s,;]+/).filter(ehUuid).map((u) => u.toLowerCase()));
+}
+
+// Valida o corpo já parseado. Devolve um pedido limpo ou lança.
+export function validarPedido(corpo, hoje = new Date().toISOString().slice(0, 10)) {
+  if (!corpo || typeof corpo !== 'object' || Array.isArray(corpo)) throw new ErroOpenFinance(400, 'pedido_invalido', 'Pedido inválido.');
+  const { acao } = corpo;
+  if (!ACOES.includes(acao)) throw new ErroOpenFinance(400, 'acao_desconhecida', 'Ação desconhecida.');
+  if (acao === 'vincular' || acao === 'desvincular') {
+    if (!ehUuid(corpo.itemId)) throw new ErroOpenFinance(400, 'item_invalido', 'O código da conexão (itemId) não é válido.');
+    const apelido = typeof corpo.apelido === 'string' ? corpo.apelido.trim().slice(0, 60) : '';
+    return { acao, itemId: corpo.itemId.toLowerCase(), apelido: apelido || null };
+  }
+  if (acao === 'transacoes') {
+    const { de, ate } = corpo;
+    if (!dataValida(de) || !dataValida(ate)) throw new ErroOpenFinance(400, 'periodo_invalido', 'Período inválido.');
+    if (de > ate) throw new ErroOpenFinance(400, 'periodo_invalido', 'A data inicial é depois da final.');
+    if (ate > hoje) throw new ErroOpenFinance(400, 'periodo_invalido', 'A data final não pode ser no futuro.');
+    const dias = (Date.parse(ate) - Date.parse(de)) / 86_400_000;
+    if (dias > LIMITES.diasPorConsulta) throw new ErroOpenFinance(400, 'periodo_longo', `Escolha no máximo ${LIMITES.diasPorConsulta} dias por vez.`);
+    return { acao, de, ate };
+  }
+  return { acao };
+}
+
+// Cliente mínimo da Pluggy. A apiKey vale 2h; renovamos com folga (1h50) e
+// guardamos no escopo do módulo para não estourar o limite de /auth.
+export function criarClientePluggy({ clientId, clientSecret, fetch: fetcher = globalThis.fetch, agora = () => Date.now() }) {
+  let cache = null;
+
+  async function chamar(caminho, init = {}) {
+    const ctrl = new AbortController();
+    const relogio = setTimeout(() => ctrl.abort(), LIMITES.tempoMs);
+    try {
+      return await fetcher(`${PLUGGY_API}${caminho}`, { ...init, signal: ctrl.signal });
+    } catch {
+      throw new ErroOpenFinance(504, 'pluggy_indisponivel', 'O Open Finance não respondeu. Tente de novo em instantes.');
+    } finally {
+      clearTimeout(relogio);
+    }
+  }
+
+  async function apiKey() {
+    if (cache && cache.expira > agora()) return cache.chave;
+    const r = await chamar('/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ clientId, clientSecret }),
+    });
+    const corpo = await r.json().catch(() => null);
+    if (!r.ok || typeof corpo?.apiKey !== 'string') {
+      throw new ErroOpenFinance(503, 'pluggy_credencial', 'As credenciais do Open Finance no servidor foram recusadas pela Pluggy.');
+    }
+    cache = { chave: corpo.apiKey, expira: agora() + 110 * 60_000 };
+    return cache.chave;
+  }
+
+  // Só GET: a função nunca escreve nada na Pluggy.
+  async function get(caminho, { tolerar404 = false } = {}) {
+    let r = await chamar(caminho, { headers: { 'X-API-KEY': await apiKey() } });
+    if (r.status === 401 || r.status === 403) {
+      // apiKey revogada antes da hora: uma nova tentativa com chave nova.
+      cache = null;
+      r = await chamar(caminho, { headers: { 'X-API-KEY': await apiKey() } });
+    }
+    if (tolerar404 && (r.status === 404 || r.status === 403)) return null;
+    if (r.status === 429) throw new ErroOpenFinance(429, 'pluggy_limite', 'Muitas consultas ao Open Finance agora. Espere um minuto.');
+    if (!r.ok) throw new ErroOpenFinance(502, 'pluggy_erro', 'O Open Finance devolveu um erro.');
+    const corpo = await r.json().catch(() => null);
+    if (!corpo || typeof corpo !== 'object') throw new ErroOpenFinance(502, 'pluggy_erro', 'Resposta inesperada do Open Finance.');
+    return corpo;
+  }
+
+  return {
+    item: (itemId) => get(`/items/${encodeURIComponent(itemId)}`, { tolerar404: true }),
+    contas: async (itemId) => (await get(`/accounts?itemId=${encodeURIComponent(itemId)}`)).results ?? [],
+    // GET /v2/transactions (cursor) — o /transactions paginado por número
+    // deixa de existir depois de 2026-12-31.
+    async transacoes(accountId, de, ate) {
+      const todas = [];
+      let consulta = `?accountId=${encodeURIComponent(accountId)}&dateFrom=${de}&dateTo=${ate}`;
+      for (let pagina = 0; pagina < LIMITES.paginasPorConta && consulta; pagina++) {
+        const corpo = await get(`/v2/transactions${consulta}`);
+        if (Array.isArray(corpo.results)) todas.push(...corpo.results);
+        // `next` é uma query string pronta; só aceitamos se continuar sendo
+        // uma query string (nunca uma URL de outro host).
+        consulta = typeof corpo.next === 'string' && corpo.next.startsWith('?') ? corpo.next : null;
+      }
+      return { transacoes: todas, truncado: Boolean(consulta) };
+    },
+  };
+}
+
+function texto(v, max) {
+  return typeof v === 'string' ? v.replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, max) : '';
+}
+
+// Transação da Pluggy -> linha no formato do importador do app
+// (IMPORT_TARGETS.transacoes em js/services/csvImport.js) + externo_id para
+// nunca importar a mesma transação duas vezes. Devolve null para o que não
+// deve virar lançamento (valor inválido/zero).
+export function normalizarTransacao(t, conta) {
+  if (!t || typeof t !== 'object' || typeof t.id !== 'string') return null;
+  const valorBruto = Number(t.amount);
+  if (!Number.isFinite(valorBruto) || valorBruto === 0) return null;
+  const data = typeof t.date === 'string' && DATA.test(t.date.slice(0, 10)) ? t.date.slice(0, 10) : null;
+  if (!data) return null;
+  const cartao = conta?.type === 'CREDIT';
+  // `type` é a fonte da verdade; o sinal do valor só vale se ele faltar.
+  // No cartão, a Pluggy manda a compra como DEBIT e o estorno/pagamento como CREDIT.
+  const tipo = t.type === 'CREDIT' ? 'entrada' : t.type === 'DEBIT' ? 'saida' : valorBruto > 0 ? 'entrada' : 'saida';
+  const pendente = t.status === 'PENDING';
+  const meta = t.creditCardMetadata || {};
+  const parcelaAtual = Number.isInteger(meta.installmentNumber) && meta.installmentNumber > 0 ? meta.installmentNumber : null;
+  const parcelaTotal = Number.isInteger(meta.totalInstallments) && meta.totalInstallments > 1 ? meta.totalInstallments : null;
+  const empresa = texto(t.merchant?.businessName || t.merchant?.name, 120);
+  const nomeConta = texto(conta?.name, 60) || (cartao ? 'Cartão' : 'Conta');
+  return {
+    externo_id: `pluggy:${t.id}`,
+    tipo,
+    titulo: texto(t.description, 200) || (tipo === 'entrada' ? 'Entrada' : 'Saída'),
+    empresa_servico: empresa || '',
+    categoria_nome: texto(t.category, 60),
+    // Arredonda o ABSOLUTO: Math.round(-1234.5) = -1234 (iria pro lado errado).
+    valor: (Math.round(Math.abs(valorBruto) * 100) / 100).toFixed(2),
+    data_vencimento: data,
+    // Conta corrente: já saiu/entrou. Cartão: vira pendente até a fatura.
+    data_pagamento: !cartao && !pendente ? data : '',
+    status: !cartao && !pendente ? 'pago' : 'pendente',
+    parcela_atual: parcelaAtual && parcelaTotal ? String(parcelaAtual) : '',
+    parcela_total: parcelaAtual && parcelaTotal ? String(parcelaTotal) : '',
+    observacoes: `Open Finance · ${nomeConta}`,
+    conta: nomeConta,
+  };
+}
+
+// Conta da Pluggy -> resumo seguro para a tela (sem número completo).
+export function resumoConta(c) {
+  const numero = texto(c?.number, 40);
+  return {
+    id: typeof c?.id === 'string' ? c.id : '',
+    nome: texto(c?.name, 60) || 'Conta',
+    tipo: c?.type === 'CREDIT' ? 'cartao' : 'conta',
+    final: numero ? numero.slice(-4) : '',
+    saldo: Number.isFinite(Number(c?.balance)) ? Number(c.balance) : null,
+    moeda: texto(c?.currencyCode, 3) || 'BRL',
+  };
+}
+
+export function resumoItem(item) {
+  return {
+    banco: texto(item?.connector?.name, 60) || 'Banco',
+    logo: typeof item?.connector?.imageUrl === 'string' && item.connector.imageUrl.startsWith('https://') ? item.connector.imageUrl : '',
+    status: texto(item?.status, 30),
+    atualizado_em: typeof item?.lastUpdatedAt === 'string' ? item.lastUpdatedAt : null,
+  };
+}

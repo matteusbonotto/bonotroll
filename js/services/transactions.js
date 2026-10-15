@@ -76,7 +76,11 @@ export async function uploadComprovante(userId, file) {
 
 export async function getComprovanteUrl(path) {
   if (!path) return null;
-  if (isDemoMode() || path.startsWith('data:')) return path;
+  // data: só de imagem/PDF (é o que uploadComprovante gera no demo). Outro
+  // membro do grupo poderia gravar "data:text/html,…" em comprovante_url e
+  // o link "Ver anexo" abriria isso; javascript:/http: também não passam.
+  if (path.startsWith('data:')) return /^data:(image\/(png|jpe?g|webp|gif|heic|heif)|application\/pdf)[;,]/i.test(path) ? path : null;
+  if (isDemoMode()) return /^(blob:|https:\/\/)/i.test(path) ? path : null;
   const supabase = await getSupabase();
   const { data, error } = await supabase.storage.from('anexos').createSignedUrl(path, 3600);
   if (error) throw error;

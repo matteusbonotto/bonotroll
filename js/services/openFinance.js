@@ -1,0 +1,101 @@
+// Cliente do Open Finance (Edge Function "openfinance", Pluggy / Meu Pluggy).
+// As credenciais da Pluggy NUNCA passam por aqui — o navegador só manda o
+// token de login e a ação; a função confere tudo de novo do lado dela e
+// devolve as transações já no formato do importador (csvImport.js).
+// Ver docs/OPEN-FINANCE.md.
+import { SUPABASE_ANON_KEY, SUPABASE_URL, isDemoMode } from '../data/config.js';
+import { getSupabase } from '../data/supabaseClient.js';
+import { todayIso } from '../utils/format.js';
+import { mockDb } from '../data/mockDb.js';
+
+export class FalhaOpenFinance extends Error {
+  constructor(codigo, mensagem, status = 0) {
+    super(mensagem);
+    this.codigo = codigo;
+    this.status = status;
+  }
+}
+
+const MENSAGENS = {
+  sem_rede: 'Sem conexão com o servidor. O Open Finance precisa de internet.',
+  sessao: 'Sua sessão expirou. Entre de novo para usar o Open Finance.',
+  of_sem_chave: 'O Open Finance ainda não foi ativado no servidor.',
+  of_nao_liberado: 'O Open Finance ainda não está liberado para a sua conta.',
+  of_config: 'O Open Finance não está configurado corretamente no servidor.',
+  funcao_ausente: 'O Open Finance ainda não foi publicado no servidor.',
+  pluggy_limite: 'Muitas consultas ao Open Finance agora. Espere um minuto.',
+};
+
+// Colunas na ordem do importador de transações (IMPORT_TARGETS.transacoes)
+// — com o mesmo nome da key, o mapeamento automático casa exato.
+export const COLUNAS_OPEN_FINANCE = [
+  'tipo', 'titulo', 'empresa_servico', 'categoria_nome', 'valor', 'data_vencimento', 'data_pagamento', 'status', 'parcela_atual', 'parcela_total', 'observacoes',
+];
+
+async function tokenAtual() {
+  const supabase = await getSupabase();
+  const { data } = await supabase.auth.getSession();
+  return data.session?.access_token || null;
+}
+
+// Modo demonstração: dados fictícios no mesmo formato da função (permite
+// testar a tela inteira sem conta na Pluggy).
+const DEMO_ITEM = '00000000-0000-4000-8000-000000000001';
+async function respostaDemo(acao, dados) {
+  if (acao === 'status') {
+    return { conexoes: [{ item_id: DEMO_ITEM, apelido: 'Exemplo', banco: 'Banco de Exemplo', logo: '', status: 'UPDATED', atualizado_em: new Date().toISOString(), contas: [{ id: 'demo', nome: 'Conta Corrente', tipo: 'conta', final: '1234', saldo: 2450.9, moeda: 'BRL' }] }] };
+  }
+  if (acao === 'transacoes') {
+    const d = dados.ate || todayIso();
+    const linha = (id, tipo, titulo, valor, extra = {}) => ({
+      externo_id: `pluggy:demo-${id}`, tipo, titulo, empresa_servico: '', categoria_nome: '', valor, data_vencimento: d, data_pagamento: d,
+      status: 'pago', parcela_atual: '', parcela_total: '', observacoes: 'Open Finance · Conta Corrente', conta: 'Conta Corrente', ja_importada: false, ...extra,
+    });
+    // Mesmo dedupe da função: o que já tem externo_id no banco local sai marcado.
+    const ja = new Set((await mockDb.list('transactions')).map((t) => t.externo_id).filter(Boolean));
+    const transacoes = [linha(1, 'saida', 'Supermercado Exemplo', '152.30'), linha(2, 'entrada', 'PIX recebido', '300.00'), linha(3, 'saida', 'Farmácia', '45.90')];
+    return { truncado: false, transacoes: transacoes.map((t) => ({ ...t, ja_importada: ja.has(t.externo_id) })) };
+  }
+  return {};
+}
+
+// acao: 'status' | 'vincular' | 'desvincular' | 'transacoes'. `deps` existe
+// para os testes injetarem fetch/token sem rede.
+export async function chamarOpenFinance(acao, dados = {}, deps = {}) {
+  if (deps.demo ?? isDemoMode()) return respostaDemo(acao, dados);
+  const fetcher = deps.fetch || globalThis.fetch.bind(globalThis);
+  const token = await (deps.token || tokenAtual)();
+  if (!token) throw new FalhaOpenFinance('sessao', MENSAGENS.sessao, 401);
+  let r;
+  try {
+    r = await fetcher(`${deps.url || SUPABASE_URL}/functions/v1/openfinance`, {
+      method: 'POST',
+      headers: { authorization: `Bearer ${token}`, apikey: deps.apikey || SUPABASE_ANON_KEY, 'content-type': 'application/json' },
+      body: JSON.stringify({ acao, ...dados }),
+    });
+  } catch {
+    throw new FalhaOpenFinance('sem_rede', MENSAGENS.sem_rede);
+  }
+  let corpo = null;
+  try {
+    corpo = await r.json();
+  } catch {
+    /* corpo não-JSON: tratado abaixo */
+  }
+  if (r.status === 404 && !corpo?.codigo) throw new FalhaOpenFinance('funcao_ausente', MENSAGENS.funcao_ausente, 404);
+  if (!r.ok || !corpo?.ok) {
+    const codigo = corpo?.codigo || (r.status === 401 ? 'sessao' : 'erro');
+    throw new FalhaOpenFinance(codigo, MENSAGENS[codigo] || corpo?.erro || 'Não foi possível falar com o Open Finance agora.', r.status);
+  }
+  return corpo;
+}
+
+// Transações ainda não importadas -> { headers, rows } do importador.
+export function paraPlanilha(transacoes) {
+  const novas = (transacoes || []).filter((t) => !t.ja_importada);
+  return {
+    headers: COLUNAS_OPEN_FINANCE,
+    rows: novas.map((t) => ({ ...Object.fromEntries(COLUNAS_OPEN_FINANCE.map((c) => [c, t[c] ?? ''])), externo_id: t.externo_id })),
+    jaImportadas: (transacoes || []).length - novas.length,
+  };
+}

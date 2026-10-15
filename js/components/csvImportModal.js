@@ -6,6 +6,7 @@ import { todayIso, MOEDAS_SUPORTADAS } from '../utils/format.js';
 import * as sl from '../services/shoppingList.js';
 import * as res from '../services/resources.js';
 import * as cx from '../services/caixinhas.js';
+import { chamarOpenFinance, paraPlanilha } from '../services/openFinance.js';
 
 // Modal global de importação de CSV (Alpine.store('csvModal')) — reaproveitado
 // para transações e para itens de lista de compras.
@@ -21,6 +22,8 @@ export function csvModalStore() {
     result: { ok: 0, pulados: 0, erros: [] },
     validacao: { ok: 0, erros: [] },
     textoColado: '',
+    // Open Finance (Pluggy): conexões e período da busca — ver services/openFinance.js.
+    of: { carregando: false, erro: '', aviso: '', conexoes: [], de: '', ate: '', novoItem: '', apelido: '' },
     IMPORT_TARGETS,
 
     openFor(target, listId = null) {
@@ -34,6 +37,9 @@ export function csvModalStore() {
       this.textoColado = '';
       this.validacao = { ok: 0, erros: [] };
       this.result = { ok: 0, pulados: 0, erros: [] };
+      const hoje = todayIso();
+      const inicioMes = `${hoje.slice(0, 8)}01`;
+      this.of = { carregando: false, erro: '', aviso: '', conexoes: [], de: inicioMes, ate: hoje, novoItem: '', apelido: '' };
       // Cache de cômodos/subcategorias/itens já resolvidos NESTE import (ver
       // resolveComodo/resolveSubcategoria/itemDuplicado) — zerado a cada
       // abertura pra não arrastar estado de uma importação anterior na
@@ -73,6 +79,55 @@ export function csvModalStore() {
       this.step = 'map';
     },
 
+    // ---- Open Finance -------------------------------------------------
+    async _of(fn) {
+      this.of.carregando = true;
+      this.of.erro = '';
+      try {
+        return await fn();
+      } catch (e) {
+        this.of.erro = e.message || 'Não foi possível falar com o Open Finance agora.';
+        return null;
+      } finally {
+        this.of.carregando = false;
+      }
+    },
+    async abrirOpenFinance() {
+      this.step = 'openfinance';
+      const r = await this._of(() => chamarOpenFinance('status'));
+      if (r) this.of.conexoes = r.conexoes || [];
+    },
+    async ofVincular() {
+      const itemId = this.of.novoItem.trim();
+      if (!itemId) return;
+      const r = await this._of(() => chamarOpenFinance('vincular', { itemId, apelido: this.of.apelido.trim() || undefined }));
+      if (r) {
+        this.of.novoItem = '';
+        this.of.apelido = '';
+        await this.abrirOpenFinance();
+      }
+    },
+    async ofDesvincular(itemId) {
+      if (!confirm('Remover esta conexão do BNTT? Os lançamentos já importados continuam.')) return;
+      const r = await this._of(() => chamarOpenFinance('desvincular', { itemId }));
+      if (r) this.of.conexoes = this.of.conexoes.filter((c) => c.item_id !== itemId);
+    },
+    async ofBuscar() {
+      const r = await this._of(() => chamarOpenFinance('transacoes', { de: this.of.de, ate: this.of.ate }));
+      if (!r) return;
+      const { headers, rows, jaImportadas } = paraPlanilha(r.transacoes);
+      const partes = [];
+      if (jaImportadas) partes.push(`${jaImportadas} já importada(s) antes foram deixadas de fora.`);
+      if (r.truncado) partes.push('O período tem transações demais — escolha um período menor para ver tudo.');
+      this.of.aviso = partes.join(' ');
+      if (!rows.length) {
+        this.of.erro = jaImportadas ? 'Tudo deste período já foi importado.' : 'Nenhuma transação neste período.';
+        return;
+      }
+      this._carregar({ headers, rows });
+      // Colunas já vêm com o nome exato dos campos: pula a tela de mapeamento.
+      this.avancarPreview();
+    },
     avancarPreview() {
       this.validacao = validarLinhas(this.target, applyMapping(this.rawRows, this.mapping));
       this.step = 'preview';
@@ -118,6 +173,8 @@ export function csvModalStore() {
               parcela_atual: parcelaAtual,
               parcela_total: parcelaTotal,
               observacoes: row.observacoes || null,
+              // Origem no Open Finance: o banco tem índice único (dono + externo_id).
+              externo_id: this.rawRows[i]?.externo_id || null,
             });
             await this.resolveEmpresa(row.empresa_servico, row.empresa_logo_url);
           } else if (this.target === 'recursos') {
@@ -191,11 +248,16 @@ export function csvModalStore() {
           }
           ok++;
         } catch (e) {
+          // Mesma transação do banco importada de novo (índice único): pula.
+          if (this.rawRows[i]?.externo_id && (e.code === '23505' || /duplicate key|transactions_owner_externo_unico/i.test(e.message || ''))) {
+            this.result.pulados++;
+            continue;
+          }
           erros.push({ linha: i + 2, motivo: e.message });
         }
       }
 
-      this.result = { ok, erros };
+      this.result = { ok, pulados: this.result.pulados, erros };
       this.step = 'resultado';
       window.dispatchEvent(new CustomEvent('cg:transactions-changed'));
       window.dispatchEvent(new CustomEvent('cg:shopping-changed'));

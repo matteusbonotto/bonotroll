@@ -4,6 +4,10 @@ import { STATUS_META, statusMeta, computeStatus } from '../utils/status.js';
 import { exportToCsv, valorParaPlanilha, dataParaPlanilha } from '../services/csvImport.js';
 import * as format from '../utils/format.js';
 import { todayIso } from '../utils/format.js';
+
+// Data -> 'aaaa-mm-dd' pelo calendário LOCAL (toISOString() é UTC: depois
+// das 21h em Brasília o filtro "hoje" começava amanhã).
+const isoLocal = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 import { agruparPorAnoMes } from '../utils/periodo.js';
 
 const FILTRO_VAZIO = { tipo: '', categoriaId: '', responsavelId: '', status: '', tipoDespesa: '', busca: '', dataInicio: '', dataFim: '' };
@@ -345,7 +349,7 @@ export function transactionsView() {
       const hoje = new Date();
       const fim = new Date(hoje);
       fim.setDate(fim.getDate() + dias);
-      const iso = (d) => d.toISOString().slice(0, 10);
+      const iso = isoLocal;
       if (dias >= 0) {
         this.filtro.dataInicio = iso(hoje);
         this.filtro.dataFim = iso(fim);
@@ -357,7 +361,7 @@ export function transactionsView() {
 
     aplicarMesAtual() {
       const hoje = new Date();
-      const iso = (d) => d.toISOString().slice(0, 10);
+      const iso = isoLocal;
       this.filtro.dataInicio = iso(new Date(hoje.getFullYear(), hoje.getMonth(), 1));
       this.filtro.dataFim = iso(new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0));
     },
@@ -366,7 +370,7 @@ export function transactionsView() {
     // despesa recorrente/fixa, que já é gerada com antecedência.
     aplicarProximoMes() {
       const hoje = new Date();
-      const iso = (d) => d.toISOString().slice(0, 10);
+      const iso = isoLocal;
       this.filtro.dataInicio = iso(new Date(hoje.getFullYear(), hoje.getMonth() + 1, 1));
       this.filtro.dataFim = iso(new Date(hoje.getFullYear(), hoje.getMonth() + 2, 0));
     },

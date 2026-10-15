@@ -49,5 +49,6 @@ export function baixarComoJson(dados, nomeArquivo) {
   a.href = url;
   a.download = nomeArquivo;
   a.click();
-  URL.revokeObjectURL(url);
+  // Revogar no mesmo tique cancela o download no Firefox/Safari.
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }

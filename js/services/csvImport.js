@@ -54,14 +54,19 @@ export function baixarBlobCsv(csv, filename) {
   link.href = url;
   link.download = filename;
   link.click();
-  URL.revokeObjectURL(url);
+  // Revogar no mesmo tique cancela o download no Firefox/Safari.
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 // Separador ";" (padrão do Excel em pt-BR — com "," ele abre tudo numa
 // coluna só). O importador aceita os dois.
 export async function exportToCsv(rows, filename = 'exportacao.csv') {
   const Papa = await loadPapa();
-  baixarBlobCsv(Papa.unparse(rows, { delimiter: ';' }), filename);
+  // escapeFormulae: título/empresa/observação vêm de qualquer membro do
+  // grupo; "=HYPERLINK(...)"/"@SOMA(...)" viraria fórmula ao abrir no
+  // Excel (CSV injection). Prefixa "'" — mas deixa número negativo
+  // ("-12,50") em paz para continuar somável na planilha.
+  baixarBlobCsv(Papa.unparse(rows, { delimiter: ';', escapeFormulae: /^(?:[=+@\t\r]|-(?!\d+(?:[.,]\d+)?$))/ }), filename);
 }
 
 // Número no formato brasileiro para planilha: 1234.5 -> "1234,50".

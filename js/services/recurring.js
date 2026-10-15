@@ -1,4 +1,5 @@
 import { listTransactions, createTransaction } from './transactions.js';
+import { todayIso } from '../utils/format.js';
 
 // Empurra uma data ISO ("aaaa-mm-dd") um mês pra frente, grudando no último
 // dia do mês seguinte quando o dia de origem não existe nele (ex.: 31/01 →
@@ -65,7 +66,7 @@ export async function gerarRecorrentesPendentes({ ownerId, groupId }) {
     if (!atual || t.data_cadastro > atual.data_cadastro) series.set(chave, t);
   }
 
-  const hojeIso = new Date().toISOString().slice(0, 10);
+  const hojeIso = todayIso(); // dia LOCAL — UTC já é amanhã depois das 21h
   const criadas = [];
 
   for (const [chave, ultima] of series) {

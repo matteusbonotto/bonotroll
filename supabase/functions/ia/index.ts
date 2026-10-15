@@ -24,6 +24,33 @@ import { ErroIa, LIMITES, TAREFAS, corpoGemini, lerRespostaGemini, origemPermiti
 const MODELO_PADRAO = 'gemini-3.5-flash';
 const TEMPO_LIMITE_MS = 45_000;
 
+// Lê o corpo contando BYTES e para assim que passa do limite — sem
+// Content-Length (envio "chunked") o req.text() leria tudo para a memória
+// antes de qualquer checagem.
+async function lerCorpoLimitado(req: Request, limite: number): Promise<string> {
+  if (!req.body) return '';
+  const leitor = req.body.getReader();
+  const pedacos: Uint8Array[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await leitor.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > limite) {
+      await leitor.cancel().catch(() => {});
+      throw new ErroIa(413, 'pedido_grande', 'Pedido grande demais.');
+    }
+    pedacos.push(value);
+  }
+  const tudo = new Uint8Array(total);
+  let pos = 0;
+  for (const p of pedacos) {
+    tudo.set(p, pos);
+    pos += p.byteLength;
+  }
+  return new TextDecoder().decode(tudo);
+}
+
 Deno.serve(async (req) => {
   const cors = {
     'Access-Control-Allow-Origin': origemPermitida(req.headers.get('Origin') ?? ''),
@@ -45,14 +72,17 @@ Deno.serve(async (req) => {
 
     const tamanho = Number(req.headers.get('Content-Length') ?? '0');
     if (tamanho > LIMITES.bytesCorpo) throw new ErroIa(413, 'pedido_grande', 'Pedido grande demais.');
-    const bruto = await req.text();
-    if (bruto.length > LIMITES.bytesCorpo) throw new ErroIa(413, 'pedido_grande', 'Pedido grande demais.');
 
+    // Login ANTES de ler o corpo: quem não tem conta não faz o servidor
+    // receber/parsear nada.
     const token = (req.headers.get('Authorization') ?? '').replace(/^Bearer\s+/i, '');
+    if (!token) throw new ErroIa(401, 'sessao', 'Entre na sua conta de novo e tente outra vez.');
     const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
     const { data: quem, error: erroLogin } = await admin.auth.getUser(token);
     if (erroLogin || !quem?.user) throw new ErroIa(401, 'sessao', 'Entre na sua conta de novo e tente outra vez.');
     const user = quem.user;
+
+    const bruto = await lerCorpoLimitado(req, LIMITES.bytesCorpo);
 
     let corpo: unknown;
     try {

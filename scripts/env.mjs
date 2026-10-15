@@ -13,13 +13,15 @@
 //   SB_SK               SECRETO — secret key (sb_secret_…), equivale à service_role: NUNCA no frontend
 //   STRIP_TOKEN         SECRETO — token do Stripe (futuro billing): NUNCA no frontend
 //   Gemini_API_KEY      SECRETO — chave do Gemini (IRPF): só como segredo GEMINI_API_KEY da Edge Function ia, NUNCA no frontend
+//   PLUGGY_CLIENT_ID    SECRETO — Open Finance (Pluggy): só como segredo da Edge Function openfinance, NUNCA no frontend
+//   PLUGGY_CLIENT_SECRET SECRETO — idem (scripts/openfinance-segredos.mjs envia os dois pro Supabase)
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 export const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
-const VARIAVEIS_SECRETAS = ['SB_SK', 'STRIP_TOKEN', 'STRIP_STOKEN', 'STRIPE_WEBHOOK_SECRET', 'Gemini_API_KEY', 'GEMINI_API_KEY'];
+const VARIAVEIS_SECRETAS = ['SB_SK', 'STRIP_TOKEN', 'STRIP_STOKEN', 'STRIPE_WEBHOOK_SECRET', 'Gemini_API_KEY', 'GEMINI_API_KEY', 'PLUGGY_CLIENT_ID', 'PLUGGY_CLIENT_SECRET'];
 
 // Aceita tanto CHAVE=valor quanto CHAVE = "valor" (o .env atual usa espaços e
 // aspas, formato que o `source` do shell não entende).
@@ -33,7 +35,7 @@ export function lerEnv(arquivo = path.join(RAIZ, '.env')) {
     }
   }
   // Variável de ambiente real (ex.: CI) tem prioridade sobre o arquivo.
-  for (const nome of ['SB_PROJ_ID', 'SB_PB', 'SB_SK', 'STRIP_TOKEN', 'STRIP_PTOKEN', 'STRIP_STOKEN', 'STRIPE_WEBHOOK_SECRET', 'GEMINI_API_KEY']) {
+  for (const nome of ['SB_PROJ_ID', 'SB_PB', 'SB_SK', 'STRIP_TOKEN', 'STRIP_PTOKEN', 'STRIP_STOKEN', 'STRIPE_WEBHOOK_SECRET', 'GEMINI_API_KEY', 'PLUGGY_CLIENT_ID', 'PLUGGY_CLIENT_SECRET', 'PLUGGY_USUARIOS']) {
     if (process.env[nome]) env[nome] = process.env[nome];
   }
   return env;

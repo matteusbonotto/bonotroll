@@ -84,6 +84,8 @@ export async function joinGroupByCode(codigo, profileId) {
   const supabase = await getSupabase();
   const { data: group, error } = await supabase.rpc('join_group_by_code', { p_codigo: codigo.toUpperCase() });
   if (error) throw new Error(error.message || 'Código de grupo não encontrado.');
+  // Código errado volta NULL (sem erro) para o servidor conseguir contar a tentativa.
+  if (!group?.id) throw new Error('Código de grupo não encontrado.');
   return group;
 }
 

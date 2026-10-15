@@ -24,6 +24,10 @@
             "value": "default-src 'self'; script-src 'self' 'unsafe-eval' https://cdn.jsdelivr.net https://esm.sh; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https:; connect-src 'self' https://qlcrsclgtpjeqkmykqrs.supabase.co wss://qlcrsclgtpjeqkmykqrs.supabase.co https://esm.sh https://cdn.jsdelivr.net https://tessdata.projectnaptha.com https://api.frankfurter.dev https://api.coingecko.com https://world.openfoodfacts.org https://brasilapi.com.br; worker-src 'self' blob: https://esm.sh https://cdn.jsdelivr.net; media-src 'self' blob: mediastream:; manifest-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'self'; object-src 'none'"
           },
           {
+            "key": "Strict-Transport-Security",
+            "value": "max-age=31536000; includeSubDomains"
+          },
+          {
             "key": "Cross-Origin-Opener-Policy",
             "value": "same-origin"
           },

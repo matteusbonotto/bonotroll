@@ -282,10 +282,18 @@ export function txModalStore() {
       // (por sugestão ou à mão) — não deixa o próximo @input no título
       // trocar ela sozinha.
       this.categoriaEscolhidaManualmente = true;
+      // As duas buscas abaixo são "dispara e esquece": sem .catch() uma falha
+      // de rede virava unhandledrejection; e a checagem de id evita que a
+      // resposta atrasada de um lançamento caia no modal de OUTRO.
+      const idAberto = tx.id;
       if (tx.comprovante_url) {
-        getComprovanteUrl(tx.comprovante_url).then((url) => { this.comprovantePreviewUrl = url; });
+        getComprovanteUrl(tx.comprovante_url)
+          .then((url) => { if (this.form?.id === idAberto) this.comprovantePreviewUrl = url; })
+          .catch((e) => console.warn('[comprovante] não gerou o link do anexo', e));
       }
-      listPayers(tx.id).then((rows) => { this.pagadores = rows.length >= 2 ? rows : []; });
+      listPayers(tx.id)
+        .then((rows) => { if (this.form?.id === idAberto) this.pagadores = rows.length >= 2 ? rows : []; })
+        .catch((e) => console.warn('[pagadores] falhou ao carregar', e));
       this.open = true;
     },
 

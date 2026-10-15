@@ -8,6 +8,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import webpush from 'npm:web-push@3';
 import { naoAutorizado } from '../_shared/autorizacao.ts';
+import { endpointPushOficial } from '../_shared/push.ts';
 
 type TransactionRecord = {
   id: string;
@@ -73,10 +74,15 @@ Deno.serve(async (req) => {
     for (const n of inseridas ?? []) {
       const { data: subs } = await supabase.from('push_subscriptions').select('*').eq('profile_id', n.profile_id);
       for (const sub of subs ?? []) {
+        // Endpoint fora dos serviços oficiais: não envia (anti-SSRF, ver _shared/push.ts).
+        if (!endpointPushOficial(sub.endpoint)) {
+          pushErros.push({ profile_id: n.profile_id, motivo: 'endpoint fora dos serviços de push oficiais' });
+          continue;
+        }
         try {
           await webpush.sendNotification(
             { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
-            JSON.stringify({ title: n.titulo, body: n.corpo ?? '', tag: `bonotto-${n.id}`, url: './index.html' })
+            JSON.stringify({ title: n.titulo, body: n.corpo ?? '', tag: `bonotto-${n.id}`, url: './app' })
           );
           pushEnviados++;
         } catch (e) {

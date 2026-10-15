@@ -6,6 +6,7 @@
 // (o token é conferido aqui, com auth.getUser).
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import webpush from 'npm:web-push@3';
+import { endpointPushOficial } from '../_shared/push.ts';
 
 const CORS = {
   'Access-Control-Allow-Origin': 'https://bnttapp.web.app',
@@ -41,6 +42,11 @@ Deno.serve(async (req) => {
   let enviadas = 0;
   const falhas: string[] = [];
   for (const s of inscricoes) {
+    // Endpoint fora dos serviços oficiais: não envia (anti-SSRF, ver _shared/push.ts).
+    if (!endpointPushOficial(s.endpoint)) {
+      falhas.push('endpoint');
+      continue;
+    }
     try {
       await webpush.sendNotification(
         { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },

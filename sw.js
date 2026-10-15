@@ -9,7 +9,7 @@
 // terminar (skipWaiting() + controllerchange recarrega a página — ver
 // js/app.js e o comentário do evento "install" abaixo; não existe mais
 // banner manual desde a correção de auto-atualização de 2026-09-01).
-const CACHE_NAME = 'bntt-v20';
+const CACHE_NAME = 'bntt-v21';
 
 const APP_SHELL = [
   './',
@@ -150,7 +150,13 @@ self.addEventListener('push', (event) => {
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const url = event.notification.data?.url || './app';
+  // Só abre endereço do PRÓPRIO app: a url vem do payload do push, e um
+  // payload adulterado não pode virar redirecionamento para site externo.
+  let url = new URL('./app', self.registration.scope).href;
+  try {
+    const pedida = new URL(event.notification.data?.url || './app', self.registration.scope);
+    if (pedida.origin === self.location.origin) url = pedida.href;
+  } catch { /* url inválida: fica no app */ }
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
       for (const client of clientList) {
@@ -206,6 +212,14 @@ self.addEventListener('fetch', (event) => {
   // filtro pode "vazar" resposta de outra). Não chamar respondWith() aqui
   // deixa o fetch seguir 100% normal, direto pro navegador, sem o SW no meio.
   if (url.hostname.endsWith('.supabase.co')) return;
+
+  // Fora da origem, só os CDNs de arquivo estático (versão fixa na URL)
+  // usam o cache abaixo. APIs de dado vivo (câmbio, cripto, Open Food
+  // Facts, BrasilAPI…) caíam no stale-while-revalidate e devolviam a
+  // resposta ANTIGA primeiro — cotação "ao vivo" de ontem — além de o
+  // cache crescer sem limite. Essas seguem direto para a rede.
+  const CDNS_ESTATICOS = ['cdn.jsdelivr.net', 'esm.sh', 'fonts.googleapis.com', 'fonts.gstatic.com', 'tessdata.projectnaptha.com'];
+  if (!isSameOrigin && !CDNS_ESTATICOS.includes(url.hostname)) return;
 
   if (isSameOrigin) {
     // App shell local: rede primeiro (sempre pega o deploy mais novo com um

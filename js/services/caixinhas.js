@@ -3,6 +3,7 @@ import { mockDb } from '../data/mockDb.js';
 import { getSupabase } from '../data/supabaseClient.js';
 import * as offline from '../data/offline.js';
 import { somar, subtrair } from '../utils/money.js';
+import { todayIso } from '../utils/format.js';
 
 // Caixinhas: dinheiro guardado em bancos/corretoras, uma linha por banco
 // (nome, moeda, meta) + um histórico de movimentações (guardado/retirado).
@@ -127,7 +128,7 @@ export async function listMovimentacoesFor(caixinhaIds) {
 }
 
 export async function createMovimentacao({ caixinhaId, tipo, valor, data, observacoes }) {
-  const row = { caixinha_id: caixinhaId, tipo, valor: Number(valor), data: data || new Date().toISOString().slice(0, 10), observacoes: observacoes || null };
+  const row = { caixinha_id: caixinhaId, tipo, valor: Number(valor), data: data || todayIso(), observacoes: observacoes || null };
   if (isDemoMode()) return mockDb.insert('caixinha_movimentacoes', row);
   offline.exigirConexao('movimentar uma reserva');
   const supabase = await getSupabase();
