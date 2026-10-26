@@ -68,6 +68,13 @@ export async function createList({ ownerId, groupId, nome, limiteGasto }) {
   return data;
 }
 
+// Compra que já aconteceu (nota fiscal lida, js/services/notaMercado.js):
+// nasce encerrada, com o mercado e a data da nota — vai direto pro Histórico.
+export async function criarCompraEncerrada({ ownerId, groupId, nome, nomeMercado, finalizadoEm }) {
+  const lista = await createList({ ownerId, groupId, nome });
+  return updateList(lista.id, { status: 'finalizada', nome_mercado: nomeMercado || null, iniciado_em: finalizadoEm, finalizado_em: finalizadoEm });
+}
+
 async function updateList(id, patch) {
   if (isDemoMode()) return mockDb.update('shopping_lists', id, patch);
   const supabase = await getSupabase();
@@ -187,7 +194,7 @@ export async function listItems(listId) {
 // Preço já é aceito aqui (opcional) — antes só dava pra preencher durante
 // "Comprando" no mercado; agora dá pra informar de cara se a pessoa já
 // sabe o valor (etiqueta, app do mercado, lembrança de compra anterior).
-export async function addItem(listId, { nome, categoria_id, unidade = 'un', quantidade = 1, prioridade = 3, preco_unitario, preco_por_kg, data_validade, codigo_barras, foto_url }) {
+export async function addItem(listId, { nome, categoria_id, unidade = 'un', quantidade = 1, prioridade = 3, preco_unitario, preco_por_kg, data_validade, codigo_barras, foto_url, comprado = false }) {
   const row = {
     id: crypto.randomUUID(), // chave de idempotência do modo offline (ver transactions.js)
     list_id: listId,
@@ -205,7 +212,7 @@ export async function addItem(listId, { nome, categoria_id, unidade = 'un', quan
     preco_unitario: preco_unitario || null,
     preco_por_kg: preco_por_kg || null,
     subtotal: 0,
-    comprado: false,
+    comprado: !!comprado,
     codigo_barras: codigo_barras || null,
     data_validade: data_validade || null,
     foto_url: foto_url || null,

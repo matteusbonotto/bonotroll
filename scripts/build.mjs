@@ -14,12 +14,17 @@
 // `npm run dev` (fonte legível) — o comportamento é o mesmo.
 import fs from 'node:fs';
 import path from 'node:path';
+import { spawnSync } from 'node:child_process';
 import crypto from 'node:crypto';
 import { transform } from 'esbuild';
 import JavaScriptObfuscator from 'javascript-obfuscator';
 import { RAIZ, lerEnv, configPublica, injetarConfig, valoresSecretos } from './env.mjs';
 
 const DIST = path.join(RAIZ, 'dist');
+// BNTT Investimentos (repositório irmão, React + Vite com base '/investir/'): publicado junto, em
+// bnttapp.web.app/investir/ — mesmo domínio, mesma sessão do Supabase. Já sai minificado do Vite (não
+// passa pela obfuscação daqui), mas entra no carimbo de versão e na varredura de segredos.
+const INVESTIR = path.join(RAIZ, '..', 'BNTT Investimentos');
 
 // Lista explícita do que é publicado — docs/, supabase/, tests/, importacao/,
 // .claude/, prompts etc. nunca vão pro Hosting.
@@ -176,6 +181,14 @@ async function main() {
     }
     fs.writeFileSync(arquivo, saida);
     bytesDepois += Buffer.byteLength(saida);
+  }
+
+  // 2b) BNTT Investimentos em dist/investir/ (fora do --demo: o test:dist não precisa dele).
+  if (!soDemo && !process.argv.includes('--sem-investir')) {
+    if (!fs.existsSync(path.join(INVESTIR, 'package.json'))) throw new Error(`Não achei o BNTT Investimentos em ${INVESTIR} (use --sem-investir para publicar sem ele).`);
+    const r = spawnSync('npm', ['run', 'build'], { cwd: INVESTIR, stdio: 'inherit', shell: true });
+    if (r.status !== 0) throw new Error('O build do BNTT Investimentos falhou.');
+    copiar(path.join(INVESTIR, 'dist'), path.join(DIST, 'investir'));
   }
 
   // 3) Hash de conteúdo de tudo que foi publicado (menos o próprio sw.js).

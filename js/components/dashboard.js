@@ -147,6 +147,19 @@ export function dashboardView() {
     get painelSugestoes() {
       return sugestoesDoDia(this.painelFiliais, this.painelGeral, { hoje: todayIso() });
     },
+    // Home do dono: o painel É a Home (sem repetir a Home doméstica embaixo).
+    get homeDono() {
+      return this.mostrarPainelDono && !this.$store.app.unidadeAtual;
+    },
+    // Uma frase que responde "como está o negócio hoje?" antes de qualquer número.
+    get painelManchete() {
+      const filiais = this.painelFiliais;
+      const alerta = filiais.filter((f) => f.status === 'alerta').length;
+      const atencao = filiais.filter((f) => f.status === 'atencao').length;
+      if (alerta) return { nivel: 'alerta', icone: 'bi-exclamation-octagon-fill', texto: `${alerta} ${alerta === 1 ? 'filial precisa' : 'filiais precisam'} de você hoje.` };
+      if (atencao) return { nivel: 'atencao', icone: 'bi-eye-fill', texto: `Tudo pago. ${atencao} ${atencao === 1 ? 'filial pede' : 'filiais pedem'} atenção.` };
+      return { nivel: 'ok', icone: 'bi-check-circle-fill', texto: 'Tudo em dia nas filiais.' };
+    },
     get filialAberta() {
       const id = this.$store.app.unidadeAtual;
       return id ? this.painelFiliais.find((f) => f.id === id) || null : null;

@@ -1952,3 +1952,20 @@ body { font-size: var(--font-size-body); }
 .cg-bancos__grupo { padding-top: var(--space-3); margin-top: var(--space-3); border-top: 1px solid var(--color-border); }
 .cg-bancos__grupo-topo { display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-1); }
 .cg-bancos__conta { display: flex; justify-content: space-between; gap: var(--space-2); padding: 2px 0 2px calc(28px + var(--space-2)); color: var(--color-text-muted); font-size: var(--font-size-body-sm); }
+
+/* ---------- Nota do mercado (2026-10-25) ---------- */
+.cg-nota-cta { display: flex; align-items: center; gap: 14px; width: 100%; padding: 14px 16px; text-align: left; color: var(--color-text); background: var(--color-primary-soft); border: 1px solid var(--color-border); border-radius: var(--radius-md); cursor: pointer; }
+.cg-nota-cta:hover, .cg-nota-cta:focus-visible { border-color: var(--color-success); }
+.cg-nota-cta > .bi:first-child { font-size: 1.8rem; color: var(--color-success); flex-shrink: 0; }
+.cg-nota-cta__titulo { display: block; font-weight: 700; }
+.cg-nota-cta__texto { display: block; font-size: .85rem; color: var(--color-text-muted); }
+.cg-nota-opcao { display: flex; align-items: center; gap: 14px; width: 100%; min-height: 64px; padding: 12px 14px; text-align: left; color: var(--color-text); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); cursor: pointer; }
+.cg-nota-opcao:hover, .cg-nota-opcao:focus-within { border-color: var(--color-success); }
+.cg-nota-opcao > .bi { font-size: 1.6rem; color: var(--color-success); flex-shrink: 0; }
+.cg-nota-opcao strong, .cg-nota-opcao small { display: block; }
+.cg-nota-opcao small { color: var(--color-text-muted); }
+.cg-nota-itens { max-height: 42vh; overflow-y: auto; border: 1px solid var(--color-border); border-radius: var(--radius-md); }
+.cg-nota-item { padding: 8px 10px; border-bottom: 1px solid var(--color-border); }
+.cg-nota-item:last-child { border-bottom: 0; }
+.cg-nota-item.is-off { opacity: .5; }
+.cg-nota-item.is-off .fw-semibold { text-decoration: line-through; }

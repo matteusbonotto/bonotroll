@@ -2533,3 +2533,13 @@ section[x-data^="dashboardView"] .cg-quick-actions .cg-btn i { font-size: 1.25re
   .cg-bancos__titulo { font-size: var(--font-size-body-lg); }
   .cg-bancos__total strong { font-size: var(--font-size-body-lg); }
 }
+
+/* Home do dono (2026-10-25): uma frase de situação no topo; "Contas para pagar" ocupa a largura toda. */
+.cg-painel-manchete { display: flex; align-items: center; gap: 10px; margin: 0 0 16px; padding: 12px 14px; font-size: 1.05rem; font-weight: 700; border-radius: var(--radius-md); background: var(--color-surface); border: 1px solid var(--color-border); }
+.cg-painel-manchete .bi { font-size: 1.3rem; }
+.cg-painel-manchete--alerta .bi { color: var(--color-danger); }
+.cg-painel-manchete--atencao .bi { color: var(--color-warning); }
+.cg-painel-manchete--ok .bi { color: var(--color-success); }
+.cg-grid-dashboard.cg-grid-dashboard--um { grid-template-columns: 1fr; }
+.cg-filial .cg-filial__valor { white-space: nowrap; font-size: clamp(1.05rem, 4.6vw, 1.5rem); }
+.cg-folha__opcao.cg-folha__opcao--destaque { background: var(--color-primary-soft); }

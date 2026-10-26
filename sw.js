@@ -179,6 +179,8 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   if (request.method !== 'GET') return;
+  // /investir/ é o BNTT Investimentos, com service worker próprio (escopo /investir/)
+  if (new URL(request.url).pathname.startsWith('/investir')) return;
 
   // Navegação (usuário abrindo/recarregando a página): tenta a rede, cai para o
   // shell em cache quando offline.

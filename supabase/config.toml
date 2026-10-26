@@ -23,3 +23,7 @@ verify_jwt = false
 # Open Finance (Pluggy): valida o JWT dentro da função (auth.getUser).
 [functions.openfinance]
 verify_jwt = false
+
+# Leitura de NFC-e (itens do cupom do mercado na SEFAZ): valida o JWT dentro da função.
+[functions.nfce-itens]
+verify_jwt = false

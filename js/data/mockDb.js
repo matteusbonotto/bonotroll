@@ -321,34 +321,50 @@ function seedDatabase(nomes = NOMES_GENERICOS_PADRAO) {
 
   // data_cadastro = a própria data (o resumo do mês filtra por ela).
   const btx = (d) => tx({ group_id: padariasId, data_cadastro: d.data_pagamento || d.data_vencimento || isoDaysFromNow(0), ...d });
-  const padarias = [
-    ['un-centro', 'Centro', 1850, 3200, marinaId],
-    ['un-vila', 'Vila Nova', 1240, 2400, diegoId],
-    ['un-jardim', 'Jardim', 980, 2100, matheusId],
-    ['un-shopping', 'Shopping', 2600, 5800, matheusId],
-  ];
-  for (const [un, nome, vendas, aluguel, quem] of padarias) {
-    transactions.push(
-      btx({ tipo: 'entrada', titulo: `Vendas do dia — ${nome}`, categoria_id: 'catb-vendas', tipo_despesa: 'variavel', valor: vendas, data_vencimento: isoDaysFromNow(-1), data_pagamento: isoDaysFromNow(-1), unidade_id: un, owner_id: quem, responsavel_id: quem }),
-      btx({ tipo: 'entrada', titulo: `Vendas do dia — ${nome}`, categoria_id: 'catb-vendas', tipo_despesa: 'variavel', valor: Math.round(vendas * 0.92), data_vencimento: isoDaysFromNow(-2), data_pagamento: isoDaysFromNow(-2), unidade_id: un, owner_id: quem, responsavel_id: quem }),
-      btx({ tipo: 'saida', titulo: `Farinha e insumos — ${nome}`, categoria_id: 'catb-insumos', tipo_despesa: 'variavel', valor: Math.round(vendas * 0.35), empresa_servico: 'Moinho Bom Grão', data_vencimento: isoDaysFromNow(2), unidade_id: un, owner_id: quem, responsavel_id: quem }),
-      btx({ tipo: 'saida', titulo: `Aluguel — ${nome}`, categoria_id: 'catb-aluguel', tipo_despesa: 'fixa', valor: aluguel, data_vencimento: isoDaysFromNow(un === 'un-vila' ? -3 : 9), unidade_id: un }),
-      btx({ tipo: 'saida', titulo: `Energia — ${nome}`, categoria_id: 'catb-energia', tipo_despesa: 'variavel', valor: Math.round(aluguel * 0.18), data_vencimento: isoDaysFromNow(5), unidade_id: un }),
-    );
-  }
+  // O painel do dono olha o MÊS ATUAL (o que foi pago/recebido nele). Pra demonstração contar a mesma história
+  // em qualquer dia do mês (2026-10-25: no fim do mês só havia 2 dias de vendas contra o aluguel do mês inteiro e
+  // 3 das 4 padarias apareciam no vermelho), as vendas são acumuladas desde o dia 1 e os valores são proporcionais
+  // ao faturamento; datas pagas ficam sempre dentro do mês.
+  const diaHoje = new Date().getDate();
+  const noMes = (dia) => isoDaysFromNow(Math.max(1, Math.min(dia, diaHoje)) - diaHoje); // dia do mês atual, nunca no futuro
   // Cada padaria conta uma história diferente (o dono decide olhando os blocos):
-  // Centro = saudável (tudo pago) · Vila Nova = aluguel vencido · Jardim =
-  // gastou mais do que vendeu (conserto do forno) · Shopping = insumos caros
-  // e contas da semana.
-  for (const t of transactions) {
-    if (t.unidade_id === 'un-centro' && t.tipo === 'saida' && !t.data_pagamento && t.titulo.startsWith('Farinha')) t.data_pagamento = isoDaysFromNow(-1);
-    if (t.unidade_id === 'un-centro' && t.tipo === 'saida' && t.titulo.startsWith('Energia')) { t.data_vencimento = isoDaysFromNow(-4); t.data_pagamento = isoDaysFromNow(-4); }
-    if (t.unidade_id === 'un-centro' && t.titulo.startsWith('Aluguel')) { t.data_vencimento = isoDaysFromNow(-5); t.data_pagamento = isoDaysFromNow(-5); }
-    if (t.unidade_id === 'un-shopping' && t.titulo.startsWith('Farinha')) t.valor = 2640;
+  // Centro = saudável · Vila Nova = aluguel vencido · Jardim = gastou mais do que vendeu (conserto do forno) ·
+  // Shopping = insumos caros (acima de 40% das vendas).
+  const padarias = [
+    ['un-centro', 'Centro', 1850, 3200, marinaId, 0.30],
+    ['un-vila', 'Vila Nova', 1240, 2400, diegoId, 0.32],
+    ['un-jardim', 'Jardim', 980, 2100, matheusId, 0.35],
+    ['un-shopping', 'Shopping', 2600, 5800, matheusId, 0.53],
+  ];
+  for (const [un, nome, vendasDia, aluguel, quem, pctInsumos] of padarias) {
+    const dele = { unidade_id: un, owner_id: quem, responsavel_id: quem };
+    // vendas: os últimos dias um a um e o começo do mês somado num lançamento
+    const recentes = Math.min(diaHoje, 3);
+    for (let i = 0; i < recentes; i++) {
+      const v = Math.round(vendasDia * (i % 2 ? 0.92 : 1));
+      transactions.push(btx({ tipo: 'entrada', titulo: `Vendas do dia — ${nome}`, categoria_id: 'catb-vendas', tipo_despesa: 'variavel', valor: v, data_vencimento: noMes(diaHoje - i), data_pagamento: noMes(diaHoje - i), ...dele }));
+    }
+    if (diaHoje > 3) {
+      transactions.push(btx({ tipo: 'entrada', titulo: `Vendas do dia 1 ao ${diaHoje - 3} — ${nome}`, categoria_id: 'catb-vendas', tipo_despesa: 'variavel', valor: vendasDia * (diaHoje - 3), data_vencimento: noMes(diaHoje - 3), data_pagamento: noMes(diaHoje - 3), ...dele }));
+    }
+    const vendasMes = vendasDia * diaHoje;
+    const insumos = Math.round(vendasMes * pctInsumos);
+    transactions.push(btx({ tipo: 'saida', titulo: `Farinha e insumos — ${nome}`, categoria_id: 'catb-insumos', tipo_despesa: 'variavel', valor: insumos, empresa_servico: 'Moinho Bom Grão', data_vencimento: noMes(diaHoje - 1), data_pagamento: noMes(diaHoje - 1), ...dele }));
+    const energia = Math.round(aluguel * 0.18);
+    // aluguel: Vila Nova vencido há 3 dias; Centro pago se o mês já cobre (senão vence depois desta semana);
+    // os outros vencem depois desta semana (não mudam a cor do bloco)
+    const sobraCentro = vendasMes - insumos - energia;
+    if (un === 'un-vila') transactions.push(btx({ tipo: 'saida', titulo: `Aluguel — ${nome}`, categoria_id: 'catb-aluguel', tipo_despesa: 'fixa', valor: aluguel, data_vencimento: isoDaysFromNow(-3), unidade_id: un }));
+    else if (un === 'un-centro' && sobraCentro > aluguel) transactions.push(btx({ tipo: 'saida', titulo: `Aluguel — ${nome}`, categoria_id: 'catb-aluguel', tipo_despesa: 'fixa', valor: aluguel, data_vencimento: noMes(5), data_pagamento: noMes(5), unidade_id: un }));
+    else transactions.push(btx({ tipo: 'saida', titulo: `Aluguel — ${nome}`, categoria_id: 'catb-aluguel', tipo_despesa: 'fixa', valor: aluguel, data_vencimento: isoDaysFromNow(10), unidade_id: un }));
+    // energia: a do Centro já paga (quando o mês cobre); as outras vencem nesta semana
+    if (un === 'un-centro' && sobraCentro > 0) transactions.push(btx({ tipo: 'saida', titulo: `Energia — ${nome}`, categoria_id: 'catb-energia', tipo_despesa: 'variavel', valor: energia, data_vencimento: noMes(diaHoje - 2), data_pagamento: noMes(diaHoje - 2), unidade_id: un }));
+    else if (un === 'un-centro') transactions.push(btx({ tipo: 'saida', titulo: `Energia — ${nome}`, categoria_id: 'catb-energia', tipo_despesa: 'variavel', valor: energia, data_vencimento: isoDaysFromNow(12), unidade_id: un }));
+    else transactions.push(btx({ tipo: 'saida', titulo: `Energia — ${nome}`, categoria_id: 'catb-energia', tipo_despesa: 'variavel', valor: energia, data_vencimento: isoDaysFromNow(5), unidade_id: un }));
+    if (un === 'un-jardim') {
+      transactions.push(btx({ tipo: 'saida', titulo: 'Conserto do forno — Jardim', categoria_id: 'catb-manutencao', tipo_despesa: 'variavel', valor: Math.max(3800, Math.round(vendasMes * 0.8)), empresa_servico: 'Fornos Brasa Viva', data_vencimento: noMes(diaHoje), data_pagamento: noMes(diaHoje), unidade_id: un }));
+    }
   }
-  transactions.push(
-    btx({ tipo: 'saida', titulo: 'Conserto do forno — Jardim', categoria_id: 'catb-manutencao', tipo_despesa: 'variavel', valor: 3800, empresa_servico: 'Fornos Brasa Viva', data_vencimento: isoDaysFromNow(-3), data_pagamento: isoDaysFromNow(-3), unidade_id: 'un-jardim' }),
-  );
   transactions.push(
     btx({ tipo: 'saida', titulo: 'Folha de pagamento', categoria_id: 'catb-folha', tipo_despesa: 'fixa', valor: 18400.00, data_vencimento: isoDaysFromNow(4) }),
     btx({ tipo: 'saida', titulo: 'Simples Nacional (DAS)', categoria_id: 'catb-impostos', tipo_despesa: 'fixa', valor: 3120.55, data_vencimento: isoDaysFromNow(15), owner_id: soniaId, responsavel_id: soniaId }),

@@ -224,8 +224,8 @@
           </template>
           <!-- Atalho do BNTT Investimentos (experimental): só contas autorizadas veem. -->
           <div x-data="atalhoInvestimentos" x-show="liberado" x-cloak>
-            <a href="https://bntt-investimentos.web.app/" class="cg-sidebar__item" target="_blank" rel="noopener" @click.prevent="abrir()" :aria-busy="abrindo">
-              <i class="bi bi-graph-up-arrow" aria-hidden="true"></i> BNTT Investimentos <span class="badge text-bg-warning ms-1" style="font-size:0.65rem;">beta</span>
+            <a :href="url" href="/investir/" class="cg-sidebar__item">
+              <i class="bi bi-graph-up-arrow" aria-hidden="true"></i> Investimentos <span class="badge text-bg-warning ms-1" style="font-size:0.65rem;">beta</span>
             </a>
           </div>
           <a href="#" class="cg-sidebar__item" :class="{ 'is-active': $store.app.view === 'perfil' }" :aria-current="$store.app.view === 'perfil' ? 'page' : null" @click.prevent="$store.app.setView('perfil')">
@@ -386,9 +386,9 @@
                 </section>
                 <hr class="my-2" />
                 <div x-data="atalhoInvestimentos" x-show="liberado" x-cloak>
-                  <button type="button" class="btn btn-sm btn-outline-success w-100 text-start mb-1" @click="abrir(); menuOpen = false" :disabled="abrindo">
-                    <i class="bi bi-graph-up-arrow"></i> BNTT Investimentos <span class="badge text-bg-warning ms-1" style="font-size:0.65rem;">beta</span>
-                  </button>
+                  <a :href="url" href="/investir/" class="btn btn-sm btn-outline-success w-100 text-start mb-1">
+                    <i class="bi bi-graph-up-arrow"></i> Investimentos <span class="badge text-bg-warning ms-1" style="font-size:0.65rem;">beta</span>
+                  </a>
                 </div>
                 <button type="button" class="btn btn-sm btn-outline-secondary w-100 text-start mb-1" @click="$store.app.setView('perfil'); menuOpen = false">
                   <i class="bi bi-gear"></i> Configurações
@@ -486,6 +486,9 @@
                sugestões e um bloco por filial; tocar no bloco abre a filial. -->
           <template x-if="mostrarPainelDono && !$store.app.unidadeAtual">
             <section class="cg-painel-dono mb-4" aria-labelledby="cg-painel-titulo">
+              <p class="cg-painel-manchete" :class="'cg-painel-manchete--' + painelManchete.nivel" role="status">
+                <i class="bi" :class="painelManchete.icone" aria-hidden="true"></i> <span x-text="painelManchete.texto"></span>
+              </p>
               <h2 class="cg-section-title mb-2" id="cg-painel-titulo"><i class="bi bi-speedometer2" aria-hidden="true"></i> Resumo do mês</h2>
               <div class="cg-painel-geral">
                 <div><span>Vendas</span><strong x-text="cgFormat.formatCurrency(painelGeral.vendas)"></strong></div>
@@ -500,6 +503,13 @@
                     <i class="bi" :class="s.icone" aria-hidden="true"></i>
                     <span x-text="s.texto"></span>
                     <button type="button" class="btn btn-link p-0 ms-auto" x-show="s.unidadeId" @click="abrirFilial(s.unidadeId)">Abrir</button>
+                  </li>
+                </template>
+                <template x-if="recursosSugestoes.length">
+                  <li class="cg-sugestao cg-sugestao--atencao">
+                    <i class="bi bi-box-seam" aria-hidden="true"></i>
+                    <span x-text="recursosSugestoes.length + (recursosSugestoes.length === 1 ? ' item acabando ou vencendo' : ' itens acabando ou vencendo') + ' no estoque.'"></span>
+                    <button type="button" class="btn btn-link p-0 ms-auto" @click="$store.app.setView('recursos')">Ver</button>
                   </li>
                 </template>
               </ul>
@@ -535,7 +545,7 @@
           </template>
 
           <!-- "Precisa de você" (fase 6): o que pede ação agora, antes de qualquer número -->
-          <section class="cg-atencao mb-4" aria-labelledby="cg-atencao-titulo">
+          <section class="cg-atencao mb-4" aria-labelledby="cg-atencao-titulo" x-show="!homeDono">
             <h2 class="cg-section-title mb-2" id="cg-atencao-titulo" x-text="atencao.length ? (atencao.length === 1 ? '1 coisa precisa de você' : atencao.length + ' coisas precisam de você') : 'Tudo em dia'"></h2>
             <p class="cg-atencao__ok mb-0" x-show="!loading && !atencao.length"><i class="bi bi-check-circle-fill" aria-hidden="true"></i> Nenhuma conta vencida e nada faltando em casa.</p>
             <ul class="cg-atencao__lista" x-show="atencao.length">
@@ -557,7 +567,7 @@
                display inline, que classes utilitárias do Bootstrap com
                !important (ex.: d-flex) vencem — x-if remove o nó do DOM de
                verdade, sem esse conflito de especificidade CSS. -->
-          <template x-if="$store.app.group">
+          <template x-if="$store.app.group && !homeDono">
             <div class="d-flex flex-wrap gap-2 mb-3">
               <template x-for="o in opcoesQuemVer" :key="o.id">
                 <button type="button" class="btn btn-sm rounded-pill d-flex align-items-center gap-2" :class="quemVer === o.id ? 'text-white' : 'btn-outline-secondary'" :style="quemVer === o.id ? { background: o.cor || 'var(--color-primary)', borderColor: o.cor || 'var(--color-primary)' } : {}" @click="quemVer = o.id">
@@ -575,7 +585,7 @@
           <!-- Período do resumo/gráficos (2026-08-20) — antes era sempre
                "desde sempre", sem filtro nenhum. "Contas a vencer"/Recursos
                não entram aqui, são sempre "agora", sem período. -->
-          <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+          <div class="d-flex flex-wrap align-items-center gap-2 mb-3" x-show.important="!homeDono">
             <select class="form-select form-select-sm" style="width: auto;" x-model="periodoModo">
               <option value="mes_atual">Este mês</option>
               <option value="mes_anterior">Mês anterior</option>
@@ -604,7 +614,7 @@
             </template>
           </div>
 
-          <div class="cg-hero-balance mb-4" :class="{ 'cg-hero-balance--neg': resumoSelecionado.saldo < 0 }">
+          <div class="cg-hero-balance mb-4" x-show="!homeDono" :class="{ 'cg-hero-balance--neg': resumoSelecionado.saldo < 0 }">
             <span class="cg-hero-balance__label">Saldo <span x-text="quemVer === 'grupo' ? 'do grupo' : quemVer === 'eu' ? 'atual' : ('de ' + (opcoesQuemVer.find(o => o.id === quemVer)?.nome || ''))"></span></span>
             <span class="cg-help" x-data="cgHelp('Entradas pagas menos saídas pagas, olhando pra quem está selecionado acima. Lançamentos ainda não pagos não entram aqui — eles aparecem à parte, em \'Esperado\'.')" @mouseenter="aoPassarMouse()" @mouseleave="fechar()" @click.outside="fechar()">
               <button type="button" class="cg-help__trigger" @click="aoClicar()" @keydown.escape.stop="fechar()" :aria-expanded="aberto ? 'true' : 'false'" :aria-describedby="id" aria-label="O que é o saldo">
@@ -664,16 +674,16 @@
             </div>
           </div>
 
-          <div class="cg-quick-actions mb-4">
+          <div class="cg-quick-actions mb-4" x-show="!homeDono">
             <button type="button" class="cg-btn btn btn-danger" data-tour-alvo="nova-transacao" @click="$store.txModal.openNew('saida')"><i class="bi bi-dash-circle"></i> Nova despesa</button>
             <button type="button" class="cg-btn btn btn-outline-danger" @click="$store.txModal.openNew('saida', 'fixa')"><i class="bi bi-pin-angle"></i> Despesa fixa</button>
             <button type="button" class="cg-btn btn btn-outline-success" @click="$store.txModal.openNew('entrada')"><i class="bi bi-plus-circle"></i> Nova entrada</button>
             <button type="button" class="cg-btn btn btn-outline-secondary" @click="$store.app.setView('compras')"><i class="bi bi-cart3"></i> Lista de compras</button>
           </div>
 
-          <div class="cg-grid-dashboard mb-4">
+          <div class="cg-grid-dashboard mb-4" :class="homeDono && 'cg-grid-dashboard--um'">
             <div class="cg-card">
-              <div class="cg-section-title"><i class="bi bi-exclamation-circle"></i> Contas a vencer</div>
+              <div class="cg-section-title"><i class="bi bi-exclamation-circle"></i> <span x-text="homeDono ? 'Contas para pagar' : 'Contas a vencer'"></span></div>
               <template x-if="!contasAVencer.length"><p class="cg-muted small mb-0">Nada vencido ou vencendo nos próximos dias. 🎉</p></template>
               <div class="d-flex flex-column gap-2">
                 <template x-for="t in contasAVencer" :key="t.id">
@@ -689,7 +699,7 @@
               </div>
             </div>
 
-            <div class="cg-card">
+            <div class="cg-card" x-show="!homeDono">
               <button type="button" class="btn p-0 border-0 bg-transparent w-100 d-flex align-items-center justify-content-between mb-0" :disabled="!recursosSugestoes.length" @click="recursosSugestoes.length && (recursosSugestoesAbertas = !recursosSugestoesAbertas)">
                 <div class="cg-section-title mb-0"><i class="bi bi-box-seam"></i> <span x-text="$store.app.linha === 'business' ? 'Em falta no estoque' : 'Em falta no inventário'"></span> <span class="cg-badge cg-badge--danger" x-show="recursosSugestoes.length" x-text="recursosSugestoes.length"></span></div>
                 <i class="bi fs-5 cg-muted" x-show="recursosSugestoes.length" :class="recursosSugestoesAbertas ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
@@ -718,6 +728,9 @@
                momento — a escolha de cada um fica salva por navegador. -->
           <button type="button" class="cg-btn btn btn-outline-secondary w-100 mb-4" x-show="!analisesAbertas" @click="analisesAbertas = true">
             <i class="bi bi-bar-chart-line" aria-hidden="true"></i> Ver análises e gráficos
+          </button>
+          <button type="button" class="cg-btn btn btn-outline-secondary w-100 mb-4" x-show="homeDono" @click="$store.app.setView('transacoes')">
+            <i class="bi bi-list-ul" aria-hidden="true"></i> Ver todos os lançamentos
           </button>
           <div x-show="analisesAbertas">
           <div class="d-flex align-items-center justify-content-between mb-2">
@@ -885,7 +898,7 @@
           </div>
 
           </div>
-          <div class="cg-card">
+          <div class="cg-card" x-show="!homeDono">
             <div class="cg-section-title mb-2"><i class="bi bi-clock-history"></i> Lançamentos recentes</div>
             <template x-if="!recentes.length"><p class="cg-muted small mb-0">Nada por aqui ainda.</p></template>
             <div class="d-flex flex-column gap-2">
@@ -1448,6 +1461,15 @@
               <div class="cg-section-title mb-0"><i class="bi bi-cart3"></i> Minhas listas</div>
               <button type="button" class="cg-btn btn btn-outline-secondary btn-sm" @click="abrirHistorico()"><i class="bi bi-clock-history"></i> Histórico</button>
             </div>
+            <!-- Nota do mercado (2026-10-25): QR da NFC-e ou foto do cupom → compra salva com mercado, data e itens. -->
+            <button type="button" class="cg-nota-cta mb-3" @click="abrirNota()" data-testid="ler-nota">
+              <i class="bi bi-qr-code-scan" aria-hidden="true"></i>
+              <span class="min-w-0">
+                <span class="cg-nota-cta__titulo">Ler nota do mercado</span>
+                <span class="cg-nota-cta__texto">Aponte para o QR do cupom: a compra fica salva com o mercado, o dia e cada item.</span>
+              </span>
+              <i class="bi bi-chevron-right ms-auto" aria-hidden="true"></i>
+            </button>
             <p class="cg-muted small" x-show="loading">Carregando…</p>
             <div class="cg-room-grid" x-show="!loading">
               <template x-for="l in listasAbertas" :key="l.list.id">
@@ -1516,6 +1538,91 @@
                 </div>
                 <button type="submit" class="cg-btn btn btn-primary w-100" :disabled="!novaListaNome.trim()">Criar lista</button>
               </form>
+            </div>
+          </div>
+
+          <!-- Nota do mercado: escolher (QR/foto) → lendo → conferir → salvar -->
+          <div class="cg-modal-backdrop" x-show="notaAberta" x-cloak @click.self="notaEtapa !== 'lendo' && fecharNota()">
+            <div class="cg-modal cg-modal--nota" role="dialog" aria-modal="true" aria-labelledby="cg-nota-titulo">
+              <div class="d-flex align-items-center justify-content-between mb-3">
+                <h2 class="h6 fw-bold mb-0" id="cg-nota-titulo"><i class="bi bi-receipt"></i> <span x-text="notaEtapa === 'conferir' ? 'Confira a compra' : 'Ler nota do mercado'"></span></h2>
+                <button type="button" class="btn-close" @click="fecharNota()" aria-label="Fechar" :disabled="notaEtapa === 'lendo' || salvandoNota"></button>
+              </div>
+
+              <div class="alert alert-warning small py-2" x-show="notaErro" x-text="notaErro" role="alert"></div>
+
+              <template x-if="notaEtapa === 'escolher'">
+                <div class="d-grid gap-2">
+                  <button type="button" class="cg-nota-opcao" @click="lerQrNota()">
+                    <i class="bi bi-qr-code-scan" aria-hidden="true"></i>
+                    <span><strong>QR code do cupom</strong><small>O jeito certo: traz todos os itens da SEFAZ.</small></span>
+                  </button>
+                  <label class="cg-nota-opcao mb-0" role="button">
+                    <i class="bi bi-camera" aria-hidden="true"></i>
+                    <span><strong>Foto do cupom</strong><small>Se o QR não funcionar. Confira os itens depois.</small></span>
+                    <input type="file" accept="image/*" capture="environment" class="visually-hidden" @change="onFotoNota($event)" />
+                  </label>
+                </div>
+              </template>
+
+              <div x-show="notaEtapa === 'camera'" class="text-center">
+                <p class="small mb-2">Aponte para o QR code no fim do cupom.</p>
+                <div id="cg-scanner-viewport-nota" style="min-height:240px; background:#000; border-radius: var(--radius-md); overflow:hidden;"></div>
+                <button type="button" class="cg-btn btn btn-outline-secondary mt-3" @click="fecharNota()">Cancelar</button>
+              </div>
+
+              <template x-if="notaEtapa === 'lendo'">
+                <div class="text-center py-4">
+                  <div class="spinner-border text-success mb-2" aria-hidden="true"></div>
+                  <p class="mb-0" role="status">Lendo os itens da nota…</p>
+                </div>
+              </template>
+
+              <template x-if="notaEtapa === 'conferir' && nota">
+                <div>
+                  <div class="alert alert-info small py-2" x-show="nota.jaSalva" role="status">Esta nota já foi lançada antes. Salvar de novo duplica a compra.</div>
+                  <div class="row g-2 mb-2">
+                    <div class="col-7">
+                      <label class="form-label small mb-1" for="cg-nota-mercado">Mercado</label>
+                      <input id="cg-nota-mercado" type="text" class="form-control form-control-sm" x-model="nota.mercado" placeholder="Nome do mercado" />
+                    </div>
+                    <div class="col-5">
+                      <label class="form-label small mb-1" for="cg-nota-data">Dia</label>
+                      <input id="cg-nota-data" type="date" class="form-control form-control-sm" x-model="nota.data" />
+                    </div>
+                  </div>
+                  <ul class="cg-nota-itens list-unstyled mb-2" aria-label="Itens da nota">
+                    <template x-for="item in nota.itens" :key="item._id">
+                      <li class="cg-nota-item" :class="!item.marcado && 'is-off'">
+                        <label class="d-flex align-items-start gap-2 mb-0 w-100">
+                          <input type="checkbox" class="form-check-input mt-1 flex-shrink-0" x-model="item.marcado" :aria-label="'Incluir ' + item.nome" />
+                          <span class="min-w-0 flex-grow-1">
+                            <span class="d-block text-truncate fw-semibold" x-text="item.nome"></span>
+                            <span class="cg-muted small" x-text="String(item.quantidade).replace('.', ',') + ' ' + item.unidadeNota.toLowerCase() + ' × ' + cgFormat.formatCurrency(item.valorUnitario)"></span>
+                          </span>
+                          <span class="fw-semibold flex-shrink-0" x-text="cgFormat.formatCurrency(item.valorTotal)"></span>
+                        </label>
+                      </li>
+                    </template>
+                  </ul>
+                  <div class="d-flex justify-content-between align-items-baseline border-top pt-2 mb-2">
+                    <span class="cg-muted small" x-text="itensMarcadosNota + ' de ' + nota.itens.length + ' itens'"></span>
+                    <span class="fs-5 fw-bold" x-text="cgFormat.formatCurrency(totalNota)"></span>
+                  </div>
+                  <label class="form-label small mb-1" for="cg-nota-pagamento">Como pagou?</label>
+                  <select id="cg-nota-pagamento" class="form-select form-select-sm mb-3" x-model="notaPagamento">
+                    <option value="avista">Pix, débito ou dinheiro</option>
+                    <template x-for="c in $store.app.cartoes" :key="c.id">
+                      <option :value="c.id" x-text="'Cartão ' + c.nome + ' (entra na fatura)'"></option>
+                    </template>
+                    <option value="nao">Só guardar a compra (sem lançar gasto)</option>
+                  </select>
+                  <button type="button" class="cg-btn btn btn-success w-100" @click="salvarNota()" :disabled="salvandoNota || !itensMarcadosNota">
+                    <span x-show="!salvandoNota"><i class="bi bi-check2-circle"></i> Salvar compra</span>
+                    <span x-show="salvandoNota">Salvando…</span>
+                  </button>
+                </div>
+              </template>
             </div>
           </div>
 
@@ -2064,6 +2171,7 @@
             </div>
           </div>
 
+                  </div>
           <!-- Histórico de compras finalizadas — agrupado por mês (TASK-043),
                com filtro por mercado + intervalo de data (finalizado_em).
                Largura padrão de .cg-modal (breakpoints do Bootstrap são por
@@ -2177,7 +2285,6 @@
               <button type="button" class="cg-btn btn btn-outline-secondary w-100 mt-3" @click="fecharDetalheHistorico()">Fechar</button>
             </div>
           </div>
-                  </div>
         </section>
 
         <!-- ===== RECURSOS ===== -->
@@ -3880,6 +3987,7 @@
             </div>
             <p class="cg-folha__grupo">Dinheiro</p>
             <div class="cg-folha__opcoes">
+              <button type="button" class="cg-folha__opcao cg-folha__opcao--destaque" @click="$store.app.adicionarAberto = false; $store.app.setView('compras'); window.dispatchEvent(new CustomEvent('cg:nota-abrir'))"><i class="bi bi-qr-code-scan text-success" aria-hidden="true"></i><span><strong>Nota do mercado</strong><small>Leia o QR do cupom: compra e gasto entram sozinhos</small></span></button>
               <button type="button" class="cg-folha__opcao" @click="$store.app.adicionarAberto = false; $store.txModal.openNew('saida')"><i class="bi bi-dash-circle text-danger" aria-hidden="true"></i><span><strong>Despesa</strong><small>Algo que você pagou ou vai pagar</small></span></button>
               <button type="button" class="cg-folha__opcao" @click="$store.app.adicionarAberto = false; $store.txModal.openNew('entrada')"><i class="bi bi-plus-circle text-success" aria-hidden="true"></i><span><strong>Receita</strong><small>Dinheiro que entrou</small></span></button>
             </div>

@@ -40,7 +40,15 @@ function proximaData(isoDate, tipo, intervaloDias) {
 // cadência — evita uma enxurrada de lançamentos se o app ficar muito tempo
 // sem ser aberto (mesma preocupação de antes, só que agora por cadência:
 // semanal precisa de mais passos pra cobrir o mesmo período que 1 mensal).
-const MAX_PASSOS_POR_TIPO = { semanal: 8, mensal: 3, anual: 1, personalizado: 12 };
+const MAX_PASSOS_POR_TIPO = { semanal: 12, mensal: 4, anual: 1, personalizado: 16 };
+
+// Até onde gerar (2026-10-25, docs/PLANO-UNIFICACAO-2026-10.md §3): até o FIM
+// DO MÊS SEGUINTE — antes parava em hoje e o mês que vem aparecia vazio. As
+// ocorrências futuras nascem sem pagamento ("a vencer") e não entram no saldo realizado.
+export function horizonteRecorrencia(hojeIso) {
+  const [ano, mes] = hojeIso.split('-').map(Number);
+  return new Date(Date.UTC(ano, mes + 1, 0)).toISOString().slice(0, 10);
+}
 
 // Gera automaticamente os lançamentos recorrentes (recorrente = true) que
 // ainda não existem — só olha as transações do PRÓPRIO dono (não gera em
@@ -66,7 +74,7 @@ export async function gerarRecorrentesPendentes({ ownerId, groupId }) {
     if (!atual || t.data_cadastro > atual.data_cadastro) series.set(chave, t);
   }
 
-  const hojeIso = todayIso(); // dia LOCAL — UTC já é amanhã depois das 21h
+  const horizonte = horizonteRecorrencia(todayIso()); // dia LOCAL — UTC já é amanhã depois das 21h
   const criadas = [];
 
   for (const [chave, ultima] of series) {
@@ -79,8 +87,9 @@ export async function gerarRecorrentesPendentes({ ownerId, groupId }) {
     const maxPassos = MAX_PASSOS_POR_TIPO[ultima.recorrencia_tipo] || 3;
     let serieEncerrada = false;
 
-    while (cursorCadastro < hojeIso && passos < maxPassos && !serieEncerrada) {
+    while (passos < maxPassos && !serieEncerrada) {
       const novaDataCadastro = proximaData(cursorCadastro, ultima.recorrencia_tipo, ultima.recorrencia_intervalo_dias);
+      if (novaDataCadastro > horizonte) break;
       const novoVencimento = cursorVencimento ? proximaData(cursorVencimento, ultima.recorrencia_tipo, ultima.recorrencia_intervalo_dias) : null;
       cursorCadastro = novaDataCadastro;
       cursorVencimento = novoVencimento;
@@ -122,6 +131,7 @@ export async function gerarRecorrentesPendentes({ ownerId, groupId }) {
         // duplicação que groupCartaoCredito existe pra evitar (o caso do
         // usuário, "Amazon Prime", é justamente uma assinatura recorrente).
         cartao_credito: !!ultima.cartao_credito,
+        cartao_id: ultima.cartao_id || null,
       });
       criadas.push(nova);
       datasExistentes.add(cursorCadastro);

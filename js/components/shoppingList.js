@@ -3,7 +3,8 @@ import { startBarcodeScanner, stopBarcodeScanner, lookupProductByBarcode, search
 import { createTransaction } from '../services/transactions.js';
 import { generateBudgetAlerts } from '../services/notifications.js';
 import { recognizeText, parseReceiptText } from '../services/ocr.js';
-import { todayIso, semAcento } from '../utils/format.js';
+import { todayIso, semAcento, formatCurrency } from '../utils/format.js';
+import * as notaMercado from '../services/notaMercado.js';
 import { resizeImage } from '../utils/image.js';
 
 const FILTRO_VAZIO = { categoriaId: '', status: '', prioridade: '', busca: '' };
@@ -44,6 +45,14 @@ export function shoppingView() {
     graficoAberto: false,
     lendoFotoItem: false,
     ordenarPorPrioridade: false,
+
+    // ---------- Nota do mercado (QR da NFC-e ou foto do cupom → compra salva) ----------
+    notaAberta: false,
+    notaEtapa: 'escolher', // escolher | camera | lendo | conferir
+    notaErro: '',
+    nota: null,
+    notaPagamento: '',
+    salvandoNota: false,
 
     // ---------- Filtros (mesmo padrão de Transações: painel recolhível no
     // mobile, chips dos filtros ativos, "Cancelar" reseta tudo) ----------
@@ -216,6 +225,7 @@ export function shoppingView() {
       this.load();
       window.addEventListener('cg:shopping-changed', () => this.refreshItems());
       window.addEventListener('cg:compras-abrir-lista', () => this.garantirListaAberta());
+      window.addEventListener('cg:nota-abrir', () => this.abrirNota());
     },
 
     async load() {
@@ -763,6 +773,108 @@ export function shoppingView() {
         this.$store.app.notify(produto?.nome ? `Produto identificado: ${produto.nome}` : 'Código lido — confira o nome do item.');
       } catch (e) {
         this.$store.app.notify(e.message || 'Não consegui identificar esse código.', 'danger');
+      }
+    },
+
+    // ---------- Nota do mercado ----------
+    abrirNota() {
+      this.notaAberta = true;
+      this.notaEtapa = 'escolher';
+      this.notaErro = '';
+      this.nota = null;
+    },
+    async fecharNota() {
+      if (this.notaEtapa === 'camera') await stopBarcodeScanner();
+      this.notaAberta = false;
+      this.nota = null;
+    },
+    async lerQrNota() {
+      this.notaEtapa = 'camera';
+      this.notaErro = '';
+      await this.$nextTick();
+      try {
+        await startBarcodeScanner('cg-scanner-viewport-nota', (codigo) => this.onQrNota(codigo));
+      } catch (e) {
+        console.error('startBarcodeScanner falhou:', e);
+        this.notaErro = mensagemErroCamera(e);
+      }
+    },
+    async onQrNota(codigo) {
+      await stopBarcodeScanner();
+      this.notaEtapa = 'lendo';
+      try {
+        const lida = await notaMercado.lerNotaPeloQr(codigo);
+        await this.prepararConferencia(lida, codigo);
+      } catch (e) {
+        this.notaEtapa = 'escolher';
+        this.notaErro = e.message || 'Não consegui ler essa nota.';
+      }
+    },
+    async onFotoNota(event) {
+      const file = event.target.files?.[0];
+      event.target.value = '';
+      if (!file) return;
+      this.notaEtapa = 'lendo';
+      this.notaErro = '';
+      try {
+        const texto = await recognizeText(await resizeImage(file, 2400, 0.92));
+        const lida = notaMercado.dadosDoCupomPorTexto(texto);
+        if (!lida.itens.length) throw new Error('Não consegui achar os itens nessa foto. Tente com o cupom reto, bem iluminado, ou leia o QR code.');
+        await this.prepararConferencia(lida, null);
+      } catch (e) {
+        this.notaEtapa = 'escolher';
+        this.notaErro = e.message || 'Não consegui ler a foto.';
+      }
+    },
+    async prepararConferencia(lida, codigoQr) {
+      const store = this.$store.app;
+      const cats = store.categories;
+      const jaSalva = await notaMercado.notaJaSalva(lida.chave, { ownerId: store.profile.id, groupId: store.group?.group?.id });
+      this.nota = {
+        mercado: lida.mercado || '',
+        data: (lida.emissao || todayIso()).slice(0, 10),
+        codigoQr,
+        jaSalva: !!jaSalva,
+        itens: lida.itens.map((i, idx) => ({ ...i, _id: idx, marcado: true, categoria_id: sl.guessCategoryByName(i.nome, cats)?.id || '' })),
+      };
+      // Como pagou: cartão de crédito com um cartão só cadastrado já vem escolhido.
+      const cartoes = store.cartoes || [];
+      this.notaPagamento = lida.formaPagamento === 'credito' && cartoes.length === 1 ? cartoes[0].id : 'avista';
+      this.notaEtapa = 'conferir';
+    },
+    get totalNota() {
+      if (!this.nota) return 0;
+      return Math.round(this.nota.itens.filter((i) => i.marcado).reduce((s, i) => s + (Number(i.valorTotal) || 0), 0) * 100) / 100;
+    },
+    get itensMarcadosNota() {
+      return this.nota ? this.nota.itens.filter((i) => i.marcado).length : 0;
+    },
+    async salvarNota() {
+      if (this.salvandoNota || !this.nota) return;
+      const store = this.$store.app;
+      this.salvandoNota = true;
+      try {
+        const categoriaMercado = store.categories.find((c) => ['mercado', 'alimentos', 'supermercado'].includes(c.nome.trim().toLowerCase()));
+        const pag = this.notaPagamento;
+        const { total } = await notaMercado.salvarCompraDaNota({
+          ownerId: store.profile.id,
+          groupId: store.group?.group?.id ?? null,
+          mercado: this.nota.mercado,
+          data: this.nota.data,
+          codigoQr: this.nota.codigoQr,
+          itens: this.nota.itens.filter((i) => i.marcado),
+          pagamento: { lancar: pag !== 'nao', cartaoId: pag !== 'avista' && pag !== 'nao' ? pag : null, categoriaId: categoriaMercado?.id || null, responsavelId: store.profile.id },
+        });
+        if (pag !== 'nao') window.dispatchEvent(new CustomEvent('cg:transactions-changed'));
+        store.notify(`Compra salva: ${this.nota.mercado || 'Mercado'}, ${this.itensMarcadosNota} itens, ${formatCurrency(total)}. Está no Histórico.`);
+        this.notaAberta = false;
+        this.nota = null;
+        await this.carregarHistoricoPrecos().catch(() => {});
+        await this.abrirHistorico();
+      } catch (e) {
+        store.notify(e.message || 'Não consegui salvar a compra.', 'danger');
+      } finally {
+        this.salvandoNota = false;
       }
     },
 
