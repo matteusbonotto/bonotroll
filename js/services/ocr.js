@@ -1,4 +1,5 @@
-import { decodificarReduzido } from '../utils/image.js';
+import { decodificarReduzido, resizeImage } from '../utils/image.js';
+import { chamarIa } from './ia.js';
 // Tesseract.js é carregado sob demanda — só baixa (é pesado, ~2MB com o
 // modelo de idioma) quando o usuário realmente tenta ler uma foto. Roda
 // 100% no navegador, sem custo e sem chave de API (mas menos preciso que
@@ -155,4 +156,39 @@ export function parseReceiptText(text) {
   }
 
   return { titulo, valor: maiorValor, vencimento };
+}
+
+async function paraBase64(blob) {
+  const bytes = new Uint8Array(await blob.arrayBuffer());
+  let bin = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return btoa(bin);
+}
+
+// Resposta da IA → mesmo formato de parseReceiptText, revalidando tudo
+// (a IA pode errar o formato; data inválida vira null, nunca chuta).
+export function normalizarLeituraIa(r) {
+  const texto = typeof r?.texto === 'string' ? r.texto : '';
+  if (r?.legivel === false && !texto.trim()) return { titulo: null, valor: null, vencimento: null, texto };
+  const titulo = typeof r?.titulo === 'string' && r.titulo.trim() ? r.titulo.trim().slice(0, 120) : null;
+  const valor = Number.isFinite(r?.valor) && r.valor > 0 ? Math.round(r.valor * 100) / 100 : null;
+  const iso = typeof r?.vencimento === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(r.vencimento) ? r.vencimento : null;
+  const vencimento = iso ? extrairDataValida(iso.split('-').reverse().join('/')) : null;
+  return { titulo, valor, vencimento, texto };
+}
+
+// Leitura de foto do modo câmera: IA de visão primeiro (lê embalagem e cupom
+// de verdade); sem IA (demo, sem internet, limite do dia, função antiga no
+// servidor) cai no Tesseract do aparelho. contexto: 'produto' | 'comprovante' | 'cupom'.
+export async function lerFoto(file, contexto = 'produto') {
+  try {
+    const foto = await resizeImage(file, 1600, 0.85);
+    const imagem = await paraBase64(foto);
+    const mime = foto.type && foto.type !== 'image/heic' ? foto.type : 'image/jpeg';
+    const r = await chamarIa('foto_ler', { imagem, mime, contexto });
+    return { ...normalizarLeituraIa(r), fonte: 'ia' };
+  } catch {
+    const texto = await recognizeText(await resizeImage(file, contexto === 'cupom' ? 2400 : 2000, 0.9));
+    return { ...parseReceiptText(texto), texto, fonte: 'aparelho' };
+  }
 }

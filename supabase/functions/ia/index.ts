@@ -119,7 +119,7 @@ Deno.serve(async (req) => {
       clearTimeout(relogio);
     }
     const resposta = await r.json().catch(() => null);
-    const extracao = lerRespostaGemini(r.status, resposta);
+    const extracao = lerRespostaGemini(r.status, resposta, pedido.tarefa);
     console.log(JSON.stringify({ tarefa, status: 200 }));
     return json({ ok: true, resultado: extracao, modelo });
   } catch (e) {

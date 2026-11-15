@@ -2,8 +2,7 @@ import * as res from '../services/resources.js';
 import { getOrCreateActiveList, addItem as addShoppingItem } from '../services/shoppingList.js';
 import { computeExpiryStatus, expiryStatusMeta } from '../utils/status.js';
 import { startBarcodeScanner, stopBarcodeScanner, lookupProductByBarcode, searchProductByName, mensagemErroCamera } from '../services/barcode.js';
-import { recognizeText, parseReceiptText } from '../services/ocr.js';
-import { resizeImage } from '../utils/image.js';
+import { lerFoto } from '../services/ocr.js';
 
 const ITEM_FORM_VAZIO = () => ({ id: null, nome: '', quantidade: 1, data_validade: '', categoria_id: '', foto_url: null });
 const ROOM_FORM_VAZIO = () => ({ id: null, nome: '', icone: 'bi-door-open' });
@@ -526,14 +525,12 @@ export function resourcesView() {
       try {
         // Ver js/utils/image.js::resizeImage — sem isso, foto crua de
         // celular podia derrubar o app por memória (bug real, 2026-08-23).
-        const fotoOtimizada = await resizeImage(file, 2000, 0.9);
-        const texto = await recognizeText(fotoOtimizada);
-        const dados = parseReceiptText(texto);
+        const dados = await lerFoto(file, 'produto');
         if (dados.titulo) {
           // Mesma correção de shoppingList.js::onFotoItem (2026-08-24): usa
           // o texto lido como busca contra um banco de produtos real em vez
           // de confiar cegamente no OCR puro.
-          const produto = await searchProductByName(dados.titulo).catch(() => null);
+          const produto = dados.fonte === 'ia' ? null : await searchProductByName(dados.titulo).catch(() => null);
           this.itemForm.nome = produto?.nome || dados.titulo;
           this.itemForm.foto_url = produto?.imagemUrl || null;
           if (dados.vencimento) this.itemForm.data_validade = dados.vencimento;

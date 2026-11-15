@@ -2,10 +2,9 @@ import * as sl from '../services/shoppingList.js';
 import { startBarcodeScanner, stopBarcodeScanner, lookupProductByBarcode, searchProductByName, mensagemErroCamera } from '../services/barcode.js';
 import { createTransaction } from '../services/transactions.js';
 import { generateBudgetAlerts } from '../services/notifications.js';
-import { recognizeText, parseReceiptText } from '../services/ocr.js';
+import { lerFoto } from '../services/ocr.js';
 import { todayIso, semAcento, formatCurrency } from '../utils/format.js';
 import * as notaMercado from '../services/notaMercado.js';
-import { resizeImage } from '../utils/image.js';
 
 const FILTRO_VAZIO = { categoriaId: '', status: '', prioridade: '', busca: '' };
 
@@ -411,9 +410,7 @@ export function shoppingView() {
         // travava/derrubava o app por memória (bug real relatado em uso,
         // 2026-08-23). 2000px de maior dimensão continua nitidamente
         // legível pro Tesseract, só corta o excesso que não ajuda em nada.
-        const fotoOtimizada = await resizeImage(file, 2000, 0.9);
-        const texto = await recognizeText(fotoOtimizada);
-        const dados = parseReceiptText(texto);
+        const dados = await lerFoto(file, 'produto');
         if (dados.titulo) {
           // OCR puro erra muito em embalagem real (bug relatado em uso,
           // 2026-08-24: "tirei foto de uma lata de Nescau e leu dado
@@ -422,7 +419,7 @@ export function shoppingView() {
           // cegamente nele; se achar um produto plausível, o nome/imagem
           // reais substituem o palpite do OCR. Nunca trava o fluxo se a
           // busca falhar (sem internet, produto não cadastrado etc.).
-          const produto = await searchProductByName(dados.titulo).catch(() => null);
+          const produto = dados.fonte === 'ia' ? null : await searchProductByName(dados.titulo).catch(() => null);
           this.novoItem.nome = produto?.nome || dados.titulo;
           this.novoItem.foto_url = produto?.imagemUrl || null;
           this.onNomeInput();
@@ -817,7 +814,7 @@ export function shoppingView() {
       this.notaEtapa = 'lendo';
       this.notaErro = '';
       try {
-        const texto = await recognizeText(await resizeImage(file, 2400, 0.92));
+        const { texto } = await lerFoto(file, 'cupom');
         const lida = notaMercado.dadosDoCupomPorTexto(texto);
         if (!lida.itens.length) throw new Error('Não consegui achar os itens nessa foto. Tente com o cupom reto, bem iluminado, ou leia o QR code.');
         await this.prepararConferencia(lida, null);

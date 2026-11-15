@@ -1,7 +1,7 @@
 import { createTransaction, contarLancamentosDoMes, updateTransaction, deleteTransaction, uploadComprovante, getComprovanteUrl, listPayers, setPayers, splitEqually, guessCategoryByTitle } from '../services/transactions.js';
 import { createCompany, updateCompany, uploadCompanyLogo } from '../services/companies.js';
 import { notifyPayment } from '../services/notifications.js';
-import { recognizeText, parseReceiptText } from '../services/ocr.js';
+import { recognizeText, parseReceiptText, lerFoto } from '../services/ocr.js';
 import { startBarcodeScanner, stopBarcodeScanner, interpretScannedCode, buscarEmpresaPorCnpj, mensagemErroCamera } from '../services/barcode.js';
 import { extractTextFromPdf } from '../services/pdf.js';
 import { todayIso, parseCurrencyInput } from '../utils/format.js';
@@ -476,9 +476,7 @@ export function txModalStore() {
           // conferir depois) — só a cópia que alimenta o OCR é redimensionada.
           // Ver js/utils/image.js::resizeImage: sem isso, foto crua de
           // celular podia derrubar o app por memória (bug real, 2026-08-23).
-          const fotoOtimizada = await resizeImage(file, 2000, 0.9);
-          const texto = await recognizeText(fotoOtimizada);
-          const dados = parseReceiptText(texto);
+          const dados = await lerFoto(file, 'comprovante');
           const preencheu = this.aplicarDadosExtraidos(dados);
           if (preencheu) store.notify('Dados lidos da foto — confira antes de salvar.');
         } catch {
