@@ -180,8 +180,31 @@ export function normalizarLeituraIa(r) {
 // Leitura de foto do modo câmera: IA de visão primeiro (lê embalagem e cupom
 // de verdade); sem IA (demo, sem internet, limite do dia, função antiga no
 // servidor) cai no Tesseract do aparelho. contexto: 'produto' | 'comprovante' | 'cupom'.
+// Autorização para mandar fotos à IA (Google Gemini, camada gratuita: o Google pode guardar e usar
+// o conteúdo). Perguntada uma vez por aparelho; "não" usa só o leitor do aparelho. Chave com prefixo
+// bonotto_ (ver CLAUDE.md). Para mudar de ideia: Perfil › limpar a preferência ou
+// localStorage.removeItem('bonotto_ia_fotos').
+const CHAVE_IA_FOTOS = 'bonotto_ia_fotos';
+export function iaFotosAutorizada() {
+  let v = null;
+  try { v = localStorage.getItem(CHAVE_IA_FOTOS); } catch { /* sem armazenamento: pergunta de novo */ }
+  if (v === 'sim') return true;
+  if (v === 'nao') return false;
+  const ok = typeof confirm === 'function' && confirm(
+    'Ler esta foto com IA?
+
+A foto vai pelo nosso servidor para a IA do Google (Gemini), que lê embalagens, comprovantes e cupons muito melhor que o leitor do aparelho. '
+    + 'Usamos a versão gratuita: o Google pode guardar a imagem e usá-la para melhorar os produtos dele. Evite fotos com dados que você não quer compartilhar.
+
+'
+    + 'OK = usar IA nas próximas fotos · Cancelar = só o leitor do aparelho');
+  try { localStorage.setItem(CHAVE_IA_FOTOS, ok ? 'sim' : 'nao'); } catch { /* ignora */ }
+  return ok;
+}
+
 export async function lerFoto(file, contexto = 'produto') {
   try {
+    if (!iaFotosAutorizada()) throw new Error('sem_autorizacao');
     const foto = await resizeImage(file, 1600, 0.85);
     const imagem = await paraBase64(foto);
     const mime = foto.type && foto.type !== 'image/heic' ? foto.type : 'image/jpeg';
