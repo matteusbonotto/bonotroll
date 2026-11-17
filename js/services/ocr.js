@@ -191,12 +191,8 @@ export function iaFotosAutorizada() {
   if (v === 'sim') return true;
   if (v === 'nao') return false;
   const ok = typeof confirm === 'function' && confirm(
-    'Ler esta foto com IA?
-
-A foto vai pelo nosso servidor para a IA do Google (Gemini), que lê embalagens, comprovantes e cupons muito melhor que o leitor do aparelho. '
-    + 'Usamos a versão gratuita: o Google pode guardar a imagem e usá-la para melhorar os produtos dele. Evite fotos com dados que você não quer compartilhar.
-
-'
+    'Ler esta foto com IA?\n\nA foto vai pelo nosso servidor para a IA do Google (Gemini), que lê embalagens, comprovantes e cupons muito melhor que o leitor do aparelho. '
+    + 'Usamos a versão gratuita: o Google pode guardar a imagem e usá-la para melhorar os produtos dele. Evite fotos com dados que você não quer compartilhar.\n\n'
     + 'OK = usar IA nas próximas fotos · Cancelar = só o leitor do aparelho');
   try { localStorage.setItem(CHAVE_IA_FOTOS, ok ? 'sim' : 'nao'); } catch { /* ignora */ }
   return ok;

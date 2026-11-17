@@ -104,8 +104,12 @@ Deno.serve(async (req) => {
   // conta já tem.
   const novo = metadadosDoPlano(sub);
   const meta = atual.user.app_metadata ?? {};
-  if (meta.assinatura_ativa && meta.stripe_subscription && meta.stripe_subscription !== sub.id && !novo.assinatura_ativa) {
-    return json({ ok: true, ignorado: 'assinatura antiga/diferente inativa' });
+  // Ativa ou não, uma assinatura DIFERENTE nunca substitui a ativa da conta: com o
+  // client_reference_id vindo do navegador, outra pessoa poderia trocar a assinatura registrada
+  // e, ao excluir a conta, a assinatura verdadeira continuaria cobrando. Fica só no log.
+  if (meta.assinatura_ativa && meta.stripe_subscription && meta.stripe_subscription !== sub.id) {
+    console.warn('stripe-webhook: assinatura diferente ignorada', { ativa: Boolean(novo.assinatura_ativa) });
+    return json({ ok: true, ignorado: 'assinatura diferente da ativa' });
   }
   const { error } = await supabase.auth.admin.updateUserById(userId, {
     app_metadata: { ...meta, ...novo, cortesia: false },

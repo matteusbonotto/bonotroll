@@ -46,3 +46,14 @@ test('normalização da leitura nunca aceita dado fora do formato', () => {
   assert.deepEqual(ruim, { titulo: null, valor: null, vencimento: null, texto: 'x' });
   assert.deepEqual(normalizarLeituraIa(null), { titulo: null, valor: null, vencimento: null, texto: '' });
 });
+
+test('IA nas fotos só com autorização guardada; sem resposta = leitor do aparelho', async () => {
+  const { iaFotosAutorizada } = await import('../../js/services/ocr.js');
+  localStorage.setItem('bonotto_ia_fotos', 'sim');
+  assert.equal(iaFotosAutorizada(), true);
+  localStorage.setItem('bonotto_ia_fotos', 'nao');
+  assert.equal(iaFotosAutorizada(), false);
+  localStorage.removeItem('bonotto_ia_fotos');
+  assert.equal(iaFotosAutorizada(), false); // sem confirm() (fora do navegador) nunca autoriza sozinho
+  assert.equal(localStorage.getItem('bonotto_ia_fotos'), 'nao');
+});
