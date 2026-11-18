@@ -97,6 +97,15 @@ Deno.serve(async (req) => {
     const linha = user.app_metadata?.tipo ?? user.user_metadata?.tipo_conta;
     if (regra.apenasHome && linha === 'business') throw new ErroIa(403, 'linha', 'Este recurso é do BNTT Home.');
 
+    // Conta sem e-mail confirmado não usa IA (senão cadastros em massa esgotam a cota de todos).
+    if (!user.email_confirmed_at) throw new ErroIa(403, 'sessao', 'Confirme seu e-mail para usar a leitura por IA.');
+    // Teto do dia para o app inteiro (cota grátis do Gemini é do projeto, não de cada pessoa).
+    const hoje = new Date(Date.now() - 3 * 3_600_000).toISOString().slice(0, 10); // dia em São Paulo
+    const { data: usoDia } = await admin.from('ia_uso').select('chamadas').eq('dia', hoje);
+    const totalDia = (usoDia ?? []).reduce((t: number, r: { chamadas: number }) => t + r.chamadas, 0);
+    if (totalDia >= Number(Deno.env.get('IA_LIMITE_GLOBAL_DIA') ?? 500))
+      throw new ErroIa(429, 'ia_limite_provedor', 'A IA atingiu o limite de uso de hoje. Amanhã libera de novo.');
+
     // Limite diário por pessoa — atômico no banco (supabase/ia-2026-10.sql).
     const { data: liberado, error: erroUso } = await admin.rpc('ia_consumir', { p_user: user.id, p_tarefa: pedido.tarefa, p_limite: LIMITES.chamadasPorDia });
     if (erroUso) throw new ErroIa(503, 'ia_config', 'A IA não está configurada corretamente no servidor.');

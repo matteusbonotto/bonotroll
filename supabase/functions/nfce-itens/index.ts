@@ -32,7 +32,13 @@ Deno.serve(async (req) => {
     const { data: quem, error } = await admin.auth.getUser(token);
     if (error || !quem?.user) throw new ErroNfce(401, 'sessao', 'Entre na sua conta de novo e tente outra vez.');
 
-    const bruto = await req.text();
+    // limite por pessoa: a função busca páginas da SEFAZ e não pode virar proxy em massa
+    const { data: liberado } = await admin.rpc('ia_consumir', { p_user: quem.user.id, p_tarefa: 'nfce', p_limite: 60 });
+    if (liberado === false) throw new ErroNfce(429, 'limite', 'Muitas notas lidas hoje. Amanhã libera de novo.');
+    if (!req.body) throw new ErroNfce(400, 'pedido_invalido', 'Pedido inválido.');
+    const bruto = await new Response(req.body.pipeThrough(new TransformStream({
+      n: 0, transform(pedaco, ctl) { this.n += pedaco.byteLength; if (this.n > LIMITES.bytesCorpo) ctl.error(new ErroNfce(413, 'pedido_grande', 'Pedido grande demais.')); else ctl.enqueue(pedaco); },
+    } as Transformer<Uint8Array, Uint8Array> & { n: number }))).text();
     if (bruto.length > LIMITES.bytesCorpo) throw new ErroNfce(413, 'pedido_grande', 'Pedido grande demais.');
     let corpo: unknown;
     try {
