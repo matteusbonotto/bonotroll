@@ -1598,8 +1598,8 @@ as $$
     when u.raw_app_meta_data->>'assinatura_ativa' = 'true' and u.raw_app_meta_data->>'plano' is not null
       then u.raw_app_meta_data->>'plano'
     when u.created_at > now() - interval '30 days'
-      then case when coalesce(u.raw_app_meta_data->>'tipo', u.raw_user_meta_data->>'tipo_conta') = 'business' then 'business_expansao' else 'home_familia' end
-    else case when coalesce(u.raw_app_meta_data->>'tipo', u.raw_user_meta_data->>'tipo_conta') = 'business' then 'business_largada' else 'home_gratis' end
+      then case when u.raw_app_meta_data->>'tipo' = 'business' then 'business_expansao' else 'home_familia' end
+    else case when u.raw_app_meta_data->>'tipo' = 'business' then 'business_largada' else 'home_gratis' end
   end
   from auth.users u
   where u.id = uid;

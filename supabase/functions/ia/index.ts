@@ -94,7 +94,7 @@ Deno.serve(async (req) => {
     tarefa = pedido.tarefa;
     const regra = TAREFAS[pedido.tarefa as keyof typeof TAREFAS];
 
-    const linha = user.app_metadata?.tipo ?? user.user_metadata?.tipo_conta;
+    const linha = user.app_metadata?.tipo; // gravado pelo servidor no cadastro (nunca user_metadata)
     if (regra.apenasHome && linha === 'business') throw new ErroIa(403, 'linha', 'Este recurso é do BNTT Home.');
 
     // Conta sem e-mail confirmado não usa IA (senão cadastros em massa esgotam a cota de todos).
